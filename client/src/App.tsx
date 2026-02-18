@@ -45,6 +45,8 @@ const DevSystemHealth = lazy(() => import("./pages/DevSystemHealth"));
 const DevActivityLog = lazy(() => import("./pages/DevActivityLog"));
 const DevImpersonate = lazy(() => import("./pages/DevImpersonate"));
 const CompanyAdmin = lazy(() => import("./pages/CompanyAdmin"));
+const Settings = lazy(() => import("./pages/Settings"));
+const HubSpotImport = lazy(() => import("./pages/HubSpotImport"));
 
 function PageLoader() {
   return (
@@ -98,6 +100,8 @@ function Router() {
           <Route path="/dev/activity" component={DevActivityLog} />
           <Route path="/dev/impersonate" component={DevImpersonate} />
           <Route path="/team" component={CompanyAdmin} />
+          <Route path="/settings" component={Settings} />
+          <Route path="/import/hubspot" component={HubSpotImport} />
           <Route path="/help" component={HelpCenter} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />

@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, bigint } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, bigint, decimal } from "drizzle-orm/mysql-core";
 
 // ─── Tenant Companies ───
 export const tenantCompanies = mysqlTable("tenant_companies", {
@@ -33,7 +33,7 @@ export const users = mysqlTable("users", {
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   // Multi-tenant hierarchy fields
-  systemRole: mysqlEnum("systemRole", ["developer", "company_admin", "manager", "user"]).default("user").notNull(),
+  systemRole: mysqlEnum("systemRole", ["developer", "super_admin", "company_admin", "manager", "user"]).default("user").notNull(),
   tenantCompanyId: int("tenantCompanyId"),
   managerId: int("managerId"),
   isActive: boolean("isActive").default(true).notNull(),
@@ -157,6 +157,18 @@ export const contacts = mysqlTable("contacts", {
   customerType: varchar("customerType", { length: 64 }),
   paymentResponsibility: varchar("paymentResponsibility", { length: 128 }),
   preferredContactMethod: varchar("preferredContactMethod", { length: 64 }),
+  // 13. HubSpot Freight-Specific Fields
+  freightDetails: varchar("freightDetails", { length: 128 }), // LTL, Truckload, Flatbed, Refrigerated, Intermodal, International Air, Domestic Air
+  shipmentLength: decimal("shipmentLength", { precision: 10, scale: 2 }), // inches
+  shipmentWidth: decimal("shipmentWidth", { precision: 10, scale: 2 }), // inches
+  shipmentHeight: decimal("shipmentHeight", { precision: 10, scale: 2 }), // inches
+  shipmentWeight: decimal("shipmentWeight", { precision: 10, scale: 2 }), // pounds
+  destinationZipCode: varchar("destinationZipCode", { length: 16 }),
+  shippingOrigination: varchar("shippingOrigination", { length: 256 }),
+  destination: varchar("destination", { length: 256 }),
+  additionalInformation: text("additionalInformation"),
+  contactOwnerMeetingLink: varchar("contactOwnerMeetingLink", { length: 512 }),
+  personHasMoved: varchar("personHasMoved", { length: 64 }),
   // General
   tags: json("tags").$type<string[]>(),
   avatarUrl: varchar("avatarUrl", { length: 512 }),
@@ -211,6 +223,9 @@ export const companies = mysqlTable("companies", {
   paymentStatus: varchar("paymentStatus", { length: 64 }),
   lanePreferences: text("lanePreferences"),
   tmsIntegrationStatus: varchar("tmsIntegrationStatus", { length: 64 }),
+  // 7b. HubSpot Freight-Specific Fields
+  annualFreightSpend: decimal("annualFreightSpend", { precision: 14, scale: 2 }),
+  commodity: varchar("commodity", { length: 256 }),
   // 8. System Properties
   recordSource: varchar("recordSource", { length: 128 }),
   importSource: varchar("importSource", { length: 128 }),

@@ -28,7 +28,7 @@ import {
   Filter, PanelLeft, LogOut, Zap, Send, ChevronDown,
   Brain, Target, Radar, Ghost, Flame, Plug,
   ShieldCheck, Ban, Settings, Globe, Sparkles, BookOpen, FileSearch,
-  Activity, Database, Eye, ScrollText, UserCog,
+  Activity, Database, Eye, ScrollText, UserCog, Download,
 } from "lucide-react";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -104,6 +104,8 @@ const standardSections = [
     label: "Resources",
     items: [
       { icon: BookOpen, label: "Help Center", path: "/help" },
+      { icon: Settings, label: "Settings", path: "/settings" },
+      { icon: Download, label: "HubSpot Import", path: "/import/hubspot" },
     ],
   },
 ];

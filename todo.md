@@ -432,3 +432,46 @@
 ### Tests
 - [x] Multi-tenant hierarchy tests (19 tests: features, roles, schema, assignments, invites, sidebar mapping)
 - [x] All tests passing across 5 test files
+
+## Phase 11: HubSpot Integration & Comprehensive Settings Page
+
+### User Hierarchy Update
+- [x] Add "super_admin" role between developer and company_admin
+- [x] Super Admin: full CRM access, no app changes, sets up paying customer companies
+- [x] Update schema, migration (0003_large_pandemic.sql), and role validation logic
+
+### Missing Freight-Specific Properties
+- [x] Add freight_details enum (LTL, Truckload, Flatbed, Refrigerated, Intermodal, International Air, Domestic Air) to contacts
+- [x] Add shipment dimensions (height, length, width inches; weight pounds) as decimal(10,2) to contacts
+- [x] Add destination_zip_code, shipping_origination, destination to contacts
+- [x] Add annual_freight_spend (decimal 14,2), commodity, credit_terms, lane_preferences, tms_integration_status to companies
+- [x] Run schema migration (0003_large_pandemic.sql applied)
+
+### Comprehensive Settings Page (from SettingsPage.docx)
+- [x] Your Preferences section (Profile, Email, Calling, Calendar, Tasks, Security, Automation)
+- [x] Notifications section (Email Notifications, Desktop, Mobile, Digest)
+- [x] Account Management section (Account Defaults, Audit Log, Hierarchy, Product Updates)
+- [x] Integrations section (Connected Apps, API Access, Webhooks Config, Marketplace)
+- [x] Privacy & Consent section (Data Privacy, Cookie Settings, Consent Management, Data Retention)
+- [x] AI & Automation section (AI Settings, Workflow Automation, Predictive Scoring, Smart Suggestions)
+- [x] Data Management section (Properties per object, Objects config, Import & Export, Backups)
+- [x] Profile settings with avatar, name, email, timezone, language
+- [x] Add Settings to sidebar navigation under Resources
+
+### HubSpot Import/Mapping Tool
+- [x] Build HubSpot CSV parser with quoted field support
+- [x] Auto-map 38 contact properties and 21 company properties to Apex CRM fields
+- [x] Show mapping UI with source → destination field matching, grouped by category
+- [x] One-click import with dedup and skip-empty options
+- [x] Import progress bar and per-file results summary (created/skipped/errors)
+- [x] 3-step wizard: Upload → Map → Import → Complete
+- [x] Custom freight/logistics field mapping (all 14 contact + 5 company freight fields)
+- [x] Add HubSpot Import to sidebar under Resources
+
+### Tests
+- [x] Tests for settings page structure (6 tests)
+- [x] Tests for HubSpot import mapper (9 tests: mappings, CSV parser)
+- [x] Tests for updated role hierarchy (6 tests)
+- [x] Tests for freight property schema (5 tests)
+- [x] Tests for CSV parser (6 tests)
+- [x] All 158 tests passing across 6 test files
