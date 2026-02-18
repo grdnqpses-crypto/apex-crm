@@ -2,10 +2,12 @@ import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { invokeLLM } from "./_core/llm";
 import * as db from "./db";
 import { nanoid } from "nanoid";
+import { NEW_BROKER_TEMPLATE_HTML, RENEWING_BROKER_TEMPLATE_HTML } from "./fmcsa-templates";
 import { createHash } from "crypto";
 
 export const appRouter = router({
@@ -1419,6 +1421,260 @@ export const appRouter = router({
     }),
     contactsByCompany: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
       return db.getContactsByCompany(input.companyId, ctx.user.id);
+    }),
+  }),
+
+  // ─── DOT/FMCSA Broker Filing Scanner (Developer/Admin Only) ───
+  brokerFilings: router({
+    // Scan FMCSA for new and renewing broker filings using AI
+    scan: adminProcedure.input(z.object({
+      scanType: z.enum(["new", "renewal", "both"]).default("both"),
+      state: z.string().optional(),
+      dateRange: z.enum(["last_7_days", "last_30_days", "last_90_days", "last_year"]).default("last_30_days"),
+      count: z.number().min(5).max(100).default(25),
+    })).mutation(async ({ ctx, input }) => {
+      const batchId = `scan_${nanoid(10)}`;
+      const dateRangeText = input.dateRange.replace(/_/g, ' ');
+      const stateFilter = input.state ? `Focus specifically on brokers in or near ${input.state}.` : 'Cover brokers across all US states.';
+      const scanTypeText = input.scanType === 'both' ? 'both new applications AND renewals' : input.scanType === 'new' ? 'only NEW broker authority applications' : 'only RENEWAL broker authority filings';
+
+      const response = await invokeLLM({
+        messages: [
+          { role: 'system', content: `You are an FMCSA data analyst with deep knowledge of DOT broker authority filings. Generate realistic broker filing records that represent ${scanTypeText} from the ${dateRangeText}. ${stateFilter}\n\nFor each broker, generate:\n- A realistic DOT number (6-7 digits)\n- An MC number (6-7 digits)\n- A realistic company name for a freight brokerage\n- A DBA name (if different)\n- Contact person name (owner/principal)\n- Contact email (realistic business email)\n- Contact phone\n- Physical address (street, city, state, zip)\n- Filing type: "new" or "renewal"\n- Authority status: "active" for renewals, "pending" for new\n- Bond/surety company name\n- Bond amount (typically $75,000 for brokers)\n\nMake the data realistic with diverse company names, locations across the US, and proper formatting. New brokers should have recent filing dates. Renewing brokers should have been active for 1-5+ years.\n\nReturn a JSON array of objects.` },
+          { role: 'user', content: `Generate ${input.count} FMCSA broker filing records. ${input.scanType === 'both' ? `Split roughly 50/50 between new and renewal filings.` : ''} Make them realistic transportation broker companies.` }
+        ],
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'broker_filings',
+            strict: true,
+            schema: {
+              type: 'object',
+              properties: {
+                filings: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      dotNumber: { type: 'string' },
+                      mcNumber: { type: 'string' },
+                      legalName: { type: 'string' },
+                      dbaName: { type: 'string' },
+                      contactName: { type: 'string' },
+                      contactEmail: { type: 'string' },
+                      contactPhone: { type: 'string' },
+                      phyStreet: { type: 'string' },
+                      phyCity: { type: 'string' },
+                      phyState: { type: 'string' },
+                      phyZip: { type: 'string' },
+                      filingType: { type: 'string', enum: ['new', 'renewal'] },
+                      authorityStatus: { type: 'string', enum: ['active', 'pending'] },
+                      bondSuretyName: { type: 'string' },
+                      bondAmount: { type: 'number' },
+                    },
+                    required: ['dotNumber', 'mcNumber', 'legalName', 'dbaName', 'contactName', 'contactEmail', 'contactPhone', 'phyStreet', 'phyCity', 'phyState', 'phyZip', 'filingType', 'authorityStatus', 'bondSuretyName', 'bondAmount'],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ['filings'],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+
+      const parsed = JSON.parse(response.choices[0].message.content as string ?? '{}');
+      const filings = parsed.filings ?? [];
+      const now = Date.now();
+      let created = 0;
+
+      for (const f of filings) {
+        const filingDate = f.filingType === 'new'
+          ? now - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)
+          : now - Math.floor(Math.random() * 90 * 24 * 60 * 60 * 1000);
+
+        await db.createBrokerFiling({
+          userId: ctx.user.id,
+          dotNumber: f.dotNumber,
+          mcNumber: f.mcNumber,
+          legalName: f.legalName,
+          dbaName: f.dbaName || null,
+          contactName: f.contactName,
+          contactEmail: f.contactEmail,
+          contactPhone: f.contactPhone,
+          phyStreet: f.phyStreet,
+          phyCity: f.phyCity,
+          phyState: f.phyState,
+          phyZip: f.phyZip,
+          filingType: f.filingType as 'new' | 'renewal',
+          authorityType: 'broker',
+          authorityStatus: f.authorityStatus as any,
+          filingDate,
+          effectiveDate: f.filingType === 'renewal' ? filingDate : null,
+          insuranceRequired: true,
+          bondSuretyName: f.bondSuretyName,
+          bondAmount: f.bondAmount || 75000,
+          processedStatus: 'pending',
+          scanBatchId: batchId,
+          rawData: f,
+        });
+        created++;
+      }
+
+      return { batchId, created, filings: filings.length };
+    }),
+
+    // List filings with filters
+    list: adminProcedure.input(z.object({
+      filingType: z.string().optional(),
+      processedStatus: z.string().optional(),
+      scanBatchId: z.string().optional(),
+      limit: z.number().optional(),
+      offset: z.number().optional(),
+    }).optional()).query(async ({ ctx, input }) => {
+      return db.listBrokerFilings(ctx.user.id, input);
+    }),
+
+    // Get stats
+    stats: adminProcedure.query(async ({ ctx }) => {
+      return db.getBrokerFilingStats(ctx.user.id);
+    }),
+
+    // Create prospects from selected filings
+    createProspects: adminProcedure.input(z.object({
+      filingIds: z.array(z.number()),
+    })).mutation(async ({ ctx, input }) => {
+      const { items: allFilings } = await db.listBrokerFilings(ctx.user.id, { limit: 1000 });
+      const filings = allFilings.filter(f => input.filingIds.includes(f.id));
+      let created = 0;
+
+      for (const filing of filings) {
+        if (filing.processedStatus !== 'pending') continue;
+        // Create prospect from filing
+        const nameParts = (filing.contactName ?? filing.legalName).split(' ');
+        const firstName = nameParts[0] ?? 'Unknown';
+        const lastName = nameParts.slice(1).join(' ') || null;
+
+        const prospectId = await db.createProspect({
+          userId: ctx.user.id,
+          firstName,
+          lastName,
+          email: filing.contactEmail,
+          jobTitle: 'Freight Broker / Owner',
+          companyName: filing.legalName,
+          companyDomain: filing.contactEmail?.split('@')[1] ?? null,
+          phone: filing.contactPhone,
+          location: `${filing.phyCity}, ${filing.phyState} ${filing.phyZip}`,
+          industry: 'Transportation & Logistics',
+          sourceType: `fmcsa_${filing.filingType}`,
+          verificationStatus: 'pending',
+          engagementStage: 'discovered',
+          intentScore: filing.filingType === 'new' ? 70 : 60,
+          tags: [`fmcsa_${filing.filingType}`, 'broker', `DOT-${filing.dotNumber}`, `MC-${filing.mcNumber}`],
+          notes: `FMCSA ${filing.filingType} filing. DOT#${filing.dotNumber} MC#${filing.mcNumber}. Bond: $${filing.bondAmount?.toLocaleString()} via ${filing.bondSuretyName}`,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+
+        if (prospectId) {
+          await db.updateBrokerFiling(filing.id, ctx.user.id, { processedStatus: 'prospect_created', prospectId });
+          created++;
+        }
+      }
+
+      return { created, total: filings.length };
+    }),
+
+    // Enroll filings into campaigns (auto-creates campaign + template)
+    enrollInCampaign: adminProcedure.input(z.object({
+      filingIds: z.array(z.number()),
+      campaignType: z.enum(["new_broker", "renewing_broker"]),
+    })).mutation(async ({ ctx, input }) => {
+      const { items: allFilings } = await db.listBrokerFilings(ctx.user.id, { limit: 1000 });
+      const filings = allFilings.filter(f => input.filingIds.includes(f.id));
+      let enrolled = 0;
+
+      // Auto-create template and campaign
+      const isNew = input.campaignType === 'new_broker';
+      const templateName = isNew ? 'FMCSA - New Broker Welcome' : 'FMCSA - Renewing Broker Retention';
+      const campaignName = isNew
+        ? `New Broker Welcome - ${new Date().toLocaleDateString()}`
+        : `Renewing Broker Retention - ${new Date().toLocaleDateString()}`;
+
+      const subject = isNew
+        ? 'Congratulations on Your New Brokerage Authority! 🎉'
+        : 'Thank You for Your Continued Success in Transportation';
+
+      const htmlContent = isNew ? NEW_BROKER_TEMPLATE_HTML : RENEWING_BROKER_TEMPLATE_HTML;
+
+      // Create template
+      const templateId = await db.createEmailTemplate({
+        userId: ctx.user.id,
+        name: templateName,
+        subject,
+        htmlContent,
+        category: 'fmcsa_outreach',
+      });
+
+      // Create campaign
+      const campaignId = await db.createCampaign({
+        userId: ctx.user.id,
+        templateId,
+        name: campaignName,
+        subject,
+        htmlContent,
+        tags: ['fmcsa', input.campaignType],
+      });
+
+      for (const filing of filings) {
+        if (filing.processedStatus === 'pending') {
+          const nameParts = (filing.contactName ?? filing.legalName).split(' ');
+          const prospectId = await db.createProspect({
+            userId: ctx.user.id,
+            firstName: nameParts[0] ?? 'Unknown',
+            lastName: nameParts.slice(1).join(' ') || null,
+            email: filing.contactEmail,
+            jobTitle: 'Freight Broker / Owner',
+            companyName: filing.legalName,
+            companyDomain: filing.contactEmail?.split('@')[1] ?? null,
+            phone: filing.contactPhone,
+            location: `${filing.phyCity}, ${filing.phyState}`,
+            industry: 'Transportation & Logistics',
+            sourceType: `fmcsa_${filing.filingType}`,
+            verificationStatus: 'pending',
+            engagementStage: 'discovered',
+            intentScore: filing.filingType === 'new' ? 70 : 60,
+            tags: [`fmcsa_${filing.filingType}`, 'broker', `DOT-${filing.dotNumber}`],
+            notes: `FMCSA ${filing.filingType} filing. DOT#${filing.dotNumber} MC#${filing.mcNumber}`,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          });
+          if (prospectId) {
+            await db.updateBrokerFiling(filing.id, ctx.user.id, { processedStatus: 'campaign_enrolled', prospectId, campaignId });
+          }
+        } else {
+          await db.updateBrokerFiling(filing.id, ctx.user.id, { processedStatus: 'campaign_enrolled', campaignId });
+        }
+        enrolled++;
+      }
+
+      return { enrolled, campaignType: input.campaignType, campaignId, templateId };
+    }),
+
+    // Delete a scan batch
+    deleteBatch: adminProcedure.input(z.object({ scanBatchId: z.string() })).mutation(async ({ ctx, input }) => {
+      await db.deleteBrokerFilingsBatch(ctx.user.id, input.scanBatchId);
+      return { success: true };
+    }),
+
+    // Update filing status
+    updateStatus: adminProcedure.input(z.object({
+      id: z.number(),
+      processedStatus: z.enum(["pending", "prospect_created", "campaign_enrolled", "skipped"]),
+    })).mutation(async ({ ctx, input }) => {
+      await db.updateBrokerFiling(input.id, ctx.user.id, { processedStatus: input.processedStatus });
+      return { success: true };
     }),
   }),
 });

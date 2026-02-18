@@ -10,7 +10,7 @@ import {
   integrationCredentials, prospects, triggerSignals,
   ghostSequences, ghostSequenceSteps, prospectOutreach, battleCards,
   suppressionList, complianceAuditLog, senderSettings,
-  domainSendingStats, prospectScores,
+  domainSendingStats, prospectScores, brokerFilings,
   type Contact, type InsertContact,
   type Company, type InsertCompany,
   type Deal, type InsertDeal,
@@ -1390,3 +1390,63 @@ export async function getProspectsBySequence(sequenceId: number, userId: number)
   );
 }
 
+
+
+// ─── DOT/FMCSA Broker Filings ───
+export async function createBrokerFiling(data: any) {
+  const db = await getDb(); if (!db) return null;
+  const now = Date.now();
+  const [result] = await db.insert(brokerFilings).values({ ...data, createdAt: now, updatedAt: now });
+  return result.insertId;
+}
+
+export async function createBrokerFilingsBatch(filings: any[]) {
+  const db = await getDb(); if (!db) return [];
+  const now = Date.now();
+  const records = filings.map(f => ({ ...f, createdAt: now, updatedAt: now }));
+  const [result] = await db.insert(brokerFilings).values(records);
+  return result.insertId;
+}
+
+export async function listBrokerFilings(userId: number, filters?: { filingType?: string; processedStatus?: string; scanBatchId?: string; limit?: number; offset?: number }) {
+  const db = await getDb(); if (!db) return { items: [], total: 0 };
+  const conditions = [eq(brokerFilings.userId, userId)];
+  if (filters?.filingType) conditions.push(eq(brokerFilings.filingType, filters.filingType as any));
+  if (filters?.processedStatus) conditions.push(eq(brokerFilings.processedStatus, filters.processedStatus as any));
+  if (filters?.scanBatchId) conditions.push(eq(brokerFilings.scanBatchId, filters.scanBatchId));
+  const where = and(...conditions);
+  const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(brokerFilings).where(where);
+  const items = await db.select().from(brokerFilings).where(where).orderBy(desc(brokerFilings.createdAt)).limit(filters?.limit ?? 50).offset(filters?.offset ?? 0);
+  return { items, total: Number(countResult?.count ?? 0) };
+}
+
+export async function updateBrokerFiling(id: number, userId: number, data: Partial<any>) {
+  const db = await getDb(); if (!db) return;
+  await db.update(brokerFilings).set({ ...data, updatedAt: Date.now() }).where(and(eq(brokerFilings.id, id), eq(brokerFilings.userId, userId)));
+}
+
+export async function getBrokerFilingStats(userId: number) {
+  const db = await getDb(); if (!db) return { total: 0, newFilings: 0, renewals: 0, pending: 0, prospectCreated: 0, campaignEnrolled: 0 };
+  const result = await db.select({
+    total: sql<number>`count(*)`,
+    newFilings: sql<number>`SUM(CASE WHEN filingType = 'new' THEN 1 ELSE 0 END)`,
+    renewals: sql<number>`SUM(CASE WHEN filingType = 'renewal' THEN 1 ELSE 0 END)`,
+    pending: sql<number>`SUM(CASE WHEN processedStatus = 'pending' THEN 1 ELSE 0 END)`,
+    prospectCreated: sql<number>`SUM(CASE WHEN processedStatus = 'prospect_created' THEN 1 ELSE 0 END)`,
+    campaignEnrolled: sql<number>`SUM(CASE WHEN processedStatus = 'campaign_enrolled' THEN 1 ELSE 0 END)`,
+  }).from(brokerFilings).where(eq(brokerFilings.userId, userId));
+  const r = result[0];
+  return {
+    total: Number(r?.total ?? 0),
+    newFilings: Number(r?.newFilings ?? 0),
+    renewals: Number(r?.renewals ?? 0),
+    pending: Number(r?.pending ?? 0),
+    prospectCreated: Number(r?.prospectCreated ?? 0),
+    campaignEnrolled: Number(r?.campaignEnrolled ?? 0),
+  };
+}
+
+export async function deleteBrokerFilingsBatch(userId: number, scanBatchId: string) {
+  const db = await getDb(); if (!db) return;
+  await db.delete(brokerFilings).where(and(eq(brokerFilings.userId, userId), eq(brokerFilings.scanBatchId, scanBatchId)));
+}

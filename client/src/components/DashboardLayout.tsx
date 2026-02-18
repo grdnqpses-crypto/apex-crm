@@ -27,7 +27,7 @@ import {
   BarChart3, ListChecks, GitBranch, FlaskConical, Key, Webhook,
   Filter, PanelLeft, LogOut, Zap, Send, ChevronDown,
   Brain, Target, Radar, Ghost, Flame, Plug,
-  ShieldCheck, Ban, Settings, Globe, Sparkles, BookOpen,
+  ShieldCheck, Ban, Settings, Globe, Sparkles, BookOpen, FileSearch,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -97,6 +97,7 @@ const menuSections = [
   {
     label: "Developer",
     items: [
+      { icon: FileSearch, label: "FMCSA Scanner", path: "/fmcsa-scanner" },
       { icon: Key, label: "API Keys", path: "/api-keys" },
       { icon: Webhook, label: "Webhooks", path: "/webhooks" },
     ],

@@ -872,3 +872,48 @@ export const prospectScores = mysqlTable("prospect_scores", {
 });
 
 export type ProspectScore = typeof prospectScores.$inferSelect;
+
+
+// ─── DOT/FMCSA Broker Filings ───
+export const brokerFilings = mysqlTable("broker_filings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  // FMCSA identifiers
+  dotNumber: varchar("dotNumber", { length: 32 }),
+  mcNumber: varchar("mcNumber", { length: 32 }),
+  // Company info
+  legalName: varchar("legalName", { length: 512 }).notNull(),
+  dbaName: varchar("dbaName", { length: 512 }),
+  // Contact info
+  contactName: varchar("contactName", { length: 256 }),
+  contactEmail: varchar("contactEmail", { length: 320 }),
+  contactPhone: varchar("contactPhone", { length: 64 }),
+  // Address
+  phyStreet: varchar("phyStreet", { length: 512 }),
+  phyCity: varchar("phyCity", { length: 128 }),
+  phyState: varchar("phyState", { length: 64 }),
+  phyZip: varchar("phyZip", { length: 16 }),
+  // Filing details
+  filingType: mysqlEnum("filingType", ["new", "renewal", "reinstatement"]).notNull(),
+  authorityType: mysqlEnum("authorityType", ["broker", "carrier", "freight_forwarder", "broker_carrier"]).default("broker"),
+  authorityStatus: mysqlEnum("authorityStatus", ["active", "pending", "revoked", "inactive", "not_authorized"]).default("pending"),
+  filingDate: bigint("filingDate", { mode: "number" }),
+  effectiveDate: bigint("effectiveDate", { mode: "number" }),
+  // Insurance/Bond
+  insuranceRequired: boolean("insuranceRequired").default(true),
+  bondSuretyName: varchar("bondSuretyName", { length: 256 }),
+  bondAmount: int("bondAmount"),
+  // Processing
+  processedStatus: mysqlEnum("processedStatus", ["pending", "prospect_created", "campaign_enrolled", "skipped"]).default("pending"),
+  prospectId: int("prospectId"),
+  campaignId: int("campaignId"),
+  // Metadata
+  scanBatchId: varchar("scanBatchId", { length: 64 }),
+  rawData: json("rawData"),
+  notes: text("notes"),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+
+export type BrokerFiling = typeof brokerFilings.$inferSelect;
+export type InsertBrokerFiling = typeof brokerFilings.$inferInsert;

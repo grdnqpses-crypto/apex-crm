@@ -326,3 +326,39 @@
 ### Tests
 - [x] Cross-feature integration tests (18 tests verifying all cross-feature procedures exist)
 - [x] All 85 tests passing across 3 test files
+
+## Phase 8: DOT/FMCSA Broker Filing Lookup & Targeted Campaigns (Developer Only)
+
+### DOT/FMCSA Filing Lookup Engine
+- [x] Research FMCSA SAFER/Li&I data sources for broker filings
+- [x] Build database table for broker filing records (DOT#, MC#, filing type, status, company info)
+- [x] Build LLM-powered filing lookup that queries FMCSA data for new and renewing brokers
+- [x] Create developer-only tRPC endpoints for filing lookup and prospect creation
+- [x] Auto-create prospects from filing results with proper tagging (new vs renewing)
+
+### Developer-Only UI
+- [x] Build DOT/FMCSA Broker Scanner page (admin/developer access only)
+- [x] Filing lookup interface with date range, filing type, state filters
+- [x] Results table showing broker details, filing type, status with expandable details
+- [x] Bulk select and enroll into campaigns with campaign type selector
+- [x] Add to sidebar under Developer section (role-gated via adminProcedure)
+
+### New Broker Campaign
+- [x] Create email template: Congratulations on new brokerage
+- [x] Explain how Apex CRM helps new brokers grow and prosper (5 features)
+- [x] Offer 2-month free trial with CTA button
+- [x] Auto-create campaign + template when enrolling new broker filings
+
+### Renewing Broker Campaign
+- [x] Create email template: Thank you for continued support
+- [x] Empathize with industry struggles (fuel costs, margins, regulations)
+- [x] Show competitor pricing comparison table (HubSpot, Salesforce, Outreach, Tai TMS)
+- [x] Explain what we're doing to alleviate costs (5 solutions)
+- [x] Offer 2-month free trial with CTA
+- [x] Include sign-up/join link + schedule demo CTA
+- [x] One-click contact/lead import feature (import box with supported platforms)
+- [x] 3-step onboarding: sign up, import, start working
+
+### Tests
+- [x] Vitest tests for FMCSA templates (22 tests covering content, structure, quality)
+- [x] All 107 tests passing across 4 test files

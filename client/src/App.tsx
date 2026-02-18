@@ -38,6 +38,7 @@ const SenderSettings = lazy(() => import("./pages/SenderSettings"));
 const DomainStats = lazy(() => import("./pages/DomainStats"));
 const QuantumScore = lazy(() => import("./pages/QuantumScore"));
 const HelpCenter = lazy(() => import("./pages/HelpCenter"));
+const FmcsaScanner = lazy(() => import("./pages/FmcsaScanner"));
 
 function PageLoader() {
   return (
@@ -84,6 +85,7 @@ function Router() {
           <Route path="/suppression" component={SuppressionList} />
           <Route path="/sender-settings" component={SenderSettings} />
           <Route path="/domain-stats" component={DomainStats} />
+          <Route path="/fmcsa-scanner" component={FmcsaScanner} />
           <Route path="/help" component={HelpCenter} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
