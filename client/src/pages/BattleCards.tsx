@@ -11,6 +11,9 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
+
 
 export default function BattleCards() {
   const [, navigate] = useLocation();
@@ -32,6 +35,7 @@ export default function BattleCards() {
 
   return (
     <div className="space-y-6">
+      <PageGuide {...pageGuides.battleCards} />
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">

@@ -21,7 +21,7 @@ export const appRouter = router({
 
   dashboard: router({
     stats: protectedProcedure.query(async ({ ctx }) => {
-      return db.getDashboardStats(ctx.user.id);
+      return db.getEnhancedDashboardStats(ctx.user.id);
     }),
   }),
 
@@ -475,6 +475,43 @@ export const appRouter = router({
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
       await db.deleteCampaign(input.id, ctx.user.id);
       return { success: true };
+    }),
+    // Load template content into campaign
+    loadTemplate: protectedProcedure.input(z.object({ campaignId: z.number(), templateId: z.number() })).mutation(async ({ ctx, input }) => {
+      const tpl = await db.getEmailTemplate(input.templateId, ctx.user.id);
+      if (!tpl) throw new Error('Template not found');
+      await db.updateCampaign(input.campaignId, ctx.user.id, { htmlContent: tpl.htmlContent, subject: tpl.subject });
+      return { subject: tpl.subject, htmlContent: tpl.htmlContent };
+    }),
+    // Get segment contact count for campaign targeting
+    segmentPreview: protectedProcedure.input(z.object({ segmentId: z.number() })).query(async ({ ctx, input }) => {
+      const count = await db.countSegmentContacts(input.segmentId, ctx.user.id);
+      return { count };
+    }),
+    // Send campaign (queue emails for segment contacts)
+    send: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const campaign = await db.getCampaign(input.id, ctx.user.id);
+      if (!campaign) throw new Error('Campaign not found');
+      if (!campaign.htmlContent || !campaign.subject) throw new Error('Campaign must have subject and content');
+      if (!campaign.fromEmail) throw new Error('Campaign must have a from email');
+      // Get contacts from segment or all contacts
+      let contactList: any[] = [];
+      if (campaign.segmentId) {
+        contactList = await db.getSegmentContacts(campaign.segmentId, ctx.user.id);
+      } else {
+        const result = await db.listContacts(ctx.user.id, { limit: 1000 });
+        contactList = result.items.filter((c: any) => c.email);
+      }
+      if (contactList.length === 0) throw new Error('No contacts with email addresses found');
+      // Run compliance check on first contact
+      const settings = await db.getSenderSettings(ctx.user.id);
+      const complianceResult = db.runComplianceCheck({ htmlContent: campaign.htmlContent, subject: campaign.subject, fromEmail: campaign.fromEmail, toEmail: contactList[0].email, senderSettings: settings, isSuppressed: false });
+      if (!complianceResult.passed) throw new Error(`Compliance check failed: ${complianceResult.failures.join(', ')}`);
+      // Queue emails
+      const emails = contactList.map((c: any) => ({ email: c.email, contactId: c.id, firstName: c.firstName }));
+      const queued = await db.queueCampaignEmails(input.id, ctx.user.id, emails, campaign.subject, campaign.htmlContent, campaign.fromEmail);
+      await db.updateCampaign(input.id, ctx.user.id, { status: 'sending' });
+      return { queued, total: contactList.length, skippedSuppressed: contactList.length - queued };
     }),
     analyzeSpam: protectedProcedure.input(z.object({
       subject: z.string(),
@@ -1023,11 +1060,16 @@ export const appRouter = router({
       const emailContent = response.choices[0]?.message?.content;
       return JSON.parse(typeof emailContent === "string" ? emailContent : "{}");
     }),
-    // Promote prospect to CRM contact
+    // Promote prospect to CRM contact (with company linking)
     promoteToContact: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
       const prospect = await db.getProspect(input.id, ctx.user.id);
       if (!prospect) return { error: "not_found" };
       const now = Date.now();
+      // Find or create company if prospect has companyName
+      let companyId: number | undefined;
+      if (prospect.companyName) {
+        companyId = await db.findOrCreateCompanyByName(ctx.user.id, prospect.companyName, { domain: prospect.companyDomain ?? undefined, industry: prospect.industry ?? undefined }) ?? undefined;
+      }
       const contactId = await db.createContact({
         userId: ctx.user.id,
         firstName: prospect.firstName,
@@ -1037,14 +1079,22 @@ export const appRouter = router({
         linkedinUrl: prospect.linkedinUrl,
         directPhone: prospect.phone,
         city: prospect.location,
+        companyId,
         leadSource: `paradigm_${prospect.sourceType}`,
         lifecycleStage: "lead",
+        tags: prospect.tags,
+        notes: prospect.notes,
         createdAt: now,
         updatedAt: now,
       });
       await db.updateProspect(input.id, ctx.user.id, { contactId, engagementStage: "converted" });
       await db.createActivity({ userId: ctx.user.id, contactId, type: "contact_created", subject: `Promoted from Paradigm Engine prospect` });
-      return { contactId };
+      return { contactId, companyId };
+    }),
+    // Enroll prospect in ghost sequence
+    enrollInSequence: protectedProcedure.input(z.object({ id: z.number(), sequenceId: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.enrollProspectInSequence(input.id, input.sequenceId, ctx.user.id);
+      return { success: true };
     }),
   }),
 
@@ -1083,6 +1133,20 @@ export const appRouter = router({
       if (data.status && data.status !== "new") updateData.processedAt = Date.now();
       await db.updateTriggerSignal(id, ctx.user.id, updateData);
       return { success: true };
+    }),
+    // Create prospect from signal
+    createProspect: protectedProcedure.input(z.object({
+      id: z.number(),
+      firstName: z.string().min(1),
+      lastName: z.string().optional(),
+      email: z.string().optional(),
+      jobTitle: z.string().optional(),
+      companyName: z.string().optional(),
+      industry: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      const prospectId = await db.createProspectFromSignal(id, ctx.user.id, data);
+      return { prospectId };
     }),
   }),
 
@@ -1200,7 +1264,162 @@ export const appRouter = router({
       await db.updateBattleCard(input.id, ctx.user.id, { isArchived: true });
       return { success: true };
     }),
+   }),
+
+  // ═══════════════════════════════════════════════════════════════
+  // COMPLIANCE FORTRESS + DELIVERABILITY ENGINE
+  // ═══════════════════════════════════════════════════════════════
+
+  suppression: router({
+    list: protectedProcedure.input(z.object({ limit: z.number().optional(), offset: z.number().optional(), reason: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.listSuppressionEntries(ctx.user.id, input || {});
+    }),
+    add: protectedProcedure.input(z.object({ email: z.string(), reason: z.string(), notes: z.string().optional() })).mutation(async ({ ctx, input }) => {
+      return db.addToSuppressionList({ userId: ctx.user.id, ...input, source: 'manual' });
+    }),
+    remove: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.removeFromSuppressionList(ctx.user.id, input.id);
+      return { success: true };
+    }),
+    check: protectedProcedure.input(z.object({ email: z.string() })).query(async ({ ctx, input }) => {
+      const suppressed = await db.isEmailSuppressed(ctx.user.id, input.email);
+      return { email: input.email, suppressed };
+    }),
+    bulkAdd: protectedProcedure.input(z.object({ emails: z.array(z.object({ email: z.string(), reason: z.string() })) })).mutation(async ({ ctx, input }) => {
+      let added = 0;
+      for (const entry of input.emails) {
+        await db.addToSuppressionList({ userId: ctx.user.id, ...entry, source: 'bulk_import' });
+        added++;
+      }
+      return { added };
+    }),
+  }),
+
+  compliance: router({
+    audits: protectedProcedure.input(z.object({ limit: z.number().optional(), offset: z.number().optional(), campaignId: z.number().optional(), passed: z.boolean().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.listComplianceAudits(ctx.user.id, input || {});
+    }),
+    stats: protectedProcedure.query(async ({ ctx }) => {
+      return db.getComplianceStats(ctx.user.id);
+    }),
+    preCheck: protectedProcedure.input(z.object({
+      htmlContent: z.string(),
+      subject: z.string(),
+      fromEmail: z.string(),
+      toEmail: z.string(),
+    })).mutation(async ({ ctx, input }) => {
+      const settings = await db.getSenderSettings(ctx.user.id);
+      const isSuppressed = await db.isEmailSuppressed(ctx.user.id, input.toEmail);
+      const result = db.runComplianceCheck({ ...input, senderSettings: settings, isSuppressed });
+      const provider = db.detectEmailProvider(input.toEmail);
+      return { ...result, recipientProvider: provider };
+    }),
+    analyzeEmail: protectedProcedure.input(z.object({
+      htmlContent: z.string(),
+      subject: z.string(),
+      fromName: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const response = await invokeLLM({
+        messages: [
+          { role: 'system', content: `You are an email deliverability expert. Analyze this email for spam triggers, compliance issues, and deliverability risks. Score it 0-100 (100 = perfect inbox placement). Return JSON: { "score": number, "grade": "A+/A/B/C/D/F", "issues": [{ "severity": "critical/warning/info", "category": "content/technical/compliance/reputation", "message": string, "fix": string }], "providerRisks": { "gmail": string, "outlook": string, "yahoo": string }, "subjectAnalysis": { "spamScore": number, "improvements": string[] }, "contentAnalysis": { "textToImageRatio": string, "linkDensity": string, "spamWords": string[], "readability": string }, "recommendations": string[] }` },
+          { role: 'user', content: `Subject: ${input.subject}\nFrom: ${input.fromName || 'Unknown'}\n\nHTML Content:\n${input.htmlContent.substring(0, 5000)}` }
+        ],
+        response_format: { type: 'json_schema', json_schema: { name: 'email_analysis', strict: true, schema: { type: 'object', properties: { score: { type: 'integer' }, grade: { type: 'string' }, issues: { type: 'array', items: { type: 'object', properties: { severity: { type: 'string' }, category: { type: 'string' }, message: { type: 'string' }, fix: { type: 'string' } }, required: ['severity', 'category', 'message', 'fix'], additionalProperties: false } }, providerRisks: { type: 'object', properties: { gmail: { type: 'string' }, outlook: { type: 'string' }, yahoo: { type: 'string' } }, required: ['gmail', 'outlook', 'yahoo'], additionalProperties: false }, subjectAnalysis: { type: 'object', properties: { spamScore: { type: 'integer' }, improvements: { type: 'array', items: { type: 'string' } } }, required: ['spamScore', 'improvements'], additionalProperties: false }, contentAnalysis: { type: 'object', properties: { textToImageRatio: { type: 'string' }, linkDensity: { type: 'string' }, spamWords: { type: 'array', items: { type: 'string' } }, readability: { type: 'string' } }, required: ['textToImageRatio', 'linkDensity', 'spamWords', 'readability'], additionalProperties: false }, recommendations: { type: 'array', items: { type: 'string' } } }, required: ['score', 'grade', 'issues', 'providerRisks', 'subjectAnalysis', 'contentAnalysis', 'recommendations'], additionalProperties: false } } }
+      });
+      return JSON.parse(response.choices[0].message.content as string);
+    }),
+  }),
+
+  senderSettings: router({
+    get: protectedProcedure.query(async ({ ctx }) => {
+      return db.getSenderSettings(ctx.user.id);
+    }),
+    upsert: protectedProcedure.input(z.object({
+      companyName: z.string().optional(),
+      physicalAddress: z.string().optional(),
+      city: z.string().optional(),
+      state: z.string().optional(),
+      zipCode: z.string().optional(),
+      country: z.string().optional(),
+      defaultFromName: z.string().optional(),
+      defaultReplyTo: z.string().optional(),
+      unsubscribeUrl: z.string().optional(),
+      privacyPolicyUrl: z.string().optional(),
+      outlookThrottlePerMinute: z.number().optional(),
+      gmailThrottlePerMinute: z.number().optional(),
+      yahooThrottlePerMinute: z.number().optional(),
+      defaultThrottlePerMinute: z.number().optional(),
+      maxBounceRatePercent: z.number().optional(),
+      maxComplaintRatePercent: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      return db.upsertSenderSettings(ctx.user.id, input);
+    }),
+  }),
+
+  domainStats: router({
+    list: protectedProcedure.input(z.object({ domain: z.string().optional(), days: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.getDomainStats(ctx.user.id, input || {});
+    }),
+    aggregated: protectedProcedure.query(async ({ ctx }) => {
+      return db.getDomainStatsAggregated(ctx.user.id);
+    }),
+    providerBreakdown: protectedProcedure.input(z.object({ days: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.getProviderBreakdown(ctx.user.id, input?.days || 30);
+    }),
+  }),
+
+  quantumScore: router({
+    get: protectedProcedure.input(z.object({ prospectId: z.number() })).query(async ({ ctx, input }) => {
+      return db.getProspectScore(input.prospectId);
+    }),
+    calculate: protectedProcedure.input(z.object({ prospectId: z.number() })).mutation(async ({ ctx, input }) => {
+      const prospect = await db.getProspect(input.prospectId, ctx.user.id);
+      if (!prospect) throw new Error('Prospect not found');
+      const outreach = await db.listProspectOutreach(input.prospectId, 50);
+      const response = await invokeLLM({
+        messages: [
+          { role: 'system', content: `You are a sales intelligence AI. Analyze this prospect and score them across 12 dimensions (each 0-100). Return JSON: { "firmographicScore": int, "behavioralScore": int, "engagementScore": int, "timingScore": int, "socialScore": int, "contentScore": int, "recencyScore": int, "frequencyScore": int, "monetaryScore": int, "channelScore": int, "intentScore": int, "relationshipScore": int, "totalScore": int, "scoreGrade": "A+/A/B+/B/C+/C/D/F", "scoreExplanation": string, "topStrengths": [string], "topWeaknesses": [string], "recommendedActions": [string], "predictedConversionProb": int, "predictedDealValue": int, "optimalContactTime": string, "optimalChannel": string }` },
+          { role: 'user', content: `Prospect: ${JSON.stringify({ name: prospect.firstName + ' ' + (prospect.lastName || ''), title: prospect.jobTitle, company: prospect.companyName, industry: prospect.industry, email: prospect.email, engagementStage: prospect.engagementStage, intentScore: prospect.intentScore, outreachCount: outreach.length, psychographicProfile: prospect.psychographicProfile })}` }
+        ],
+        response_format: { type: 'json_schema', json_schema: { name: 'quantum_score', strict: true, schema: { type: 'object', properties: { firmographicScore: { type: 'integer' }, behavioralScore: { type: 'integer' }, engagementScore: { type: 'integer' }, timingScore: { type: 'integer' }, socialScore: { type: 'integer' }, contentScore: { type: 'integer' }, recencyScore: { type: 'integer' }, frequencyScore: { type: 'integer' }, monetaryScore: { type: 'integer' }, channelScore: { type: 'integer' }, intentScore: { type: 'integer' }, relationshipScore: { type: 'integer' }, totalScore: { type: 'integer' }, scoreGrade: { type: 'string' }, scoreExplanation: { type: 'string' }, topStrengths: { type: 'array', items: { type: 'string' } }, topWeaknesses: { type: 'array', items: { type: 'string' } }, recommendedActions: { type: 'array', items: { type: 'string' } }, predictedConversionProb: { type: 'integer' }, predictedDealValue: { type: 'integer' }, optimalContactTime: { type: 'string' }, optimalChannel: { type: 'string' } }, required: ['firmographicScore', 'behavioralScore', 'engagementScore', 'timingScore', 'socialScore', 'contentScore', 'recencyScore', 'frequencyScore', 'monetaryScore', 'channelScore', 'intentScore', 'relationshipScore', 'totalScore', 'scoreGrade', 'scoreExplanation', 'topStrengths', 'topWeaknesses', 'recommendedActions', 'predictedConversionProb', 'predictedDealValue', 'optimalContactTime', 'optimalChannel'], additionalProperties: false } } }
+      });
+      const scoreData = JSON.parse(response.choices[0].message.content as string);
+      const result = await db.upsertProspectScore(input.prospectId, scoreData);
+      // Also update the prospect's overall score
+      await db.updateProspect(input.prospectId, ctx.user.id, { score: scoreData.totalScore });
+      return result;
+    }),
+  }),
+
+  // ═══════════════════════════════════════════════════════════════
+  // CROSS-FEATURE QUERY ENDPOINTS
+  // ═══════════════════════════════════════════════════════════════
+  crossFeature: router({
+    dealsByContact: protectedProcedure.input(z.object({ contactId: z.number() })).query(async ({ ctx, input }) => {
+      return db.getDealsByContact(input.contactId, ctx.user.id);
+    }),
+    dealsByCompany: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
+      return db.getDealsByCompany(input.companyId, ctx.user.id);
+    }),
+    tasksByContact: protectedProcedure.input(z.object({ contactId: z.number() })).query(async ({ ctx, input }) => {
+      return db.getTasksByContact(input.contactId, ctx.user.id);
+    }),
+    tasksByCompany: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
+      return db.getTasksByCompany(input.companyId, ctx.user.id);
+    }),
+    tasksByDeal: protectedProcedure.input(z.object({ dealId: z.number() })).query(async ({ ctx, input }) => {
+      return db.getTasksByDeal(input.dealId, ctx.user.id);
+    }),
+    segmentContacts: protectedProcedure.input(z.object({ segmentId: z.number() })).query(async ({ ctx, input }) => {
+      const contacts = await db.getSegmentContacts(input.segmentId, ctx.user.id);
+      return { contacts, count: contacts.length };
+    }),
+    prospectsBySequence: protectedProcedure.input(z.object({ sequenceId: z.number() })).query(async ({ ctx, input }) => {
+      return db.getProspectsBySequence(input.sequenceId, ctx.user.id);
+    }),
+    contactsByCompany: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
+      return db.getContactsByCompany(input.companyId, ctx.user.id);
+    }),
   }),
 });
-
 export type AppRouter = typeof appRouter;

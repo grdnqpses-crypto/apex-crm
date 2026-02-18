@@ -5,14 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   Brain, Shield, Ghost, Mail, Flame, Target, ArrowLeft,
   Loader2, UserPlus, ExternalLink, Building, MapPin,
-  Briefcase, Globe, Phone, Linkedin, Sparkles,
+  Briefcase, Globe, Phone, Linkedin, Sparkles, Zap,
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useParams } from "wouter";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
 
 export default function ProspectDetail() {
   const params = useParams<{ id: string }>();
@@ -20,11 +24,14 @@ export default function ProspectDetail() {
   const [, navigate] = useLocation();
   const [emailDraft, setEmailDraft] = useState<{ subject: string; body: string; spamScore: number; personalizationNotes: string } | null>(null);
   const [emailContext, setEmailContext] = useState("initial outreach");
+  const [showEnrollDialog, setShowEnrollDialog] = useState(false);
+  const [selectedSequenceId, setSelectedSequenceId] = useState<string>("");
 
   const utils = trpc.useUtils();
   const { data: prospect, isLoading } = trpc.prospects.get.useQuery({ id });
   const { data: outreach } = trpc.outreach.list.useQuery({ prospectId: id, limit: 20 });
   const { data: battleCards } = trpc.battleCards.list.useQuery({ limit: 50 });
+  const { data: sequences } = trpc.ghostSequences.list.useQuery();
 
   const verifyMut = trpc.prospects.verify.useMutation({
     onSuccess: (r) => { utils.prospects.get.invalidate({ id }); toast.success(`Email: ${r.status}`); },
@@ -45,8 +52,21 @@ export default function ProspectDetail() {
   const promoteMut = trpc.prospects.promoteToContact.useMutation({
     onSuccess: (r) => {
       utils.prospects.get.invalidate({ id });
-      if ("contactId" in r) { toast.success("Promoted to CRM contact!"); navigate(`/contacts/${r.contactId}`); }
+      if ("contactId" in r) {
+        const msg = r.companyId ? "Promoted to CRM contact with company linked!" : "Promoted to CRM contact!";
+        toast.success(msg);
+        navigate(`/contacts/${r.contactId}`);
+      }
     },
+  });
+  const enrollMut = trpc.prospects.enrollInSequence.useMutation({
+    onSuccess: () => {
+      utils.prospects.get.invalidate({ id });
+      setShowEnrollDialog(false);
+      setSelectedSequenceId("");
+      toast.success("Enrolled in Ghost Sequence!");
+    },
+    onError: (e) => toast.error(e.message),
   });
 
   if (isLoading) {
@@ -72,9 +92,11 @@ export default function ProspectDetail() {
   const p = prospect;
   const profile = p.psychographicProfile as any;
   const myBattleCard = battleCards?.find((bc) => bc.prospectId === p.id);
+  const enrolledSequence = sequences?.find((s) => s.id === p.ghostSequenceId);
 
   return (
     <div className="space-y-6">
+      <PageGuide {...pageGuides.prospectDetail} />
       {/* Header */}
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={() => navigate("/paradigm/prospects")}>
@@ -86,16 +108,22 @@ export default function ProspectDetail() {
         </div>
         <div className="flex gap-2">
           {p.engagementStage !== "converted" && (
-            <Button variant="outline" onClick={() => promoteMut.mutate({ id })} disabled={promoteMut.isPending}>
-              {promoteMut.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <UserPlus className="h-4 w-4 mr-2" />}
-              Promote to Contact
-            </Button>
+            <>
+              <Button variant="outline" size="sm" onClick={() => setShowEnrollDialog(true)}>
+                <Ghost className="h-4 w-4 mr-2 text-violet-400" />
+                Enroll in Sequence
+              </Button>
+              <Button variant="outline" onClick={() => promoteMut.mutate({ id })} disabled={promoteMut.isPending}>
+                {promoteMut.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <UserPlus className="h-4 w-4 mr-2" />}
+                Promote to Contact
+              </Button>
+            </>
           )}
         </div>
       </div>
 
       {/* Info Cards Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card>
           <CardContent className="p-3">
             <div className="text-xs text-muted-foreground mb-1">Stage</div>
@@ -120,6 +148,16 @@ export default function ProspectDetail() {
           <CardContent className="p-3">
             <div className="text-xs text-muted-foreground mb-1">Bounce Risk</div>
             <Badge variant="outline" className="text-xs">{p.bounceRisk ?? "unknown"}</Badge>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3">
+            <div className="text-xs text-muted-foreground mb-1">Sequence</div>
+            {enrolledSequence ? (
+              <Badge className="text-xs bg-violet-600">{enrolledSequence.name}</Badge>
+            ) : (
+              <span className="text-xs text-muted-foreground">None</span>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -176,6 +214,21 @@ export default function ProspectDetail() {
             </CardContent>
           </Card>
 
+          {/* Conversion Path Info */}
+          {p.contactId && (
+            <Card className="border-green-500/30">
+              <CardContent className="p-4 flex items-center gap-3">
+                <Zap className="h-5 w-5 text-green-400" />
+                <div>
+                  <p className="text-sm font-medium text-green-400">Converted to CRM Contact</p>
+                  <Button variant="link" className="text-xs p-0 h-auto" onClick={() => navigate(`/contacts/${p.contactId}`)}>
+                    View Contact Record &rarr;
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {p.notes && (
             <Card>
               <CardHeader className="pb-2"><CardTitle className="text-sm">Notes</CardTitle></CardHeader>
@@ -227,8 +280,8 @@ export default function ProspectDetail() {
                 <CardHeader className="pb-2"><CardTitle className="text-sm">Pain Points</CardTitle></CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-1.5">
-                    {(profile.painPoints ?? []).map((p: string, i: number) => (
-                      <Badge key={i} variant="destructive" className="text-xs">{p}</Badge>
+                    {(profile.painPoints ?? []).map((pp: string, i: number) => (
+                      <Badge key={i} variant="destructive" className="text-xs">{pp}</Badge>
                     ))}
                   </div>
                 </CardContent>
@@ -237,8 +290,8 @@ export default function ProspectDetail() {
                 <CardHeader className="pb-2"><CardTitle className="text-sm">Interests</CardTitle></CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-1.5">
-                    {(profile.interests ?? []).map((i: string, idx: number) => (
-                      <Badge key={idx} className="text-xs bg-primary/20 text-primary">{i}</Badge>
+                    {(profile.interests ?? []).map((interest: string, idx: number) => (
+                      <Badge key={idx} className="text-xs bg-primary/20 text-primary">{interest}</Badge>
                     ))}
                   </div>
                 </CardContent>
@@ -375,6 +428,56 @@ export default function ProspectDetail() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Enroll in Sequence Dialog */}
+      <Dialog open={showEnrollDialog} onOpenChange={setShowEnrollDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Ghost className="h-5 w-5 text-violet-400" />
+              Enroll in Ghost Sequence
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Select a sequence to enroll <strong>{p.firstName} {p.lastName}</strong> into automated follow-up outreach.
+            </p>
+            {enrolledSequence && (
+              <div className="p-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
+                <p className="text-xs text-muted-foreground">Currently enrolled in:</p>
+                <p className="text-sm font-medium text-violet-400">{enrolledSequence.name}</p>
+              </div>
+            )}
+            <Select value={selectedSequenceId} onValueChange={setSelectedSequenceId}>
+              <SelectTrigger><SelectValue placeholder="Select a sequence..." /></SelectTrigger>
+              <SelectContent>
+                {(sequences ?? []).filter(s => s.status === "active" || s.status === "draft").map((s) => (
+                  <SelectItem key={s.id} value={String(s.id)}>
+                    {s.name} ({s.status})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {sequences && sequences.filter(s => s.status === "active" || s.status === "draft").length === 0 && (
+              <p className="text-xs text-muted-foreground">No active sequences available. Create one in Ghost Sequences first.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEnrollDialog(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                if (!selectedSequenceId) { toast.error("Select a sequence"); return; }
+                enrollMut.mutate({ id, sequenceId: Number(selectedSequenceId) });
+              }}
+              disabled={!selectedSequenceId || enrollMut.isPending}
+              className="gap-2"
+            >
+              {enrollMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ghost className="h-4 w-4" />}
+              Enroll
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

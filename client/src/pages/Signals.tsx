@@ -5,14 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   Radar, Plus, AlertTriangle, Briefcase, TrendingUp,
   MessageSquare, Globe, CheckCircle2, Clock, Eye, Loader2,
+  UserPlus, Target,
 } from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "wouter";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
 
 const signalTypeConfig: Record<string, { label: string; color: string }> = {
   job_change: { label: "Job Change", color: "text-blue-400" },
@@ -50,6 +54,10 @@ export default function Signals() {
   const [form, setForm] = useState(emptyForm);
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [showProspectDialog, setShowProspectDialog] = useState(false);
+  const [prospectSignal, setProspectSignal] = useState<any>(null);
+  const [prospectForm, setProspectForm] = useState({ firstName: "", lastName: "", email: "", jobTitle: "", companyName: "", industry: "" });
+  const [, navigate] = useLocation();
 
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.signals.list.useQuery({
@@ -63,18 +71,43 @@ export default function Signals() {
   const updateMut = trpc.signals.update.useMutation({
     onSuccess: () => { utils.signals.list.invalidate(); toast.success("Signal updated"); },
   });
+  const createProspectMut = trpc.signals.createProspect.useMutation({
+    onSuccess: (result) => {
+      utils.signals.list.invalidate();
+      setShowProspectDialog(false);
+      toast.success("Prospect created from signal!");
+      navigate(`/paradigm/prospects/${result.prospectId}`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   const signals = data?.items ?? [];
 
+  const openProspectDialog = (signal: any) => {
+    setProspectSignal(signal);
+    // Pre-fill from signal data
+    const nameParts = (signal.personName ?? "").split(" ");
+    setProspectForm({
+      firstName: nameParts[0] || "",
+      lastName: nameParts.slice(1).join(" ") || "",
+      email: "",
+      jobTitle: "",
+      companyName: signal.companyName ?? "",
+      industry: "",
+    });
+    setShowProspectDialog(true);
+  };
+
   return (
     <div className="space-y-6">
+      <PageGuide {...pageGuides.signals} />
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Radar className="h-6 w-6 text-amber-400" />
             Sentinel Signal Feed
           </h1>
-          <p className="text-muted-foreground mt-1">Trigger events and market intelligence</p>
+          <p className="text-muted-foreground mt-1">Trigger events and market intelligence &middot; Convert signals to prospects</p>
         </div>
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
           <DialogTrigger asChild>
@@ -205,6 +238,12 @@ export default function Signals() {
                       </div>
                     </div>
                     <div className="flex gap-1 shrink-0">
+                      {/* Create Prospect from Signal */}
+                      {sig.status !== "actioned" && (
+                        <Button variant="ghost" size="sm" onClick={() => openProspectDialog(sig)} title="Create Prospect from Signal">
+                          <UserPlus className="h-3.5 w-3.5 text-indigo-400" />
+                        </Button>
+                      )}
                       {sig.status === "new" && (
                         <>
                           <Button variant="ghost" size="sm" onClick={() => updateMut.mutate({ id: sig.id, status: "reviewed" })} title="Mark Reviewed">
@@ -233,6 +272,68 @@ export default function Signals() {
           })}
         </div>
       )}
+
+      {/* Create Prospect from Signal Dialog */}
+      <Dialog open={showProspectDialog} onOpenChange={setShowProspectDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-indigo-400" />
+              Create Prospect from Signal
+            </DialogTitle>
+          </DialogHeader>
+          {prospectSignal && (
+            <div className="space-y-1 mb-3 p-3 rounded-lg bg-muted/50">
+              <p className="text-xs text-muted-foreground">Source Signal</p>
+              <p className="text-sm font-medium">{prospectSignal.title}</p>
+              <Badge variant="outline" className="text-[10px]">{signalTypeConfig[prospectSignal.signalType]?.label ?? prospectSignal.signalType}</Badge>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">First Name *</Label>
+              <Input value={prospectForm.firstName} onChange={(e) => setProspectForm(p => ({ ...p, firstName: e.target.value }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Last Name</Label>
+              <Input value={prospectForm.lastName} onChange={(e) => setProspectForm(p => ({ ...p, lastName: e.target.value }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Email</Label>
+              <Input value={prospectForm.email} onChange={(e) => setProspectForm(p => ({ ...p, email: e.target.value }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Job Title</Label>
+              <Input value={prospectForm.jobTitle} onChange={(e) => setProspectForm(p => ({ ...p, jobTitle: e.target.value }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Company Name</Label>
+              <Input value={prospectForm.companyName} onChange={(e) => setProspectForm(p => ({ ...p, companyName: e.target.value }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Industry</Label>
+              <Input value={prospectForm.industry} onChange={(e) => setProspectForm(p => ({ ...p, industry: e.target.value }))} className="mt-1" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowProspectDialog(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                if (!prospectForm.firstName.trim()) { toast.error("First name is required"); return; }
+                createProspectMut.mutate({
+                  id: prospectSignal.id,
+                  ...prospectForm,
+                });
+              }}
+              disabled={createProspectMut.isPending}
+              className="gap-2"
+            >
+              {createProspectMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+              Create Prospect
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

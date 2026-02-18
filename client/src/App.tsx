@@ -32,6 +32,12 @@ const Signals = lazy(() => import("./pages/Signals"));
 const GhostSequences = lazy(() => import("./pages/GhostSequences"));
 const BattleCards = lazy(() => import("./pages/BattleCards"));
 const Integrations = lazy(() => import("./pages/Integrations"));
+const ComplianceCenter = lazy(() => import("./pages/ComplianceCenter"));
+const SuppressionList = lazy(() => import("./pages/SuppressionList"));
+const SenderSettings = lazy(() => import("./pages/SenderSettings"));
+const DomainStats = lazy(() => import("./pages/DomainStats"));
+const QuantumScore = lazy(() => import("./pages/QuantumScore"));
+const HelpCenter = lazy(() => import("./pages/HelpCenter"));
 
 function PageLoader() {
   return (
@@ -73,6 +79,12 @@ function Router() {
           <Route path="/paradigm/sequences" component={GhostSequences} />
           <Route path="/paradigm/battle-cards" component={BattleCards} />
           <Route path="/paradigm/integrations" component={Integrations} />
+          <Route path="/paradigm/quantum-score" component={QuantumScore} />
+          <Route path="/compliance" component={ComplianceCenter} />
+          <Route path="/suppression" component={SuppressionList} />
+          <Route path="/sender-settings" component={SenderSettings} />
+          <Route path="/domain-stats" component={DomainStats} />
+          <Route path="/help" component={HelpCenter} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>

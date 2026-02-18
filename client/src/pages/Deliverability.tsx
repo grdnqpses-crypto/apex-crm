@@ -9,6 +9,9 @@ import { Progress } from "@/components/ui/progress";
 import { Shield, CheckCircle, XCircle, AlertTriangle, Plus, Globe, Loader2, Mail, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
+
 
 const AUTH_STATUS_ICONS: Record<string, any> = {
   pass: CheckCircle,
@@ -59,6 +62,7 @@ export default function Deliverability() {
 
   return (
     <div className="space-y-6">
+      <PageGuide {...pageGuides.deliverability} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Email Deliverability</h1>

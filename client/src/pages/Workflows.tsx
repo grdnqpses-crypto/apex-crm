@@ -11,6 +11,9 @@ import { Plus, GitBranch, Play, Pause, MoreHorizontal, Trash2, Zap, Mail, Clock,
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { toast } from "sonner";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
+
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -67,6 +70,7 @@ export default function Workflows() {
 
   return (
     <div className="space-y-5">
+      <PageGuide {...pageGuides.workflows} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Automation Workflows</h1>

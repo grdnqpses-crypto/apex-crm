@@ -10,9 +10,13 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import {
   Ghost, Plus, Trash2, Loader2, Play, Pause, ChevronDown, ChevronUp,
-  Mail, Clock, Sparkles,
+  Mail, Clock, Sparkles, Target, Users,
 } from "lucide-react";
 import { useState } from "react";
+import { Link } from "wouter";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
+
 
 const statusBadge: Record<string, string> = {
   draft: "bg-zinc-600",
@@ -41,6 +45,7 @@ export default function GhostSequences() {
 
   return (
     <div className="space-y-6">
+      <PageGuide {...pageGuides.ghostSequences} />
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -133,6 +138,11 @@ function SequenceCard({ sequence, expanded, onToggle, onUpdate, onDelete }: {
     onSuccess: () => { utils.ghostSequences.steps.list.invalidate({ sequenceId: sequence.id }); toast.success("Step removed"); },
   });
 
+  const { data: enrolledProspects } = trpc.crossFeature.prospectsBySequence.useQuery(
+    { sequenceId: sequence.id },
+    { enabled: expanded }
+  );
+
   return (
     <Card className={expanded ? "border-primary/30" : ""}>
       <CardContent className="p-4">
@@ -144,6 +154,9 @@ function SequenceCard({ sequence, expanded, onToggle, onUpdate, onDelete }: {
             <div className="flex items-center gap-2">
               <p className="text-sm font-medium">{sequence.name}</p>
               <Badge className={`text-[10px] ${statusBadge[sequence.status] ?? "bg-zinc-600"}`}>{sequence.status}</Badge>
+              {enrolledProspects && enrolledProspects.length > 0 && (
+                <Badge variant="outline" className="text-[10px] gap-1"><Users className="h-2.5 w-2.5" />{enrolledProspects.length} enrolled</Badge>
+              )}
             </div>
             {sequence.description && <p className="text-xs text-muted-foreground truncate">{sequence.description}</p>}
           </div>
@@ -217,6 +230,27 @@ function SequenceCard({ sequence, expanded, onToggle, onUpdate, onDelete }: {
                   </div>
                 </CardContent>
               </Card>
+            )}
+
+            {/* Enrolled Prospects */}
+            {enrolledProspects && enrolledProspects.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-indigo-400" />
+                  <p className="text-sm font-medium">Enrolled Prospects ({enrolledProspects.length})</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {enrolledProspects.map((p: any) => (
+                    <Link key={p.id} href={`/paradigm/prospects/${p.id}`} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                      <Target className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium truncate">{p.firstName} {p.lastName}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{p.companyName ?? p.email ?? ""}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             )}
 
             {(!steps || steps.length === 0) ? (

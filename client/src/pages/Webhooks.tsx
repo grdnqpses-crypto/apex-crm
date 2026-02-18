@@ -11,6 +11,9 @@ import { Plus, Webhook, MoreHorizontal, Trash2, Eye, CheckCircle, XCircle } from
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { toast } from "sonner";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
+
 
 const EVENTS = [
   "contact.created", "contact.updated", "contact.deleted",
@@ -61,6 +64,7 @@ export default function Webhooks() {
 
   return (
     <div className="space-y-6">
+      <PageGuide {...pageGuides.webhooks} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Webhooks</h1>

@@ -11,6 +11,9 @@ import { Plus, Users, Filter, MoreHorizontal, Trash2, RefreshCw } from "lucide-r
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { toast } from "sonner";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
+
 
 const SEGMENT_TYPES: Record<string, string> = {
   static: "bg-muted text-muted-foreground",
@@ -51,6 +54,7 @@ export default function Segments() {
 
   return (
     <div className="space-y-5">
+      <PageGuide {...pageGuides.segments} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Segments & Lists</h1>

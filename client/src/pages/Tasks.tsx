@@ -15,6 +15,9 @@ import { Plus, Calendar, MoreHorizontal, Trash2, Phone, Mail, ClipboardList, Ref
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
+
 
 const PRIORITY_COLORS: Record<string, string> = {
   low: "bg-muted text-muted-foreground",
@@ -99,6 +102,7 @@ export default function Tasks() {
 
   return (
     <div className="space-y-5">
+      <PageGuide {...pageGuides.tasks} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Tasks</h1>

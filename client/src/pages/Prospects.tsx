@@ -16,6 +16,9 @@ import {
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
+
 
 const stages = [
   { value: "all", label: "All Stages" },
@@ -109,6 +112,7 @@ export default function Prospects() {
 
   return (
     <div className="space-y-6">
+      <PageGuide {...pageGuides.prospects} />
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">

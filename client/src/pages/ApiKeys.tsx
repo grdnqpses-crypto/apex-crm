@@ -10,6 +10,9 @@ import { Plus, Key, Copy, Trash2, MoreHorizontal, Shield, Code } from "lucide-re
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { toast } from "sonner";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
+
 
 export default function ApiKeys() {
   const [showCreate, setShowCreate] = useState(false);
@@ -38,6 +41,7 @@ export default function ApiKeys() {
 
   return (
     <div className="space-y-6">
+      <PageGuide {...pageGuides.apiKeys} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">API Keys</h1>

@@ -179,3 +179,150 @@
 
 ### Tests
 - [x] Vitest tests for Paradigm Engine routers (50 tests passing)
+
+## Phase 4: Proprietary BNB Engine + Compliance Fortress + Deliverability Infrastructure
+
+### Compliance Engine (CAN-SPAM / GDPR / CCPA)
+- [x] Pre-send compliance validator that blocks non-compliant emails
+- [x] Physical address requirement enforcement
+- [x] Unsubscribe link injection (RFC 8058 one-click)
+- [x] Subject line deception detector (AI-powered)
+- [x] Opt-out honor system (automatic suppression within 10 business days)
+- [x] GDPR consent tracking and right-to-erasure support
+- [x] CCPA data access and deletion request handling
+- [x] Compliance audit log for every email sent
+
+### Deliverability Infrastructure
+- [x] Provider-specific email routing (Gmail, Outlook, Yahoo detection)
+- [x] Outlook-specific optimizations (SNDS headers, RFC 8058, complaint rate monitoring)
+- [x] Gmail-specific optimizations (List-Unsubscribe, dual SPF+DKIM, <0.1% complaint target)
+- [x] Yahoo-specific optimizations (CFL headers, DMARC alignment)
+- [x] Email header optimization engine (proper MIME, Message-ID, Date, Return-Path)
+- [x] Send rate throttling per provider with configurable limits
+- [x] Automatic domain rotation with health-aware load balancing
+- [x] Real-time bounce processing and automatic suppression
+- [x] Complaint feedback loop processing
+- [x] Blacklist monitoring across 50+ lists
+
+### Proprietary AI Prospecting Engine
+- [x] Quantum Lead Score: 12-dimension scoring model (firmographic, behavioral, engagement, timing, social, content, recency, frequency, monetary, channel, intent, relationship)
+- [x] Behavioral DNA Profiler: AI personality analysis from public data
+- [x] Predictive Send Time Optimizer: per-prospect optimal timing
+- [x] Adaptive Sequence Engine: sequences that rewrite based on engagement
+- [x] Intent Signal Synthesizer: combine weak signals into strong buying indicators
+- [x] AI Email Composer: hyper-personalized emails using prospect DNA profile
+- [x] Prospect Discovery Engine: AI-powered ICP matching and lookalike finding
+- [x] Engagement Velocity Tracker: measure speed of prospect warming
+
+### Domain Reputation Autopilot
+- [x] Per-domain health scoring dashboard
+- [x] Automatic sending pause when domain approaches danger thresholds
+- [x] Domain warm-up scheduler with graduated volume increases
+- [x] Reputation recovery protocols (automatic cooldown periods)
+- [x] Cross-domain load balancing based on health scores
+
+### Provider-Specific Monitoring Dashboard
+- [x] Real-time inbox placement estimation per provider
+- [x] Bounce rate, complaint rate, unsubscribe rate per domain per provider
+- [x] Blacklist status checker with auto-alerts
+- [x] Authentication status monitor (SPF/DKIM/DMARC per domain)
+- [x] Sending volume and velocity charts
+
+### Tests
+- [ ] Vitest tests for compliance engine
+- [ ] Vitest tests for deliverability infrastructure
+- [ ] Vitest tests for AI prospecting engine
+
+## Phase 5: Contextual Help & Instruction Manual
+
+### Contextual Page Guides
+- [x] Create reusable PageGuide component (collapsible help section at top of each page)
+- [x] Add contextual help to Dashboard page
+- [x] Add contextual help to Contacts page
+- [x] Add contextual help to Contact Detail page
+- [x] Add contextual help to Companies page
+- [x] Add contextual help to Company Detail page
+- [x] Add contextual help to Deals page
+- [x] Add contextual help to Tasks page
+- [x] Add contextual help to Campaigns page
+- [x] Add contextual help to Templates page
+- [x] Add contextual help to Deliverability page
+- [x] Add contextual help to Workflows page
+- [x] Add contextual help to Analytics page
+- [x] Add contextual help to Segments page
+- [x] Add contextual help to A/B Tests page
+- [x] Add contextual help to API Keys page
+- [x] Add contextual help to Webhooks page
+- [x] Add contextual help to Paradigm Pulse page
+- [x] Add contextual help to Prospects page
+- [x] Add contextual help to Prospect Detail page
+- [x] Add contextual help to Signals page
+- [x] Add contextual help to Ghost Sequences page
+- [x] Add contextual help to Battle Cards page
+- [x] Add contextual help to Integrations page
+- [x] Add contextual help to Compliance Center page
+- [x] Add contextual help to Suppression List page
+- [x] Add contextual help to Sender Settings page
+- [x] Add contextual help to Domain Stats page
+- [x] Add contextual help to Quantum Score page
+- [x] Add contextual help to SMTP Accounts page
+
+### Instruction Manual / Help Center
+- [x] Build Help Center page with full documentation for every feature
+- [x] Add Help Center to sidebar navigation
+- [x] Add route in App.tsx
+
+## Phase 6: Logistics Lead Scanning & Email Campaign Test
+
+### AI Lead Scanning
+- [ ] Use AI to scan for manufacturers that ship freight (TL) and generate prospects
+- [ ] Use AI to scan for distributors that ship freight (LTL) and generate prospects
+- [ ] Populate prospect records with company info, contacts, and engagement stages
+- [ ] Tag/segment prospects by TL vs LTL (manufacturers vs distributors)
+
+### Email Campaign Creation & Test
+- [ ] Create targeted email campaign for TL prospects
+- [ ] Create targeted email campaign for LTL prospects
+- [ ] Run compliance pre-check on both campaigns
+- [ ] Execute test send through the system
+
+## Phase 7: Cross-Feature Integration (Making Everything Work Together)
+
+### Cross-Feature Data Queries
+- [x] Add crossFeature router with dealsByContact, dealsByCompany, tasksByContact, tasksByCompany, tasksByDeal, segmentContacts, prospectsBySequence, contactsByCompany
+- [x] Add getProspectsBySequence db helper
+
+### Dashboard Enhancement
+- [x] Dashboard stats now pull real data from contacts, companies, deals, campaigns, paradigm engine, and email queue
+- [x] Enhanced dashboard with cross-module metrics (paradigm stats, email queue, sequence counts)
+
+### Contact Detail Cross-Feature
+- [x] Contact detail page now shows Deals tab with associated deals
+- [x] Contact detail page now shows Tasks tab with associated tasks
+
+### Company Detail Cross-Feature
+- [x] Company detail page now shows Deals tab with associated deals
+- [x] Company detail page now shows Tasks tab with associated tasks
+
+### Campaign Pipeline Integration
+- [x] Campaign creation now loads templates from template library
+- [x] Campaign creation now targets segments with contact preview count
+- [x] Campaign send pipeline: segment contacts → compliance check → suppression filter → queue emails → SMTP delivery
+- [x] Campaign send button with pre-flight validation
+
+### Paradigm Engine Integration
+- [x] Signals page: Create Prospect directly from a trigger signal
+- [x] Prospect detail: Enroll in Ghost Sequence with sequence selector
+- [x] Prospect promotion: Auto-creates company and links to contact on promote
+- [x] Ghost Sequences: Shows enrolled prospects per sequence
+
+### Analytics Cross-Module
+- [x] Analytics page now pulls real data from all modules (contacts, deals, paradigm, campaigns, sequences, domain health, suppression)
+- [x] Pipeline funnel uses real contact → prospect → hot lead → deal → won data
+- [x] Prospect engagement chart from Paradigm Engine stats
+- [x] Campaign status breakdown from real campaign data
+- [x] Domain health chart from deliverability data
+
+### Tests
+- [x] Cross-feature integration tests (18 tests verifying all cross-feature procedures exist)
+- [x] All 85 tests passing across 3 test files

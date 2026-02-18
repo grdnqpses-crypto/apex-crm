@@ -11,11 +11,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft, Mail, Phone, MapPin, Building2, Globe, Linkedin,
-  Clock, Users, FileText, Save, PhoneCall, Video, Target, Hash, User, Tag, DollarSign, Calendar
+  Clock, Users, FileText, Save, PhoneCall, Video, Target, Hash, User, Tag, DollarSign, Calendar,
+  Kanban, ListChecks,
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
+
 
 const LEAD_STATUSES = [
   "Qualified", "Cold", "Cold-Upwork", "Hot", "Warm", "Customer",
@@ -45,6 +49,8 @@ export default function CompanyDetail() {
   const { data: company, isLoading } = trpc.companies.get.useQuery({ id: companyId });
   const { data: contacts } = trpc.contacts.byCompany.useQuery({ companyId });
   const { data: activities } = trpc.activities.list.useQuery({ companyId });
+  const { data: companyDeals } = trpc.crossFeature.dealsByCompany.useQuery({ companyId });
+  const { data: companyTasks } = trpc.crossFeature.tasksByCompany.useQuery({ companyId });
   const updateMutation = trpc.companies.update.useMutation({
     onSuccess: () => { utils.companies.get.invalidate({ id: companyId }); toast.success("Company updated"); },
     onError: (e: any) => toast.error(e.message),
@@ -94,6 +100,7 @@ export default function CompanyDetail() {
 
   return (
     <div className="space-y-6">
+      <PageGuide {...pageGuides.companyDetail} />
       <Button variant="ghost" size="sm" onClick={() => setLocation("/companies")} className="gap-2">
         <ArrowLeft className="h-4 w-4" /> Back to Companies
       </Button>
@@ -169,6 +176,8 @@ export default function CompanyDetail() {
             <TabsList className="bg-secondary/30">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="contacts">Contacts ({contacts?.length ?? 0})</TabsTrigger>
+              <TabsTrigger value="deals">Deals{companyDeals && companyDeals.length > 0 ? ` (${companyDeals.length})` : ''}</TabsTrigger>
+              <TabsTrigger value="tasks">Tasks{companyTasks && companyTasks.length > 0 ? ` (${companyTasks.length})` : ''}</TabsTrigger>
               <TabsTrigger value="activities">Activities</TabsTrigger>
               <TabsTrigger value="edit">Edit</TabsTrigger>
             </TabsList>
@@ -224,6 +233,67 @@ export default function CompanyDetail() {
                       {c.leadStatus && <Badge variant="outline" className="text-[10px]">{c.leadStatus}</Badge>}
                     </div>
                   ))}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Deals Tab */}
+            <TabsContent value="deals" className="mt-4">
+              <Card className="bg-card border-border">
+                <CardHeader className="pb-3"><CardTitle className="text-sm">Company Deals</CardTitle></CardHeader>
+                <CardContent>
+                  {!companyDeals || companyDeals.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-6">No deals associated with this company yet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {companyDeals.map((deal: any) => (
+                        <div key={deal.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/20 hover:bg-secondary/30 cursor-pointer" onClick={() => setLocation(`/deals`)}>
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-lg bg-chart-3/10 flex items-center justify-center">
+                              <Kanban className="h-4 w-4 text-chart-3" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">{deal.name}</p>
+                              <p className="text-xs text-muted-foreground">{deal.stage}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold">${(deal.value ?? 0).toLocaleString()}</p>
+                            <Badge variant="outline" className="text-[10px]">{deal.status}</Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Tasks Tab */}
+            <TabsContent value="tasks" className="mt-4">
+              <Card className="bg-card border-border">
+                <CardHeader className="pb-3"><CardTitle className="text-sm">Company Tasks</CardTitle></CardHeader>
+                <CardContent>
+                  {!companyTasks || companyTasks.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-6">No tasks associated with this company.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {companyTasks.map((task: any) => (
+                        <div key={task.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/20">
+                          <div className="flex items-center gap-3">
+                            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${task.status === 'completed' ? 'bg-green-500/10' : 'bg-amber-500/10'}`}>
+                              <ListChecks className={`h-4 w-4 ${task.status === 'completed' ? 'text-green-400' : 'text-amber-400'}`} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">{task.title}</p>
+                              <p className="text-xs text-muted-foreground">{task.priority} priority &middot; {task.status}</p>
+                            </div>
+                          </div>
+                          {task.dueDate && <span className="text-xs text-muted-foreground">{new Date(task.dueDate).toLocaleDateString()}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

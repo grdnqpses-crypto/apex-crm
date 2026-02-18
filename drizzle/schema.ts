@@ -730,3 +730,145 @@ export const battleCards = mysqlTable("battle_cards", {
 });
 
 export type BattleCard = typeof battleCards.$inferSelect;
+
+
+// ═══════════════════════════════════════════════════════════════
+// COMPLIANCE FORTRESS + DELIVERABILITY ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+// ─── Email Suppression List (bounces, unsubscribes, complaints — NEVER send again) ───
+export const suppressionList = mysqlTable("suppression_list", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  reason: varchar("reason", { length: 64 }).notNull(), // hard_bounce, soft_bounce, unsubscribe, complaint, manual, invalid, role_address
+  source: varchar("source", { length: 64 }), // campaign, system, manual, feedback_loop
+  campaignId: int("campaignId"),
+  notes: text("notes"),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+
+export type SuppressionEntry = typeof suppressionList.$inferSelect;
+
+// ─── Compliance Audit Log (every email sent is logged for legal compliance) ───
+export const complianceAuditLog = mysqlTable("compliance_audit_log", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  emailQueueId: int("emailQueueId"),
+  campaignId: int("campaignId"),
+  toEmail: varchar("toEmail", { length: 320 }).notNull(),
+  fromEmail: varchar("fromEmail", { length: 320 }).notNull(),
+  // Compliance checks performed
+  hasPhysicalAddress: boolean("hasPhysicalAddress").notNull(),
+  hasUnsubscribeLink: boolean("hasUnsubscribeLink").notNull(),
+  hasOneClickUnsubscribe: boolean("hasOneClickUnsubscribe").notNull(), // RFC 8058
+  hasIdentifiedAsAd: boolean("hasIdentifiedAsAd").notNull(),
+  subjectLineClean: boolean("subjectLineClean").notNull(), // no deceptive content
+  recipientNotSuppressed: boolean("recipientNotSuppressed").notNull(),
+  recipientHasConsent: boolean("recipientHasConsent").notNull(),
+  spfAligned: boolean("spfAligned").notNull(),
+  dkimAligned: boolean("dkimAligned").notNull(),
+  dmarcAligned: boolean("dmarcAligned").notNull(),
+  // Overall
+  compliancePassed: boolean("compliancePassed").notNull(),
+  failureReasons: json("failureReasons").$type<string[]>(),
+  // Provider detection
+  recipientProvider: varchar("recipientProvider", { length: 32 }), // gmail, outlook, yahoo, aol, other
+  // Result
+  wasSent: boolean("wasSent").default(false).notNull(),
+  sentAt: bigint("sentAt", { mode: "number" }),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+
+export type ComplianceAuditEntry = typeof complianceAuditLog.$inferSelect;
+
+// ─── Sender Settings (physical address, company info for CAN-SPAM) ───
+export const senderSettings = mysqlTable("sender_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyName: varchar("companyName", { length: 256 }).notNull(),
+  physicalAddress: text("physicalAddress").notNull(), // required by CAN-SPAM
+  city: varchar("city", { length: 128 }),
+  state: varchar("state", { length: 64 }),
+  zipCode: varchar("zipCode", { length: 16 }),
+  country: varchar("country", { length: 64 }),
+  defaultFromName: varchar("defaultFromName", { length: 256 }),
+  defaultReplyTo: varchar("defaultReplyTo", { length: 320 }),
+  unsubscribeUrl: varchar("unsubscribeUrl", { length: 1024 }),
+  privacyPolicyUrl: varchar("privacyPolicyUrl", { length: 1024 }),
+  // Provider-specific settings
+  outlookThrottlePerMinute: int("outlookThrottlePerMinute").default(10),
+  gmailThrottlePerMinute: int("gmailThrottlePerMinute").default(20),
+  yahooThrottlePerMinute: int("yahooThrottlePerMinute").default(15),
+  defaultThrottlePerMinute: int("defaultThrottlePerMinute").default(30),
+  maxBounceRatePercent: int("maxBounceRatePercent").default(2), // auto-pause above this
+  maxComplaintRatePercent: int("maxComplaintRatePercent").default(1), // 0.1% = 1 (stored as 10x)
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+
+export type SenderSetting = typeof senderSettings.$inferSelect;
+
+// ─── Domain Sending Stats (per-domain, per-provider daily stats) ───
+export const domainSendingStats = mysqlTable("domain_sending_stats", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  domain: varchar("domain", { length: 256 }).notNull(),
+  provider: varchar("provider", { length: 32 }).notNull(), // gmail, outlook, yahoo, aol, other
+  date: varchar("statDate", { length: 16 }).notNull(), // YYYY-MM-DD
+  sent: int("sent").default(0).notNull(),
+  delivered: int("delivered").default(0).notNull(),
+  bounced: int("bounced").default(0).notNull(),
+  complaints: int("complaints").default(0).notNull(),
+  opens: int("opens").default(0).notNull(),
+  clicks: int("clicks").default(0).notNull(),
+  unsubscribes: int("unsubscribes").default(0).notNull(),
+  // Calculated rates
+  bounceRate: int("bounceRate").default(0), // stored as percentage * 100 (e.g., 150 = 1.50%)
+  complaintRate: int("complaintRate").default(0), // stored as percentage * 1000 (e.g., 100 = 0.100%)
+  openRate: int("openRate").default(0), // stored as percentage * 100
+  // Auto-pause
+  isPaused: boolean("isPaused").default(false).notNull(),
+  pauseReason: varchar("pauseReason", { length: 256 }),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+
+export type DomainSendingStat = typeof domainSendingStats.$inferSelect;
+
+// ─── Prospect Quantum Score (12-dimension scoring breakdown) ───
+export const prospectScores = mysqlTable("prospect_scores", {
+  id: int("id").autoincrement().primaryKey(),
+  prospectId: int("prospectId").notNull(),
+  // 12 Scoring Dimensions (each 0-100)
+  firmographicScore: int("firmographicScore").default(0), // company size, industry match, revenue
+  behavioralScore: int("behavioralScore").default(0), // email opens, clicks, website visits
+  engagementScore: int("engagementScore").default(0), // reply rate, response time, interaction depth
+  timingScore: int("timingScore").default(0), // recency of engagement, buying cycle stage
+  socialScore: int("socialScore").default(0), // social activity, influence, network size
+  contentScore: int("contentScore").default(0), // content consumption patterns
+  recencyScore: int("recencyScore").default(0), // how recently they engaged
+  frequencyScore: int("frequencyScore").default(0), // how often they engage
+  monetaryScore: int("monetaryScore").default(0), // estimated deal value potential
+  channelScore: int("channelScore").default(0), // multi-channel engagement
+  intentScore: int("intentScore").default(0), // buying intent signals
+  relationshipScore: int("relationshipScore").default(0), // warmth of relationship
+  // Composite
+  totalScore: int("totalScore").default(0), // weighted composite 0-100
+  scoreGrade: varchar("scoreGrade", { length: 4 }), // A+, A, B+, B, C+, C, D, F
+  // AI reasoning
+  scoreExplanation: text("scoreExplanation"),
+  topStrengths: json("topStrengths").$type<string[]>(),
+  topWeaknesses: json("topWeaknesses").$type<string[]>(),
+  recommendedActions: json("recommendedActions").$type<string[]>(),
+  // Predictive
+  predictedConversionProb: int("predictedConversionProb").default(0), // 0-100%
+  predictedDealValue: bigint("predictedDealValue", { mode: "number" }),
+  optimalContactTime: varchar("optimalContactTime", { length: 256 }), // e.g., "Tuesday 10am EST"
+  optimalChannel: varchar("optimalChannel", { length: 256 }), // email, phone, linkedin, in_person
+  // Metadata
+  lastScoredAt: bigint("lastScoredAt", { mode: "number" }).notNull(),
+  scoringVersion: int("scoringVersion").default(1),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+
+export type ProspectScore = typeof prospectScores.$inferSelect;

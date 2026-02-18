@@ -1,32 +1,59 @@
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, TrendingUp, TrendingDown, Mail, Users, DollarSign, Target, MousePointerClick, Eye, AlertTriangle } from "lucide-react";
+import { BarChart3, TrendingUp, TrendingDown, Mail, Users, DollarSign, Target, AlertTriangle, Ghost, Zap, Shield, Inbox } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area } from "recharts";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
 
-const CHART_COLORS = ["#6366f1", "#8b5cf6", "#a855f7", "#d946ef", "#22c55e", "#f59e0b"];
+
+const CHART_COLORS = ["#6366f1", "#8b5cf6", "#a855f7", "#d946ef", "#22c55e", "#f59e0b", "#ef4444", "#06b6d4"];
 
 export default function Analytics() {
+  // Core CRM stats
   const { data: stats } = trpc.dashboard.stats.useQuery();
+  // Paradigm Engine stats
+  const { data: paradigmStats } = trpc.paradigm.stats.useQuery();
+  // Email deliverability
+  const { data: domainHealth } = trpc.domainHealth.list.useQuery();
+  // Campaigns
   const { data: campaigns } = trpc.campaigns.list.useQuery({ limit: 100 });
+  // Ghost sequences
+  const { data: sequences } = trpc.ghostSequences.list.useQuery();
+  // Suppression list
+  const { data: suppressionList } = trpc.suppression.list.useQuery();
 
-  // Compute analytics from available data
+  // Core metrics
   const totalContacts = stats?.totalContacts ?? 0;
+  const totalCompanies = stats?.totalCompanies ?? 0;
   const totalDeals = stats?.totalDeals ?? 0;
   const totalRevenue = stats?.totalValue ?? 0;
   const totalCampaigns = stats?.totalCampaigns ?? 0;
   const openDeals = stats?.openDeals ?? 0;
   const wonDeals = stats?.wonDeals ?? 0;
   const lostDeals = stats?.lostDeals ?? 0;
-  const winRate = totalDeals > 0 ? Math.round((wonDeals / (wonDeals + lostDeals || 1)) * 100) : 0;
+  const winRate = (wonDeals + lostDeals) > 0 ? Math.round((wonDeals / (wonDeals + lostDeals)) * 100) : 0;
 
-  // Pipeline funnel data
+  // Paradigm metrics
+  const totalProspects = paradigmStats?.total ?? 0;
+  const hotLeads = paradigmStats?.hotLeads ?? 0;
+  const convertedProspects = paradigmStats?.converted ?? 0;
+  const avgIntentScore = paradigmStats?.avgIntentScore ?? 0;
+
+  // Sequence metrics
+  const totalSequences = sequences?.length ?? 0;
+  const activeSequences = sequences?.filter((s: any) => s.status === "active").length ?? 0;
+
+  // Suppression metrics
+  const suppressedCount = suppressionList?.items?.length ?? suppressionList?.total ?? 0;
+
+  // Pipeline funnel data from real stats
   const funnelData = [
-    { stage: "Leads", count: totalContacts, fill: "#6366f1" },
-    { stage: "Qualified", count: Math.round(totalContacts * 0.6), fill: "#8b5cf6" },
-    { stage: "Proposals", count: Math.round(totalContacts * 0.3), fill: "#a855f7" },
-    { stage: "Negotiations", count: Math.round(totalContacts * 0.15), fill: "#d946ef" },
-    { stage: "Closed", count: wonDeals, fill: "#22c55e" },
+    { stage: "Contacts", count: totalContacts, fill: "#6366f1" },
+    { stage: "Prospects", count: totalProspects, fill: "#8b5cf6" },
+    { stage: "Hot Leads", count: hotLeads, fill: "#d946ef" },
+    { stage: "Open Deals", count: openDeals, fill: "#f59e0b" },
+    { stage: "Won Deals", count: wonDeals, fill: "#22c55e" },
   ];
 
   // Deal status breakdown
@@ -36,38 +63,51 @@ export default function Analytics() {
     { name: "Lost", value: lostDeals, fill: "#ef4444" },
   ].filter(d => d.value > 0);
 
-  // Campaign performance mock (from real campaign count)
-  const campaignPerformance = [
-    { name: "Sent", value: totalCampaigns * 1200 },
-    { name: "Delivered", value: Math.round(totalCampaigns * 1200 * 0.97) },
-    { name: "Opened", value: Math.round(totalCampaigns * 1200 * 0.32) },
-    { name: "Clicked", value: Math.round(totalCampaigns * 1200 * 0.08) },
-    { name: "Bounced", value: Math.round(totalCampaigns * 1200 * 0.02) },
-  ];
+  // Prospect engagement stages from paradigm stats
+  const prospectStages = [
+    { name: "New", value: totalProspects - hotLeads - convertedProspects, fill: "#6366f1" },
+    { name: "Hot Lead", value: hotLeads, fill: "#d946ef" },
+    { name: "Converted", value: convertedProspects, fill: "#22c55e" },
+  ].filter(d => d.value > 0);
 
-  // Monthly trend data
-  const monthlyData = [
-    { month: "Sep", contacts: 45, deals: 8, revenue: 12000 },
-    { month: "Oct", contacts: 62, deals: 12, revenue: 18500 },
-    { month: "Nov", contacts: 78, deals: 15, revenue: 24000 },
-    { month: "Dec", contacts: 95, deals: 18, revenue: 31000 },
-    { month: "Jan", contacts: 110, deals: 22, revenue: 38000 },
-    { month: "Feb", contacts: totalContacts || 130, deals: totalDeals || 25, revenue: totalRevenue || 45000 },
-  ];
+  // Domain health data
+  const domainData = domainHealth?.map((d: any) => ({
+    domain: d.domain,
+    score: d.reputationScore ?? 0,
+    fill: (d.reputationScore ?? 0) >= 80 ? "#22c55e" : (d.reputationScore ?? 0) >= 50 ? "#f59e0b" : "#ef4444",
+  })) ?? [];
+
+  // Campaign status breakdown
+  const campaignItems: any[] = Array.isArray(campaigns) ? campaigns : (campaigns as any)?.items ?? [];
+  const campaignStatusData = [
+    { name: "Draft", value: campaignItems.filter((c: any) => c.status === "draft").length, fill: "#6366f1" },
+    { name: "Sending", value: campaignItems.filter((c: any) => c.status === "sending").length, fill: "#f59e0b" },
+    { name: "Sent", value: campaignItems.filter((c: any) => c.status === "sent").length, fill: "#22c55e" },
+    { name: "Scheduled", value: campaignItems.filter((c: any) => c.status === "scheduled").length, fill: "#8b5cf6" },
+  ].filter(d => d.value > 0);
 
   return (
     <div className="space-y-6">
+      <PageGuide {...pageGuides.analytics} />
       <div>
         <h1 className="text-2xl font-bold text-foreground">Analytics & Reporting</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Comprehensive insights across your CRM pipeline, campaigns, and revenue.</p>
+        <p className="text-sm text-muted-foreground mt-0.5">Comprehensive insights across your entire CRM — contacts, deals, campaigns, and Paradigm Engine.</p>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards Row 1: Core CRM */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiCard title="Total Contacts" value={totalContacts.toLocaleString()} icon={Users} change="+12%" positive />
-        <KpiCard title="Pipeline Value" value={`$${(totalRevenue / 1000).toFixed(0)}K`} icon={DollarSign} change="+8%" positive />
-        <KpiCard title="Win Rate" value={`${winRate}%`} icon={Target} change="+3%" positive />
-        <KpiCard title="Campaigns Sent" value={totalCampaigns.toString()} icon={Mail} change="+5%" positive />
+        <KpiCard title="Total Contacts" value={totalContacts.toLocaleString()} icon={Users} subtitle={`${totalCompanies} companies`} />
+        <KpiCard title="Pipeline Value" value={`$${(totalRevenue / 1000).toFixed(0)}K`} icon={DollarSign} subtitle={`${openDeals} open deals`} />
+        <KpiCard title="Win Rate" value={`${winRate}%`} icon={Target} subtitle={`${wonDeals}W / ${lostDeals}L`} />
+        <KpiCard title="Campaigns" value={totalCampaigns.toString()} icon={Mail} subtitle={`${campaignStatusData.find(d => d.name === "Sent")?.value ?? 0} sent`} />
+      </div>
+
+      {/* KPI Cards Row 2: Paradigm Engine */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KpiCard title="Total Prospects" value={totalProspects.toLocaleString()} icon={Zap} subtitle={`${hotLeads} hot leads`} color="violet" />
+        <KpiCard title="Avg Intent Score" value={avgIntentScore.toFixed(0)} icon={Target} subtitle={`${convertedProspects} converted`} color="violet" />
+        <KpiCard title="Ghost Sequences" value={totalSequences.toString()} icon={Ghost} subtitle={`${activeSequences} active`} color="violet" />
+        <KpiCard title="Suppressed" value={suppressedCount.toString()} icon={Shield} subtitle="blocked emails" color="amber" />
       </div>
 
       {/* Charts Row 1 */}
@@ -75,29 +115,9 @@ export default function Analytics() {
         <Card className="bg-card border-border">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-chart-1" /> Revenue Trend
+              <BarChart3 className="h-4 w-4 text-chart-1" /> Sales Pipeline Funnel
             </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-                  <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", color: "hsl(var(--foreground))" }} />
-                  <Area type="monotone" dataKey="revenue" stroke="#6366f1" fill="#6366f1" fillOpacity={0.1} strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-chart-2" /> Pipeline Funnel
-            </CardTitle>
+            <p className="text-xs text-muted-foreground">From contacts through to won deals — real data across all modules</p>
           </CardHeader>
           <CardContent>
             <div className="h-64">
@@ -112,6 +132,31 @@ export default function Analytics() {
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Zap className="h-4 w-4 text-violet-400" /> Prospect Engagement
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">Paradigm Engine prospect distribution by stage</p>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              {prospectStages.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={prospectStages} cx="50%" cy="50%" innerRadius={50} outerRadius={85} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
+                      {prospectStages.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                    </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", color: "hsl(var(--foreground))" }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">No prospect data yet — run AI Prospecting from the Paradigm Engine</div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -144,20 +189,26 @@ export default function Analytics() {
         <Card className="bg-card border-border">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Mail className="h-4 w-4 text-chart-5" /> Email Performance
+              <Mail className="h-4 w-4 text-chart-5" /> Campaign Status
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={campaignPerformance}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                  <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", color: "hsl(var(--foreground))" }} />
-                  <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {campaignStatusData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={campaignStatusData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                    <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", color: "hsl(var(--foreground))" }} />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                      {campaignStatusData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">No campaigns yet</div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -165,39 +216,46 @@ export default function Analytics() {
         <Card className="bg-card border-border">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Users className="h-4 w-4 text-chart-3" /> Contact Growth
+              <Shield className="h-4 w-4 text-chart-3" /> Domain Health
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="month" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                  <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", color: "hsl(var(--foreground))" }} />
-                  <Line type="monotone" dataKey="contacts" stroke="#22c55e" strokeWidth={2} dot={{ fill: "#22c55e", r: 3 }} />
-                </LineChart>
-              </ResponsiveContainer>
+              {domainData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={domainData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="domain" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", color: "hsl(var(--foreground))" }} />
+                    <Bar dataKey="score" radius={[4, 4, 0, 0]}>
+                      {domainData.map((entry: any, i: number) => <Cell key={i} fill={entry.fill} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Add domains in Deliverability settings</div>
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Deliverability Metrics */}
+      {/* Cross-Module Summary */}
       <Card className="bg-card border-border">
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-warning" /> Email Deliverability Metrics
+            <Inbox className="h-4 w-4 text-primary" /> Cross-Module Summary
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <MetricCard label="Delivery Rate" value="97.2%" good />
-            <MetricCard label="Open Rate" value="32.4%" good />
-            <MetricCard label="Click Rate" value="8.1%" good />
-            <MetricCard label="Bounce Rate" value="2.1%" good={false} />
-            <MetricCard label="Spam Rate" value="0.08%" good />
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+            <MetricCard label="Contacts" value={totalContacts.toString()} color="indigo" />
+            <MetricCard label="Companies" value={totalCompanies.toString()} color="blue" />
+            <MetricCard label="Deals" value={totalDeals.toString()} color="emerald" />
+            <MetricCard label="Prospects" value={totalProspects.toString()} color="violet" />
+            <MetricCard label="Campaigns" value={totalCampaigns.toString()} color="purple" />
+            <MetricCard label="Sequences" value={totalSequences.toString()} color="pink" />
           </div>
         </CardContent>
       </Card>
@@ -205,30 +263,35 @@ export default function Analytics() {
   );
 }
 
-function KpiCard({ title, value, icon: Icon, change, positive }: { title: string; value: string; icon: any; change: string; positive: boolean }) {
+function KpiCard({ title, value, icon: Icon, subtitle, color = "primary" }: { title: string; value: string; icon: any; subtitle: string; color?: string }) {
+  const bgClass = color === "violet" ? "bg-violet-500/10" : color === "amber" ? "bg-amber-500/10" : "bg-primary/10";
+  const iconClass = color === "violet" ? "text-violet-400" : color === "amber" ? "text-amber-400" : "text-primary";
   return (
     <Card className="bg-card border-border">
       <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Icon className="h-4.5 w-4.5 text-primary" />
+        <div className="flex items-center gap-3">
+          <div className={`h-9 w-9 rounded-lg ${bgClass} flex items-center justify-center shrink-0`}>
+            <Icon className={`h-4.5 w-4.5 ${iconClass}`} />
           </div>
-          <Badge variant="secondary" className={`text-[10px] ${positive ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}`}>
-            {positive ? <TrendingUp className="h-3 w-3 mr-0.5" /> : <TrendingDown className="h-3 w-3 mr-0.5" />}
-            {change}
-          </Badge>
+          <div className="min-w-0">
+            <p className="text-xl font-bold text-foreground">{value}</p>
+            <p className="text-xs text-muted-foreground">{title}</p>
+            <p className="text-[10px] text-muted-foreground/70">{subtitle}</p>
+          </div>
         </div>
-        <p className="text-2xl font-bold text-foreground mt-3">{value}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{title}</p>
       </CardContent>
     </Card>
   );
 }
 
-function MetricCard({ label, value, good }: { label: string; value: string; good: boolean }) {
+function MetricCard({ label, value, color }: { label: string; value: string; color: string }) {
+  const colorMap: Record<string, string> = {
+    indigo: "text-indigo-400", blue: "text-blue-400", emerald: "text-emerald-400",
+    violet: "text-violet-400", purple: "text-purple-400", pink: "text-pink-400",
+  };
   return (
     <div className="p-3 rounded-lg bg-secondary/20 text-center">
-      <p className={`text-xl font-bold ${good ? "text-success" : "text-warning"}`}>{value}</p>
+      <p className={`text-xl font-bold ${colorMap[color] ?? "text-primary"}`}>{value}</p>
       <p className="text-xs text-muted-foreground mt-1">{label}</p>
     </div>
   );

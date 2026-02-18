@@ -12,6 +12,9 @@ import {
   RefreshCw, Globe, Shield,
 } from "lucide-react";
 import { useState } from "react";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
+
 
 const serviceOptions = [
   { value: "apollo", label: "Apollo.io", description: "B2B contact and company data enrichment" },
@@ -51,6 +54,7 @@ export default function Integrations() {
 
   return (
     <div className="space-y-6">
+      <PageGuide {...pageGuides.integrations} />
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">

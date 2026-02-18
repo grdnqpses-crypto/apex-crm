@@ -9,6 +9,9 @@ import { Plus, Search, Building2, Globe, MoreHorizontal, Trash2 } from "lucide-r
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
+
 
 export default function Companies() {
   const [search, setSearch] = useState("");
@@ -42,6 +45,7 @@ export default function Companies() {
 
   return (
     <div className="space-y-5">
+      <PageGuide {...pageGuides.companies} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Companies</h1>

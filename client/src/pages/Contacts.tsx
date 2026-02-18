@@ -14,6 +14,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
+
 
 const STAGES = ["subscriber", "lead", "mql", "sql", "opportunity", "customer", "evangelist"] as const;
 const STAGE_COLORS: Record<string, string> = {
@@ -96,6 +99,7 @@ export default function Contacts() {
 
   return (
     <div className="space-y-5">
+      <PageGuide {...pageGuides.contacts} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Contacts</h1>

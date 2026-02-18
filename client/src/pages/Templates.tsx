@@ -10,6 +10,9 @@ import { Plus, Mail, MoreHorizontal, Trash2, Copy, Eye } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { toast } from "sonner";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
+
 
 export default function Templates() {
   const [showCreate, setShowCreate] = useState(false);
@@ -41,6 +44,7 @@ export default function Templates() {
 
   return (
     <div className="space-y-5">
+      <PageGuide {...pageGuides.templates} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Email Templates</h1>

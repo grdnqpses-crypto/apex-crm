@@ -13,6 +13,9 @@ import { Progress } from "@/components/ui/progress";
 import { Server, Plus, MoreHorizontal, Trash2, RefreshCw, Shield, Zap, Mail } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
+
 
 const emptyForm = {
   emailAddress: "", displayName: "", domain: "", smtpHost: "", smtpPort: 587,
@@ -47,6 +50,7 @@ export default function SmtpAccounts() {
 
   return (
     <div className="space-y-5">
+      <PageGuide {...pageGuides.smtpAccounts} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">SMTP Accounts</h1>

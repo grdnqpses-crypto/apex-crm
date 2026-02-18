@@ -11,6 +11,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Progress } from "@/components/ui/progress";
 import { useState } from "react";
 import { toast } from "sonner";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
+
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -57,6 +60,7 @@ export default function ABTests() {
 
   return (
     <div className="space-y-5">
+      <PageGuide {...pageGuides.abTests} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">A/B Testing</h1>

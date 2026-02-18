@@ -27,6 +27,7 @@ import {
   BarChart3, ListChecks, GitBranch, FlaskConical, Key, Webhook,
   Filter, PanelLeft, LogOut, Zap, Send, ChevronDown,
   Brain, Target, Radar, Ghost, Flame, Plug,
+  ShieldCheck, Ban, Settings, Globe, Sparkles, BookOpen,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -75,6 +76,16 @@ const menuSections = [
       { icon: Ghost, label: "Ghost Sequences", path: "/paradigm/sequences" },
       { icon: Flame, label: "Battle Cards", path: "/paradigm/battle-cards" },
       { icon: Plug, label: "Integrations", path: "/paradigm/integrations" },
+      { icon: Sparkles, label: "Quantum Score", path: "/paradigm/quantum-score" },
+    ],
+  },
+  {
+    label: "Compliance & Safety",
+    items: [
+      { icon: ShieldCheck, label: "Compliance Center", path: "/compliance" },
+      { icon: Ban, label: "Suppression List", path: "/suppression" },
+      { icon: Settings, label: "Sender Settings", path: "/sender-settings" },
+      { icon: Globe, label: "Domain Stats", path: "/domain-stats" },
     ],
   },
   {
@@ -88,6 +99,12 @@ const menuSections = [
     items: [
       { icon: Key, label: "API Keys", path: "/api-keys" },
       { icon: Webhook, label: "Webhooks", path: "/webhooks" },
+    ],
+  },
+  {
+    label: "Resources",
+    items: [
+      { icon: BookOpen, label: "Help Center", path: "/help" },
     ],
   },
 ];

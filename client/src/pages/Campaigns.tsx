@@ -8,10 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Send, MoreHorizontal, Trash2, Shield, AlertTriangle, CheckCircle, Info } from "lucide-react";
+import { Plus, Send, MoreHorizontal, Trash2, Shield, AlertTriangle, CheckCircle, Info, FileText, Users, Loader2, Rocket } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -25,8 +27,12 @@ const STATUS_COLORS: Record<string, string> = {
 export default function Campaigns() {
   const [showCreate, setShowCreate] = useState(false);
   const [showSpamCheck, setShowSpamCheck] = useState(false);
+  const [showSendConfirm, setShowSendConfirm] = useState(false);
+  const [sendCampaignId, setSendCampaignId] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [spamResult, setSpamResult] = useState<any>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [selectedSegmentId, setSelectedSegmentId] = useState<string>("");
   const utils = trpc.useUtils();
 
   const listInput = useMemo(() => ({
@@ -35,20 +41,51 @@ export default function Campaigns() {
   }), [statusFilter]);
 
   const { data, isLoading } = trpc.campaigns.list.useQuery(listInput);
+  const { data: templates } = trpc.emailTemplates.list.useQuery();
+  const { data: segmentList } = trpc.segments.list.useQuery();
+
   const createMutation = trpc.campaigns.create.useMutation({
-    onSuccess: () => { utils.campaigns.list.invalidate(); utils.dashboard.stats.invalidate(); setShowCreate(false); toast.success("Campaign created"); },
+    onSuccess: () => { utils.campaigns.list.invalidate(); utils.dashboard.stats.invalidate(); setShowCreate(false); resetForm(); toast.success("Campaign created"); },
     onError: (e) => toast.error(e.message),
   });
   const deleteMutation = trpc.campaigns.delete.useMutation({
     onSuccess: () => { utils.campaigns.list.invalidate(); toast.success("Campaign deleted"); },
+  });
+  const loadTemplateMut = trpc.campaigns.loadTemplate.useMutation({
+    onSuccess: (data) => {
+      setForm(p => ({ ...p, subject: data.subject ?? p.subject, htmlContent: data.htmlContent ?? p.htmlContent }));
+      toast.success("Template loaded into campaign");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const sendMut = trpc.campaigns.send.useMutation({
+    onSuccess: (result) => {
+      utils.campaigns.list.invalidate();
+      setShowSendConfirm(false);
+      setSendCampaignId(null);
+      toast.success(`Campaign sent! ${result.queued} emails queued. ${result.skippedSuppressed > 0 ? `${result.skippedSuppressed} suppressed.` : ""}`);
+    },
+    onError: (e) => { toast.error(e.message); },
   });
   const analyzeSpam = trpc.campaigns.analyzeSpam.useMutation({
     onSuccess: (data) => { setSpamResult(data); },
     onError: (e) => toast.error(e.message),
   });
 
-  const [form, setForm] = useState({ name: "", subject: "", fromName: "", fromEmail: "", htmlContent: "" });
+  // Segment preview for send confirmation
+  const segmentPreviewQuery = trpc.campaigns.segmentPreview.useQuery(
+    { segmentId: Number(selectedSegmentId) },
+    { enabled: !!selectedSegmentId && selectedSegmentId !== "all" }
+  );
+
+  const [form, setForm] = useState({ name: "", subject: "", fromName: "", fromEmail: "", htmlContent: "", segmentId: "" });
   const [spamForm, setSpamForm] = useState({ subject: "", htmlContent: "", fromName: "" });
+
+  const resetForm = () => {
+    setForm({ name: "", subject: "", fromName: "", fromEmail: "", htmlContent: "", segmentId: "" });
+    setSelectedTemplateId("");
+    setSelectedSegmentId("");
+  };
 
   const handleCreate = () => {
     if (!form.name.trim()) { toast.error("Campaign name is required"); return; }
@@ -58,6 +95,7 @@ export default function Campaigns() {
       fromName: form.fromName || undefined,
       fromEmail: form.fromEmail || undefined,
       htmlContent: form.htmlContent || undefined,
+      segmentId: form.segmentId ? Number(form.segmentId) : undefined,
     });
   };
 
@@ -66,21 +104,27 @@ export default function Campaigns() {
     analyzeSpam.mutate(spamForm);
   };
 
+  const handleSendCampaign = (campaignId: number) => {
+    setSendCampaignId(campaignId);
+    setShowSendConfirm(true);
+  };
+
   const SEVERITY_ICONS: Record<string, any> = { critical: AlertTriangle, warning: AlertTriangle, info: Info };
   const SEVERITY_COLORS: Record<string, string> = { critical: "text-destructive", warning: "text-warning", info: "text-chart-1" };
 
   return (
     <div className="space-y-5">
+      <PageGuide {...pageGuides.campaigns} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Email Campaigns</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{data?.total ?? 0} campaigns</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{data?.total ?? 0} campaigns &middot; Connected to Templates, Segments, Compliance &amp; SMTP</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="gap-2" onClick={() => { setSpamResult(null); setShowSpamCheck(true); }}>
             <Shield className="h-4 w-4" /> Spam Checker
           </Button>
-          <Button onClick={() => setShowCreate(true)} size="sm" className="gap-2">
+          <Button onClick={() => { resetForm(); setShowCreate(true); }} size="sm" className="gap-2">
             <Plus className="h-4 w-4" /> New Campaign
           </Button>
         </div>
@@ -163,6 +207,11 @@ export default function Campaigns() {
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          {campaign.status === "draft" && (
+                            <DropdownMenuItem onClick={() => handleSendCampaign(campaign.id)}>
+                              <Rocket className="mr-2 h-4 w-4 text-green-400" /> Send Campaign
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate({ id: campaign.id })}>
                             <Trash2 className="mr-2 h-4 w-4" /> Delete
                           </DropdownMenuItem>
@@ -177,13 +226,60 @@ export default function Campaigns() {
         </CardContent>
       </Card>
 
-      {/* Create Campaign Dialog */}
+      {/* Create Campaign Dialog - Enhanced with Template & Segment */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="bg-card border-border max-w-2xl">
+        <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Create Email Campaign</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2"><Label>Campaign Name *</Label><Input value={form.name} onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Q1 Newsletter" className="bg-secondary/30" /></div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5 text-cyan-400" /> Load from Template</Label>
+              <Select value={selectedTemplateId} onValueChange={(v) => {
+                setSelectedTemplateId(v);
+                if (v) toast.info("Click 'Apply Template' to load content");
+              }}>
+                <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select template..." /></SelectTrigger>
+                <SelectContent>
+                  {(templates ?? []).map((t: any) => (
+                    <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedTemplateId && (
+                <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => {
+                  // We'll load template content directly into form
+                  const tpl = (templates ?? []).find((t: any) => t.id === Number(selectedTemplateId));
+                  if (tpl) {
+                    setForm(p => ({ ...p, subject: tpl.subject ?? p.subject, htmlContent: tpl.htmlContent ?? p.htmlContent }));
+                    toast.success("Template content loaded");
+                  }
+                }}>
+                  <FileText className="h-3.5 w-3.5" /> Apply Template
+                </Button>
+              )}
+            </div>
             <div className="space-y-2"><Label>Subject Line</Label><Input value={form.subject} onChange={(e) => setForm(p => ({ ...p, subject: e.target.value }))} placeholder="Your weekly update" className="bg-secondary/30" /></div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-violet-400" /> Target Segment</Label>
+              <Select value={form.segmentId} onValueChange={(v) => {
+                setForm(p => ({ ...p, segmentId: v === "all" ? "" : v }));
+                setSelectedSegmentId(v);
+              }}>
+                <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="All contacts" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All contacts with email</SelectItem>
+                  {(segmentList ?? []).map((s) => (
+                    <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedSegmentId && selectedSegmentId !== "all" && segmentPreviewQuery.data && (
+                <p className="text-xs text-muted-foreground">
+                  <Users className="h-3 w-3 inline mr-1" />
+                  {segmentPreviewQuery.data.count} contacts match this segment
+                </p>
+              )}
+            </div>
             <div className="space-y-2"><Label>From Name</Label><Input value={form.fromName} onChange={(e) => setForm(p => ({ ...p, fromName: e.target.value }))} placeholder="John from Acme" className="bg-secondary/30" /></div>
             <div className="space-y-2"><Label>From Email</Label><Input type="email" value={form.fromEmail} onChange={(e) => setForm(p => ({ ...p, fromEmail: e.target.value }))} placeholder="john@acme.com" className="bg-secondary/30" /></div>
             <div className="space-y-2 col-span-2">
@@ -194,6 +290,31 @@ export default function Campaigns() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
             <Button onClick={handleCreate} disabled={createMutation.isPending}>{createMutation.isPending ? "Creating..." : "Create Campaign"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Confirmation Dialog */}
+      <Dialog open={showSendConfirm} onOpenChange={setShowSendConfirm}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Rocket className="h-5 w-5 text-green-400" /> Send Campaign</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              This will queue emails for all matching contacts. The system will automatically:
+            </p>
+            <ul className="text-sm text-muted-foreground space-y-1.5 ml-4">
+              <li className="flex items-center gap-2"><CheckCircle className="h-3.5 w-3.5 text-green-400 shrink-0" /> Check suppression list for each recipient</li>
+              <li className="flex items-center gap-2"><CheckCircle className="h-3.5 w-3.5 text-green-400 shrink-0" /> Run CAN-SPAM compliance checks</li>
+              <li className="flex items-center gap-2"><CheckCircle className="h-3.5 w-3.5 text-green-400 shrink-0" /> Verify unsubscribe mechanism</li>
+              <li className="flex items-center gap-2"><CheckCircle className="h-3.5 w-3.5 text-green-400 shrink-0" /> Queue emails for SMTP delivery</li>
+            </ul>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSendConfirm(false)}>Cancel</Button>
+            <Button className="gap-2 bg-green-600 hover:bg-green-700" onClick={() => { if (sendCampaignId) sendMut.mutate({ id: sendCampaignId }); }} disabled={sendMut.isPending}>
+              {sendMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
+              {sendMut.isPending ? "Sending..." : "Confirm Send"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -217,7 +338,6 @@ export default function Campaigns() {
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Score Display */}
               <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/30">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Spam Score</p>
@@ -227,8 +347,6 @@ export default function Campaigns() {
                   {spamResult.overallRating?.toUpperCase()}
                 </Badge>
               </div>
-
-              {/* Issues */}
               {spamResult.issues?.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-sm font-semibold text-foreground">Issues Found ({spamResult.issues.length})</p>
@@ -250,7 +368,6 @@ export default function Campaigns() {
                   })}
                 </div>
               )}
-
               <Button variant="outline" onClick={() => setSpamResult(null)} className="w-full">Analyze Another Email</Button>
             </div>
           )}

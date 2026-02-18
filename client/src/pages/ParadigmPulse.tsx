@@ -9,6 +9,9 @@ import {
   Activity, CheckCircle2, Clock,
 } from "lucide-react";
 import { useLocation } from "wouter";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
+
 
 const stageConfig: Record<string, { color: string; bg: string }> = {
   discovered: { color: "text-zinc-400", bg: "bg-zinc-600" },
@@ -59,6 +62,7 @@ export default function ParadigmPulse() {
 
   return (
     <div className="space-y-6">
+      <PageGuide {...pageGuides.paradigmPulse} />
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>

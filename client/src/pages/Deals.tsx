@@ -10,6 +10,9 @@ import { Plus, DollarSign, MoreHorizontal, Trash2, Trophy, X, GripVertical } fro
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
+
 
 const DEFAULT_STAGES = [
   { name: "Qualification", probability: 10, color: "#6366f1" },
@@ -85,6 +88,7 @@ export default function Deals() {
 
   return (
     <div className="space-y-5">
+      <PageGuide {...pageGuides.deals} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Deals</h1>

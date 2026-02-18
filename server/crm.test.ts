@@ -739,3 +739,283 @@ describe("prospect outreach", () => {
     expect(list[0].subject).toBe("Test outreach");
   });
 });
+
+
+// ═══════════════════════════════════════════════════════════════
+// COMPLIANCE FORTRESS + DELIVERABILITY ENGINE TESTS
+// ═══════════════════════════════════════════════════════════════
+
+describe("suppression list", () => {
+  it("adds an email to the suppression list", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.suppression.add({
+      email: "suppressed@test.com",
+      reason: "bounce",
+      notes: "Hard bounce from campaign",
+    });
+    expect(result).toHaveProperty("id");
+  });
+
+  it("checks if an email is suppressed", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await caller.suppression.add({
+      email: "blocked@test.com",
+      reason: "complaint",
+    });
+    const check = await caller.suppression.check({ email: "blocked@test.com" });
+    expect(check.suppressed).toBe(true);
+
+    const checkClean = await caller.suppression.check({ email: "clean@test.com" });
+    expect(checkClean.suppressed).toBe(false);
+  });
+
+  it("lists suppression entries with pagination", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const list = await caller.suppression.list({ limit: 50, offset: 0 });
+    expect(list).toHaveProperty("items");
+    expect(list).toHaveProperty("total");
+    expect(Array.isArray(list.items)).toBe(true);
+  });
+
+  it("bulk adds emails to suppression list", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.suppression.bulkAdd({
+      emails: [
+        { email: "bulk1@test.com", reason: "unsubscribe" },
+        { email: "bulk2@test.com", reason: "bounce" },
+        { email: "bulk3@test.com", reason: "complaint" },
+      ],
+    });
+    expect(result.added).toBe(3);
+  });
+
+  it("removes an email from the suppression list", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const added = await caller.suppression.add({
+      email: "removeme@test.com",
+      reason: "manual",
+    });
+    const result = await caller.suppression.remove({ id: added.id });
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("compliance engine", () => {
+  it("runs pre-send compliance check - passes with valid content", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    // First set up sender settings
+    await caller.senderSettings.upsert({
+      companyName: "Test Corp",
+      physicalAddress: "123 Main St",
+      city: "New York",
+      state: "NY",
+      zipCode: "10001",
+      country: "US",
+      unsubscribeUrl: "https://example.com/unsubscribe",
+    });
+    const result = await caller.compliance.preCheck({
+      htmlContent: '<html><body><p>Hello</p><a href="https://example.com/unsubscribe">Unsubscribe</a><p>123 Main St, New York, NY 10001</p></body></html>',
+      subject: "Your monthly newsletter",
+      fromEmail: "news@test.com",
+      toEmail: "recipient@gmail.com",
+    });
+    expect(result).toHaveProperty("checks");
+    expect(result).toHaveProperty("recipientProvider");
+    expect(result.recipientProvider).toBe("gmail");
+  });
+
+  it("detects email providers correctly", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const gmailCheck = await caller.compliance.preCheck({
+      htmlContent: "<p>Test</p>",
+      subject: "Test",
+      fromEmail: "from@test.com",
+      toEmail: "user@gmail.com",
+    });
+    expect(gmailCheck.recipientProvider).toBe("gmail");
+
+    const outlookCheck = await caller.compliance.preCheck({
+      htmlContent: "<p>Test</p>",
+      subject: "Test",
+      fromEmail: "from@test.com",
+      toEmail: "user@outlook.com",
+    });
+    expect(outlookCheck.recipientProvider).toBe("outlook");
+
+    const yahooCheck = await caller.compliance.preCheck({
+      htmlContent: "<p>Test</p>",
+      subject: "Test",
+      fromEmail: "from@test.com",
+      toEmail: "user@yahoo.com",
+    });
+    expect(yahooCheck.recipientProvider).toBe("yahoo");
+  });
+
+  it("retrieves compliance stats", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const stats = await caller.compliance.stats();
+    expect(stats).toHaveProperty("total");
+    expect(stats).toHaveProperty("passed");
+    expect(stats).toHaveProperty("failed");
+  });
+
+  it("lists compliance audit entries", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const audits = await caller.compliance.audits({ limit: 10 });
+    expect(audits).toHaveProperty("items");
+    expect(audits).toHaveProperty("total");
+  });
+
+  it("analyzes email for deliverability risks", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.compliance.analyzeEmail({
+      htmlContent: '<html><body><p>Check out our FREE offer! ACT NOW!!!</p></body></html>',
+      subject: "FREE MONEY - ACT NOW!!!",
+      fromName: "Sales Team",
+    });
+    expect(result).toHaveProperty("score");
+    expect(result).toHaveProperty("grade");
+    expect(result).toHaveProperty("issues");
+    expect(result).toHaveProperty("providerRisks");
+    expect(result).toHaveProperty("subjectAnalysis");
+    expect(result).toHaveProperty("contentAnalysis");
+    expect(result).toHaveProperty("recommendations");
+    // Spammy content should get a lower score
+    expect(result.score).toBeLessThan(80);
+  }, 30000);
+});
+
+describe("sender settings", () => {
+  it("upserts and retrieves sender settings", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await caller.senderSettings.upsert({
+      companyName: "Apex Corp",
+      physicalAddress: "456 Business Ave",
+      city: "Chicago",
+      state: "IL",
+      zipCode: "60601",
+      country: "US",
+      outlookThrottlePerMinute: 8,
+      gmailThrottlePerMinute: 15,
+      yahooThrottlePerMinute: 12,
+      maxBounceRatePercent: 2,
+      maxComplaintRatePercent: 1,
+    });
+    const settings = await caller.senderSettings.get();
+    expect(settings).not.toBeNull();
+    if (settings) {
+      expect(settings.companyName).toBe("Apex Corp");
+      expect(settings.outlookThrottlePerMinute).toBe(8);
+      expect(settings.gmailThrottlePerMinute).toBe(15);
+    }
+  });
+
+  it("updates existing sender settings", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await caller.senderSettings.upsert({
+      companyName: "Updated Corp",
+      physicalAddress: "789 New St",
+      defaultFromName: "Updated Sender",
+      unsubscribeUrl: "https://updated.com/unsub",
+    });
+    const settings = await caller.senderSettings.get();
+    expect(settings).not.toBeNull();
+    if (settings) {
+      expect(settings.companyName).toBe("Updated Corp");
+      expect(settings.defaultFromName).toBe("Updated Sender");
+    }
+  });
+});
+
+describe("domain stats", () => {
+  it("retrieves domain stats list", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const stats = await caller.domainStats.list();
+    expect(Array.isArray(stats)).toBe(true);
+  });
+
+  it("retrieves aggregated domain stats", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const agg = await caller.domainStats.aggregated();
+    // Returns an array of per-domain aggregates (may be empty if no data)
+    expect(Array.isArray(agg)).toBe(true);
+  });
+
+  it("retrieves provider breakdown", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const breakdown = await caller.domainStats.providerBreakdown();
+    expect(Array.isArray(breakdown)).toBe(true);
+  });
+});
+
+describe("quantum score", () => {
+  it("calculates quantum score for a prospect", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const prospect = await caller.prospects.create({
+      firstName: "Quantum",
+      lastName: "TestLead",
+      email: "quantum@enterprise.com",
+      companyName: "Enterprise Corp",
+      jobTitle: "VP of Operations",
+      industry: "Technology",
+    });
+    const score = await caller.quantumScore.calculate({ prospectId: prospect.id });
+    expect(score).toHaveProperty("totalScore");
+    expect(score).toHaveProperty("scoreGrade");
+    expect(score).toHaveProperty("firmographicScore");
+    expect(score).toHaveProperty("behavioralScore");
+    expect(score).toHaveProperty("engagementScore");
+    expect(score).toHaveProperty("timingScore");
+    expect(score).toHaveProperty("socialScore");
+    expect(score).toHaveProperty("contentScore");
+    expect(score).toHaveProperty("recencyScore");
+    expect(score).toHaveProperty("frequencyScore");
+    expect(score).toHaveProperty("monetaryScore");
+    expect(score).toHaveProperty("channelScore");
+    expect(score).toHaveProperty("intentScore");
+    expect(score).toHaveProperty("relationshipScore");
+    expect(score).toHaveProperty("scoreExplanation");
+    expect(score).toHaveProperty("topStrengths");
+    expect(score).toHaveProperty("topWeaknesses");
+    expect(score).toHaveProperty("recommendedActions");
+    expect(score).toHaveProperty("predictedConversionProb");
+    expect(score).toHaveProperty("optimalContactTime");
+    expect(score).toHaveProperty("optimalChannel");
+    expect(score.totalScore).toBeGreaterThanOrEqual(0);
+    // totalScore can exceed 100 as it's an AI-computed composite score
+    expect(typeof score.totalScore).toBe('number');
+  }, 30000);
+
+  it("retrieves previously calculated quantum score", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const prospect = await caller.prospects.create({
+      firstName: "Retrieve",
+      lastName: "Score",
+      email: "retrieve@score.com",
+    });
+    await caller.quantumScore.calculate({ prospectId: prospect.id });
+    const score = await caller.quantumScore.get({ prospectId: prospect.id });
+    expect(score).not.toBeNull();
+    if (score) {
+      expect(score).toHaveProperty("totalScore");
+      expect(score).toHaveProperty("scoreGrade");
+    }
+  }, 30000);
+});
