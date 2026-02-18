@@ -1,0 +1,26 @@
+{
+  "query": "SELECT id, name, email, role, systemRole, tenantCompanyId FROM users;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, name, email, role, systemRole, tenantCompanyId FROM users;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "crm",
+      "email": "crm@shiplw.com",
+      "role": "admin",
+      "systemRole": "developer",
+      "tenantCompanyId": "NULL"
+    },
+    {
+      "id": "12",
+      "name": "Crypto- GRDN",
+      "email": "grdn.qpses@gmail.com",
+      "role": "admin",
+      "systemRole": "developer",
+      "tenantCompanyId": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\tsystemRole\ttenantCompanyId\n1\tcrm\tcrm@shiplw.com\tadmin\tdeveloper\tNULL\n12\tCrypto- GRDN\tgrdn.qpses@gmail.com\tadmin\tdeveloper\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 355
+}

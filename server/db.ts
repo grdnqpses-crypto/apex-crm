@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, sql, like, or, isNotNull } from "drizzle-orm";
+import { eq, and, desc, asc, sql, like, or, isNotNull, count } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser, users,
@@ -11,6 +11,9 @@ import {
   ghostSequences, ghostSequenceSteps, prospectOutreach, battleCards,
   suppressionList, complianceAuditLog, senderSettings,
   domainSendingStats, prospectScores, brokerFilings,
+  tenantCompanies, featureAssignments, companyInvites,
+  type TenantCompany, type InsertTenantCompany,
+  type FeatureAssignment, type CompanyInvite,
   type Contact, type InsertContact,
   type Company, type InsertCompany,
   type Deal, type InsertDeal,
@@ -1449,4 +1452,322 @@ export async function getBrokerFilingStats(userId: number) {
 export async function deleteBrokerFilingsBatch(userId: number, scanBatchId: string) {
   const db = await getDb(); if (!db) return;
   await db.delete(brokerFilings).where(and(eq(brokerFilings.userId, userId), eq(brokerFilings.scanBatchId, scanBatchId)));
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// ─── Multi-Tenant Hierarchy Helpers ──────────────────────────
+// ═══════════════════════════════════════════════════════════════
+
+// ─── Tenant Companies ───
+
+export async function createTenantCompany(data: Omit<InsertTenantCompany, "id">) {
+  const db = await getDb();
+  if (!db) return null as any;
+  const [result] = await db.insert(tenantCompanies).values(data);
+  return result.insertId;
+}
+
+export async function getTenantCompanies() {
+  const db = await getDb();
+  if (!db) return null as any;
+  return db.select().from(tenantCompanies).orderBy(desc(tenantCompanies.createdAt));
+}
+
+export async function getTenantCompanyById(id: number) {
+  const db = await getDb();
+  if (!db) return null as any;
+  const [company] = await db.select().from(tenantCompanies).where(eq(tenantCompanies.id, id));
+  return company || null;
+}
+
+export async function getTenantCompanyBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) return null as any;
+  const [company] = await db.select().from(tenantCompanies).where(eq(tenantCompanies.slug, slug));
+  return company || null;
+}
+
+export async function updateTenantCompany(id: number, data: Partial<InsertTenantCompany>) {
+  const db = await getDb();
+  if (!db) return null as any;
+  await db.update(tenantCompanies).set(data).where(eq(tenantCompanies.id, id));
+}
+
+export async function deleteTenantCompany(id: number) {
+  const db = await getDb();
+  if (!db) return null as any;
+  await db.delete(tenantCompanies).where(eq(tenantCompanies.id, id));
+}
+
+export async function getTenantCompanyUserCount(companyId: number) {
+  const db = await getDb();
+  if (!db) return null as any;
+  const [result] = await db.select({ count: count() }).from(users).where(eq(users.tenantCompanyId, companyId));
+  return result?.count ?? 0;
+}
+
+// ─── User Hierarchy ───
+
+export async function getUsersByCompany(companyId: number) {
+  const db = await getDb();
+  if (!db) return null as any;
+  return db.select().from(users).where(eq(users.tenantCompanyId, companyId)).orderBy(users.systemRole);
+}
+
+export async function getUsersByManager(managerId: number) {
+  const db = await getDb();
+  if (!db) return null as any;
+  return db.select().from(users).where(eq(users.managerId, managerId));
+}
+
+export async function getAllUsersWithCompany() {
+  const db = await getDb();
+  if (!db) return null as any;
+  return db.select({
+    user: users,
+    companyName: tenantCompanies.name,
+    companySlug: tenantCompanies.slug,
+  }).from(users)
+    .leftJoin(tenantCompanies, eq(users.tenantCompanyId, tenantCompanies.id))
+    .orderBy(desc(users.lastSignedIn));
+}
+
+export async function updateUserRole(userId: number, systemRole: "developer" | "company_admin" | "manager" | "user") {
+  const db = await getDb();
+  if (!db) return null as any;
+  await db.update(users).set({ systemRole }).where(eq(users.id, userId));
+}
+
+export async function updateUserCompany(userId: number, companyId: number | null, managerId: number | null = null) {
+  const db = await getDb();
+  if (!db) return null as any;
+  await db.update(users).set({ tenantCompanyId: companyId, managerId }).where(eq(users.id, userId));
+}
+
+export async function updateUserProfile(userId: number, data: { name?: string; jobTitle?: string; phone?: string; avatarUrl?: string; isActive?: boolean }) {
+  const db = await getDb();
+  if (!db) return null as any;
+  await db.update(users).set(data).where(eq(users.id, userId));
+}
+
+export async function deactivateUser(userId: number) {
+  const db = await getDb();
+  if (!db) return null as any;
+  await db.update(users).set({ isActive: false }).where(eq(users.id, userId));
+}
+
+export async function activateUser(userId: number) {
+  const db = await getDb();
+  if (!db) return null as any;
+  await db.update(users).set({ isActive: true }).where(eq(users.id, userId));
+}
+
+// ─── Feature Assignments ───
+
+export const ALL_FEATURES = [
+  { key: "crm_contacts", label: "Contacts", group: "CRM" },
+  { key: "crm_companies", label: "Companies", group: "CRM" },
+  { key: "crm_deals", label: "Deals", group: "CRM" },
+  { key: "crm_tasks", label: "Tasks", group: "CRM" },
+  { key: "marketing_campaigns", label: "Campaigns", group: "Marketing" },
+  { key: "marketing_templates", label: "Templates", group: "Marketing" },
+  { key: "marketing_deliverability", label: "Deliverability", group: "Marketing" },
+  { key: "marketing_ab_tests", label: "A/B Tests", group: "Marketing" },
+  { key: "marketing_smtp", label: "SMTP Accounts", group: "Marketing" },
+  { key: "automation_workflows", label: "Workflows", group: "Automation" },
+  { key: "automation_segments", label: "Segments", group: "Automation" },
+  { key: "paradigm_pulse", label: "Pulse Dashboard", group: "Paradigm Engine" },
+  { key: "paradigm_prospects", label: "Prospects", group: "Paradigm Engine" },
+  { key: "paradigm_signals", label: "Signals", group: "Paradigm Engine" },
+  { key: "paradigm_sequences", label: "Ghost Sequences", group: "Paradigm Engine" },
+  { key: "paradigm_battle_cards", label: "Battle Cards", group: "Paradigm Engine" },
+  { key: "paradigm_integrations", label: "Integrations", group: "Paradigm Engine" },
+  { key: "paradigm_quantum_score", label: "Quantum Score", group: "Paradigm Engine" },
+  { key: "compliance_center", label: "Compliance Center", group: "Compliance" },
+  { key: "compliance_suppression", label: "Suppression List", group: "Compliance" },
+  { key: "compliance_sender_settings", label: "Sender Settings", group: "Compliance" },
+  { key: "compliance_domain_stats", label: "Domain Stats", group: "Compliance" },
+  { key: "analytics_reports", label: "Reports", group: "Analytics" },
+] as const;
+
+export type FeatureKey = typeof ALL_FEATURES[number]["key"];
+
+export async function getUserFeatures(userId: number): Promise<string[]> {
+  const db = await getDb();
+  if (!db) return null as any;
+  const assignments = await db.select({ featureKey: featureAssignments.featureKey })
+    .from(featureAssignments)
+    .where(eq(featureAssignments.userId, userId));
+  return assignments.map(a => a.featureKey);
+}
+
+export async function getCompanyFeatures(companyId: number): Promise<string[]> {
+  const db = await getDb();
+  if (!db) return null as any;
+  const [company] = await db.select({ enabledFeatures: tenantCompanies.enabledFeatures })
+    .from(tenantCompanies)
+    .where(eq(tenantCompanies.id, companyId));
+  return (company?.enabledFeatures as string[]) || [];
+}
+
+export async function assignFeaturesToUser(userId: number, featureKeys: string[], grantedBy: number, companyId: number) {
+  const db = await getDb();
+  if (!db) return null as any;
+  // Remove existing assignments for this user
+  await db.delete(featureAssignments).where(eq(featureAssignments.userId, userId));
+  // Insert new assignments
+  if (featureKeys.length > 0) {
+    const now = Date.now();
+    await db.insert(featureAssignments).values(
+      featureKeys.map(key => ({
+        userId,
+        featureKey: key,
+        grantedBy,
+        tenantCompanyId: companyId,
+        createdAt: now,
+      }))
+    );
+  }
+}
+
+export async function getFeatureAssignmentsByCompany(companyId: number) {
+  const db = await getDb();
+  if (!db) return null as any;
+  return db.select({
+    assignment: featureAssignments,
+    userName: users.name,
+    userEmail: users.email,
+  }).from(featureAssignments)
+    .innerJoin(users, eq(featureAssignments.userId, users.id))
+    .where(eq(featureAssignments.tenantCompanyId, companyId));
+}
+
+// ─── Company Invites ───
+
+export async function createCompanyInvite(data: {
+  tenantCompanyId: number;
+  email: string;
+  inviteRole: "company_admin" | "manager" | "user";
+  managerId?: number;
+  token: string;
+  invitedBy: number;
+  features?: string[];
+  expiresAt: number;
+}) {
+  const db = await getDb();
+  if (!db) return null as any;
+  const [result] = await db.insert(companyInvites).values({
+    ...data,
+    createdAt: Date.now(),
+  });
+  return result.insertId;
+}
+
+export async function getCompanyInvites(companyId: number) {
+  const db = await getDb();
+  if (!db) return null as any;
+  return db.select().from(companyInvites)
+    .where(eq(companyInvites.tenantCompanyId, companyId))
+    .orderBy(desc(companyInvites.createdAt));
+}
+
+export async function getInviteByToken(token: string) {
+  const db = await getDb();
+  if (!db) return null as any;
+  const [invite] = await db.select().from(companyInvites).where(eq(companyInvites.token, token));
+  return invite || null;
+}
+
+export async function acceptInvite(token: string) {
+  const db = await getDb();
+  if (!db) return null as any;
+  await db.update(companyInvites).set({
+    status: "accepted",
+    acceptedAt: Date.now(),
+  }).where(eq(companyInvites.token, token));
+}
+
+export async function revokeInvite(id: number) {
+  const db = await getDb();
+  if (!db) return null as any;
+  await db.update(companyInvites).set({ status: "revoked" }).where(eq(companyInvites.id, id));
+}
+
+// ─── System Health & Activity Logs ───
+
+export async function getSystemStats() {
+  const db = await getDb();
+  if (!db) return null as any;
+  const [userCount] = await db.select({ count: count() }).from(users);
+  const [companyCount] = await db.select({ count: count() }).from(tenantCompanies);
+  const [contactCount] = await db.select({ count: count() }).from(contacts);
+  const [dealCount] = await db.select({ count: count() }).from(deals);
+  const [campaignCount] = await db.select({ count: count() }).from(emailCampaigns);
+  const [prospectCount] = await db.select({ count: count() }).from(prospects);
+  const [activeUsers] = await db.select({ count: count() }).from(users).where(eq(users.isActive, true));
+  const [invitePending] = await db.select({ count: count() }).from(companyInvites).where(eq(companyInvites.status, "pending"));
+  
+  return {
+    totalUsers: userCount?.count ?? 0,
+    totalCompanies: companyCount?.count ?? 0,
+    totalContacts: contactCount?.count ?? 0,
+    totalDeals: dealCount?.count ?? 0,
+    totalCampaigns: campaignCount?.count ?? 0,
+    totalProspects: prospectCount?.count ?? 0,
+    activeUsers: activeUsers?.count ?? 0,
+    pendingInvites: invitePending?.count ?? 0,
+  };
+}
+
+export async function getTableRowCounts() {
+  const db = await getDb();
+  if (!db) return null as any;
+  const tables = [
+    { name: "users", table: users },
+    { name: "tenant_companies", table: tenantCompanies },
+    { name: "contacts", table: contacts },
+    { name: "companies", table: companies },
+    { name: "deals", table: deals },
+    { name: "tasks", table: tasks },
+    { name: "email_campaigns", table: emailCampaigns },
+    { name: "email_templates", table: emailTemplates },
+    { name: "email_queue", table: emailQueue },
+    { name: "prospects", table: prospects },
+    { name: "trigger_signals", table: triggerSignals },
+    { name: "ghost_sequences", table: ghostSequences },
+    { name: "battle_cards", table: battleCards },
+    { name: "activities", table: activities },
+    { name: "segments", table: segments },
+    { name: "workflows", table: workflows },
+    { name: "smtp_accounts", table: smtpAccounts },
+    { name: "suppression_list", table: suppressionList },
+    { name: "feature_assignments", table: featureAssignments },
+    { name: "company_invites", table: companyInvites },
+    { name: "broker_filings", table: brokerFilings },
+  ];
+  
+  const results = await Promise.all(
+    tables.map(async ({ name, table }) => {
+      const [result] = await db.select({ count: count() }).from(table);
+      return { table: name, rows: result?.count ?? 0 };
+    })
+  );
+  return results;
+}
+
+export async function getGlobalRecentActivity(limit = 50) {
+  const db = await getDb();
+  if (!db) return null as any;
+  return db.select({
+    id: activities.id,
+    type: activities.type,
+    subject: activities.subject,
+    body: activities.body,
+    contactId: activities.contactId,
+    userId: activities.userId,
+    createdAt: activities.createdAt,
+  }).from(activities)
+    .orderBy(desc(activities.createdAt))
+    .limit(limit);
 }

@@ -1677,5 +1677,320 @@ export const appRouter = router({
       return { success: true };
     }),
   }),
+
+  // ═══════════════════════════════════════════════════════════════
+  // ─── Multi-Tenant Hierarchy ────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════
+
+  tenants: router({
+    // Developer-only: list all companies
+    list: adminProcedure.query(async () => {
+      const companies = await db.getTenantCompanies();
+      const withCounts = await Promise.all(companies.map(async (c: any) => ({
+        ...c,
+        userCount: await db.getTenantCompanyUserCount(c.id),
+      })));
+      return withCounts;
+    }),
+
+    // Developer-only: get single company
+    get: adminProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+      const company = await db.getTenantCompanyById(input.id);
+      if (!company) throw new TRPCError({ code: "NOT_FOUND", message: "Company not found" });
+      const userCount = await db.getTenantCompanyUserCount(company.id);
+      return { ...company, userCount };
+    }),
+
+    // Developer-only: create company
+    create: adminProcedure.input(z.object({
+      name: z.string().min(1),
+      slug: z.string().min(1).regex(/^[a-z0-9-]+$/),
+      industry: z.string().optional(),
+      website: z.string().optional(),
+      contactEmail: z.string().email().optional(),
+      phone: z.string().optional(),
+      address: z.string().optional(),
+      maxUsers: z.number().min(1).default(25),
+      subscriptionTier: z.enum(["trial", "starter", "professional", "enterprise"]).default("trial"),
+      enabledFeatures: z.array(z.string()).optional(),
+    })).mutation(async ({ input }) => {
+      const existing = await db.getTenantCompanyBySlug(input.slug);
+      if (existing) throw new TRPCError({ code: "CONFLICT", message: "Company slug already exists" });
+      const now = Date.now();
+      const allFeatureKeys = db.ALL_FEATURES.map(f => f.key);
+      const id = await db.createTenantCompany({
+        ...input,
+        enabledFeatures: input.enabledFeatures || allFeatureKeys,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return { id };
+    }),
+
+    // Developer-only: update company
+    update: adminProcedure.input(z.object({
+      id: z.number(),
+      name: z.string().optional(),
+      industry: z.string().optional(),
+      website: z.string().optional(),
+      contactEmail: z.string().optional(),
+      phone: z.string().optional(),
+      address: z.string().optional(),
+      maxUsers: z.number().optional(),
+      subscriptionTier: z.enum(["trial", "starter", "professional", "enterprise"]).optional(),
+      subscriptionStatus: z.enum(["active", "suspended", "cancelled", "expired"]).optional(),
+      enabledFeatures: z.array(z.string()).optional(),
+    })).mutation(async ({ input }) => {
+      const { id, ...data } = input;
+      await db.updateTenantCompany(id, { ...data, updatedAt: Date.now() } as any);
+      return { success: true };
+    }),
+
+    // Developer-only: delete company
+    delete: adminProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+      await db.deleteTenantCompany(input.id);
+      return { success: true };
+    }),
+
+    // Get company users (admin of that company or developer)
+    users: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
+      if (ctx.user.systemRole !== "developer" && ctx.user.tenantCompanyId !== input.companyId) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      return db.getUsersByCompany(input.companyId);
+    }),
+
+    // Get users under a manager
+    managerUsers: protectedProcedure.input(z.object({ managerId: z.number() })).query(async ({ ctx, input }) => {
+      if (ctx.user.systemRole !== "developer" && ctx.user.id !== input.managerId && ctx.user.systemRole !== "company_admin") {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      return db.getUsersByManager(input.managerId);
+    }),
+
+    // Get available features list
+    allFeatures: protectedProcedure.query(() => {
+      return db.ALL_FEATURES;
+    }),
+  }),
+
+  userManagement: router({
+    // Developer-only: get all users across all companies
+    allUsers: adminProcedure.query(async () => {
+      return db.getAllUsersWithCompany();
+    }),
+
+    // Update user role (developer can set any, admin can set within company)
+    setRole: protectedProcedure.input(z.object({
+      userId: z.number(),
+      systemRole: z.enum(["developer", "company_admin", "manager", "user"]),
+    })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.systemRole === "developer") {
+        await db.updateUserRole(input.userId, input.systemRole);
+      } else if (ctx.user.systemRole === "company_admin") {
+        if (input.systemRole === "developer") throw new TRPCError({ code: "FORBIDDEN", message: "Cannot promote to developer" });
+        await db.updateUserRole(input.userId, input.systemRole);
+      } else {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      return { success: true };
+    }),
+
+    // Assign user to company
+    assignToCompany: adminProcedure.input(z.object({
+      userId: z.number(),
+      companyId: z.number().nullable(),
+      managerId: z.number().nullable().optional(),
+    })).mutation(async ({ input }) => {
+      await db.updateUserCompany(input.userId, input.companyId, input.managerId ?? null);
+      return { success: true };
+    }),
+
+    // Update user profile
+    updateProfile: protectedProcedure.input(z.object({
+      userId: z.number(),
+      name: z.string().optional(),
+      jobTitle: z.string().optional(),
+      phone: z.string().optional(),
+      isActive: z.boolean().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { userId, ...data } = input;
+      if (ctx.user.systemRole !== "developer" && ctx.user.systemRole !== "company_admin" && ctx.user.id !== userId) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      await db.updateUserProfile(userId, data);
+      return { success: true };
+    }),
+
+    // Deactivate user
+    deactivate: protectedProcedure.input(z.object({ userId: z.number() })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.systemRole !== "developer" && ctx.user.systemRole !== "company_admin") {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      await db.deactivateUser(input.userId);
+      return { success: true };
+    }),
+
+    // Activate user
+    activate: protectedProcedure.input(z.object({ userId: z.number() })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.systemRole !== "developer" && ctx.user.systemRole !== "company_admin") {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      await db.activateUser(input.userId);
+      return { success: true };
+    }),
+
+    // Assign features to a user
+    assignFeatures: protectedProcedure.input(z.object({
+      userId: z.number(),
+      featureKeys: z.array(z.string()),
+      companyId: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.systemRole !== "developer" && ctx.user.systemRole !== "company_admin" && ctx.user.systemRole !== "manager") {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      // Managers can only assign features they themselves have
+      if (ctx.user.systemRole === "manager") {
+        const myFeatures = await db.getUserFeatures(ctx.user.id);
+        const invalid = input.featureKeys.filter(k => !myFeatures.includes(k));
+        if (invalid.length > 0) {
+          throw new TRPCError({ code: "FORBIDDEN", message: `Cannot assign features you don't have: ${invalid.join(", ")}` });
+        }
+      }
+      await db.assignFeaturesToUser(input.userId, input.featureKeys, ctx.user.id, input.companyId);
+      return { success: true };
+    }),
+
+    // Get user's assigned features
+    getFeatures: protectedProcedure.input(z.object({ userId: z.number() })).query(async ({ input }) => {
+      return db.getUserFeatures(input.userId);
+    }),
+
+    // Get my features (for current user)
+    myFeatures: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.systemRole === "developer") {
+        return db.ALL_FEATURES.map(f => f.key);
+      }
+      return db.getUserFeatures(ctx.user.id);
+    }),
+  }),
+
+  invites: router({
+    // Create invite (admin or manager)
+    create: protectedProcedure.input(z.object({
+      companyId: z.number(),
+      email: z.string().email(),
+      role: z.enum(["company_admin", "manager", "user"]),
+      managerId: z.number().optional(),
+      features: z.array(z.string()).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.systemRole !== "developer" && ctx.user.systemRole !== "company_admin" && ctx.user.systemRole !== "manager") {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      if (ctx.user.systemRole === "manager" && input.role !== "user") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Managers can only invite users" });
+      }
+      const token = nanoid(48);
+      const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+      const id = await db.createCompanyInvite({
+        tenantCompanyId: input.companyId,
+        email: input.email,
+        inviteRole: input.role,
+        managerId: input.managerId || (ctx.user.systemRole === "manager" ? ctx.user.id : undefined),
+        token,
+        invitedBy: ctx.user.id,
+        features: input.features,
+        expiresAt,
+      });
+      return { id, token, expiresAt };
+    }),
+
+    // List invites for a company
+    list: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
+      if (ctx.user.systemRole !== "developer" && ctx.user.tenantCompanyId !== input.companyId) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      return db.getCompanyInvites(input.companyId);
+    }),
+
+    // Revoke invite
+    revoke: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.systemRole !== "developer" && ctx.user.systemRole !== "company_admin") {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      await db.revokeInvite(input.id);
+      return { success: true };
+    }),
+
+    // Accept invite (public - user clicks invite link)
+    accept: protectedProcedure.input(z.object({ token: z.string() })).mutation(async ({ ctx, input }) => {
+      const invite = await db.getInviteByToken(input.token);
+      if (!invite) throw new TRPCError({ code: "NOT_FOUND", message: "Invite not found" });
+      if (invite.status !== "pending") throw new TRPCError({ code: "BAD_REQUEST", message: "Invite is no longer valid" });
+      if (invite.expiresAt < Date.now()) throw new TRPCError({ code: "BAD_REQUEST", message: "Invite has expired" });
+
+      // Update user with company, role, and manager
+      await db.updateUserCompany(ctx.user.id, invite.tenantCompanyId, invite.managerId ?? null);
+      await db.updateUserRole(ctx.user.id, invite.inviteRole);
+
+      // Assign features from invite
+      if (invite.features && Array.isArray(invite.features) && invite.features.length > 0) {
+        await db.assignFeaturesToUser(ctx.user.id, invite.features as string[], invite.invitedBy, invite.tenantCompanyId);
+      }
+
+      await db.acceptInvite(input.token);
+      return { success: true, companyId: invite.tenantCompanyId };
+    }),
+  }),
+
+  devTools: router({
+    // System health stats
+    systemStats: adminProcedure.query(async () => {
+      return db.getSystemStats();
+    }),
+
+    // Table row counts for DB inspector
+    tableRowCounts: adminProcedure.query(async () => {
+      return db.getTableRowCounts();
+    }),
+
+    // Global activity log
+    activityLog: adminProcedure.input(z.object({ limit: z.number().default(50) }).optional()).query(async ({ input }) => {
+      return db.getGlobalRecentActivity(input?.limit ?? 50);
+    }),
+
+    // Server info
+    serverInfo: adminProcedure.query(async () => {
+      const uptime = process.uptime();
+      const memUsage = process.memoryUsage();
+      return {
+        uptime: Math.floor(uptime),
+        uptimeFormatted: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${Math.floor(uptime % 60)}s`,
+        memory: {
+          rss: Math.round(memUsage.rss / 1024 / 1024),
+          heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
+          heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
+          external: Math.round(memUsage.external / 1024 / 1024),
+        },
+        nodeVersion: process.version,
+        platform: process.platform,
+        pid: process.pid,
+        env: process.env.NODE_ENV || "development",
+      };
+    }),
+
+    // Impersonate user (returns user data for viewing)
+    impersonateUser: adminProcedure.input(z.object({ userId: z.number() })).query(async ({ input }) => {
+      const allUsers = await db.getAllUsersWithCompany();
+      const target = allUsers.find((u: any) => u.user.id === input.userId);
+      if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      const features = await db.getUserFeatures(input.userId);
+      return {
+        user: target.user,
+        companyName: target.companyName,
+        features,
+      };
+    }),
+  }),
 });
 export type AppRouter = typeof appRouter;

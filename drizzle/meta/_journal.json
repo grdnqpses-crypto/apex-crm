@@ -15,6 +15,13 @@
       "when": 1771437311453,
       "tag": "0001_nostalgic_thunderbird",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1771442335120,
+      "tag": "0002_clever_multiple_man",
+      "breakpoints": true
     }
   ]
 }

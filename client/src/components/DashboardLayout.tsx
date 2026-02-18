@@ -28,12 +28,14 @@ import {
   Filter, PanelLeft, LogOut, Zap, Send, ChevronDown,
   Brain, Target, Radar, Ghost, Flame, Plug,
   ShieldCheck, Ban, Settings, Globe, Sparkles, BookOpen, FileSearch,
+  Activity, Database, Eye, ScrollText, UserCog,
 } from "lucide-react";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { toast } from "sonner";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 
 // ─── Menu Sections (Developer is separate, hidden by default) ───
 
@@ -42,6 +44,7 @@ const standardSections = [
     label: "Overview",
     items: [
       { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+      { icon: Users, label: "Team", path: "/team" },
     ],
   },
   {
@@ -108,6 +111,11 @@ const standardSections = [
 const developerSection = {
   label: "Developer",
   items: [
+    { icon: Building2, label: "Companies", path: "/dev/companies" },
+    { icon: UserCog, label: "All Users", path: "/dev/users" },
+    { icon: Activity, label: "System Health", path: "/dev/health" },
+    { icon: ScrollText, label: "Activity Log", path: "/dev/activity" },
+    { icon: Eye, label: "Impersonate", path: "/dev/impersonate" },
     { icon: FileSearch, label: "FMCSA Scanner", path: "/fmcsa-scanner" },
     { icon: Key, label: "API Keys", path: "/api-keys" },
     { icon: Webhook, label: "Webhooks", path: "/webhooks" },
@@ -266,9 +274,15 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const { devMode, handleLogoTap, disableDevMode } = useDevMode();
+  const { canAccessSidebarItem } = useFeatureAccess();
 
   const menuSections = getMenuSections(devMode);
-  const allMenuItems = menuSections.flatMap(s => s.items);
+  // Filter sidebar items based on feature access
+  const filteredSections = menuSections.map(section => ({
+    ...section,
+    items: section.items.filter(item => canAccessSidebarItem(item.path)),
+  })).filter(section => section.items.length > 0);
+  const allMenuItems = filteredSections.flatMap(s => s.items);
   const activeMenuItem = allMenuItems.find(item => item.path === location) || allMenuItems.find(item => location.startsWith(item.path) && item.path !== "/");
 
   useEffect(() => {
@@ -327,7 +341,7 @@ function DashboardLayoutContent({
           </SidebarHeader>
 
           <SidebarContent className="gap-0 py-2">
-            {menuSections.map((section) => (
+            {filteredSections.map((section) => (
               <div key={section.label} className="mb-1">
                 {!isCollapsed && (
                   <div className="px-4 py-1.5">

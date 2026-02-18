@@ -373,3 +373,62 @@
 - [x] Amber logo icon + DEV badge when developer mode is active
 - [x] "Hide Dev Options" in user dropdown to disable without closing browser
 - [x] All 107 tests passing
+
+## Phase 10: Multi-Tenant Hierarchy & Role-Based Access Control
+
+### Database Schema
+- [x] Create tenant_companies table (company profiles, settings, branding, subscription plan, maxUsers, billing)
+- [x] Extend users table with companyId, hierarchical systemRole (developer/company_admin/manager/user), managerId
+- [x] Create feature_assignments table (assignable features per user with companyId, assignedBy)
+- [x] Create company_invites table (invite tokens with role, email, expiry, status)
+- [x] Run migrations (0002_clever_multiple_man.sql applied)
+
+### Role Hierarchy
+- [x] Developer (God mode): full access to everything, manages all companies, all features unlocked
+- [x] Company Admin: manages their company settings, managers, users, and feature assignments
+- [x] Manager: manages their assigned users, can assign features from their own allowed set
+- [x] User: access only to features assigned by their manager/admin
+
+### Backend API
+- [x] Company CRUD endpoints (developer only via adminProcedure)
+- [x] User invite/onboard endpoints (admin creates managers, managers create users)
+- [x] Role management endpoints (promote/demote within hierarchy with validation)
+- [x] Feature assignment endpoints (admin assigns to managers, managers assign to users with cascading validation)
+- [x] Feature gate: useFeatureAccess hook checks user's allowed features on frontend
+- [x] Company settings endpoints (admin manages company profile, branding)
+- [x] myFeatures endpoint for current user's assigned features
+- [x] allFeatures endpoint listing all 23 assignable features
+
+### Developer God Mode Panel
+- [x] Company management page (create, edit, suspend companies) — DevCompanies.tsx
+- [x] Global user directory (see all users across all companies, change roles, assign companies) — DevUsers.tsx
+- [x] System Health Monitor (server uptime, memory, DB table row counts, API response times) — DevSystemHealth.tsx
+- [x] User Impersonation (view user details, feature assignments) — DevImpersonate.tsx
+- [x] Activity Logs Viewer (global audit trail of all user actions) — DevActivityLog.tsx
+
+### Company Admin Panel
+- [x] Team management page (invite/remove managers and users) — CompanyAdmin.tsx
+- [x] Feature assignment matrix (toggle 23 features per manager/user grouped by category)
+- [x] Invite system with email, role, and token generation
+- [x] Company-level user listing with role badges
+
+### Manager Panel
+- [x] Team view (see assigned users) — integrated into CompanyAdmin.tsx
+- [x] Feature assignment for their users (from their allowed feature set, validated server-side)
+
+### Feature-Gated Access
+- [x] useFeatureAccess hook enforces feature gates across all CRM pages
+- [x] Sidebar items filtered based on user's assigned features (23 feature-to-route mappings)
+- [x] Developer/admin bypass: full access without feature checks
+- [x] Always-accessible routes: Dashboard, Help Center, Team
+
+### Additional Developer Tools
+- [x] Database Inspector (browse all 36 tables with row counts) — DevSystemHealth.tsx
+- [x] System Health Monitor (server uptime, memory usage, DB health, API metrics) — DevSystemHealth.tsx
+- [x] User Impersonation (view any user's profile, features, role) — DevImpersonate.tsx
+- [x] Activity Logs Viewer (global audit trail with type filters) — DevActivityLog.tsx
+- [x] All 6 dev tools in sidebar under Developer section (behind 11-tap unlock)
+
+### Tests
+- [x] Multi-tenant hierarchy tests (19 tests: features, roles, schema, assignments, invites, sidebar mapping)
+- [x] All tests passing across 5 test files

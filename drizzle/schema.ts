@@ -1,5 +1,29 @@
 import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, bigint } from "drizzle-orm/mysql-core";
 
+// ─── Tenant Companies ───
+export const tenantCompanies = mysqlTable("tenant_companies", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 256 }).notNull(),
+  slug: varchar("slug", { length: 128 }).notNull().unique(),
+  industry: varchar("industry", { length: 256 }),
+  website: varchar("website", { length: 512 }),
+  logoUrl: varchar("logoUrl", { length: 512 }),
+  address: text("address"),
+  phone: varchar("phone", { length: 64 }),
+  contactEmail: varchar("contactEmail", { length: 320 }),
+  maxUsers: int("maxUsers").default(25),
+  subscriptionTier: mysqlEnum("subscriptionTier", ["trial", "starter", "professional", "enterprise"]).default("trial").notNull(),
+  subscriptionStatus: mysqlEnum("subscriptionStatus", ["active", "suspended", "cancelled", "expired"]).default("active").notNull(),
+  trialEndsAt: bigint("trialEndsAt", { mode: "number" }),
+  enabledFeatures: json("enabledFeatures").$type<string[]>(),
+  settings: json("settings").$type<Record<string, unknown>>(),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+
+export type TenantCompany = typeof tenantCompanies.$inferSelect;
+export type InsertTenantCompany = typeof tenantCompanies.$inferInsert;
+
 // ─── Users ───
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
@@ -8,6 +32,16 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  // Multi-tenant hierarchy fields
+  systemRole: mysqlEnum("systemRole", ["developer", "company_admin", "manager", "user"]).default("user").notNull(),
+  tenantCompanyId: int("tenantCompanyId"),
+  managerId: int("managerId"),
+  isActive: boolean("isActive").default(true).notNull(),
+  invitedBy: int("invitedBy"),
+  jobTitle: varchar("jobTitle", { length: 256 }),
+  phone: varchar("phone", { length: 64 }),
+  avatarUrl: varchar("avatarUrl", { length: 512 }),
+  lastActiveAt: bigint("lastActiveAt", { mode: "number" }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -15,6 +49,36 @@ export const users = mysqlTable("users", {
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+
+// ─── Feature Assignments ───
+export const featureAssignments = mysqlTable("feature_assignments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  featureKey: varchar("featureKey", { length: 128 }).notNull(),
+  grantedBy: int("grantedBy").notNull(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+
+export type FeatureAssignment = typeof featureAssignments.$inferSelect;
+
+// ─── Company Invites ───
+export const companyInvites = mysqlTable("company_invites", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  inviteRole: mysqlEnum("inviteRole", ["company_admin", "manager", "user"]).default("user").notNull(),
+  managerId: int("managerId"),
+  token: varchar("token", { length: 128 }).notNull().unique(),
+  invitedBy: int("invitedBy").notNull(),
+  status: mysqlEnum("inviteStatus", ["pending", "accepted", "expired", "revoked"]).default("pending").notNull(),
+  features: json("features").$type<string[]>(),
+  expiresAt: bigint("expiresAt", { mode: "number" }).notNull(),
+  acceptedAt: bigint("acceptedAt", { mode: "number" }),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+
+export type CompanyInvite = typeof companyInvites.$inferSelect;
 
 // ─── Contacts (per ContactInstructions.docx) ───
 export const contacts = mysqlTable("contacts", {

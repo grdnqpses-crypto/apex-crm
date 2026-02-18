@@ -39,6 +39,12 @@ const DomainStats = lazy(() => import("./pages/DomainStats"));
 const QuantumScore = lazy(() => import("./pages/QuantumScore"));
 const HelpCenter = lazy(() => import("./pages/HelpCenter"));
 const FmcsaScanner = lazy(() => import("./pages/FmcsaScanner"));
+const DevCompanies = lazy(() => import("./pages/DevCompanies"));
+const DevUsers = lazy(() => import("./pages/DevUsers"));
+const DevSystemHealth = lazy(() => import("./pages/DevSystemHealth"));
+const DevActivityLog = lazy(() => import("./pages/DevActivityLog"));
+const DevImpersonate = lazy(() => import("./pages/DevImpersonate"));
+const CompanyAdmin = lazy(() => import("./pages/CompanyAdmin"));
 
 function PageLoader() {
   return (
@@ -86,6 +92,12 @@ function Router() {
           <Route path="/sender-settings" component={SenderSettings} />
           <Route path="/domain-stats" component={DomainStats} />
           <Route path="/fmcsa-scanner" component={FmcsaScanner} />
+          <Route path="/dev/companies" component={DevCompanies} />
+          <Route path="/dev/users" component={DevUsers} />
+          <Route path="/dev/health" component={DevSystemHealth} />
+          <Route path="/dev/activity" component={DevActivityLog} />
+          <Route path="/dev/impersonate" component={DevImpersonate} />
+          <Route path="/team" component={CompanyAdmin} />
           <Route path="/help" component={HelpCenter} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
