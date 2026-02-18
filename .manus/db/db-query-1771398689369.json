@@ -1,0 +1,60 @@
+{
+  "query": "SELECT * FROM lead_status_options LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT * FROM lead_status_options LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "userId": "0",
+      "label": "Qualified",
+      "color": "#22c55e",
+      "sortOrder": "0",
+      "isDefault": "0",
+      "isActive": "1",
+      "createdAt": "1771397477914"
+    },
+    {
+      "id": "2",
+      "userId": "0",
+      "label": "Cold",
+      "color": "#3b82f6",
+      "sortOrder": "1",
+      "isDefault": "1",
+      "isActive": "1",
+      "createdAt": "1771397477935"
+    },
+    {
+      "id": "3",
+      "userId": "0",
+      "label": "Cold-Upwork",
+      "color": "#6366f1",
+      "sortOrder": "2",
+      "isDefault": "0",
+      "isActive": "1",
+      "createdAt": "1771397477946"
+    },
+    {
+      "id": "4",
+      "userId": "0",
+      "label": "Hot",
+      "color": "#ef4444",
+      "sortOrder": "3",
+      "isDefault": "0",
+      "isActive": "1",
+      "createdAt": "1771397477959"
+    },
+    {
+      "id": "5",
+      "userId": "0",
+      "label": "Warm",
+      "color": "#f59e0b",
+      "sortOrder": "4",
+      "isDefault": "0",
+      "isActive": "1",
+      "createdAt": "1771397477970"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tlabel\tcolor\tsortOrder\tisDefault\tisActive\tcreatedAt\n1\t0\tQualified\t#22c55e\t0\t0\t1\t1771397477914\n2\t0\tCold\t#3b82f6\t1\t1\t1\t1771397477935\n3\t0\tCold-Upwork\t#6366f1\t2\t0\t1\t1771397477946\n4\t0\tHot\t#ef4444\t3\t0\t1\t1771397477959\n5\t0\tWarm\t#f59e0b\t4\t0\t1\t1771397477970\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

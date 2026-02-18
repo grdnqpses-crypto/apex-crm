@@ -2,7 +2,7 @@ import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { invokeLLM } from "./_core/llm";
 import * as db from "./db";
 import { nanoid } from "nanoid";
@@ -25,10 +25,17 @@ export const appRouter = router({
     }),
   }),
 
+  leadStatuses: router({
+    list: protectedProcedure.query(async () => {
+      return db.listLeadStatuses();
+    }),
+  }),
+
   contacts: router({
     list: protectedProcedure.input(z.object({
       search: z.string().optional(),
       stage: z.string().optional(),
+      leadStatus: z.string().optional(),
       limit: z.number().min(1).max(100).optional(),
       offset: z.number().min(0).optional(),
     }).optional()).query(async ({ ctx, input }) => {
@@ -37,25 +44,49 @@ export const appRouter = router({
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
       return db.getContact(input.id, ctx.user.id);
     }),
+    byCompany: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
+      return db.getContactsByCompany(input.companyId, ctx.user.id);
+    }),
     create: protectedProcedure.input(z.object({
       firstName: z.string().min(1),
       lastName: z.string().optional(),
-      email: z.string().email().optional(),
-      phone: z.string().optional(),
-      title: z.string().optional(),
+      jobTitle: z.string().optional(),
       companyId: z.number().optional(),
-      lifecycleStage: z.enum(["subscriber", "lead", "mql", "sql", "opportunity", "customer", "evangelist"]).optional(),
-      source: z.string().optional(),
-      tags: z.array(z.string()).optional(),
-      customFields: z.record(z.string(), z.string()).optional(),
-      address: z.string().optional(),
+      email: z.string().optional(),
+      companyPhone: z.string().optional(),
+      directPhone: z.string().optional(),
+      mobilePhone: z.string().optional(),
+      faxNumber: z.string().optional(),
+      linkedinUrl: z.string().optional(),
+      websiteUrl: z.string().optional(),
+      streetAddress: z.string().optional(),
+      addressLine2: z.string().optional(),
       city: z.string().optional(),
-      state: z.string().optional(),
+      stateRegion: z.string().optional(),
+      postalCode: z.string().optional(),
       country: z.string().optional(),
+      timezone: z.string().optional(),
+      lifecycleStage: z.string().optional(),
+      leadStatus: z.string().optional(),
+      leadSource: z.string().optional(),
+      leadScore: z.number().optional(),
+      originalSource: z.string().optional(),
+      emailSubscriptionStatus: z.string().optional(),
+      gdprConsentStatus: z.string().optional(),
+      twitterHandle: z.string().optional(),
+      facebookProfile: z.string().optional(),
+      instagramProfile: z.string().optional(),
+      decisionMakerRole: z.string().optional(),
+      department: z.string().optional(),
+      freightVolume: z.string().optional(),
+      customerType: z.string().optional(),
+      paymentResponsibility: z.string().optional(),
+      preferredContactMethod: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+      notes: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
       const now = Date.now();
-      const contactData = { ...input, userId: ctx.user.id, createdAt: now, updatedAt: now };
-      const id = await db.createContact(contactData as any);
+      const id = await db.createContact({ ...input, userId: ctx.user.id, createdAt: now, updatedAt: now });
       await db.createActivity({ userId: ctx.user.id, contactId: id, type: "contact_created", subject: `Created contact ${input.firstName} ${input.lastName ?? ""}`.trim() });
       return { id };
     }),
@@ -63,22 +94,42 @@ export const appRouter = router({
       id: z.number(),
       firstName: z.string().min(1).optional(),
       lastName: z.string().optional(),
-      email: z.string().email().optional(),
-      phone: z.string().optional(),
-      title: z.string().optional(),
+      jobTitle: z.string().optional(),
       companyId: z.number().nullable().optional(),
-      lifecycleStage: z.enum(["subscriber", "lead", "mql", "sql", "opportunity", "customer", "evangelist"]).optional(),
-      leadScore: z.number().optional(),
-      source: z.string().optional(),
-      tags: z.array(z.string()).optional(),
-      customFields: z.record(z.string(), z.string()).optional(),
-      address: z.string().optional(),
+      email: z.string().optional(),
+      companyPhone: z.string().optional(),
+      directPhone: z.string().optional(),
+      mobilePhone: z.string().optional(),
+      faxNumber: z.string().optional(),
+      linkedinUrl: z.string().optional(),
+      websiteUrl: z.string().optional(),
+      streetAddress: z.string().optional(),
+      addressLine2: z.string().optional(),
       city: z.string().optional(),
-      state: z.string().optional(),
+      stateRegion: z.string().optional(),
+      postalCode: z.string().optional(),
       country: z.string().optional(),
+      timezone: z.string().optional(),
+      lifecycleStage: z.string().optional(),
+      leadStatus: z.string().optional(),
+      leadSource: z.string().optional(),
+      leadScore: z.number().optional(),
+      emailSubscriptionStatus: z.string().optional(),
+      gdprConsentStatus: z.string().optional(),
+      twitterHandle: z.string().optional(),
+      facebookProfile: z.string().optional(),
+      instagramProfile: z.string().optional(),
+      decisionMakerRole: z.string().optional(),
+      department: z.string().optional(),
+      freightVolume: z.string().optional(),
+      customerType: z.string().optional(),
+      paymentResponsibility: z.string().optional(),
+      preferredContactMethod: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+      notes: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
-      await db.updateContact(id, ctx.user.id, data as any);
+      await db.updateContact(id, ctx.user.id, data);
       return { success: true };
     }),
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
@@ -90,6 +141,7 @@ export const appRouter = router({
   companies: router({
     list: protectedProcedure.input(z.object({
       search: z.string().optional(),
+      leadStatus: z.string().optional(),
       limit: z.number().min(1).max(100).optional(),
       offset: z.number().min(0).optional(),
     }).optional()).query(async ({ ctx, input }) => {
@@ -101,44 +153,76 @@ export const appRouter = router({
     create: protectedProcedure.input(z.object({
       name: z.string().min(1),
       domain: z.string().optional(),
-      industry: z.string().optional(),
-      size: z.string().optional(),
-      revenue: z.string().optional(),
+      companyType: z.string().optional(),
+      companyEmail: z.string().optional(),
       phone: z.string().optional(),
-      address: z.string().optional(),
+      streetAddress: z.string().optional(),
+      addressLine2: z.string().optional(),
       city: z.string().optional(),
-      state: z.string().optional(),
+      stateRegion: z.string().optional(),
+      postalCode: z.string().optional(),
       country: z.string().optional(),
-      website: z.string().optional(),
+      timezone: z.string().optional(),
+      industry: z.string().optional(),
+      numberOfEmployees: z.string().optional(),
+      annualRevenue: z.string().optional(),
       description: z.string().optional(),
+      businessClassification: z.string().optional(),
+      foundedYear: z.string().optional(),
+      leadSource: z.string().optional(),
+      leadStatus: z.string().optional(),
+      creditTerms: z.string().optional(),
+      paymentStatus: z.string().optional(),
+      lanePreferences: z.string().optional(),
+      tmsIntegrationStatus: z.string().optional(),
+      facebookPage: z.string().optional(),
+      twitterHandle: z.string().optional(),
+      linkedinUrl: z.string().optional(),
+      youtubeUrl: z.string().optional(),
       parentId: z.number().optional(),
+      website: z.string().optional(),
       tags: z.array(z.string()).optional(),
-      customFields: z.record(z.string(), z.string()).optional(),
     })).mutation(async ({ ctx, input }) => {
       const now = Date.now();
-      const id = await db.createCompany({ ...input, userId: ctx.user.id, createdAt: now, updatedAt: now } as any);
+      const id = await db.createCompany({ ...input, userId: ctx.user.id, createdAt: now, updatedAt: now });
       return { id };
     }),
     update: protectedProcedure.input(z.object({
       id: z.number(),
       name: z.string().min(1).optional(),
       domain: z.string().optional(),
-      industry: z.string().optional(),
-      size: z.string().optional(),
-      revenue: z.string().optional(),
+      companyType: z.string().optional(),
+      companyEmail: z.string().optional(),
       phone: z.string().optional(),
-      address: z.string().optional(),
+      streetAddress: z.string().optional(),
+      addressLine2: z.string().optional(),
       city: z.string().optional(),
-      state: z.string().optional(),
+      stateRegion: z.string().optional(),
+      postalCode: z.string().optional(),
       country: z.string().optional(),
-      website: z.string().optional(),
+      timezone: z.string().optional(),
+      industry: z.string().optional(),
+      numberOfEmployees: z.string().optional(),
+      annualRevenue: z.string().optional(),
       description: z.string().optional(),
+      businessClassification: z.string().optional(),
+      foundedYear: z.string().optional(),
+      leadSource: z.string().optional(),
+      leadStatus: z.string().optional(),
+      creditTerms: z.string().optional(),
+      paymentStatus: z.string().optional(),
+      lanePreferences: z.string().optional(),
+      tmsIntegrationStatus: z.string().optional(),
+      facebookPage: z.string().optional(),
+      twitterHandle: z.string().optional(),
+      linkedinUrl: z.string().optional(),
+      youtubeUrl: z.string().optional(),
       parentId: z.number().nullable().optional(),
+      website: z.string().optional(),
       tags: z.array(z.string()).optional(),
-            customFields: z.record(z.string(), z.string()).optional(),
     })).mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
-      await db.updateCompany(id, ctx.user.id, data as any);
+      await db.updateCompany(id, ctx.user.id, data);
       return { success: true };
     }),
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
@@ -228,6 +312,7 @@ export const appRouter = router({
       contactId: z.number().optional(),
       companyId: z.number().optional(),
       dealId: z.number().optional(),
+      type: z.string().optional(),
       limit: z.number().optional(),
     }).optional()).query(async ({ ctx, input }) => {
       return db.listActivities(ctx.user.id, input);
@@ -236,9 +321,23 @@ export const appRouter = router({
       contactId: z.number().optional(),
       companyId: z.number().optional(),
       dealId: z.number().optional(),
-      type: z.enum(["note", "email", "call", "meeting", "task"]),
+      type: z.string(),
       subject: z.string().optional(),
       body: z.string().optional(),
+      // Call fields
+      callOutcome: z.string().optional(),
+      callType: z.string().optional(),
+      callDuration: z.number().optional(),
+      // Email fields
+      emailTo: z.string().optional(),
+      emailFrom: z.string().optional(),
+      emailCc: z.string().optional(),
+      // Meeting fields
+      meetingStartTime: z.number().optional(),
+      meetingEndTime: z.number().optional(),
+      meetingLocation: z.string().optional(),
+      meetingAttendees: z.string().optional(),
+      meetingOutcome: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
       await db.createActivity({ ...input, userId: ctx.user.id });
       return { success: true };
@@ -248,7 +347,10 @@ export const appRouter = router({
   tasks: router({
     list: protectedProcedure.input(z.object({
       status: z.string().optional(),
+      taskType: z.string().optional(),
+      queue: z.string().optional(),
       contactId: z.number().optional(),
+      companyId: z.number().optional(),
       dealId: z.number().optional(),
       limit: z.number().optional(),
       offset: z.number().optional(),
@@ -257,12 +359,19 @@ export const appRouter = router({
     }),
     create: protectedProcedure.input(z.object({
       title: z.string().min(1),
-      description: z.string().optional(),
-      contactId: z.number().optional(),
-      dealId: z.number().optional(),
-      assignedTo: z.number().optional(),
+      taskType: z.enum(["call", "email", "to_do", "follow_up"]).optional(),
       dueDate: z.number().optional(),
-      priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
+      dueTime: z.string().optional(),
+      assignedTo: z.number().optional(),
+      priority: z.enum(["low", "medium", "high"]).optional(),
+      description: z.string().optional(),
+      queue: z.string().optional(),
+      reminderDate: z.number().optional(),
+      contactId: z.number().optional(),
+      companyId: z.number().optional(),
+      dealId: z.number().optional(),
+      isRecurring: z.boolean().optional(),
+      recurringFrequency: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
       const id = await db.createTask({ ...input, userId: ctx.user.id });
       return { id };
@@ -270,11 +379,20 @@ export const appRouter = router({
     update: protectedProcedure.input(z.object({
       id: z.number(),
       title: z.string().optional(),
-      description: z.string().optional(),
+      taskType: z.string().optional(),
       dueDate: z.number().optional(),
-      priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
-      status: z.enum(["todo", "in_progress", "done", "cancelled"]).optional(),
+      dueTime: z.string().optional(),
+      priority: z.enum(["low", "medium", "high"]).optional(),
+      description: z.string().optional(),
+      status: z.enum(["not_started", "completed"]).optional(),
+      queue: z.string().optional(),
       assignedTo: z.number().optional(),
+      contactId: z.number().nullable().optional(),
+      companyId: z.number().nullable().optional(),
+      dealId: z.number().nullable().optional(),
+      completedAt: z.number().optional(),
+      completedBy: z.number().optional(),
+      outcome: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
       await db.updateTask(id, ctx.user.id, data);
@@ -297,7 +415,7 @@ export const appRouter = router({
       jsonContent: z.record(z.string(), z.unknown()).optional(),
       category: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
-      const id = await db.createEmailTemplate({ ...input, userId: ctx.user.id } as any);
+      const id = await db.createEmailTemplate({ ...input, userId: ctx.user.id });
       return { id };
     }),
     update: protectedProcedure.input(z.object({
@@ -309,7 +427,7 @@ export const appRouter = router({
       category: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
-      await db.updateEmailTemplate(id, ctx.user.id, data as any);
+      await db.updateEmailTemplate(id, ctx.user.id, data);
       return { success: true };
     }),
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
@@ -365,7 +483,7 @@ export const appRouter = router({
     })).mutation(async ({ input }) => {
       const response = await invokeLLM({
         messages: [
-          { role: "system", content: `You are an email deliverability expert. Analyze the following email for spam triggers and deliverability issues. Return a JSON response with: score (0-100, where 0 is perfect and 100 is definitely spam), issues (array of {severity: "critical"|"warning"|"info", message: string, fix: string}), and overallRating ("excellent"|"good"|"fair"|"poor"). Be thorough and check for: spam trigger words, excessive caps, too many links, missing unsubscribe, image-to-text ratio, deceptive subject lines, and other common spam triggers.` },
+          { role: "system", content: `You are an email deliverability expert. Analyze the following email for spam triggers and deliverability issues. Return a JSON response with: score (0-100, where 0 is perfect and 100 is definitely spam), issues (array of {severity: "critical"|"warning"|"info", message: string, fix: string}), and overallRating ("excellent"|"good"|"fair"|"poor"). Be thorough.` },
           { role: "user", content: `Subject: ${input.subject}\n\nFrom: ${input.fromName ?? "Unknown"}\n\nContent:\n${input.htmlContent}` },
         ],
         response_format: {
@@ -376,21 +494,9 @@ export const appRouter = router({
             schema: {
               type: "object",
               properties: {
-                score: { type: "number", description: "Spam score 0-100" },
+                score: { type: "number" },
                 overallRating: { type: "string", enum: ["excellent", "good", "fair", "poor"] },
-                issues: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      severity: { type: "string", enum: ["critical", "warning", "info"] },
-                      message: { type: "string" },
-                      fix: { type: "string" },
-                    },
-                    required: ["severity", "message", "fix"],
-                    additionalProperties: false,
-                  },
-                },
+                issues: { type: "array", items: { type: "object", properties: { severity: { type: "string", enum: ["critical", "warning", "info"] }, message: { type: "string" }, fix: { type: "string" } }, required: ["severity", "message", "fix"], additionalProperties: false } },
               },
               required: ["score", "overallRating", "issues"],
               additionalProperties: false,
@@ -403,14 +509,59 @@ export const appRouter = router({
     }),
   }),
 
+  smtpAccounts: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return db.listSmtpAccounts(ctx.user.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      emailAddress: z.string(),
+      displayName: z.string().optional(),
+      domain: z.string(),
+      smtpHost: z.string(),
+      smtpPort: z.number().optional(),
+      smtpUsername: z.string(),
+      smtpPassword: z.string(),
+      useTls: z.boolean().optional(),
+      dailyLimit: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const id = await db.createSmtpAccount({ ...input, userId: ctx.user.id });
+      return { id };
+    }),
+    update: protectedProcedure.input(z.object({
+      id: z.number(),
+      displayName: z.string().optional(),
+      smtpHost: z.string().optional(),
+      smtpPort: z.number().optional(),
+      smtpUsername: z.string().optional(),
+      smtpPassword: z.string().optional(),
+      useTls: z.boolean().optional(),
+      isActive: z.boolean().optional(),
+      dailyLimit: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      await db.updateSmtpAccount(id, ctx.user.id, data);
+      return { success: true };
+    }),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.deleteSmtpAccount(input.id, ctx.user.id);
+      return { success: true };
+    }),
+    resetDailyCounts: protectedProcedure.mutation(async ({ ctx }) => {
+      await db.resetDailySmtpCounts(ctx.user.id);
+      return { success: true };
+    }),
+  }),
+
   domainHealth: router({
     list: protectedProcedure.query(async ({ ctx }) => {
       return db.listDomainHealth(ctx.user.id);
     }),
     create: protectedProcedure.input(z.object({
       domain: z.string().min(1),
+      mxServer: z.string().optional(),
+      mxIp: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
-      const id = await db.createDomainHealth({ userId: ctx.user.id, domain: input.domain });
+      const id = await db.createDomainHealth({ userId: ctx.user.id, ...input });
       return { id };
     }),
     update: protectedProcedure.input(z.object({
@@ -418,6 +569,7 @@ export const appRouter = router({
       spfStatus: z.enum(["pass", "fail", "missing", "unknown"]).optional(),
       dkimStatus: z.enum(["pass", "fail", "missing", "unknown"]).optional(),
       dmarcStatus: z.enum(["pass", "fail", "missing", "unknown"]).optional(),
+      dmarcPolicy: z.string().optional(),
       reputationScore: z.number().optional(),
       warmupPhase: z.number().optional(),
       dailySendLimit: z.number().optional(),
@@ -430,7 +582,7 @@ export const appRouter = router({
     checkAuth: protectedProcedure.input(z.object({ domain: z.string() })).mutation(async ({ input }) => {
       const response = await invokeLLM({
         messages: [
-          { role: "system", content: `You are a DNS and email authentication expert. Given a domain, provide guidance on setting up SPF, DKIM, and DMARC records. Return JSON with recommendations for each protocol, including the recommended DNS records to add. Be specific and actionable.` },
+          { role: "system", content: `You are a DNS and email authentication expert. Given a domain, provide guidance on setting up SPF, DKIM, and DMARC records. Return JSON with recommendations.` },
           { role: "user", content: `Domain: ${input.domain}` },
         ],
         response_format: {
@@ -498,7 +650,7 @@ export const appRouter = router({
       trigger: z.record(z.string(), z.unknown()).optional(),
       steps: z.array(z.record(z.string(), z.unknown())).optional(),
     })).mutation(async ({ ctx, input }) => {
-      const id = await db.createWorkflow({ ...input, userId: ctx.user.id } as any);
+      const id = await db.createWorkflow({ ...input, userId: ctx.user.id });
       return { id };
     }),
     update: protectedProcedure.input(z.object({
@@ -510,7 +662,7 @@ export const appRouter = router({
       status: z.enum(["draft", "active", "paused", "archived"]).optional(),
     })).mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
-      await db.updateWorkflow(id, ctx.user.id, data as any);
+      await db.updateWorkflow(id, ctx.user.id, data);
       return { success: true };
     }),
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
@@ -530,7 +682,7 @@ export const appRouter = router({
       variants: z.array(z.record(z.string(), z.unknown())).optional(),
       sampleSize: z.number().optional(),
     })).mutation(async ({ ctx, input }) => {
-      const id = await db.createAbTest({ ...input, userId: ctx.user.id } as any);
+      const id = await db.createAbTest({ ...input, userId: ctx.user.id });
       return { id };
     }),
     update: protectedProcedure.input(z.object({
@@ -540,7 +692,7 @@ export const appRouter = router({
       results: z.record(z.string(), z.unknown()).optional(),
     })).mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
-      await db.updateAbTest(id, ctx.user.id, data as any);
+      await db.updateAbTest(id, ctx.user.id, data);
       return { success: true };
     }),
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {

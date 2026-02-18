@@ -23,6 +23,8 @@ const Segments = lazy(() => import("./pages/Segments"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const ApiKeys = lazy(() => import("./pages/ApiKeys"));
 const Webhooks = lazy(() => import("./pages/Webhooks"));
+const SmtpAccounts = lazy(() => import("./pages/SmtpAccounts"));
+const CompanyDetail = lazy(() => import("./pages/CompanyDetail"));
 
 function PageLoader() {
   return (
@@ -55,6 +57,8 @@ function Router() {
           <Route path="/analytics" component={Analytics} />
           <Route path="/api-keys" component={ApiKeys} />
           <Route path="/webhooks" component={Webhooks} />
+          <Route path="/smtp-accounts" component={SmtpAccounts} />
+          <Route path="/companies/:id" component={CompanyDetail} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>

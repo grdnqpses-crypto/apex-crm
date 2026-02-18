@@ -55,6 +55,7 @@ const menuSections = [
       { icon: Mail, label: "Templates", path: "/templates" },
       { icon: Shield, label: "Deliverability", path: "/deliverability" },
       { icon: FlaskConical, label: "A/B Tests", path: "/ab-tests" },
+      { icon: Zap, label: "SMTP Accounts", path: "/smtp-accounts" },
     ],
   },
   {

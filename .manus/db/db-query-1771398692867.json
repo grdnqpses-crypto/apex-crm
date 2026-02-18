@@ -1,0 +1,145 @@
+{
+  "query": "SELECT id, label, userId FROM lead_status_options LIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, label, userId FROM lead_status_options LIMIT 30;",
+  "rows": [
+    {
+      "id": "1",
+      "label": "Qualified",
+      "userId": "0"
+    },
+    {
+      "id": "2",
+      "label": "Cold",
+      "userId": "0"
+    },
+    {
+      "id": "3",
+      "label": "Cold-Upwork",
+      "userId": "0"
+    },
+    {
+      "id": "4",
+      "label": "Hot",
+      "userId": "0"
+    },
+    {
+      "id": "5",
+      "label": "Warm",
+      "userId": "0"
+    },
+    {
+      "id": "6",
+      "label": "Customer",
+      "userId": "0"
+    },
+    {
+      "id": "7",
+      "label": "Attempted Contact",
+      "userId": "0"
+    },
+    {
+      "id": "8",
+      "label": "DM Reached/Awaiting Quote",
+      "userId": "0"
+    },
+    {
+      "id": "9",
+      "label": "Currently Quoting/Awaiting Business",
+      "userId": "0"
+    },
+    {
+      "id": "10",
+      "label": "Paperwork Received",
+      "userId": "0"
+    },
+    {
+      "id": "11",
+      "label": "Has Freight/DM not Reached",
+      "userId": "0"
+    },
+    {
+      "id": "12",
+      "label": "Cannot Get a Quote from DM",
+      "userId": "0"
+    },
+    {
+      "id": "13",
+      "label": "Under Contract",
+      "userId": "0"
+    },
+    {
+      "id": "14",
+      "label": "BOL Lead",
+      "userId": "0"
+    },
+    {
+      "id": "15",
+      "label": "Not Enough Freight",
+      "userId": "0"
+    },
+    {
+      "id": "16",
+      "label": "No Freight",
+      "userId": "0"
+    },
+    {
+      "id": "17",
+      "label": "Cannot Reach DM",
+      "userId": "0"
+    },
+    {
+      "id": "18",
+      "label": "Cannot Reach Anyone/VM Every Time",
+      "userId": "0"
+    },
+    {
+      "id": "19",
+      "label": "Competitor",
+      "userId": "0"
+    },
+    {
+      "id": "20",
+      "label": "Has Own Trucks",
+      "userId": "0"
+    },
+    {
+      "id": "21",
+      "label": "Customer Routed",
+      "userId": "0"
+    },
+    {
+      "id": "22",
+      "label": "Small Parcel",
+      "userId": "0"
+    },
+    {
+      "id": "23",
+      "label": "Our Rates Are Too High Every Time",
+      "userId": "0"
+    },
+    {
+      "id": "24",
+      "label": "Lost - Not a Good Fit",
+      "userId": "0"
+    },
+    {
+      "id": "25",
+      "label": "Lost - Disconnected/Out of Business",
+      "userId": "0"
+    },
+    {
+      "id": "26",
+      "label": "Bad Credit",
+      "userId": "0"
+    },
+    {
+      "id": "27",
+      "label": "Inactive Customer",
+      "userId": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tlabel\tuserId\n1\tQualified\t0\n2\tCold\t0\n3\tCold-Upwork\t0\n4\tHot\t0\n5\tWarm\t0\n6\tCustomer\t0\n7\tAttempted Contact\t0\n8\tDM Reached/Awaiting Quote\t0\n9\tCurrently Quoting/Awaiting Business\t0\n10\tPaperwork Received\t0\n11\tHas Freight/DM not Reached\t0\n12\tCannot Get a Quote from DM\t0\n13\tUnder Contract\t0\n14\tBOL Lead\t0\n15\tNot Enough Freight\t0\n16\tNo Freight\t0\n17\tCannot Reach DM\t0\n18\tCannot Reach Anyone/VM Every Time\t0\n19\tCompetitor\t0\n20\tHas Own Trucks\t0\n21\tCustomer Routed\t0\n22\tSmall Parcel\t0\n23\tOur Rates Are Too High Every Time\t0\n24\tLost - Not a Good Fit\t0\n25\tLost - Disconnected/Out of Business\t0\n26\tBad Credit\t0\n27\tInactive Customer\t0\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

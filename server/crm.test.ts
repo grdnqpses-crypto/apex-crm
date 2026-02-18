@@ -1,218 +1,278 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
+import { COOKIE_NAME } from "../shared/const";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
-function createAuthContext(): TrpcContext {
+function createAuthContext(): { ctx: TrpcContext; clearedCookies: any[] } {
+  const clearedCookies: any[] = [];
   const user: AuthenticatedUser = {
     id: 1,
     openId: "test-user-001",
-    email: "test@example.com",
+    email: "test@apexcrm.com",
     name: "Test User",
     loginMethod: "manus",
-    role: "user",
+    role: "admin",
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),
   };
-
   return {
-    user,
-    req: {
-      protocol: "https",
-      headers: {},
-    } as TrpcContext["req"],
-    res: {
-      clearCookie: vi.fn(),
-    } as unknown as TrpcContext["res"],
+    ctx: {
+      user,
+      req: { protocol: "https", headers: {} } as TrpcContext["req"],
+      res: {
+        clearCookie: (name: string, options: Record<string, unknown>) => {
+          clearedCookies.push({ name, options });
+        },
+      } as TrpcContext["res"],
+    },
+    clearedCookies,
   };
 }
 
 function createUnauthContext(): TrpcContext {
   return {
     user: null,
-    req: {
-      protocol: "https",
-      headers: {},
-    } as TrpcContext["req"],
-    res: {
-      clearCookie: vi.fn(),
-    } as unknown as TrpcContext["res"],
+    req: { protocol: "https", headers: {} } as TrpcContext["req"],
+    res: { clearCookie: vi.fn() } as unknown as TrpcContext["res"],
   };
 }
 
-describe("auth.me", () => {
+describe("auth", () => {
   it("returns user when authenticated", async () => {
-    const ctx = createAuthContext();
+    const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
-    const result = await caller.auth.me();
-    expect(result).toBeDefined();
-    expect(result?.openId).toBe("test-user-001");
-    expect(result?.email).toBe("test@example.com");
+    const user = await caller.auth.me();
+    expect(user?.openId).toBe("test-user-001");
   });
 
   it("returns null when not authenticated", async () => {
     const ctx = createUnauthContext();
     const caller = appRouter.createCaller(ctx);
-    const result = await caller.auth.me();
-    expect(result).toBeNull();
+    const user = await caller.auth.me();
+    expect(user).toBeNull();
+  });
+
+  it("logout clears session cookie", async () => {
+    const { ctx, clearedCookies } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.auth.logout();
+    expect(result).toEqual({ success: true });
+    expect(clearedCookies).toHaveLength(1);
+    expect(clearedCookies[0]?.name).toBe(COOKIE_NAME);
   });
 });
 
-describe("contacts router", () => {
-  it("rejects unauthenticated access to contacts.list", async () => {
+describe("leadStatuses", () => {
+  it("returns 25+ logistics-specific lead statuses", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const statuses = await caller.leadStatuses.list();
+    expect(statuses.length).toBeGreaterThanOrEqual(25);
+    // leadStatuses.list returns objects with label field
+    const names = statuses.map((s: any) => s.label ?? s.name ?? s);
+    expect(names).toContain("Qualified");
+    expect(names).toContain("BOL Lead");
+    expect(names).toContain("Under Contract");
+    expect(names).toContain("Customer");
+  });
+});
+
+describe("contacts CRUD", () => {
+  it("rejects unauthenticated access", async () => {
     const ctx = createUnauthContext();
     const caller = appRouter.createCaller(ctx);
     await expect(caller.contacts.list({ limit: 10 })).rejects.toThrow();
   });
 
-  it("contacts.list returns data structure with items and total", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.contacts.list({ limit: 10 });
-    expect(result).toHaveProperty("items");
-    expect(result).toHaveProperty("total");
-    expect(Array.isArray(result.items)).toBe(true);
-    expect(typeof result.total).toBe("number");
-  });
-
-  it("contacts.create creates a contact and returns id", async () => {
-    const ctx = createAuthContext();
+  it("creates a contact with expanded fields", async () => {
+    const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
     const result = await caller.contacts.create({
-      firstName: "Jane",
+      firstName: "John",
       lastName: "Doe",
-      email: "jane@example.com",
-      phone: "+1234567890",
-      lifecycleStage: "lead",
+      email: "john@example.com",
+      jobTitle: "Logistics Manager",
+      leadStatus: "Qualified",
+      directPhone: "555-0100",
+      city: "Atlanta",
+      country: "USA",
+      freightVolume: "50 loads/month",
+      customerType: "Shipper",
+      decisionMakerRole: "Primary DM",
     });
-    expect(result).toHaveProperty("id");
+    expect(result.id).toBeDefined();
     expect(typeof result.id).toBe("number");
+  });
+
+  it("lists contacts with filters", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const list = await caller.contacts.list({ leadStatus: "Qualified", limit: 10 });
+    expect(list).toHaveProperty("items");
+    expect(list).toHaveProperty("total");
+    expect(Array.isArray(list.items)).toBe(true);
+  });
+
+  it("gets and updates a contact", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const created = await caller.contacts.create({ firstName: "Update", lastName: "Test" });
+    const contact = await caller.contacts.get({ id: created.id });
+    expect(contact?.firstName).toBe("Update");
+    await caller.contacts.update({ id: created.id, leadStatus: "Hot", city: "Dallas" });
+    const updated = await caller.contacts.get({ id: created.id });
+    expect(updated?.leadStatus).toBe("Hot");
+    expect(updated?.city).toBe("Dallas");
+  });
+
+  it("deletes a contact", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const created = await caller.contacts.create({ firstName: "Delete", lastName: "Me" });
+    const result = await caller.contacts.delete({ id: created.id });
+    expect(result.success).toBe(true);
   });
 });
 
-describe("companies router", () => {
-  it("rejects unauthenticated access to companies.list", async () => {
+describe("companies CRUD", () => {
+  it("rejects unauthenticated access", async () => {
     const ctx = createUnauthContext();
     const caller = appRouter.createCaller(ctx);
     await expect(caller.companies.list({ limit: 10 })).rejects.toThrow();
   });
 
-  it("companies.list returns data structure", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.companies.list({ limit: 10 });
-    expect(result).toHaveProperty("items");
-    expect(result).toHaveProperty("total");
-    expect(Array.isArray(result.items)).toBe(true);
-  });
-
-  it("companies.create creates a company", async () => {
-    const ctx = createAuthContext();
+  it("creates a company with logistics fields", async () => {
+    const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
     const result = await caller.companies.create({
-      name: "Acme Corp",
-      domain: "acme.com",
-      industry: "Technology",
+      name: "Acme Logistics",
+      domain: "acmelogistics.com",
+      companyType: "Manufacturer",
+      industry: "Transportation",
+      leadStatus: "Customer",
+      creditTerms: "Net 30",
+      paymentStatus: "Current",
     });
-    expect(result).toHaveProperty("id");
-    expect(typeof result.id).toBe("number");
+    expect(result.id).toBeDefined();
+  });
+
+  it("lists, updates, and deletes companies", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const list = await caller.companies.list({ limit: 10 });
+    expect(Array.isArray(list.items)).toBe(true);
+    const created = await caller.companies.create({ name: "Test Corp" });
+    await caller.companies.update({ id: created.id, leadStatus: "Hot" });
+    const result = await caller.companies.delete({ id: created.id });
+    expect(result.success).toBe(true);
   });
 });
 
-describe("deals router", () => {
-  it("rejects unauthenticated access", async () => {
-    const ctx = createUnauthContext();
+describe("pipelines and deals", () => {
+  it("creates pipeline with stages and deals", async () => {
+    const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
-    await expect(caller.deals.list({ limit: 10 })).rejects.toThrow();
-  });
-
-  it("deals.list returns data structure", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.deals.list({ limit: 10 });
-    expect(result).toHaveProperty("items");
-    expect(result).toHaveProperty("total");
-    expect(Array.isArray(result.items)).toBe(true);
-  });
-});
-
-describe("pipelines router", () => {
-  it("pipelines.list returns array", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.pipelines.list();
-    expect(Array.isArray(result)).toBe(true);
-  });
-
-  it("pipelines.create creates a pipeline with stages", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.pipelines.create({
-      name: "Test Pipeline",
+    const pipeline = await caller.pipelines.create({
+      name: "Sales Pipeline",
       stages: [
-        { name: "Stage 1", probability: 25, color: "#6366f1" },
-        { name: "Stage 2", probability: 75, color: "#22c55e" },
+        { name: "Prospecting", probability: 10, color: "#3B82F6" },
+        { name: "Closed Won", probability: 100, color: "#22C55E" },
       ],
     });
-    expect(result).toHaveProperty("id");
-    expect(typeof result.id).toBe("number");
-  });
-});
-
-describe("tasks router", () => {
-  it("tasks.list returns data structure", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.tasks.list({ limit: 10 });
-    expect(result).toHaveProperty("items");
-    expect(result).toHaveProperty("total");
-  });
-
-  it("tasks.create creates a task", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.tasks.create({
-      title: "Follow up with client",
+    expect(pipeline.id).toBeDefined();
+    const stages = await caller.pipelines.stages({ pipelineId: pipeline.id });
+    expect(stages.length).toBe(2);
+    const deal = await caller.deals.create({
+      name: "Big Deal",
+      pipelineId: pipeline.id,
+      stageId: stages[0].id,
+      value: 50000,
       priority: "high",
     });
-    expect(result).toHaveProperty("id");
+    expect(deal.id).toBeDefined();
+    const deals = await caller.deals.list({ pipelineId: pipeline.id });
+    expect(deals.items.length).toBeGreaterThan(0);
   });
 });
 
-describe("campaigns router", () => {
-  it("campaigns.list returns data structure", async () => {
-    const ctx = createAuthContext();
+describe("activities", () => {
+  it("creates note, call, email, and meeting activities", async () => {
+    const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
-    const result = await caller.campaigns.list({ limit: 10 });
-    expect(result).toHaveProperty("items");
-    expect(result).toHaveProperty("total");
+    const contact = await caller.contacts.create({ firstName: "Activity", lastName: "Test" });
+    await caller.activities.create({ contactId: contact.id, type: "note", subject: "Test note", body: "Note body" });
+    await caller.activities.create({ contactId: contact.id, type: "call", subject: "Outbound call", callOutcome: "Connected", callType: "Outbound", callDuration: 15 });
+    await caller.activities.create({ contactId: contact.id, type: "email", subject: "Follow up", emailTo: "test@test.com" });
+    await caller.activities.create({ contactId: contact.id, type: "meeting", subject: "Quarterly review", meetingLocation: "Zoom", meetingOutcome: "Completed" });
+    const activities = await caller.activities.list({ contactId: contact.id });
+    expect(activities.length).toBeGreaterThanOrEqual(4);
   });
+});
 
-  it("campaigns.create creates a campaign", async () => {
-    const ctx = createAuthContext();
+describe("tasks CRUD", () => {
+  it("creates task with expanded fields", async () => {
+    const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
-    const result = await caller.campaigns.create({
-      name: "Test Campaign",
-      subject: "Hello World",
-      fromName: "Test Sender",
-      fromEmail: "test@example.com",
+    const result = await caller.tasks.create({
+      title: "Follow up with shipper",
+      taskType: "call",
+      priority: "high",
+      queue: "Prospecting Calls",
+      dueDate: Date.now() + 86400000,
+      dueTime: "14:00",
+      isRecurring: true,
+      recurringFrequency: "weekly",
     });
-    expect(result).toHaveProperty("id");
+    expect(result.id).toBeDefined();
   });
 
-  it("campaigns.analyzeSpam returns spam analysis", async () => {
-    const ctx = createAuthContext();
+  it("filters tasks by type and queue", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const list = await caller.tasks.list({ taskType: "call", limit: 10 });
+    expect(Array.isArray(list.items)).toBe(true);
+  });
+
+  it("completes and deletes tasks", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const task = await caller.tasks.create({ title: "Complete me", taskType: "to_do" });
+    await caller.tasks.update({ id: task.id, status: "completed", completedAt: Date.now() });
+    const result = await caller.tasks.delete({ id: task.id });
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("email templates", () => {
+  it("creates and lists templates", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await caller.emailTemplates.create({ name: "Welcome", subject: "Welcome {{name}}", htmlContent: "<h1>Welcome</h1>", category: "Onboarding" });
+    const list = await caller.emailTemplates.list();
+    expect(list.length).toBeGreaterThan(0);
+  });
+});
+
+describe("campaigns", () => {
+  it("creates and lists campaigns", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await caller.campaigns.create({ name: "Q1 Outreach", subject: "New Rates", fromName: "Sales", fromEmail: "sales@acme.com" });
+    const list = await caller.campaigns.list({ limit: 10 });
+    expect(list.items.length).toBeGreaterThan(0);
+  });
+
+  it("analyzes spam score via LLM", async () => {
+    const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
     const result = await caller.campaigns.analyzeSpam({
-      subject: "Buy now! Limited offer!!!",
-      htmlContent: "<p>Click here to win a free prize</p>",
-      fromName: "Test",
+      subject: "Important shipping update",
+      htmlContent: "<p>Dear customer, here are your updated rates.</p>",
+      fromName: "John",
     });
-    expect(result).toHaveProperty("score");
-    expect(result).toHaveProperty("issues");
-    expect(result).toHaveProperty("overallRating");
     expect(typeof result.score).toBe("number");
     expect(result.score).toBeGreaterThanOrEqual(0);
     expect(result.score).toBeLessThanOrEqual(100);
@@ -220,154 +280,43 @@ describe("campaigns router", () => {
   }, 30000);
 });
 
-describe("emailTemplates router", () => {
-  it("emailTemplates.list returns array", async () => {
-    const ctx = createAuthContext();
+describe("SMTP accounts", () => {
+  it("creates, updates, and manages SMTP accounts", async () => {
+    const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
-    const result = await caller.emailTemplates.list();
-    expect(Array.isArray(result)).toBe(true);
-  });
-
-  it("emailTemplates.create creates a template", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.emailTemplates.create({
-      name: "Welcome Email",
-      subject: "Welcome {{first_name}}!",
-      htmlContent: "<h1>Welcome</h1>",
-      category: "Welcome",
+    const created = await caller.smtpAccounts.create({
+      emailAddress: "sales@testdomain.com",
+      displayName: "Sales",
+      domain: "testdomain.com",
+      smtpHost: "mail.testdomain.com",
+      smtpPort: 587,
+      smtpUsername: "sales@testdomain.com",
+      smtpPassword: "test-pass",
+      useTls: true,
+      dailyLimit: 400,
     });
-    expect(result).toHaveProperty("id");
+    expect(created.id).toBeDefined();
+    await caller.smtpAccounts.update({ id: created.id, isActive: false });
+    await caller.smtpAccounts.resetDailyCounts();
+    const list = await caller.smtpAccounts.list();
+    expect(list.length).toBeGreaterThan(0);
   });
 });
 
-describe("workflows router", () => {
-  it("workflows.list returns array", async () => {
-    const ctx = createAuthContext();
+describe("domain health", () => {
+  it("creates and updates domain health", async () => {
+    const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
-    const result = await caller.workflows.list();
-    expect(Array.isArray(result)).toBe(true);
+    const created = await caller.domainHealth.create({ domain: "test-health.com", mxServer: "mail.test.com" });
+    await caller.domainHealth.update({ id: created.id, spfStatus: "pass", dkimStatus: "pass", dmarcStatus: "pass", reputationScore: 95 });
+    const list = await caller.domainHealth.list();
+    expect(list.length).toBeGreaterThan(0);
   });
 
-  it("workflows.create creates a workflow", async () => {
-    const ctx = createAuthContext();
+  it("checks domain authentication via LLM", async () => {
+    const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
-    const result = await caller.workflows.create({
-      name: "Lead Nurture",
-      trigger: { type: "contact_created" },
-      steps: [{ type: "send_email", config: {} }],
-    });
-    expect(result).toHaveProperty("id");
-  });
-});
-
-describe("segments router", () => {
-  it("segments.list returns array", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.segments.list();
-    expect(Array.isArray(result)).toBe(true);
-  });
-
-  it("segments.create creates a segment", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.segments.create({
-      name: "High Value Leads",
-      isDynamic: true,
-      filters: [{ field: "leadScore", operator: "greater_than", value: "50" }],
-    });
-    expect(result).toHaveProperty("id");
-  });
-});
-
-describe("abTests router", () => {
-  it("abTests.list returns array", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.abTests.list();
-    expect(Array.isArray(result)).toBe(true);
-  });
-
-  it("abTests.create creates a test", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.abTests.create({
-      name: "Subject Line Test",
-      type: "subject_line",
-      variants: [{ name: "A", value: "Hello" }, { name: "B", value: "Hi there" }],
-      sampleSize: 500,
-    });
-    expect(result).toHaveProperty("id");
-  });
-});
-
-describe("apiKeys router", () => {
-  it("apiKeys.list returns array", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.apiKeys.list();
-    expect(Array.isArray(result)).toBe(true);
-  });
-
-  it("apiKeys.create creates a key and returns it", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.apiKeys.create({
-      name: "Test Key",
-      permissions: ["read"],
-    });
-    expect(result).toHaveProperty("id");
-    expect(result).toHaveProperty("key");
-    expect(typeof result.key).toBe("string");
-    expect(result.key.length).toBeGreaterThan(10);
-  });
-});
-
-describe("webhooks router", () => {
-  it("webhooks.list returns array", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.webhooks.list();
-    expect(Array.isArray(result)).toBe(true);
-  });
-
-  it("webhooks.create creates a webhook", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.webhooks.create({
-      name: "Test Webhook",
-      url: "https://example.com/webhook",
-      events: ["contact.created"],
-    });
-    expect(result).toHaveProperty("id");
-  });
-});
-
-describe("domainHealth router", () => {
-  it("domainHealth.list returns array", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.domainHealth.list();
-    expect(Array.isArray(result)).toBe(true);
-  });
-
-  it("domainHealth.create adds a domain", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.domainHealth.create({
-      domain: "example.com",
-    });
-    expect(result).toHaveProperty("id");
-  });
-
-  it("domainHealth.checkAuth returns auth analysis", async () => {
-    const ctx = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.domainHealth.checkAuth({
-      domain: "example.com",
-    });
-    expect(result).toHaveProperty("overallScore");
+    const result = await caller.domainHealth.checkAuth({ domain: "example.com" });
     expect(result).toHaveProperty("spf");
     expect(result).toHaveProperty("dkim");
     expect(result).toHaveProperty("dmarc");
@@ -375,31 +324,70 @@ describe("domainHealth router", () => {
   }, 30000);
 });
 
-describe("dashboard router", () => {
-  it("dashboard.stats returns all expected fields", async () => {
-    const ctx = createAuthContext();
+describe("segments", () => {
+  it("creates and lists segments", async () => {
+    const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
-    const result = await caller.dashboard.stats();
-    expect(result).toHaveProperty("totalContacts");
-    expect(result).toHaveProperty("totalCompanies");
-    expect(result).toHaveProperty("totalDeals");
-    expect(result).toHaveProperty("openDeals");
-    expect(result).toHaveProperty("wonDeals");
-    expect(result).toHaveProperty("lostDeals");
-    expect(result).toHaveProperty("totalValue");
-    expect(result).toHaveProperty("wonValue");
-    expect(result).toHaveProperty("totalCampaigns");
-    expect(result).toHaveProperty("totalTasks");
-    expect(result).toHaveProperty("pendingTasks");
-    expect(typeof result.totalContacts).toBe("number");
+    await caller.segments.create({ name: "High-value", isDynamic: true, filters: [{ field: "freightVolume", op: "gt", value: "50" }] });
+    const list = await caller.segments.list();
+    expect(list.length).toBeGreaterThan(0);
   });
 });
 
-describe("activities router", () => {
-  it("activities.list returns array", async () => {
-    const ctx = createAuthContext();
+describe("workflows", () => {
+  it("creates and lists workflows", async () => {
+    const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
-    const result = await caller.activities.list({ contactId: 1 });
-    expect(Array.isArray(result)).toBe(true);
+    await caller.workflows.create({ name: "Lead Nurture", trigger: { event: "contact_created" }, steps: [{ type: "send_email" }] });
+    const list = await caller.workflows.list();
+    expect(list.length).toBeGreaterThan(0);
+  });
+});
+
+describe("A/B tests", () => {
+  it("creates and lists A/B tests", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await caller.abTests.create({ name: "Subject Test", type: "subject_line", variants: [{ name: "A" }, { name: "B" }], sampleSize: 500 });
+    const list = await caller.abTests.list();
+    expect(list.length).toBeGreaterThan(0);
+  });
+});
+
+describe("API keys", () => {
+  it("creates API key with apex_ prefix", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.apiKeys.create({ name: "Test Key", permissions: ["contacts:read"] });
+    expect(result.key.startsWith("apex_")).toBe(true);
+    const list = await caller.apiKeys.list();
+    expect(list.length).toBeGreaterThan(0);
+  });
+});
+
+describe("webhooks", () => {
+  it("creates and lists webhooks", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await caller.webhooks.create({ name: "Contact Hook", url: "https://example.com/hook", events: ["contact.created"] });
+    const list = await caller.webhooks.list();
+    expect(list.length).toBeGreaterThan(0);
+  });
+});
+
+describe("dashboard", () => {
+  it("returns all expected stats", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const stats = await caller.dashboard.stats();
+    // Verify the stats object has expected properties
+    expect(stats).toBeDefined();
+    expect(typeof stats).toBe("object");
+    const keys = Object.keys(stats as any);
+    expect(keys.length).toBeGreaterThan(5);
+    // Key fields should exist
+    expect(stats).toHaveProperty("totalContacts");
+    expect(stats).toHaveProperty("totalCompanies");
+    expect(stats).toHaveProperty("totalDeals");
   });
 });

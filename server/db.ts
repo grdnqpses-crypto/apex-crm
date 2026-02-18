@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, sql, like, or, inArray } from "drizzle-orm";
+import { eq, and, desc, asc, sql, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser, users,
@@ -6,9 +6,11 @@ import {
   activities, tasks, emailTemplates, emailCampaigns,
   domainHealth, segments, workflows, abTests,
   apiKeys, webhooks, webhookLogs,
+  smtpAccounts, emailQueue, leadStatusOptions,
   type Contact, type InsertContact,
   type Company, type InsertCompany,
   type Deal, type InsertDeal,
+  type SmtpAccount, type EmailQueueItem,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -16,12 +18,7 @@ let _db: ReturnType<typeof drizzle> | null = null;
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
-    try {
-      _db = drizzle(process.env.DATABASE_URL);
-    } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
-      _db = null;
-    }
+    try { _db = drizzle(process.env.DATABASE_URL); } catch (error) { console.warn("[Database] Failed to connect:", error); _db = null; }
   }
   return _db;
 }
@@ -36,23 +33,14 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     const updateSet: Record<string, unknown> = {};
     const textFields = ["name", "email", "loginMethod"] as const;
     type TextField = (typeof textFields)[number];
-    const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
-      values[field] = normalized;
-      updateSet[field] = normalized;
-    };
+    const assignNullable = (field: TextField) => { const value = user[field]; if (value === undefined) return; const normalized = value ?? null; values[field] = normalized; updateSet[field] = normalized; };
     textFields.forEach(assignNullable);
     if (user.lastSignedIn !== undefined) { values.lastSignedIn = user.lastSignedIn; updateSet.lastSignedIn = user.lastSignedIn; }
     if (user.role !== undefined) { values.role = user.role; updateSet.role = user.role; } else if (user.openId === ENV.ownerOpenId) { values.role = 'admin'; updateSet.role = 'admin'; }
     if (!values.lastSignedIn) values.lastSignedIn = new Date();
     if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
     await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
-  } catch (error) {
-    console.error("[Database] Failed to upsert user:", error);
-    throw error;
-  }
+  } catch (error) { console.error("[Database] Failed to upsert user:", error); throw error; }
 }
 
 export async function getUserByOpenId(openId: string) {
@@ -62,12 +50,20 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+// ─── Lead Status Options ───
+export async function listLeadStatuses() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(leadStatusOptions).where(eq(leadStatusOptions.isActive, true)).orderBy(asc(leadStatusOptions.sortOrder));
+}
+
 // ─── Contacts ───
-export async function listContacts(userId: number, opts?: { search?: string; stage?: string; limit?: number; offset?: number }) {
+export async function listContacts(userId: number, opts?: { search?: string; stage?: string; leadStatus?: string; limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return { items: [], total: 0 };
   const conditions = [eq(contacts.userId, userId)];
-  if (opts?.stage) conditions.push(eq(contacts.lifecycleStage, opts.stage as any));
+  if (opts?.stage) conditions.push(eq(contacts.lifecycleStage, opts.stage));
+  if (opts?.leadStatus) conditions.push(eq(contacts.leadStatus, opts.leadStatus));
   if (opts?.search) conditions.push(or(like(contacts.firstName, `%${opts.search}%`), like(contacts.lastName, `%${opts.search}%`), like(contacts.email, `%${opts.search}%`))!);
   const where = and(...conditions);
   const [items, countResult] = await Promise.all([
@@ -84,14 +80,14 @@ export async function getContact(id: number, userId: number) {
   return result[0] ?? null;
 }
 
-export async function createContact(data: Omit<InsertContact, 'id'>) {
+export async function createContact(data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   const result = await db.insert(contacts).values(data);
   return result[0].insertId;
 }
 
-export async function updateContact(id: number, userId: number, data: Partial<InsertContact>) {
+export async function updateContact(id: number, userId: number, data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   await db.update(contacts).set({ ...data, updatedAt: Date.now() }).where(and(eq(contacts.id, id), eq(contacts.userId, userId)));
@@ -103,11 +99,18 @@ export async function deleteContact(id: number, userId: number) {
   await db.delete(contacts).where(and(eq(contacts.id, id), eq(contacts.userId, userId)));
 }
 
+export async function getContactsByCompany(companyId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(contacts).where(and(eq(contacts.companyId, companyId), eq(contacts.userId, userId))).orderBy(desc(contacts.createdAt));
+}
+
 // ─── Companies ───
-export async function listCompanies(userId: number, opts?: { search?: string; limit?: number; offset?: number }) {
+export async function listCompanies(userId: number, opts?: { search?: string; leadStatus?: string; limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return { items: [], total: 0 };
   const conditions = [eq(companies.userId, userId)];
+  if (opts?.leadStatus) conditions.push(eq(companies.leadStatus, opts.leadStatus));
   if (opts?.search) conditions.push(or(like(companies.name, `%${opts.search}%`), like(companies.domain, `%${opts.search}%`))!);
   const where = and(...conditions);
   const [items, countResult] = await Promise.all([
@@ -124,14 +127,14 @@ export async function getCompany(id: number, userId: number) {
   return result[0] ?? null;
 }
 
-export async function createCompany(data: Omit<InsertCompany, 'id'>) {
+export async function createCompany(data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   const result = await db.insert(companies).values(data);
   return result[0].insertId;
 }
 
-export async function updateCompany(id: number, userId: number, data: Partial<InsertCompany>) {
+export async function updateCompany(id: number, userId: number, data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   await db.update(companies).set({ ...data, updatedAt: Date.now() }).where(and(eq(companies.id, id), eq(companies.userId, userId)));
@@ -189,14 +192,14 @@ export async function listDeals(userId: number, opts?: { pipelineId?: number; st
   return { items, total: countResult[0]?.count ?? 0 };
 }
 
-export async function createDeal(data: Omit<InsertDeal, 'id'>) {
+export async function createDeal(data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   const result = await db.insert(deals).values(data);
   return result[0].insertId;
 }
 
-export async function updateDeal(id: number, userId: number, data: Partial<InsertDeal>) {
+export async function updateDeal(id: number, userId: number, data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   await db.update(deals).set({ ...data, updatedAt: Date.now() }).where(and(eq(deals.id, id), eq(deals.userId, userId)));
@@ -208,30 +211,34 @@ export async function deleteDeal(id: number, userId: number) {
   await db.delete(deals).where(and(eq(deals.id, id), eq(deals.userId, userId)));
 }
 
-// ─── Activities ───
-export async function listActivities(userId: number, opts?: { contactId?: number; companyId?: number; dealId?: number; limit?: number }) {
+// ─── Activities (expanded: note, email, call, meeting, task, system events) ───
+export async function listActivities(userId: number, opts?: { contactId?: number; companyId?: number; dealId?: number; type?: string; limit?: number }) {
   const db = await getDb();
   if (!db) return [];
   const conditions = [eq(activities.userId, userId)];
   if (opts?.contactId) conditions.push(eq(activities.contactId, opts.contactId));
   if (opts?.companyId) conditions.push(eq(activities.companyId, opts.companyId));
   if (opts?.dealId) conditions.push(eq(activities.dealId, opts.dealId));
+  if (opts?.type) conditions.push(eq(activities.type, opts.type));
   return db.select().from(activities).where(and(...conditions)).orderBy(desc(activities.createdAt)).limit(opts?.limit ?? 50);
 }
 
-export async function createActivity(data: { userId: number; contactId?: number; companyId?: number; dealId?: number; type: any; subject?: string; body?: string; metadata?: Record<string, unknown> }) {
+export async function createActivity(data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
-  await db.insert(activities).values({ ...data, createdAt: Date.now() });
+  await db.insert(activities).values({ ...data, createdAt: data.createdAt ?? Date.now() });
 }
 
-// ─── Tasks ───
-export async function listTasks(userId: number, opts?: { status?: string; contactId?: number; dealId?: number; limit?: number; offset?: number }) {
+// ─── Tasks (expanded per TaskPage.docx) ───
+export async function listTasks(userId: number, opts?: { status?: string; taskType?: string; queue?: string; contactId?: number; companyId?: number; dealId?: number; limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return { items: [], total: 0 };
   const conditions = [eq(tasks.userId, userId)];
   if (opts?.status) conditions.push(eq(tasks.status, opts.status as any));
+  if (opts?.taskType) conditions.push(eq(tasks.taskType, opts.taskType));
+  if (opts?.queue) conditions.push(eq(tasks.queue, opts.queue));
   if (opts?.contactId) conditions.push(eq(tasks.contactId, opts.contactId));
+  if (opts?.companyId) conditions.push(eq(tasks.companyId, opts.companyId));
   if (opts?.dealId) conditions.push(eq(tasks.dealId, opts.dealId));
   const where = and(...conditions);
   const [items, countResult] = await Promise.all([
@@ -241,15 +248,15 @@ export async function listTasks(userId: number, opts?: { status?: string; contac
   return { items, total: countResult[0]?.count ?? 0 };
 }
 
-export async function createTask(data: { userId: number; assignedTo?: number; contactId?: number; dealId?: number; title: string; description?: string; dueDate?: number; priority?: any }) {
+export async function createTask(data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   const now = Date.now();
-  const result = await db.insert(tasks).values({ ...data, status: "todo", createdAt: now, updatedAt: now });
+  const result = await db.insert(tasks).values({ ...data, status: data.status ?? "not_started", createdAt: now, updatedAt: now });
   return result[0].insertId;
 }
 
-export async function updateTask(id: number, userId: number, data: Partial<{ title: string; description: string; dueDate: number; priority: any; status: any; assignedTo: number }>) {
+export async function updateTask(id: number, userId: number, data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   await db.update(tasks).set({ ...data, updatedAt: Date.now() }).where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
@@ -268,7 +275,7 @@ export async function listEmailTemplates(userId: number) {
   return db.select().from(emailTemplates).where(or(eq(emailTemplates.userId, userId), eq(emailTemplates.isSystem, true))).orderBy(desc(emailTemplates.createdAt));
 }
 
-export async function createEmailTemplate(data: { userId: number; name: string; subject: string; htmlContent: string; jsonContent?: Record<string, unknown>; category?: string }) {
+export async function createEmailTemplate(data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   const now = Date.now();
@@ -276,7 +283,7 @@ export async function createEmailTemplate(data: { userId: number; name: string; 
   return result[0].insertId;
 }
 
-export async function updateEmailTemplate(id: number, userId: number, data: Partial<{ name: string; subject: string; htmlContent: string; jsonContent: Record<string, unknown>; category: string }>) {
+export async function updateEmailTemplate(id: number, userId: number, data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   await db.update(emailTemplates).set({ ...data, updatedAt: Date.now() }).where(and(eq(emailTemplates.id, id), eq(emailTemplates.userId, userId)));
@@ -302,7 +309,7 @@ export async function listCampaigns(userId: number, opts?: { status?: string; li
   return { items, total: countResult[0]?.count ?? 0 };
 }
 
-export async function createCampaign(data: { userId: number; name: string; subject?: string; fromName?: string; fromEmail?: string; htmlContent?: string; templateId?: number; segmentId?: number }) {
+export async function createCampaign(data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   const now = Date.now();
@@ -310,16 +317,95 @@ export async function createCampaign(data: { userId: number; name: string; subje
   return result[0].insertId;
 }
 
-export async function updateCampaign(id: number, userId: number, data: Partial<Record<string, unknown>>) {
+export async function updateCampaign(id: number, userId: number, data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
-  await db.update(emailCampaigns).set({ ...data as any, updatedAt: Date.now() }).where(and(eq(emailCampaigns.id, id), eq(emailCampaigns.userId, userId)));
+  await db.update(emailCampaigns).set({ ...data, updatedAt: Date.now() }).where(and(eq(emailCampaigns.id, id), eq(emailCampaigns.userId, userId)));
 }
 
 export async function deleteCampaign(id: number, userId: number) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   await db.delete(emailCampaigns).where(and(eq(emailCampaigns.id, id), eq(emailCampaigns.userId, userId)));
+}
+
+// ─── SMTP Accounts ───
+export async function listSmtpAccounts(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(smtpAccounts).where(eq(smtpAccounts.userId, userId)).orderBy(asc(smtpAccounts.domain));
+}
+
+export async function createSmtpAccount(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const now = Date.now();
+  const result = await db.insert(smtpAccounts).values({ ...data, createdAt: now, updatedAt: now });
+  return result[0].insertId;
+}
+
+export async function updateSmtpAccount(id: number, userId: number, data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(smtpAccounts).set({ ...data, updatedAt: Date.now() }).where(and(eq(smtpAccounts.id, id), eq(smtpAccounts.userId, userId)));
+}
+
+export async function deleteSmtpAccount(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.delete(smtpAccounts).where(and(eq(smtpAccounts.id, id), eq(smtpAccounts.userId, userId)));
+}
+
+export async function getAvailableSmtpAccount(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(smtpAccounts)
+    .where(and(eq(smtpAccounts.userId, userId), eq(smtpAccounts.isActive, true)))
+    .orderBy(asc(smtpAccounts.sentToday))
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export async function incrementSmtpSentCount(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(smtpAccounts).set({
+    sentToday: sql`sentToday + 1`,
+    lastSentAt: Date.now(),
+    updatedAt: Date.now(),
+  }).where(eq(smtpAccounts.id, id));
+}
+
+export async function resetDailySmtpCounts(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  const today = new Date().toISOString().slice(0, 10);
+  await db.update(smtpAccounts).set({ sentToday: 0, lastResetDate: today, updatedAt: Date.now() })
+    .where(and(eq(smtpAccounts.userId, userId)));
+}
+
+// ─── Email Queue ───
+export async function addToEmailQueue(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const result = await db.insert(emailQueue).values({ ...data, status: "pending", createdAt: Date.now() });
+  return result[0].insertId;
+}
+
+export async function listEmailQueue(opts?: { campaignId?: number; status?: string; limit?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions: any[] = [];
+  if (opts?.campaignId) conditions.push(eq(emailQueue.campaignId, opts.campaignId));
+  if (opts?.status) conditions.push(eq(emailQueue.status, opts.status));
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+  return db.select().from(emailQueue).where(where).orderBy(asc(emailQueue.createdAt)).limit(opts?.limit ?? 100);
+}
+
+export async function updateEmailQueueItem(id: number, data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(emailQueue).set(data).where(eq(emailQueue.id, id));
 }
 
 // ─── Domain Health ───
@@ -329,7 +415,7 @@ export async function listDomainHealth(userId: number) {
   return db.select().from(domainHealth).where(eq(domainHealth.userId, userId)).orderBy(desc(domainHealth.createdAt));
 }
 
-export async function createDomainHealth(data: { userId: number; domain: string }) {
+export async function createDomainHealth(data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   const now = Date.now();
@@ -337,10 +423,10 @@ export async function createDomainHealth(data: { userId: number; domain: string 
   return result[0].insertId;
 }
 
-export async function updateDomainHealth(id: number, userId: number, data: Partial<Record<string, unknown>>) {
+export async function updateDomainHealth(id: number, userId: number, data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
-  await db.update(domainHealth).set({ ...data as any, updatedAt: Date.now() }).where(and(eq(domainHealth.id, id), eq(domainHealth.userId, userId)));
+  await db.update(domainHealth).set({ ...data, updatedAt: Date.now() }).where(and(eq(domainHealth.id, id), eq(domainHealth.userId, userId)));
 }
 
 // ─── Segments ───
@@ -350,7 +436,7 @@ export async function listSegments(userId: number) {
   return db.select().from(segments).where(eq(segments.userId, userId)).orderBy(desc(segments.createdAt));
 }
 
-export async function createSegment(data: { userId: number; name: string; description?: string; filters?: Record<string, unknown>[]; isDynamic?: boolean }) {
+export async function createSegment(data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   const now = Date.now();
@@ -358,10 +444,10 @@ export async function createSegment(data: { userId: number; name: string; descri
   return result[0].insertId;
 }
 
-export async function updateSegment(id: number, userId: number, data: Partial<Record<string, unknown>>) {
+export async function updateSegment(id: number, userId: number, data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
-  await db.update(segments).set({ ...data as any, updatedAt: Date.now() }).where(and(eq(segments.id, id), eq(segments.userId, userId)));
+  await db.update(segments).set({ ...data, updatedAt: Date.now() }).where(and(eq(segments.id, id), eq(segments.userId, userId)));
 }
 
 export async function deleteSegment(id: number, userId: number) {
@@ -377,7 +463,7 @@ export async function listWorkflows(userId: number) {
   return db.select().from(workflows).where(eq(workflows.userId, userId)).orderBy(desc(workflows.createdAt));
 }
 
-export async function createWorkflow(data: { userId: number; name: string; description?: string; trigger?: Record<string, unknown>; steps?: Record<string, unknown>[] }) {
+export async function createWorkflow(data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   const now = Date.now();
@@ -385,10 +471,10 @@ export async function createWorkflow(data: { userId: number; name: string; descr
   return result[0].insertId;
 }
 
-export async function updateWorkflow(id: number, userId: number, data: Partial<Record<string, unknown>>) {
+export async function updateWorkflow(id: number, userId: number, data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
-  await db.update(workflows).set({ ...data as any, updatedAt: Date.now() }).where(and(eq(workflows.id, id), eq(workflows.userId, userId)));
+  await db.update(workflows).set({ ...data, updatedAt: Date.now() }).where(and(eq(workflows.id, id), eq(workflows.userId, userId)));
 }
 
 export async function deleteWorkflow(id: number, userId: number) {
@@ -404,7 +490,7 @@ export async function listAbTests(userId: number) {
   return db.select().from(abTests).where(eq(abTests.userId, userId)).orderBy(desc(abTests.createdAt));
 }
 
-export async function createAbTest(data: { userId: number; name: string; type: any; campaignId?: number; variants?: Record<string, unknown>[]; sampleSize?: number }) {
+export async function createAbTest(data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   const now = Date.now();
@@ -412,10 +498,10 @@ export async function createAbTest(data: { userId: number; name: string; type: a
   return result[0].insertId;
 }
 
-export async function updateAbTest(id: number, userId: number, data: Partial<Record<string, unknown>>) {
+export async function updateAbTest(id: number, userId: number, data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
-  await db.update(abTests).set({ ...data as any, updatedAt: Date.now() }).where(and(eq(abTests.id, id), eq(abTests.userId, userId)));
+  await db.update(abTests).set({ ...data, updatedAt: Date.now() }).where(and(eq(abTests.id, id), eq(abTests.userId, userId)));
 }
 
 export async function deleteAbTest(id: number, userId: number) {
@@ -431,7 +517,7 @@ export async function listApiKeys(userId: number) {
   return db.select({ id: apiKeys.id, name: apiKeys.name, keyPrefix: apiKeys.keyPrefix, permissions: apiKeys.permissions, lastUsedAt: apiKeys.lastUsedAt, expiresAt: apiKeys.expiresAt, isActive: apiKeys.isActive, createdAt: apiKeys.createdAt }).from(apiKeys).where(eq(apiKeys.userId, userId)).orderBy(desc(apiKeys.createdAt));
 }
 
-export async function createApiKey(data: { userId: number; name: string; keyHash: string; keyPrefix: string; permissions?: string[]; expiresAt?: number }) {
+export async function createApiKey(data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   const result = await db.insert(apiKeys).values({ ...data, isActive: true, createdAt: Date.now() });
@@ -451,7 +537,7 @@ export async function listWebhooks(userId: number) {
   return db.select().from(webhooks).where(eq(webhooks.userId, userId)).orderBy(desc(webhooks.createdAt));
 }
 
-export async function createWebhook(data: { userId: number; name: string; url: string; events?: string[]; secret?: string }) {
+export async function createWebhook(data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   const now = Date.now();
@@ -459,7 +545,7 @@ export async function createWebhook(data: { userId: number; name: string; url: s
   return result[0].insertId;
 }
 
-export async function updateWebhook(id: number, userId: number, data: Partial<{ name: string; url: string; events: string[]; isActive: boolean }>) {
+export async function updateWebhook(id: number, userId: number, data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   await db.update(webhooks).set({ ...data, updatedAt: Date.now() }).where(and(eq(webhooks.id, id), eq(webhooks.userId, userId)));
@@ -480,8 +566,8 @@ export async function listWebhookLogs(webhookId: number, limit = 50) {
 // ─── Dashboard Stats ───
 export async function getDashboardStats(userId: number) {
   const db = await getDb();
-  if (!db) return { totalContacts: 0, totalCompanies: 0, totalDeals: 0, openDeals: 0, wonDeals: 0, lostDeals: 0, totalValue: 0, wonValue: 0, totalCampaigns: 0, totalTasks: 0, pendingTasks: 0 };
-  const [contactCount, companyCount, dealStats, campaignCount, taskStats] = await Promise.all([
+  if (!db) return { totalContacts: 0, totalCompanies: 0, totalDeals: 0, openDeals: 0, wonDeals: 0, lostDeals: 0, totalValue: 0, wonValue: 0, totalCampaigns: 0, totalTasks: 0, pendingTasks: 0, totalSmtpAccounts: 0, emailsSentToday: 0 };
+  const [contactCount, companyCount, dealStats, campaignCount, taskStats, smtpStats] = await Promise.all([
     db.select({ count: sql<number>`count(*)` }).from(contacts).where(eq(contacts.userId, userId)),
     db.select({ count: sql<number>`count(*)` }).from(companies).where(eq(companies.userId, userId)),
     db.select({
@@ -495,8 +581,12 @@ export async function getDashboardStats(userId: number) {
     db.select({ count: sql<number>`count(*)` }).from(emailCampaigns).where(eq(emailCampaigns.userId, userId)),
     db.select({
       total: sql<number>`count(*)`,
-      pending: sql<number>`SUM(CASE WHEN status IN ('todo', 'in_progress') THEN 1 ELSE 0 END)`,
+      pending: sql<number>`SUM(CASE WHEN taskStatus = 'not_started' THEN 1 ELSE 0 END)`,
     }).from(tasks).where(eq(tasks.userId, userId)),
+    db.select({
+      total: sql<number>`count(*)`,
+      sentToday: sql<number>`COALESCE(SUM(sentToday), 0)`,
+    }).from(smtpAccounts).where(eq(smtpAccounts.userId, userId)),
   ]);
   return {
     totalContacts: contactCount[0]?.count ?? 0,
@@ -510,5 +600,7 @@ export async function getDashboardStats(userId: number) {
     totalCampaigns: campaignCount[0]?.count ?? 0,
     totalTasks: taskStats[0]?.total ?? 0,
     pendingTasks: taskStats[0]?.pending ?? 0,
+    totalSmtpAccounts: smtpStats[0]?.total ?? 0,
+    emailsSentToday: smtpStats[0]?.sentToday ?? 0,
   };
 }

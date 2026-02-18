@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1770955200292,
-      "tag": "0000_sour_ken_ellis",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1770955551030,
-      "tag": "0001_rapid_vapor",
+      "when": 1771397484321,
+      "tag": "0000_chemical_steel_serpent",
       "breakpoints": true
     }
   ]

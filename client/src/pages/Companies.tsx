@@ -25,7 +25,7 @@ export default function Companies() {
     onSuccess: () => { utils.companies.list.invalidate(); toast.success("Company deleted"); },
   });
 
-  const [form, setForm] = useState({ name: "", domain: "", industry: "", size: "", phone: "", website: "", description: "" });
+  const [form, setForm] = useState({ name: "", domain: "", industry: "", numberOfEmployees: "", phone: "", website: "", description: "" });
 
   const handleCreate = () => {
     if (!form.name.trim()) { toast.error("Company name is required"); return; }
@@ -33,7 +33,7 @@ export default function Companies() {
       name: form.name,
       domain: form.domain || undefined,
       industry: form.industry || undefined,
-      size: form.size || undefined,
+      numberOfEmployees: form.numberOfEmployees || undefined,
       phone: form.phone || undefined,
       website: form.website || undefined,
       description: form.description || undefined,
@@ -107,7 +107,7 @@ export default function Companies() {
                       ) : <span className="text-xs text-muted-foreground/50">—</span>}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{company.industry || "—"}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{company.size || "—"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{company.numberOfEmployees || "—"}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{new Date(company.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -136,7 +136,7 @@ export default function Companies() {
             <div className="space-y-2"><Label>Company Name *</Label><Input value={form.name} onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Acme Inc." className="bg-secondary/30" /></div>
             <div className="space-y-2"><Label>Domain</Label><Input value={form.domain} onChange={(e) => setForm(p => ({ ...p, domain: e.target.value }))} placeholder="acme.com" className="bg-secondary/30" /></div>
             <div className="space-y-2"><Label>Industry</Label><Input value={form.industry} onChange={(e) => setForm(p => ({ ...p, industry: e.target.value }))} placeholder="Technology" className="bg-secondary/30" /></div>
-            <div className="space-y-2"><Label>Size</Label><Input value={form.size} onChange={(e) => setForm(p => ({ ...p, size: e.target.value }))} placeholder="51-200" className="bg-secondary/30" /></div>
+            <div className="space-y-2"><Label>Employees</Label><Input value={form.numberOfEmployees} onChange={(e) => setForm(p => ({ ...p, numberOfEmployees: e.target.value }))} placeholder="51-200" className="bg-secondary/30" /></div>
             <div className="space-y-2"><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm(p => ({ ...p, phone: e.target.value }))} placeholder="+1 555 0123" className="bg-secondary/30" /></div>
             <div className="space-y-2"><Label>Website</Label><Input value={form.website} onChange={(e) => setForm(p => ({ ...p, website: e.target.value }))} placeholder="https://acme.com" className="bg-secondary/30" /></div>
             <div className="space-y-2 col-span-2"><Label>Description</Label><Input value={form.description} onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))} placeholder="Brief description..." className="bg-secondary/30" /></div>
