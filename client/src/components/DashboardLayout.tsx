@@ -26,6 +26,7 @@ import {
   LayoutDashboard, Users, Building2, Kanban, Mail, Shield,
   BarChart3, ListChecks, GitBranch, FlaskConical, Key, Webhook,
   Filter, PanelLeft, LogOut, Zap, Send, ChevronDown,
+  Brain, Target, Radar, Ghost, Flame, Plug,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -63,6 +64,17 @@ const menuSections = [
     items: [
       { icon: GitBranch, label: "Workflows", path: "/workflows" },
       { icon: Filter, label: "Segments", path: "/segments" },
+    ],
+  },
+  {
+    label: "Paradigm Engine",
+    items: [
+      { icon: Brain, label: "Pulse Dashboard", path: "/paradigm" },
+      { icon: Target, label: "Prospects", path: "/paradigm/prospects" },
+      { icon: Radar, label: "Signals", path: "/paradigm/signals" },
+      { icon: Ghost, label: "Ghost Sequences", path: "/paradigm/sequences" },
+      { icon: Flame, label: "Battle Cards", path: "/paradigm/battle-cards" },
+      { icon: Plug, label: "Integrations", path: "/paradigm/integrations" },
     ],
   },
   {

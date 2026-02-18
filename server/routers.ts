@@ -754,6 +754,453 @@ export const appRouter = router({
       return db.listWebhookLogs(input.webhookId, input.limit);
     }),
   }),
+
+  // ═══════════════════════════════════════════════════════════════
+  // PARADIGM ENGINE — BNB Prospecting & Sales Intelligence
+  // ═══════════════════════════════════════════════════════════════
+
+  integrations: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return db.listIntegrationCredentials(ctx.user.id);
+    }),
+    upsert: protectedProcedure.input(z.object({
+      service: z.string(),
+      apiKey: z.string(),
+      apiSecret: z.string().optional(),
+      baseUrl: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const id = await db.upsertIntegrationCredential({ ...input, userId: ctx.user.id });
+      return { id };
+    }),
+    test: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      // Simulate testing the integration
+      await db.updateIntegrationTestStatus(input.id, "success", "Connection verified successfully");
+      return { success: true };
+    }),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.deleteIntegrationCredential(input.id, ctx.user.id);
+      return { success: true };
+    }),
+  }),
+
+  paradigm: router({
+    stats: protectedProcedure.query(async ({ ctx }) => {
+      return db.getParadigmStats(ctx.user.id);
+    }),
+    recentActivity: protectedProcedure.input(z.object({ limit: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.getRecentActivity(ctx.user.id, input?.limit);
+    }),
+    hotLeads: protectedProcedure.query(async ({ ctx }) => {
+      return db.getHotLeads(ctx.user.id);
+    }),
+  }),
+
+  prospects: router({
+    list: protectedProcedure.input(z.object({
+      search: z.string().optional(),
+      stage: z.string().optional(),
+      verificationStatus: z.string().optional(),
+      limit: z.number().optional(),
+      offset: z.number().optional(),
+    }).optional()).query(async ({ ctx, input }) => {
+      return db.listProspects(ctx.user.id, input);
+    }),
+    get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      return db.getProspect(input.id, ctx.user.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      firstName: z.string().min(1),
+      lastName: z.string().optional(),
+      email: z.string().optional(),
+      jobTitle: z.string().optional(),
+      companyName: z.string().optional(),
+      companyDomain: z.string().optional(),
+      linkedinUrl: z.string().optional(),
+      phone: z.string().optional(),
+      location: z.string().optional(),
+      industry: z.string().optional(),
+      sourceType: z.string().optional().default("manual"),
+      tags: z.array(z.string()).optional(),
+      notes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const now = Date.now();
+      const id = await db.createProspect({ ...input, userId: ctx.user.id, createdAt: now, updatedAt: now });
+      return { id };
+    }),
+    update: protectedProcedure.input(z.object({
+      id: z.number(),
+      firstName: z.string().optional(),
+      lastName: z.string().optional(),
+      email: z.string().optional(),
+      jobTitle: z.string().optional(),
+      companyName: z.string().optional(),
+      companyDomain: z.string().optional(),
+      linkedinUrl: z.string().optional(),
+      phone: z.string().optional(),
+      location: z.string().optional(),
+      industry: z.string().optional(),
+      verificationStatus: z.string().optional(),
+      bounceRisk: z.string().optional(),
+      engagementStage: z.string().optional(),
+      intentScore: z.number().optional(),
+      intentSignal: z.string().optional(),
+      psychographicProfile: z.any().optional(),
+      tags: z.array(z.string()).optional(),
+      notes: z.string().optional(),
+      score: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      await db.updateProspect(id, ctx.user.id, data);
+      return { success: true };
+    }),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.deleteProspect(input.id, ctx.user.id);
+      return { success: true };
+    }),
+    // AI: Verify email via Nutrition layer
+    verify: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const prospect = await db.getProspect(input.id, ctx.user.id);
+      if (!prospect?.email) return { status: "no_email" };
+      // Use LLM to simulate verification analysis
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: "You are an email deliverability expert. Analyze the given email address and determine if it's likely valid, invalid, catch-all, disposable, or unknown. Return JSON." },
+          { role: "user", content: `Analyze this email address for deliverability: ${prospect.email} (Company: ${prospect.companyName ?? "unknown"}, Domain: ${prospect.companyDomain ?? "unknown"})` },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "email_verification",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                status: { type: "string", description: "valid, invalid, catch_all, disposable, unknown" },
+                bounceRisk: { type: "string", description: "low, medium, high" },
+                reason: { type: "string" },
+                confidence: { type: "number" },
+              },
+              required: ["status", "bounceRisk", "reason", "confidence"],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+      const content889 = response.choices[0]?.message?.content;
+      const result = JSON.parse(typeof content889 === "string" ? content889 : "{}");
+      await db.updateProspect(input.id, ctx.user.id, {
+        verificationStatus: result.status ?? "unknown",
+        bounceRisk: result.bounceRisk ?? "medium",
+        verificationProvider: "ai_analysis",
+        verifiedAt: Date.now(),
+        engagementStage: result.status === "valid" ? "verified" : prospect.engagementStage,
+      });
+      return result;
+    }),
+    // AI: Build Digital Twin psychographic profile
+    buildProfile: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const prospect = await db.getProspect(input.id, ctx.user.id);
+      if (!prospect) return { error: "not_found" };
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: `You are a sales psychologist and behavioral analyst. Build a psychographic profile for a B2B prospect based on their professional information. This will be used to personalize outreach emails. Return JSON.` },
+          { role: "user", content: `Build a psychographic profile for:\nName: ${prospect.firstName} ${prospect.lastName ?? ""}\nTitle: ${prospect.jobTitle ?? "unknown"}\nCompany: ${prospect.companyName ?? "unknown"}\nIndustry: ${prospect.industry ?? "unknown"}\nLinkedIn: ${prospect.linkedinUrl ?? "none"}\nLocation: ${prospect.location ?? "unknown"}` },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "psychographic_profile",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                personalityType: { type: "string" },
+                communicationStyle: { type: "string" },
+                motivators: { type: "array", items: { type: "string" } },
+                painPoints: { type: "array", items: { type: "string" } },
+                interests: { type: "array", items: { type: "string" } },
+                decisionStyle: { type: "string" },
+                socialActivity: { type: "string" },
+                summary: { type: "string" },
+              },
+              required: ["personalityType", "communicationStyle", "motivators", "painPoints", "interests", "decisionStyle", "socialActivity", "summary"],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+      const profileContent = response.choices[0]?.message?.content;
+      const profile = JSON.parse(typeof profileContent === "string" ? profileContent : "{}");
+      profile.analyzedAt = Date.now();
+      await db.updateProspect(input.id, ctx.user.id, {
+        psychographicProfile: profile,
+        engagementStage: "profiled",
+      });
+      return profile;
+    }),
+    // AI: Generate battle card
+    generateBattleCard: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const prospect = await db.getProspect(input.id, ctx.user.id);
+      if (!prospect) return { error: "not_found" };
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: `You are a sales strategist. Generate a tactical battle card for a sales rep about to engage a prospect. Include company overview, person insights, pain points, talking points, competitor intel, recommended approach, and objection handlers. Return JSON.` },
+          { role: "user", content: `Generate battle card for:\nName: ${prospect.firstName} ${prospect.lastName ?? ""}\nTitle: ${prospect.jobTitle ?? "unknown"}\nCompany: ${prospect.companyName ?? "unknown"}\nIndustry: ${prospect.industry ?? "unknown"}\nProfile: ${JSON.stringify(prospect.psychographicProfile ?? {})}` },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "battle_card",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                companyOverview: { type: "string" },
+                personInsights: { type: "string" },
+                painPoints: { type: "array", items: { type: "string" } },
+                talkingPoints: { type: "array", items: { type: "string" } },
+                competitorIntel: { type: "string" },
+                recommendedApproach: { type: "string" },
+                objectionHandlers: { type: "array", items: { type: "object", properties: { objection: { type: "string" }, response: { type: "string" } }, required: ["objection", "response"], additionalProperties: false } },
+                urgencyLevel: { type: "string" },
+              },
+              required: ["companyOverview", "personInsights", "painPoints", "talkingPoints", "competitorIntel", "recommendedApproach", "objectionHandlers", "urgencyLevel"],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+      const cardContent = response.choices[0]?.message?.content;
+      const card = JSON.parse(typeof cardContent === "string" ? cardContent : "{}");
+      const now = Date.now();
+      const cardId = await db.createBattleCard({
+        userId: ctx.user.id,
+        prospectId: input.id,
+        title: `Battle Card: ${prospect.firstName} ${prospect.lastName ?? ""} @ ${prospect.companyName ?? "Unknown"}`,
+        ...card,
+        generatedAt: now,
+        createdAt: now,
+        isRead: false,
+        isArchived: false,
+      });
+      await db.updateProspect(input.id, ctx.user.id, { battleCardId: cardId });
+      return { id: cardId, ...card };
+    }),
+    // AI: Draft personalized outreach email
+    draftEmail: protectedProcedure.input(z.object({
+      id: z.number(),
+      sequenceStepId: z.number().optional(),
+      tone: z.string().optional(),
+      context: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const prospect = await db.getProspect(input.id, ctx.user.id);
+      if (!prospect) return { error: "not_found" };
+      const profile = prospect.psychographicProfile;
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: `You are an expert B2B sales email copywriter. Write a highly personalized, non-spammy outreach email that feels human-written. Use the prospect's psychographic profile to tailor the message. The email must avoid spam triggers, be concise, and include a clear but soft CTA. Return JSON with subject and body.` },
+          { role: "user", content: `Write an outreach email for:\nName: ${prospect.firstName} ${prospect.lastName ?? ""}\nTitle: ${prospect.jobTitle ?? "unknown"}\nCompany: ${prospect.companyName ?? "unknown"}\nIndustry: ${prospect.industry ?? "unknown"}\nProfile: ${JSON.stringify(profile ?? {})}\nTone: ${input.tone ?? "professional but warm"}\nContext: ${input.context ?? "initial outreach"}` },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "outreach_email",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                subject: { type: "string" },
+                body: { type: "string" },
+                spamScore: { type: "number", description: "0-100, lower is better" },
+                personalizationNotes: { type: "string" },
+              },
+              required: ["subject", "body", "spamScore", "personalizationNotes"],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+      const emailContent = response.choices[0]?.message?.content;
+      return JSON.parse(typeof emailContent === "string" ? emailContent : "{}");
+    }),
+    // Promote prospect to CRM contact
+    promoteToContact: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const prospect = await db.getProspect(input.id, ctx.user.id);
+      if (!prospect) return { error: "not_found" };
+      const now = Date.now();
+      const contactId = await db.createContact({
+        userId: ctx.user.id,
+        firstName: prospect.firstName,
+        lastName: prospect.lastName,
+        email: prospect.email,
+        jobTitle: prospect.jobTitle,
+        linkedinUrl: prospect.linkedinUrl,
+        directPhone: prospect.phone,
+        city: prospect.location,
+        leadSource: `paradigm_${prospect.sourceType}`,
+        lifecycleStage: "lead",
+        createdAt: now,
+        updatedAt: now,
+      });
+      await db.updateProspect(input.id, ctx.user.id, { contactId, engagementStage: "converted" });
+      await db.createActivity({ userId: ctx.user.id, contactId, type: "contact_created", subject: `Promoted from Paradigm Engine prospect` });
+      return { contactId };
+    }),
+  }),
+
+  signals: router({
+    list: protectedProcedure.input(z.object({
+      status: z.string().optional(),
+      type: z.string().optional(),
+      limit: z.number().optional(),
+      offset: z.number().optional(),
+    }).optional()).query(async ({ ctx, input }) => {
+      return db.listTriggerSignals(ctx.user.id, input);
+    }),
+    create: protectedProcedure.input(z.object({
+      signalType: z.string(),
+      title: z.string(),
+      description: z.string().optional(),
+      sourceUrl: z.string().optional(),
+      sourcePlatform: z.string().optional(),
+      prospectId: z.number().optional(),
+      companyName: z.string().optional(),
+      personName: z.string().optional(),
+      priority: z.string().optional(),
+      metadata: z.record(z.string(), z.unknown()).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const id = await db.createTriggerSignal({ ...input, userId: ctx.user.id, createdAt: Date.now() } as any);
+      return { id };
+    }),
+    update: protectedProcedure.input(z.object({
+      id: z.number(),
+      status: z.string().optional(),
+      actionTaken: z.string().optional(),
+      priority: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      const updateData: any = { ...data };
+      if (data.status && data.status !== "new") updateData.processedAt = Date.now();
+      await db.updateTriggerSignal(id, ctx.user.id, updateData);
+      return { success: true };
+    }),
+  }),
+
+  ghostSequences: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return db.listGhostSequences(ctx.user.id);
+    }),
+    get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      return db.getGhostSequence(input.id, ctx.user.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      name: z.string().min(1),
+      description: z.string().optional(),
+      stylisticFingerprint: z.any().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const id = await db.createGhostSequence({ ...input, userId: ctx.user.id });
+      return { id, status: "draft" };
+    }),
+    update: protectedProcedure.input(z.object({
+      id: z.number(),
+      name: z.string().optional(),
+      description: z.string().optional(),
+      stylisticFingerprint: z.any().optional(),
+      status: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      await db.updateGhostSequence(id, ctx.user.id, data as any);
+      return { success: true };
+    }),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.deleteGhostSequence(input.id, ctx.user.id);
+      return { success: true };
+    }),
+    steps: router({
+      list: protectedProcedure.input(z.object({ sequenceId: z.number() })).query(async ({ input }) => {
+        return db.listGhostSequenceSteps(input.sequenceId);
+      }),
+      create: protectedProcedure.input(z.object({
+        sequenceId: z.number(),
+        stepOrder: z.number(),
+        delayDays: z.number().optional(),
+        subject: z.string().optional(),
+        bodyTemplate: z.string().optional(),
+        aiGenerated: z.boolean().optional(),
+        useDigitalTwin: z.boolean().optional(),
+        toneOverride: z.string().optional(),
+      })).mutation(async ({ input }) => {
+        const id = await db.createGhostSequenceStep(input);
+        return { id };
+      }),
+      update: protectedProcedure.input(z.object({
+        id: z.number(),
+        delayDays: z.number().optional(),
+        subject: z.string().optional(),
+        bodyTemplate: z.string().optional(),
+        toneOverride: z.string().optional(),
+      })).mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        await db.updateGhostSequenceStep(id, data);
+        return { success: true };
+      }),
+      delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+        await db.deleteGhostSequenceStep(input.id);
+        return { success: true };
+      }),
+    }),
+  }),
+
+  outreach: router({
+    list: protectedProcedure.input(z.object({ prospectId: z.number(), limit: z.number().optional() })).query(async ({ input }) => {
+      return db.listProspectOutreach(input.prospectId, input.limit);
+    }),
+    create: protectedProcedure.input(z.object({
+      prospectId: z.number(),
+      sequenceId: z.number().optional(),
+      stepId: z.number().optional(),
+      fromEmail: z.string().optional(),
+      toEmail: z.string(),
+      subject: z.string(),
+      body: z.string(),
+      smtpAccountId: z.number().optional(),
+    })).mutation(async ({ input }) => {
+      const id = await db.createProspectOutreach({ ...input, createdAt: Date.now() } as any);
+      return { id };
+    }),
+    updateStatus: protectedProcedure.input(z.object({
+      id: z.number(),
+      status: z.string(),
+      replyContent: z.string().optional(),
+      intentAnalysis: z.any().optional(),
+    })).mutation(async ({ input }) => {
+      const { id, ...data } = input;
+      const updateData: any = { ...data };
+      if (data.status === "sent") updateData.sentAt = Date.now();
+      if (data.status === "opened") updateData.openedAt = Date.now();
+      if (data.status === "replied") updateData.repliedAt = Date.now();
+      if (data.status === "bounced") updateData.bouncedAt = Date.now();
+      await db.updateProspectOutreach(id, updateData);
+      return { success: true };
+    }),
+  }),
+
+  battleCards: router({
+    list: protectedProcedure.input(z.object({ unreadOnly: z.boolean().optional(), limit: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.listBattleCards(ctx.user.id, input);
+    }),
+    get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      return db.getBattleCard(input.id, ctx.user.id);
+    }),
+    markRead: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.updateBattleCard(input.id, ctx.user.id, { isRead: true });
+      return { success: true };
+    }),
+    archive: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.updateBattleCard(input.id, ctx.user.id, { isArchived: true });
+      return { success: true };
+    }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

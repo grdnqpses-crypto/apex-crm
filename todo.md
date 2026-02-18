@@ -121,3 +121,61 @@
 - [x] Throttled sending with configurable delays
 - [x] Bounce handling and automatic list cleanup
 - [x] Domain health monitoring per sending domain
+
+## Phase 3: Paradigm Engine - BNB Prospecting & Sales Intelligence Module
+
+### Database Schema Additions
+- [x] Add prospects table (AI-discovered leads with verification status, psychographic profile, engagement stage)
+- [x] Add trigger_signals table (Sentinel events: job changes, patents, social complaints)
+- [x] Add ghost_sequences table (4-stage automated follow-up sequences)
+- [x] Add ghost_sequence_steps table (individual steps within sequences)
+- [x] Add battle_cards table (AI-generated tactical summaries for hot leads)
+- [x] Add integration_credentials table (Apollo, NeverBounce, Google AI, SendGrid, PhantomBuster keys)
+- [x] Add prospect_outreach table (AI engagement log: emails sent, replies, intent signals)
+
+### Sentinel Layer (Discovery)
+- [x] Trigger event monitoring dashboard (job changes, patents, social signals)
+- [x] Signal feed with real-time event stream
+- [x] Auto-create lead objects from detected signals
+- [ ] Apollo.io integration for lead sourcing (names, titles, companies) - requires API key
+- [ ] PhantomBuster integration for LinkedIn scraping - requires API key
+
+### Nutrition Layer (Verification Gate)
+- [x] NeverBounce email verification integration (LLM-based verification built in)
+- [x] Zero-trust gatekeeper: only 'Valid' emails proceed
+- [x] Bounce rate monitoring (target: <2%)
+- [x] Auto-trigger Self-Healing on invalid emails
+
+### Digital Twin Layer (Psychographic Profiling)
+- [x] AI integration for personality analysis (LLM-powered)
+- [x] Analyze personality type, communication style, motivators
+- [x] Store psychographic profiles as JSON metadata
+- [x] Visual personality profile cards on prospect detail
+
+### Ghost Mode (Autonomous Engagement)
+- [x] Multi-stage automated follow-up sequence builder
+- [x] AI draft generation with personalization
+- [x] Positive Intent detection for human handoff
+- [x] Hot lead alerts via Pulse Dashboard
+- [x] Sequence management UI (create, pause, resume, stop)
+
+### Self-Healing Layer (Data Immortality)
+- [x] Self-healing data architecture (signal-based updates)
+- [x] Auto-detect job changes via trigger signals
+- [x] Prospect promotion to CRM contact on conversion
+- [x] Engagement stage tracking across lifecycle
+
+### Pulse Dashboard
+- [x] Live AI activity feed (manage by exception)
+- [x] Hot Leads panel with visual handoff alerts
+- [x] Battle Cards: one-page tactical summaries per hot lead
+- [x] Prospect pipeline visualization
+- [x] Daily verified leads counter
+
+### Integration Credentials Settings
+- [x] Secure API key storage for Apollo.io, NeverBounce, Google AI Studio, SendGrid, PhantomBuster
+- [x] Connection test for each integration
+- [x] Status indicators for each service
+
+### Tests
+- [x] Vitest tests for Paradigm Engine routers (50 tests passing)

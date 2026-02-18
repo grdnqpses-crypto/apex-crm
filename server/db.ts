@@ -7,10 +7,16 @@ import {
   domainHealth, segments, workflows, abTests,
   apiKeys, webhooks, webhookLogs,
   smtpAccounts, emailQueue, leadStatusOptions,
+  integrationCredentials, prospects, triggerSignals,
+  ghostSequences, ghostSequenceSteps, prospectOutreach, battleCards,
   type Contact, type InsertContact,
   type Company, type InsertCompany,
   type Deal, type InsertDeal,
   type SmtpAccount, type EmailQueueItem,
+  type Prospect, type InsertProspect,
+  type IntegrationCredential, type TriggerSignal,
+  type GhostSequence, type GhostSequenceStep,
+  type ProspectOutreach, type BattleCard,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -603,4 +609,310 @@ export async function getDashboardStats(userId: number) {
     totalSmtpAccounts: smtpStats[0]?.total ?? 0,
     emailsSentToday: smtpStats[0]?.sentToday ?? 0,
   };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PARADIGM ENGINE — Database Helpers
+// ═══════════════════════════════════════════════════════════════
+
+// ─── Integration Credentials ───
+export async function listIntegrationCredentials(userId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(integrationCredentials).where(eq(integrationCredentials.userId, userId)).orderBy(asc(integrationCredentials.service));
+}
+
+export async function getIntegrationCredential(userId: number, service: string) {
+  const db = await getDb(); if (!db) return undefined;
+  const result = await db.select().from(integrationCredentials).where(and(eq(integrationCredentials.userId, userId), eq(integrationCredentials.service, service))).limit(1);
+  return result[0];
+}
+
+export async function upsertIntegrationCredential(data: { userId: number; service: string; apiKey: string; apiSecret?: string; baseUrl?: string }) {
+  const db = await getDb(); if (!db) return 0;
+  const now = Date.now();
+  const existing = await getIntegrationCredential(data.userId, data.service);
+  if (existing) {
+    await db.update(integrationCredentials).set({ apiKey: data.apiKey, apiSecret: data.apiSecret ?? null, baseUrl: data.baseUrl ?? null, updatedAt: now }).where(eq(integrationCredentials.id, existing.id));
+    return existing.id;
+  }
+  const [result] = await db.insert(integrationCredentials).values({ ...data, createdAt: now, updatedAt: now }).$returningId();
+  return result.id;
+}
+
+export async function updateIntegrationTestStatus(id: number, status: string, message?: string) {
+  const db = await getDb(); if (!db) return;
+  await db.update(integrationCredentials).set({ testStatus: status, testMessage: message ?? null, lastTestedAt: Date.now(), updatedAt: Date.now() }).where(eq(integrationCredentials.id, id));
+}
+
+export async function deleteIntegrationCredential(id: number, userId: number) {
+  const db = await getDb(); if (!db) return;
+  await db.delete(integrationCredentials).where(and(eq(integrationCredentials.id, id), eq(integrationCredentials.userId, userId)));
+}
+
+// ─── Prospects ───
+export async function listProspects(userId: number, opts?: { search?: string; stage?: string; verificationStatus?: string; limit?: number; offset?: number }) {
+  const db = await getDb(); if (!db) return { items: [], total: 0 };
+  const conditions = [eq(prospects.userId, userId)];
+  if (opts?.stage) conditions.push(eq(prospects.engagementStage, opts.stage));
+  if (opts?.verificationStatus) conditions.push(eq(prospects.verificationStatus, opts.verificationStatus));
+  if (opts?.search) conditions.push(or(like(prospects.firstName, `%${opts.search}%`), like(prospects.lastName, `%${opts.search}%`), like(prospects.email, `%${opts.search}%`), like(prospects.companyName, `%${opts.search}%`))!);
+  const where = and(...conditions);
+  const [items, countResult] = await Promise.all([
+    db.select().from(prospects).where(where).orderBy(desc(prospects.createdAt)).limit(opts?.limit ?? 50).offset(opts?.offset ?? 0),
+    db.select({ count: sql<number>`count(*)` }).from(prospects).where(where),
+  ]);
+  return { items, total: countResult[0]?.count ?? 0 };
+}
+
+export async function getProspect(id: number, userId: number) {
+  const db = await getDb(); if (!db) return undefined;
+  const result = await db.select().from(prospects).where(and(eq(prospects.id, id), eq(prospects.userId, userId))).limit(1);
+  return result[0];
+}
+
+export async function createProspect(data: Omit<InsertProspect, "id">) {
+  const db = await getDb(); if (!db) return 0;
+  const [result] = await db.insert(prospects).values(data).$returningId();
+  return result.id;
+}
+
+export async function updateProspect(id: number, userId: number, data: Partial<InsertProspect>) {
+  const db = await getDb(); if (!db) return;
+  await db.update(prospects).set({ ...data, updatedAt: Date.now() }).where(and(eq(prospects.id, id), eq(prospects.userId, userId)));
+}
+
+export async function deleteProspect(id: number, userId: number) {
+  const db = await getDb(); if (!db) return;
+  await db.delete(prospects).where(and(eq(prospects.id, id), eq(prospects.userId, userId)));
+}
+
+export async function getProspectStats(userId: number) {
+  const db = await getDb(); if (!db) return { total: 0, discovered: 0, verified: 0, profiled: 0, sequenced: 0, engaged: 0, replied: 0, hotLeads: 0, converted: 0, disqualified: 0, avgIntentScore: 0 };
+  const result = await db.select({
+    total: sql<number>`count(*)`,
+    discovered: sql<number>`SUM(CASE WHEN engagementStage = 'discovered' THEN 1 ELSE 0 END)`,
+    verified: sql<number>`SUM(CASE WHEN engagementStage = 'verified' THEN 1 ELSE 0 END)`,
+    profiled: sql<number>`SUM(CASE WHEN engagementStage = 'profiled' THEN 1 ELSE 0 END)`,
+    sequenced: sql<number>`SUM(CASE WHEN engagementStage = 'sequenced' THEN 1 ELSE 0 END)`,
+    engaged: sql<number>`SUM(CASE WHEN engagementStage = 'engaged' THEN 1 ELSE 0 END)`,
+    replied: sql<number>`SUM(CASE WHEN engagementStage = 'replied' THEN 1 ELSE 0 END)`,
+    hotLeads: sql<number>`SUM(CASE WHEN engagementStage = 'hot_lead' THEN 1 ELSE 0 END)`,
+    converted: sql<number>`SUM(CASE WHEN engagementStage = 'converted' THEN 1 ELSE 0 END)`,
+    disqualified: sql<number>`SUM(CASE WHEN engagementStage = 'disqualified' THEN 1 ELSE 0 END)`,
+    avgIntentScore: sql<number>`COALESCE(AVG(intentScore), 0)`,
+  }).from(prospects).where(eq(prospects.userId, userId));
+  const r = result[0];
+  return {
+    total: Number(r?.total ?? 0),
+    discovered: Number(r?.discovered ?? 0),
+    verified: Number(r?.verified ?? 0),
+    profiled: Number(r?.profiled ?? 0),
+    sequenced: Number(r?.sequenced ?? 0),
+    engaged: Number(r?.engaged ?? 0),
+    replied: Number(r?.replied ?? 0),
+    hotLeads: Number(r?.hotLeads ?? 0),
+    converted: Number(r?.converted ?? 0),
+    disqualified: Number(r?.disqualified ?? 0),
+    avgIntentScore: Number(r?.avgIntentScore ?? 0),
+  };
+}
+
+export async function getHotLeads(userId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(prospects).where(and(eq(prospects.userId, userId), eq(prospects.engagementStage, "hot_lead"))).orderBy(desc(prospects.intentScore)).limit(20);
+}
+
+// ─── Trigger Signals ───
+export async function listTriggerSignals(userId: number, opts?: { status?: string; type?: string; limit?: number; offset?: number }) {
+  const db = await getDb(); if (!db) return { items: [], total: 0 };
+  const conditions = [eq(triggerSignals.userId, userId)];
+  if (opts?.status) conditions.push(eq(triggerSignals.status, opts.status));
+  if (opts?.type) conditions.push(eq(triggerSignals.signalType, opts.type));
+  const where = and(...conditions);
+  const [items, countResult] = await Promise.all([
+    db.select().from(triggerSignals).where(where).orderBy(desc(triggerSignals.createdAt)).limit(opts?.limit ?? 50).offset(opts?.offset ?? 0),
+    db.select({ count: sql<number>`count(*)` }).from(triggerSignals).where(where),
+  ]);
+  return { items, total: countResult[0]?.count ?? 0 };
+}
+
+export async function createTriggerSignal(data: Omit<TriggerSignal, "id">) {
+  const db = await getDb(); if (!db) return 0;
+  const [result] = await db.insert(triggerSignals).values(data).$returningId();
+  return result.id;
+}
+
+export async function updateTriggerSignal(id: number, userId: number, data: Partial<TriggerSignal>) {
+  const db = await getDb(); if (!db) return;
+  await db.update(triggerSignals).set(data).where(and(eq(triggerSignals.id, id), eq(triggerSignals.userId, userId)));
+}
+
+// ─── Ghost Sequences ───
+export async function listGhostSequences(userId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(ghostSequences).where(eq(ghostSequences.userId, userId)).orderBy(desc(ghostSequences.createdAt));
+}
+
+export async function getGhostSequence(id: number, userId: number) {
+  const db = await getDb(); if (!db) return undefined;
+  const result = await db.select().from(ghostSequences).where(and(eq(ghostSequences.id, id), eq(ghostSequences.userId, userId))).limit(1);
+  return result[0];
+}
+
+export async function createGhostSequence(data: { userId: number; name: string; description?: string; stylisticFingerprint?: any }) {
+  const db = await getDb(); if (!db) return 0;
+  const now = Date.now();
+  const [result] = await db.insert(ghostSequences).values({ ...data, createdAt: now, updatedAt: now }).$returningId();
+  return result.id;
+}
+
+export async function updateGhostSequence(id: number, userId: number, data: Partial<GhostSequence>) {
+  const db = await getDb(); if (!db) return;
+  await db.update(ghostSequences).set({ ...data, updatedAt: Date.now() }).where(and(eq(ghostSequences.id, id), eq(ghostSequences.userId, userId)));
+}
+
+export async function deleteGhostSequence(id: number, userId: number) {
+  const db = await getDb(); if (!db) return;
+  await db.delete(ghostSequenceSteps).where(eq(ghostSequenceSteps.sequenceId, id));
+  await db.delete(ghostSequences).where(and(eq(ghostSequences.id, id), eq(ghostSequences.userId, userId)));
+}
+
+// ─── Ghost Sequence Steps ───
+export async function listGhostSequenceSteps(sequenceId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(ghostSequenceSteps).where(eq(ghostSequenceSteps.sequenceId, sequenceId)).orderBy(asc(ghostSequenceSteps.stepOrder));
+}
+
+export async function createGhostSequenceStep(data: { sequenceId: number; stepOrder: number; delayDays?: number; subject?: string; bodyTemplate?: string; aiGenerated?: boolean; useDigitalTwin?: boolean; toneOverride?: string }) {
+  const db = await getDb(); if (!db) return 0;
+  const [result] = await db.insert(ghostSequenceSteps).values({ ...data, createdAt: Date.now() }).$returningId();
+  return result.id;
+}
+
+export async function updateGhostSequenceStep(id: number, data: Partial<GhostSequenceStep>) {
+  const db = await getDb(); if (!db) return;
+  await db.update(ghostSequenceSteps).set(data).where(eq(ghostSequenceSteps.id, id));
+}
+
+export async function deleteGhostSequenceStep(id: number) {
+  const db = await getDb(); if (!db) return;
+  await db.delete(ghostSequenceSteps).where(eq(ghostSequenceSteps.id, id));
+}
+
+// ─── Prospect Outreach ───
+export async function listProspectOutreach(prospectId: number, limit?: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(prospectOutreach).where(eq(prospectOutreach.prospectId, prospectId)).orderBy(desc(prospectOutreach.createdAt)).limit(limit ?? 50);
+}
+
+export async function createProspectOutreach(data: Omit<ProspectOutreach, "id">) {
+  const db = await getDb(); if (!db) return 0;
+  const [result] = await db.insert(prospectOutreach).values(data).$returningId();
+  return result.id;
+}
+
+export async function updateProspectOutreach(id: number, data: Partial<ProspectOutreach>) {
+  const db = await getDb(); if (!db) return;
+  await db.update(prospectOutreach).set(data).where(eq(prospectOutreach.id, id));
+}
+
+export async function getOutreachStats(userId: number) {
+  const db = await getDb(); if (!db) return { totalSent: 0, totalOpened: 0, totalReplied: 0, totalBounced: 0, openRate: 0, replyRate: 0, bounceRate: 0 };
+  const result = await db.select({
+    totalSent: sql<number>`SUM(CASE WHEN outreachStatus IN ('sent','opened','clicked','replied') THEN 1 ELSE 0 END)`,
+    totalOpened: sql<number>`SUM(CASE WHEN outreachStatus IN ('opened','clicked','replied') THEN 1 ELSE 0 END)`,
+    totalReplied: sql<number>`SUM(CASE WHEN outreachStatus = 'replied' THEN 1 ELSE 0 END)`,
+    totalBounced: sql<number>`SUM(CASE WHEN outreachStatus = 'bounced' THEN 1 ELSE 0 END)`,
+  }).from(prospectOutreach)
+    .innerJoin(prospects, eq(prospectOutreach.prospectId, prospects.id))
+    .where(eq(prospects.userId, userId));
+  const r = result[0];
+  const sent = Number(r?.totalSent ?? 0);
+  const opened = Number(r?.totalOpened ?? 0);
+  const replied = Number(r?.totalReplied ?? 0);
+  const bounced = Number(r?.totalBounced ?? 0);
+  return {
+    totalSent: sent,
+    totalOpened: opened,
+    totalReplied: replied,
+    totalBounced: bounced,
+    openRate: sent > 0 ? Math.round((opened / sent) * 100) : 0,
+    replyRate: sent > 0 ? Math.round((replied / sent) * 100) : 0,
+    bounceRate: sent > 0 ? Math.round((bounced / sent) * 100) : 0,
+  };
+}
+
+// ─── Battle Cards ───
+export async function listBattleCards(userId: number, opts?: { unreadOnly?: boolean; limit?: number }) {
+  const db = await getDb(); if (!db) return [];
+  const conditions = [eq(battleCards.userId, userId), eq(battleCards.isArchived, false)];
+  if (opts?.unreadOnly) conditions.push(eq(battleCards.isRead, false));
+  return db.select().from(battleCards).where(and(...conditions)).orderBy(desc(battleCards.generatedAt)).limit(opts?.limit ?? 20);
+}
+
+export async function getBattleCard(id: number, userId: number) {
+  const db = await getDb(); if (!db) return undefined;
+  const result = await db.select().from(battleCards).where(and(eq(battleCards.id, id), eq(battleCards.userId, userId))).limit(1);
+  return result[0];
+}
+
+export async function createBattleCard(data: Omit<BattleCard, "id">) {
+  const db = await getDb(); if (!db) return 0;
+  const [result] = await db.insert(battleCards).values(data).$returningId();
+  return result.id;
+}
+
+export async function updateBattleCard(id: number, userId: number, data: Partial<BattleCard>) {
+  const db = await getDb(); if (!db) return;
+  await db.update(battleCards).set(data).where(and(eq(battleCards.id, id), eq(battleCards.userId, userId)));
+}
+
+// ─── Paradigm Engine Dashboard Stats ───
+export async function getParadigmStats(userId: number) {
+  const prospectStats = await getProspectStats(userId);
+  const outreachStats = await getOutreachStats(userId);
+  const db = await getDb();
+  let signalCount = 0;
+  let activeSequences = 0;
+  let unreadBattleCards = 0;
+  if (db) {
+    const [signals] = await db.select({ count: sql<number>`count(*)` }).from(triggerSignals).where(and(eq(triggerSignals.userId, userId), eq(triggerSignals.status, "new")));
+    signalCount = Number(signals?.count ?? 0);
+    const [seqs] = await db.select({ count: sql<number>`count(*)` }).from(ghostSequences).where(and(eq(ghostSequences.userId, userId), eq(ghostSequences.status, "active")));
+    activeSequences = Number(seqs?.count ?? 0);
+    const [cards] = await db.select({ count: sql<number>`count(*)` }).from(battleCards).where(and(eq(battleCards.userId, userId), eq(battleCards.isRead, false), eq(battleCards.isArchived, false)));
+    unreadBattleCards = Number(cards?.count ?? 0);
+  }
+  return { ...prospectStats, ...outreachStats, newSignals: signalCount, activeSequences, unreadBattleCards };
+}
+
+// ─── Recent AI Activity Feed ───
+export async function getRecentActivity(userId: number, limit?: number) {
+  const db = await getDb(); if (!db) return [];
+  // Combine recent signals, outreach, and prospect updates into a unified feed
+  const recentSignals = await db.select({
+    id: triggerSignals.id,
+    type: sql<string>`'signal'`,
+    title: triggerSignals.title,
+    description: triggerSignals.description,
+    status: triggerSignals.status,
+    priority: triggerSignals.priority,
+    createdAt: triggerSignals.createdAt,
+  }).from(triggerSignals).where(eq(triggerSignals.userId, userId)).orderBy(desc(triggerSignals.createdAt)).limit(limit ?? 20);
+
+  const recentOutreach = await db.select({
+    id: prospectOutreach.id,
+    type: sql<string>`'outreach'`,
+    title: prospectOutreach.subject,
+    description: sql<string>`CONCAT('To: ', prospect_outreach.toEmail)`,
+    status: prospectOutreach.status,
+    priority: sql<string>`'medium'`,
+    createdAt: prospectOutreach.createdAt,
+  }).from(prospectOutreach)
+    .innerJoin(prospects, eq(prospectOutreach.prospectId, prospects.id))
+    .where(eq(prospects.userId, userId))
+    .orderBy(desc(prospectOutreach.createdAt)).limit(limit ?? 20);
+
+  const combined = [...recentSignals, ...recentOutreach].sort((a, b) => Number(b.createdAt) - Number(a.createdAt)).slice(0, limit ?? 30);
+  return combined;
 }

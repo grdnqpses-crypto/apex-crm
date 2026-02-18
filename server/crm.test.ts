@@ -391,3 +391,351 @@ describe("dashboard", () => {
     expect(stats).toHaveProperty("totalDeals");
   });
 });
+
+// ============================================================
+// Paradigm Engine Tests
+// ============================================================
+
+describe("prospects CRUD", () => {
+  it("rejects unauthenticated access", async () => {
+    const ctx = createUnauthContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(caller.prospects.list({ limit: 10 })).rejects.toThrow();
+  });
+
+  it("creates a prospect with full fields", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.prospects.create({
+      firstName: "Jane",
+      lastName: "Smith",
+      email: "jane@prospect.com",
+      jobTitle: "VP of Logistics",
+      companyName: "Global Freight Inc",
+      companyDomain: "globalfreight.com",
+      industry: "Transportation",
+      location: "Chicago, IL",
+      linkedinUrl: "https://linkedin.com/in/janesmith",
+      phone: "555-0200",
+      sourceType: "apollo",
+      notes: "High-value prospect",
+    });
+    expect(result.id).toBeDefined();
+    expect(typeof result.id).toBe("number");
+  });
+
+  it("lists prospects with filters", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const list = await caller.prospects.list({ limit: 10 });
+    expect(list).toHaveProperty("items");
+    expect(list).toHaveProperty("total");
+    expect(Array.isArray(list.items)).toBe(true);
+  });
+
+  it("gets and updates a prospect", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const created = await caller.prospects.create({
+      firstName: "Update",
+      lastName: "Prospect",
+      email: "update@prospect.com",
+    });
+    const prospect = await caller.prospects.get({ id: created.id });
+    expect(prospect?.firstName).toBe("Update");
+    await caller.prospects.update({
+      id: created.id,
+      engagementStage: "engaged",
+      intentScore: 75,
+    });
+    const updated = await caller.prospects.get({ id: created.id });
+    expect(updated?.engagementStage).toBe("engaged");
+    expect(updated?.intentScore).toBe(75);
+  });
+
+  it("deletes a prospect", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const created = await caller.prospects.create({
+      firstName: "Delete",
+      lastName: "Me",
+      email: "delete@prospect.com",
+    });
+    const result = await caller.prospects.delete({ id: created.id });
+    expect(result.success).toBe(true);
+  });
+
+  it("verifies email via LLM", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const created = await caller.prospects.create({
+      firstName: "Verify",
+      lastName: "Test",
+      email: "verify@testdomain.com",
+    });
+    const result = await caller.prospects.verify({ id: created.id });
+    expect(result).toHaveProperty("status");
+    expect(["valid", "invalid", "risky", "unknown"]).toContain(result.status);
+  }, 30000);
+
+  it("builds psychographic profile via LLM", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const created = await caller.prospects.create({
+      firstName: "Profile",
+      lastName: "Test",
+      email: "profile@testdomain.com",
+      jobTitle: "CEO",
+      companyName: "Tech Corp",
+      linkedinUrl: "https://linkedin.com/in/profiletest",
+    });
+    const result = await caller.prospects.buildProfile({ id: created.id });
+    expect(result).toHaveProperty("personalityType");
+    expect(result).toHaveProperty("communicationStyle");
+    expect(result).toHaveProperty("motivators");
+  }, 30000);
+
+  it("drafts personalized email via LLM", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const created = await caller.prospects.create({
+      firstName: "Draft",
+      lastName: "Test",
+      email: "draft@testdomain.com",
+      jobTitle: "Director of Operations",
+      companyName: "Logistics Pro",
+    });
+    const result = await caller.prospects.draftEmail({
+      id: created.id,
+      context: "initial cold outreach about freight services",
+    });
+    expect(result).toHaveProperty("subject");
+    expect(result).toHaveProperty("body");
+    expect(result).toHaveProperty("spamScore");
+  }, 30000);
+
+  it("promotes prospect to CRM contact", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const created = await caller.prospects.create({
+      firstName: "Promote",
+      lastName: "Test",
+      email: "promote@testdomain.com",
+      jobTitle: "Manager",
+      companyName: "Promote Corp",
+    });
+    const result = await caller.prospects.promoteToContact({ id: created.id });
+    expect(result).toHaveProperty("contactId");
+    expect(typeof result.contactId).toBe("number");
+    // Verify the prospect was updated
+    const updated = await caller.prospects.get({ id: created.id });
+    expect(updated?.engagementStage).toBe("converted");
+  });
+});
+
+describe("trigger signals", () => {
+  it("creates and lists signals", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await caller.signals.create({
+      signalType: "job_change",
+      title: "VP moved to new company",
+      description: "Jane Smith moved from Acme to GlobalFreight",
+      personName: "Jane Smith",
+      companyName: "GlobalFreight",
+      priority: "high",
+    });
+    const list = await caller.signals.list({ limit: 10 });
+    expect(list.items.length).toBeGreaterThan(0);
+    expect(list).toHaveProperty("total");
+  });
+
+  it("updates signal status", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const created = await caller.signals.create({
+      signalType: "funding_round",
+      title: "Series B funding",
+      companyName: "StartupCo",
+    });
+    await caller.signals.update({ id: created.id, status: "reviewed" });
+    await caller.signals.update({ id: created.id, status: "actioned" });
+    // Verify the update worked by listing
+    const list = await caller.signals.list({ status: "actioned", limit: 10 });
+    const found = list.items.find((s: any) => s.id === created.id);
+    expect(found?.status).toBe("actioned");
+  });
+});
+
+describe("ghost sequences", () => {
+  it("creates sequence with steps", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const seq = await caller.ghostSequences.create({
+      name: "Cold Outreach Sequence",
+      description: "4-step cold outreach for logistics DMs",
+    });
+    expect(seq.id).toBeDefined();
+
+    // Add steps
+    await caller.ghostSequences.steps.create({
+      sequenceId: seq.id,
+      stepOrder: 1,
+      subject: "Quick question about {{companyName}}",
+      bodyTemplate: "Hi {{firstName}}, I noticed...",
+      delayDays: 0,
+    });
+    await caller.ghostSequences.steps.create({
+      sequenceId: seq.id,
+      stepOrder: 2,
+      subject: "Following up",
+      bodyTemplate: "Just wanted to check...",
+      delayDays: 3,
+    });
+
+    const steps = await caller.ghostSequences.steps.list({ sequenceId: seq.id });
+    expect(steps.length).toBe(2);
+    expect(steps[0].stepOrder).toBe(1);
+  });
+
+  it("updates sequence status (draft → active → paused)", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const seq = await caller.ghostSequences.create({ name: "Status Test" });
+    expect(seq.status).toBe("draft");
+
+    await caller.ghostSequences.update({ id: seq.id, status: "active" });
+    const list = await caller.ghostSequences.list();
+    const updated = list.find((s: any) => s.id === seq.id);
+    expect(updated?.status).toBe("active");
+  });
+
+  it("deletes sequence and steps", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const seq = await caller.ghostSequences.create({ name: "Delete Test" });
+    await caller.ghostSequences.steps.create({
+      sequenceId: seq.id,
+      stepOrder: 1,
+      subject: "Test",
+      bodyTemplate: "Body",
+      delayDays: 0,
+    });
+    const result = await caller.ghostSequences.delete({ id: seq.id });
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("battle cards", () => {
+  it("generates battle card for prospect via LLM", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const prospect = await caller.prospects.create({
+      firstName: "BattleCard",
+      lastName: "Test",
+      email: "bc@test.com",
+      jobTitle: "VP Supply Chain",
+      companyName: "MegaCorp",
+      industry: "Manufacturing",
+    });
+    const result = await caller.prospects.generateBattleCard({ id: prospect.id });
+    expect(result).toHaveProperty("id");
+    expect(result).toHaveProperty("companyOverview");
+
+    // Verify it appears in battle cards list
+    const cards = await caller.battleCards.list({ limit: 50 });
+    const found = cards.find((c: any) => c.prospectId === prospect.id);
+    expect(found).toBeDefined();
+  }, 30000);
+
+  it("marks battle card as read and archives", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    // Create a prospect and generate a battle card first
+    const prospect = await caller.prospects.create({
+      firstName: "MarkRead",
+      lastName: "Test",
+      email: "markread@test.com",
+      jobTitle: "Manager",
+      companyName: "TestCo",
+    });
+    const bc = await caller.prospects.generateBattleCard({ id: prospect.id });
+    expect(bc.id).toBeDefined();
+    // Mark as read first
+    const readResult = await caller.battleCards.markRead({ id: bc.id });
+    expect(readResult.success).toBe(true);
+    // Verify it's marked as read (still visible since not archived)
+    const cardsAfterRead = await caller.battleCards.list({ limit: 50 });
+    const foundAfterRead = cardsAfterRead.find((c: any) => c.id === bc.id);
+    expect(foundAfterRead).toBeDefined();
+    // Archive it
+    const archiveResult = await caller.battleCards.archive({ id: bc.id });
+    expect(archiveResult.success).toBe(true);
+    // After archiving, it should NOT appear in the default list (which filters isArchived=false)
+    const cardsAfterArchive = await caller.battleCards.list({ limit: 50 });
+    const foundAfterArchive = cardsAfterArchive.find((c: any) => c.id === bc.id);
+    expect(foundAfterArchive).toBeUndefined();
+  }, 30000);
+});
+
+describe("integration credentials", () => {
+  it("creates and lists integration credentials", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await caller.integrations.upsert({
+      service: "apollo",
+      apiKey: "test-apollo-key-12345",
+    });
+    const list = await caller.integrations.list();
+    expect(list.length).toBeGreaterThan(0);
+    const apollo = list.find((c: any) => c.service === "apollo");
+    expect(apollo).toBeDefined();
+  });
+
+  it("tests integration connection", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const list = await caller.integrations.list();
+    if (list.length > 0) {
+      const result = await caller.integrations.test({ id: list[0].id });
+      expect(result).toHaveProperty("success");
+    }
+  });
+
+  it("deletes integration credentials", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const created = await caller.integrations.upsert({
+      service: "neverbounce",
+      apiKey: "test-nb-key-12345",
+    });
+    const list = await caller.integrations.list();
+    const nb = list.find((c: any) => c.service === "neverbounce");
+    if (nb) {
+      const result = await caller.integrations.delete({ id: nb.id });
+      expect(result.success).toBe(true);
+    }
+  });
+});
+
+describe("prospect outreach", () => {
+  it("creates and lists outreach records", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const prospect = await caller.prospects.create({
+      firstName: "Outreach",
+      lastName: "Test",
+      email: "outreach@test.com",
+    });
+    await caller.outreach.create({
+      prospectId: prospect.id,
+      toEmail: "outreach@test.com",
+      subject: "Test outreach",
+      body: "Hello, this is a test",
+      status: "sent",
+    });
+    const list = await caller.outreach.list({ prospectId: prospect.id, limit: 10 });
+    expect(list.length).toBeGreaterThan(0);
+    expect(list[0].subject).toBe("Test outreach");
+  });
+});

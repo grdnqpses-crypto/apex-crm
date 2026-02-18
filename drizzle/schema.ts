@@ -510,3 +510,223 @@ export const leadStatusOptions = mysqlTable("lead_status_options", {
 });
 
 export type LeadStatusOption = typeof leadStatusOptions.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════
+// PARADIGM ENGINE — BNB Prospecting & Sales Intelligence Module
+// ═══════════════════════════════════════════════════════════════
+
+// ─── Integration Credentials (Apollo, NeverBounce, Google AI, SendGrid, PhantomBuster) ───
+export const integrationCredentials = mysqlTable("integration_credentials", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  service: varchar("service", { length: 64 }).notNull(), // apollo, neverbounce, google_ai, sendgrid, phantombuster
+  apiKey: text("apiKey").notNull(),
+  apiSecret: text("apiSecret"),
+  baseUrl: varchar("baseUrl", { length: 512 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  lastTestedAt: bigint("lastTestedAt", { mode: "number" }),
+  testStatus: varchar("testStatus", { length: 32 }).default("untested"), // untested, success, failed
+  testMessage: text("testMessage"),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+
+export type IntegrationCredential = typeof integrationCredentials.$inferSelect;
+
+// ─── Prospects (AI-discovered leads via Sentinel) ───
+export const prospects = mysqlTable("prospects", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  contactId: int("contactId"), // linked CRM contact once promoted
+  // Identity
+  firstName: varchar("firstName", { length: 128 }).notNull(),
+  lastName: varchar("lastName", { length: 128 }),
+  email: varchar("email", { length: 320 }),
+  jobTitle: varchar("jobTitle", { length: 256 }),
+  companyName: varchar("companyName", { length: 256 }),
+  companyDomain: varchar("companyDomain", { length: 256 }),
+  linkedinUrl: varchar("linkedinUrl", { length: 512 }),
+  phone: varchar("phone", { length: 64 }),
+  location: varchar("location", { length: 256 }),
+  industry: varchar("industry", { length: 128 }),
+  // Discovery
+  sourceType: varchar("sourceType", { length: 64 }).notNull(), // apollo, linkedin, trigger_event, manual
+  sourceSignalId: int("sourceSignalId"), // FK to trigger_signals
+  apolloId: varchar("apolloId", { length: 128 }),
+  // Verification (Nutrition Layer)
+  verificationStatus: varchar("verificationStatus", { length: 32 }).default("pending").notNull(), // pending, valid, invalid, catch_all, unknown, disposable
+  verificationProvider: varchar("verificationProvider", { length: 32 }), // neverbounce
+  verifiedAt: bigint("verifiedAt", { mode: "number" }),
+  bounceRisk: varchar("bounceRisk", { length: 16 }), // low, medium, high
+  // Digital Twin (Psychographic Profile)
+  psychographicProfile: json("psychographicProfile").$type<{
+    personalityType?: string;
+    communicationStyle?: string;
+    motivators?: string[];
+    painPoints?: string[];
+    interests?: string[];
+    decisionStyle?: string;
+    socialActivity?: string;
+    summary?: string;
+    analyzedAt?: number;
+  }>(),
+  socialPosts: json("socialPosts").$type<{ platform: string; content: string; date: string }[]>(),
+  // Engagement (Ghost Mode)
+  engagementStage: varchar("engagementStage", { length: 32 }).default("discovered").notNull(), // discovered, verified, profiled, sequenced, engaged, replied, hot_lead, converted, disqualified
+  ghostSequenceId: int("ghostSequenceId"),
+  currentSequenceStep: int("currentSequenceStep").default(0),
+  lastOutreachAt: bigint("lastOutreachAt", { mode: "number" }),
+  repliedAt: bigint("repliedAt", { mode: "number" }),
+  replyContent: text("replyContent"),
+  intentScore: int("intentScore").default(0), // 0-100 positive intent
+  intentSignal: varchar("intentSignal", { length: 64 }), // positive, neutral, negative, unsubscribe
+  // Self-Healing
+  lastLinkedinCheckAt: bigint("lastLinkedinCheckAt", { mode: "number" }),
+  previousCompany: varchar("previousCompany", { length: 256 }),
+  previousJobTitle: varchar("previousJobTitle", { length: 256 }),
+  jobChangeDetectedAt: bigint("jobChangeDetectedAt", { mode: "number" }),
+  selfHealingAttempts: int("selfHealingAttempts").default(0),
+  // Battle Card
+  battleCardId: int("battleCardId"),
+  // Metadata
+  tags: json("tags").$type<string[]>(),
+  notes: text("notes"),
+  score: int("score").default(0), // overall prospect score
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+
+export type Prospect = typeof prospects.$inferSelect;
+export type InsertProspect = typeof prospects.$inferInsert;
+
+// ─── Trigger Signals (Sentinel Layer events) ───
+export const triggerSignals = mysqlTable("trigger_signals", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  // Signal info
+  signalType: varchar("signalType", { length: 64 }).notNull(), // job_change, new_patent, social_complaint, funding_round, expansion, hiring_surge, leadership_change
+  title: varchar("title", { length: 512 }).notNull(),
+  description: text("description"),
+  // Source
+  sourceUrl: varchar("sourceUrl", { length: 1024 }),
+  sourcePlatform: varchar("sourcePlatform", { length: 64 }), // linkedin, crunchbase, google_patents, twitter, news
+  // Linked entities
+  prospectId: int("prospectId"),
+  companyName: varchar("companyName", { length: 256 }),
+  personName: varchar("personName", { length: 256 }),
+  // Processing
+  status: varchar("signalStatus", { length: 32 }).default("new").notNull(), // new, processing, actioned, dismissed, expired
+  priority: varchar("priority", { length: 16 }).default("medium"), // low, medium, high, critical
+  actionTaken: text("actionTaken"),
+  processedAt: bigint("processedAt", { mode: "number" }),
+  expiresAt: bigint("expiresAt", { mode: "number" }),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+
+export type TriggerSignal = typeof triggerSignals.$inferSelect;
+
+// ─── Ghost Sequences (4-stage automated follow-up) ───
+export const ghostSequences = mysqlTable("ghost_sequences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 256 }).notNull(),
+  description: text("description"),
+  // Stylistic fingerprint for AI drafting
+  stylisticFingerprint: json("stylisticFingerprint").$type<{
+    tone?: string;
+    formality?: string;
+    signOff?: string;
+    sampleEmails?: string[];
+    avoidPhrases?: string[];
+    preferredPhrases?: string[];
+  }>(),
+  status: varchar("seqStatus", { length: 32 }).default("draft").notNull(), // draft, active, paused, archived
+  totalEnrolled: int("totalEnrolled").default(0),
+  totalReplied: int("totalReplied").default(0),
+  totalConverted: int("totalConverted").default(0),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+
+export type GhostSequence = typeof ghostSequences.$inferSelect;
+
+// ─── Ghost Sequence Steps ───
+export const ghostSequenceSteps = mysqlTable("ghost_sequence_steps", {
+  id: int("id").autoincrement().primaryKey(),
+  sequenceId: int("sequenceId").notNull(),
+  stepOrder: int("stepOrder").notNull(),
+  // Step config
+  delayDays: int("delayDays").default(1).notNull(), // days to wait before sending
+  subject: varchar("subject", { length: 512 }),
+  bodyTemplate: text("bodyTemplate"), // template with {{tokens}}
+  aiGenerated: boolean("aiGenerated").default(true).notNull(),
+  // Personalization
+  useDigitalTwin: boolean("useDigitalTwin").default(true).notNull(),
+  toneOverride: varchar("toneOverride", { length: 64 }),
+  // Stats
+  totalSent: int("totalSent").default(0),
+  totalOpened: int("totalOpened").default(0),
+  totalReplied: int("totalReplied").default(0),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+
+export type GhostSequenceStep = typeof ghostSequenceSteps.$inferSelect;
+
+// ─── Prospect Outreach Log (Ghost Mode activity) ───
+export const prospectOutreach = mysqlTable("prospect_outreach", {
+  id: int("id").autoincrement().primaryKey(),
+  prospectId: int("prospectId").notNull(),
+  sequenceId: int("sequenceId"),
+  stepId: int("stepId"),
+  // Email details
+  fromEmail: varchar("fromEmail", { length: 320 }),
+  toEmail: varchar("toEmail", { length: 320 }),
+  subject: varchar("subject", { length: 512 }),
+  body: text("body"),
+  // Status
+  status: varchar("outreachStatus", { length: 32 }).default("draft").notNull(), // draft, scheduled, sent, opened, clicked, replied, bounced, failed
+  sentAt: bigint("sentAt", { mode: "number" }),
+  openedAt: bigint("openedAt", { mode: "number" }),
+  clickedAt: bigint("clickedAt", { mode: "number" }),
+  repliedAt: bigint("repliedAt", { mode: "number" }),
+  bouncedAt: bigint("bouncedAt", { mode: "number" }),
+  // AI analysis of reply
+  replyContent: text("replyContent"),
+  intentAnalysis: json("intentAnalysis").$type<{
+    intent: string; // positive, neutral, negative, unsubscribe
+    confidence: number;
+    summary: string;
+    suggestedAction: string;
+  }>(),
+  // Metadata
+  smtpAccountId: int("smtpAccountId"),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+
+export type ProspectOutreach = typeof prospectOutreach.$inferSelect;
+
+// ─── Battle Cards (AI-generated tactical summaries) ───
+export const battleCards = mysqlTable("battle_cards", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  prospectId: int("prospectId").notNull(),
+  // Card content
+  title: varchar("title", { length: 512 }).notNull(),
+  companyOverview: text("companyOverview"),
+  personInsights: text("personInsights"),
+  painPoints: json("painPoints").$type<string[]>(),
+  talkingPoints: json("talkingPoints").$type<string[]>(),
+  competitorIntel: text("competitorIntel"),
+  recommendedApproach: text("recommendedApproach"),
+  objectionHandlers: json("objectionHandlers").$type<{ objection: string; response: string }[]>(),
+  triggerContext: text("triggerContext"), // what triggered this lead becoming hot
+  urgencyLevel: varchar("urgencyLevel", { length: 500 }).default("medium"), // low, medium, high, critical
+  // Status
+  isRead: boolean("isRead").default(false).notNull(),
+  isArchived: boolean("isArchived").default(false).notNull(),
+  generatedAt: bigint("generatedAt", { mode: "number" }).notNull(),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+
+export type BattleCard = typeof battleCards.$inferSelect;

@@ -25,6 +25,13 @@ const ApiKeys = lazy(() => import("./pages/ApiKeys"));
 const Webhooks = lazy(() => import("./pages/Webhooks"));
 const SmtpAccounts = lazy(() => import("./pages/SmtpAccounts"));
 const CompanyDetail = lazy(() => import("./pages/CompanyDetail"));
+const ParadigmPulse = lazy(() => import("./pages/ParadigmPulse"));
+const Prospects = lazy(() => import("./pages/Prospects"));
+const ProspectDetail = lazy(() => import("./pages/ProspectDetail"));
+const Signals = lazy(() => import("./pages/Signals"));
+const GhostSequences = lazy(() => import("./pages/GhostSequences"));
+const BattleCards = lazy(() => import("./pages/BattleCards"));
+const Integrations = lazy(() => import("./pages/Integrations"));
 
 function PageLoader() {
   return (
@@ -59,6 +66,13 @@ function Router() {
           <Route path="/webhooks" component={Webhooks} />
           <Route path="/smtp-accounts" component={SmtpAccounts} />
           <Route path="/companies/:id" component={CompanyDetail} />
+          <Route path="/paradigm" component={ParadigmPulse} />
+          <Route path="/paradigm/prospects" component={Prospects} />
+          <Route path="/paradigm/prospects/:id" component={ProspectDetail} />
+          <Route path="/paradigm/signals" component={Signals} />
+          <Route path="/paradigm/sequences" component={GhostSequences} />
+          <Route path="/paradigm/battle-cards" component={BattleCards} />
+          <Route path="/paradigm/integrations" component={Integrations} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>
