@@ -362,3 +362,14 @@
 ### Tests
 - [x] Vitest tests for FMCSA templates (22 tests covering content, structure, quality)
 - [x] All 107 tests passing across 4 test files
+
+## Phase 9: Developer Options Secret Unlock
+
+- [x] Hide Developer section from sidebar by default
+- [x] Add 11-tap secret activation on Apex CRM logo in sidebar header
+- [x] Show toast countdown feedback during tapping (last 5 taps show countdown)
+- [x] Persist developer mode in sessionStorage (session-only, resets on close)
+- [x] Show unlock confirmation toast when activated
+- [x] Amber logo icon + DEV badge when developer mode is active
+- [x] "Hide Dev Options" in user dropdown to disable without closing browser
+- [x] All 107 tests passing

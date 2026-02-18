@@ -29,12 +29,15 @@ import {
   Brain, Target, Radar, Ghost, Flame, Plug,
   ShieldCheck, Ban, Settings, Globe, Sparkles, BookOpen, FileSearch,
 } from "lucide-react";
-import { CSSProperties, useEffect, useRef, useState } from "react";
+import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
+import { toast } from "sonner";
 
-const menuSections = [
+// ─── Menu Sections (Developer is separate, hidden by default) ───
+
+const standardSections = [
   {
     label: "Overview",
     items: [
@@ -95,14 +98,6 @@ const menuSections = [
     ],
   },
   {
-    label: "Developer",
-    items: [
-      { icon: FileSearch, label: "FMCSA Scanner", path: "/fmcsa-scanner" },
-      { icon: Key, label: "API Keys", path: "/api-keys" },
-      { icon: Webhook, label: "Webhooks", path: "/webhooks" },
-    ],
-  },
-  {
     label: "Resources",
     items: [
       { icon: BookOpen, label: "Help Center", path: "/help" },
@@ -110,7 +105,89 @@ const menuSections = [
   },
 ];
 
-const allMenuItems = menuSections.flatMap(s => s.items);
+const developerSection = {
+  label: "Developer",
+  items: [
+    { icon: FileSearch, label: "FMCSA Scanner", path: "/fmcsa-scanner" },
+    { icon: Key, label: "API Keys", path: "/api-keys" },
+    { icon: Webhook, label: "Webhooks", path: "/webhooks" },
+  ],
+};
+
+const DEV_MODE_KEY = "apex-dev-mode";
+const TAP_TARGET = 11;
+const TAP_TIMEOUT = 4000; // 4 seconds to complete all 11 taps
+
+function useDevMode() {
+  const [devMode, setDevMode] = useState(() => {
+    return sessionStorage.getItem(DEV_MODE_KEY) === "true";
+  });
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleLogoTap = useCallback(() => {
+    if (devMode) return; // Already unlocked
+
+    tapCountRef.current += 1;
+    const remaining = TAP_TARGET - tapCountRef.current;
+
+    // Clear previous timer
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+
+    if (remaining <= 0) {
+      // Unlocked!
+      tapCountRef.current = 0;
+      sessionStorage.setItem(DEV_MODE_KEY, "true");
+      setDevMode(true);
+      toast.success("Developer options unlocked", {
+        description: "Developer tools are now visible in the sidebar. This will reset when you close the browser.",
+        duration: 5000,
+      });
+    } else if (remaining <= 5) {
+      // Show countdown for the last 5 taps
+      toast.info(`${remaining} tap${remaining === 1 ? "" : "s"} to unlock developer options`, {
+        duration: 1500,
+        id: "dev-tap-countdown",
+      });
+      // Reset after timeout
+      tapTimerRef.current = setTimeout(() => {
+        tapCountRef.current = 0;
+      }, TAP_TIMEOUT);
+    } else {
+      // Silent taps for the first 6, just reset timer
+      tapTimerRef.current = setTimeout(() => {
+        tapCountRef.current = 0;
+      }, TAP_TIMEOUT);
+    }
+  }, [devMode]);
+
+  const disableDevMode = useCallback(() => {
+    sessionStorage.removeItem(DEV_MODE_KEY);
+    setDevMode(false);
+    toast.info("Developer options hidden", {
+      description: "Tap the logo 11 times to re-enable.",
+      duration: 3000,
+    });
+  }, []);
+
+  return { devMode, handleLogoTap, disableDevMode };
+}
+
+// Build menu sections dynamically based on dev mode
+function getMenuSections(devMode: boolean) {
+  if (devMode) {
+    // Insert developer section before Resources (last section)
+    const sections = [...standardSections];
+    const resourcesIdx = sections.findIndex(s => s.label === "Resources");
+    if (resourcesIdx >= 0) {
+      sections.splice(resourcesIdx, 0, developerSection);
+    } else {
+      sections.push(developerSection);
+    }
+    return sections;
+  }
+  return standardSections;
+}
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 260;
@@ -187,8 +264,12 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem = allMenuItems.find(item => item.path === location) || allMenuItems.find(item => location.startsWith(item.path) && item.path !== "/");
   const isMobile = useIsMobile();
+  const { devMode, handleLogoTap, disableDevMode } = useDevMode();
+
+  const menuSections = getMenuSections(devMode);
+  const allMenuItems = menuSections.flatMap(s => s.items);
+  const activeMenuItem = allMenuItems.find(item => item.path === location) || allMenuItems.find(item => location.startsWith(item.path) && item.path !== "/");
 
   useEffect(() => {
     if (isCollapsed) setIsResizing(false);
@@ -230,9 +311,16 @@ function DashboardLayoutContent({
                 <PanelLeft className="h-4 w-4 text-muted-foreground" />
               </button>
               {!isCollapsed && (
-                <div className="flex items-center gap-2 min-w-0">
-                  <Zap className="h-5 w-5 text-primary shrink-0" />
+                <div
+                  className="flex items-center gap-2 min-w-0 cursor-pointer select-none"
+                  onClick={handleLogoTap}
+                  title={devMode ? "Developer mode active" : undefined}
+                >
+                  <Zap className={`h-5 w-5 shrink-0 transition-colors ${devMode ? "text-amber-400" : "text-primary"}`} />
                   <span className="font-semibold tracking-tight text-foreground truncate">Apex CRM</span>
+                  {devMode && (
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-amber-400/80 ml-0.5">DEV</span>
+                  )}
                 </div>
               )}
             </div>
@@ -243,7 +331,9 @@ function DashboardLayoutContent({
               <div key={section.label} className="mb-1">
                 {!isCollapsed && (
                   <div className="px-4 py-1.5">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                    <span className={`text-[10px] font-semibold uppercase tracking-wider ${
+                      section.label === "Developer" ? "text-amber-400/70" : "text-muted-foreground/70"
+                    }`}>
                       {section.label}
                     </span>
                   </div>
@@ -291,6 +381,18 @@ function DashboardLayoutContent({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
+                {devMode && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={disableDevMode}
+                      className="cursor-pointer text-amber-400 focus:text-amber-400"
+                    >
+                      <Zap className="mr-2 h-4 w-4" />
+                      <span>Hide Dev Options</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem
                   onClick={logout}
                   className="cursor-pointer text-destructive focus:text-destructive"

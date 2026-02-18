@@ -1,0 +1,112 @@
+{
+  "query": "SHOW TABLES;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SHOW TABLES;",
+  "rows": [
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "__drizzle_migrations"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "ab_tests"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "activities"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "api_keys"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "battle_cards"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "broker_filings"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "companies"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "compliance_audit_log"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "contacts"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "deals"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "domain_health"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "domain_sending_stats"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "email_campaigns"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "email_queue"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "email_templates"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "ghost_sequence_steps"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "ghost_sequences"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "integration_credentials"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "lead_status_options"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "pipeline_stages"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "pipelines"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "prospect_outreach"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "prospect_scores"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "prospects"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "segments"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "sender_settings"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "smtp_accounts"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "suppression_list"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "tasks"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "trigger_signals"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "users"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "webhook_logs"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "webhooks"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "workflows"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_mLLZEfmfSEuH47dfeJgVGY\n__drizzle_migrations\nab_tests\nactivities\napi_keys\nbattle_cards\nbroker_filings\ncompanies\ncompliance_audit_log\ncontacts\ndeals\ndomain_health\ndomain_sending_stats\nemail_campaigns\nemail_queue\nemail_templates\nghost_sequence_steps\nghost_sequences\nintegration_credentials\nlead_status_options\npipeline_stages\npipelines\nprospect_outreach\nprospect_scores\nprospects\nsegments\nsender_settings\nsmtp_accounts\nsuppression_list\ntasks\ntrigger_signals\nusers\nwebhook_logs\nwebhooks\nworkflows\n",
+  "stderr": "",
+  "execution_time_ms": 345
+}
