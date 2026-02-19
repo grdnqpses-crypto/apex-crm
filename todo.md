@@ -825,3 +825,15 @@
 - [x] Build easy Email Masking settings UI page
 - [x] Add masking to DashboardLayout sidebar navigation
 - [x] Write tests for email masking system (15/15 passed)
+
+## Phase 19: Fix Color Scheme
+- [ ] Update index.css with correct enterprise CRM color system
+- [ ] Blue=standard workflow, Green=success/booked, Amber=pending, Red=critical, Purple=premium, Gray=inactive
+- [ ] Update dashboard cards and status badges to use correct colors
+- [ ] Verify color scheme across all key pages
+
+## Phase 20: Switch to Light Theme
+- [x] Remove dark theme, switch ThemeProvider to "light"
+- [x] Rewrite index.css :root with light theme colors (white bg, dark text)
+- [x] Ensure all CRM status colors are vibrant on light background
+- [x] Verify dashboard and all pages render correctly

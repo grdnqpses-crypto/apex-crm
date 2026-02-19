@@ -45,80 +45,158 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
-  /* Enterprise CRM Status Colors */
-  --color-crm-workflow: var(--crm-workflow);
-  --color-crm-workflow-foreground: var(--crm-workflow-foreground);
-  --color-crm-success: var(--crm-success);
-  --color-crm-success-foreground: var(--crm-success-foreground);
-  --color-crm-pending: var(--crm-pending);
-  --color-crm-pending-foreground: var(--crm-pending-foreground);
-  --color-crm-critical: var(--crm-critical);
-  --color-crm-critical-foreground: var(--crm-critical-foreground);
-  --color-crm-premium: var(--crm-premium);
-  --color-crm-premium-foreground: var(--crm-premium-foreground);
-  --color-crm-inactive: var(--crm-inactive);
-  --color-crm-inactive-foreground: var(--crm-inactive-foreground);
+  /* Enterprise CRM Semantic Colors */
+  --color-crm-blue: var(--crm-blue);
+  --color-crm-blue-foreground: var(--crm-blue-foreground);
+  --color-crm-green: var(--crm-green);
+  --color-crm-green-foreground: var(--crm-green-foreground);
+  --color-crm-amber: var(--crm-amber);
+  --color-crm-amber-foreground: var(--crm-amber-foreground);
+  --color-crm-red: var(--crm-red);
+  --color-crm-red-foreground: var(--crm-red-foreground);
+  --color-crm-purple: var(--crm-purple);
+  --color-crm-purple-foreground: var(--crm-purple-foreground);
+  --color-crm-gray: var(--crm-gray);
+  --color-crm-gray-foreground: var(--crm-gray-foreground);
 }
 
 :root {
   --radius: 0.625rem;
-  /* Indigo-tinted dark theme for enterprise CRM */
-  --background: oklch(0.13 0.012 270);
-  --foreground: oklch(0.93 0.005 270);
-  --card: oklch(0.17 0.014 270);
-  --card-foreground: oklch(0.93 0.005 270);
-  --popover: oklch(0.19 0.016 270);
-  --popover-foreground: oklch(0.93 0.005 270);
-  --primary: oklch(0.65 0.2 265);
-  --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.22 0.016 270);
-  --secondary-foreground: oklch(0.85 0.005 270);
-  --muted: oklch(0.2 0.012 270);
-  --muted-foreground: oklch(0.6 0.015 270);
-  --accent: oklch(0.22 0.018 270);
-  --accent-foreground: oklch(0.93 0.005 270);
-  --destructive: oklch(0.65 0.2 25);
-  --destructive-foreground: oklch(0.98 0 0);
-  --success: oklch(0.65 0.18 155);
-  --success-foreground: oklch(0.98 0 0);
-  --warning: oklch(0.75 0.15 80);
-  --warning-foreground: oklch(0.15 0 0);
-  --border: oklch(0.25 0.012 270);
-  --input: oklch(0.22 0.014 270);
-  --ring: oklch(0.65 0.2 265);
-  --chart-1: oklch(0.65 0.2 265);
-  --chart-2: oklch(0.7 0.15 180);
-  --chart-3: oklch(0.75 0.15 80);
-  --chart-4: oklch(0.65 0.2 25);
-  --chart-5: oklch(0.7 0.18 310);
-  --sidebar: oklch(0.11 0.014 270);
-  --sidebar-foreground: oklch(0.85 0.005 270);
-  --sidebar-primary: oklch(0.65 0.2 265);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.18 0.016 270);
-  --sidebar-accent-foreground: oklch(0.93 0.005 270);
-  --sidebar-border: oklch(0.22 0.012 270);
-  --sidebar-ring: oklch(0.65 0.2 265);
 
-  /* Enterprise CRM Status Colors */
-  /* Blue = standard pipeline activity / workflow */
-  --crm-workflow: oklch(0.55 0.18 255);
-  --crm-workflow-foreground: oklch(0.98 0 0);
-  /* Green = booked loads / closed-won / completed */
-  --crm-success: oklch(0.60 0.19 155);
-  --crm-success-foreground: oklch(0.98 0 0);
-  /* Amber = quote pending / follow-up due / needs attention */
-  --crm-pending: oklch(0.72 0.16 75);
-  --crm-pending-foreground: oklch(0.15 0 0);
-  /* Red = credit hold / overdue / churn risk / critical */
-  --crm-critical: oklch(0.58 0.22 25);
-  --crm-critical-foreground: oklch(0.98 0 0);
-  /* Purple = insights / premium / special features */
-  --crm-premium: oklch(0.58 0.2 300);
-  --crm-premium-foreground: oklch(0.98 0 0);
-  /* Gray = inactive accounts / archived */
-  --crm-inactive: oklch(0.40 0.005 270);
-  --crm-inactive-foreground: oklch(0.85 0 0);
+  /* ─── Base Theme: Clean Light with Professional White ─── */
+  --background: oklch(0.985 0.002 250);
+  --foreground: oklch(0.15 0.01 250);
+  --card: oklch(1.0 0 0);
+  --card-foreground: oklch(0.15 0.01 250);
+  --popover: oklch(1.0 0 0);
+  --popover-foreground: oklch(0.15 0.01 250);
+  --secondary: oklch(0.955 0.005 250);
+  --secondary-foreground: oklch(0.25 0.01 250);
+  --muted: oklch(0.955 0.005 250);
+  --muted-foreground: oklch(0.45 0.01 250);
+  --accent: oklch(0.95 0.008 250);
+  --accent-foreground: oklch(0.15 0.01 250);
+  --border: oklch(0.90 0.005 250);
+  --input: oklch(0.92 0.005 250);
+
+  /* ─── Primary = CRM Blue (standard workflow) ─── */
+  --primary: oklch(0.55 0.22 250);
+  --primary-foreground: oklch(0.99 0 0);
+  --ring: oklch(0.55 0.22 250);
+
+  /* ─── Destructive = CRM Red ─── */
+  --destructive: oklch(0.55 0.24 25);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  /* ─── Success = CRM Green ─── */
+  --success: oklch(0.55 0.20 155);
+  --success-foreground: oklch(0.99 0 0);
+
+  /* ─── Warning = CRM Amber ─── */
+  --warning: oklch(0.78 0.16 75);
+  --warning-foreground: oklch(0.15 0 0);
+
+  /* ─── Chart Colors (match CRM palette) ─── */
+  --chart-1: oklch(0.55 0.22 250);  /* Blue - workflow */
+  --chart-2: oklch(0.55 0.20 155);  /* Green - success */
+  --chart-3: oklch(0.78 0.16 75);   /* Amber - pending */
+  --chart-4: oklch(0.55 0.24 25);   /* Red - critical */
+  --chart-5: oklch(0.55 0.22 300);  /* Purple - premium */
+
+  /* ─── Sidebar: Clean white with subtle blue accent ─── */
+  --sidebar: oklch(0.98 0.003 250);
+  --sidebar-foreground: oklch(0.30 0.01 250);
+  --sidebar-primary: oklch(0.55 0.22 250);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.94 0.015 250);
+  --sidebar-accent-foreground: oklch(0.15 0.01 250);
+  --sidebar-border: oklch(0.90 0.005 250);
+  --sidebar-ring: oklch(0.55 0.22 250);
+
+  /* ═══════════════════════════════════════════════════════
+     ENTERPRISE CRM COLOR SYSTEM
+     Blue   = Standard pipeline activity / normal workflow
+     Green  = Booked loads / closed-won / completed / success
+     Amber  = Quote pending / follow-up due / needs attention
+     Red    = Credit hold / overdue / churn risk / critical
+     Purple = Insights / premium features / AI-powered
+     Gray   = Inactive accounts / archived / disabled
+     ═══════════════════════════════════════════════════════ */
+
+  /* Blue — Standard Workflow */
+  --crm-blue: oklch(0.55 0.22 250);
+  --crm-blue-foreground: oklch(0.99 0 0);
+
+  /* Green — Success / Booked / Completed */
+  --crm-green: oklch(0.55 0.20 155);
+  --crm-green-foreground: oklch(0.99 0 0);
+
+  /* Amber — Pending / Needs Attention */
+  --crm-amber: oklch(0.78 0.16 75);
+  --crm-amber-foreground: oklch(0.15 0 0);
+
+  /* Red — Critical / Overdue / Problem */
+  --crm-red: oklch(0.55 0.24 25);
+  --crm-red-foreground: oklch(0.99 0 0);
+
+  /* Purple — Premium / AI / Insights */
+  --crm-purple: oklch(0.55 0.22 300);
+  --crm-purple-foreground: oklch(0.99 0 0);
+
+  /* Gray — Inactive / Archived */
+  --crm-gray: oklch(0.55 0.005 250);
+  --crm-gray-foreground: oklch(0.99 0 0);
+}
+
+.dark {
+  --background: oklch(0.14 0.008 250);
+  --foreground: oklch(0.95 0.003 250);
+  --card: oklch(0.18 0.01 250);
+  --card-foreground: oklch(0.95 0.003 250);
+  --popover: oklch(0.20 0.012 250);
+  --popover-foreground: oklch(0.95 0.003 250);
+  --secondary: oklch(0.23 0.01 250);
+  --secondary-foreground: oklch(0.88 0.003 250);
+  --muted: oklch(0.21 0.008 250);
+  --muted-foreground: oklch(0.62 0.01 250);
+  --accent: oklch(0.23 0.012 250);
+  --accent-foreground: oklch(0.95 0.003 250);
+  --border: oklch(0.26 0.008 250);
+  --input: oklch(0.23 0.01 250);
+  --primary: oklch(0.62 0.19 250);
+  --primary-foreground: oklch(0.98 0 0);
+  --ring: oklch(0.62 0.19 250);
+  --destructive: oklch(0.60 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --success: oklch(0.62 0.19 155);
+  --success-foreground: oklch(0.98 0 0);
+  --warning: oklch(0.76 0.16 75);
+  --warning-foreground: oklch(0.15 0 0);
+  --chart-1: oklch(0.62 0.19 250);
+  --chart-2: oklch(0.62 0.19 155);
+  --chart-3: oklch(0.76 0.16 75);
+  --chart-4: oklch(0.60 0.22 25);
+  --chart-5: oklch(0.62 0.20 300);
+  --sidebar: oklch(0.12 0.01 250);
+  --sidebar-foreground: oklch(0.88 0.003 250);
+  --sidebar-primary: oklch(0.62 0.19 250);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.19 0.012 250);
+  --sidebar-accent-foreground: oklch(0.95 0.003 250);
+  --sidebar-border: oklch(0.23 0.008 250);
+  --sidebar-ring: oklch(0.62 0.19 250);
+  --crm-blue: oklch(0.62 0.19 250);
+  --crm-blue-foreground: oklch(0.98 0 0);
+  --crm-green: oklch(0.62 0.19 155);
+  --crm-green-foreground: oklch(0.98 0 0);
+  --crm-amber: oklch(0.76 0.16 75);
+  --crm-amber-foreground: oklch(0.15 0 0);
+  --crm-red: oklch(0.60 0.22 25);
+  --crm-red-foreground: oklch(0.98 0 0);
+  --crm-purple: oklch(0.62 0.20 300);
+  --crm-purple-foreground: oklch(0.98 0 0);
+  --crm-gray: oklch(0.42 0.005 250);
+  --crm-gray-foreground: oklch(0.85 0 0);
 }
 
 @layer base {

@@ -4,11 +4,22 @@ import { Badge } from "@/components/ui/badge";
 import {
   Users, Building2, Kanban, DollarSign, Mail, ListChecks,
   TrendingUp, Trophy, Target, Radar, Ghost, Shield,
-  FileText, Workflow, LayoutGrid, AlertCircle,
+  FileText, Workflow, LayoutGrid, AlertCircle, Truck,
+  Package, Brain, Phone,
 } from "lucide-react";
 import { Link } from "wouter";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+
+/*
+ * Enterprise CRM Color System:
+ *   Blue   (crm-blue)   = Standard pipeline activity / normal workflow
+ *   Green  (crm-green)  = Booked loads / closed-won / completed / success
+ *   Amber  (crm-amber)  = Quote pending / follow-up due / needs attention
+ *   Red    (crm-red)    = Credit hold / overdue / churn risk / critical
+ *   Purple (crm-purple) = Insights / premium / AI-powered features
+ *   Gray   (crm-gray)   = Inactive accounts / archived / disabled
+ */
 
 function StatCard({ title, value, icon: Icon, subtitle, color, href }: { title: string; value: string | number; icon: any; subtitle?: string; color: string; href?: string }) {
   const content = (
@@ -63,40 +74,51 @@ export default function Dashboard() {
         </div>
       ) : (
         <>
-          {/* CRM Core */}
+          {/* ─── CRM Core (Blue = workflow, Green = won, Red = lost, Amber = pending) ─── */}
           <div>
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">CRM Core</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard title="Total Contacts" value={stats?.totalContacts ?? 0} icon={Users} color="bg-primary/10 text-primary" href="/contacts" />
-              <StatCard title="Companies" value={stats?.totalCompanies ?? 0} icon={Building2} color="bg-chart-2/10 text-chart-2" href="/companies" />
-              <StatCard title="Open Deals" value={stats?.openDeals ?? 0} icon={Kanban} subtitle={`${stats?.totalDeals ?? 0} total`} color="bg-chart-3/10 text-chart-3" href="/deals" />
-              <StatCard title="Pipeline Value" value={formatCurrency(stats?.totalValue ?? 0)} icon={DollarSign} color="bg-chart-5/10 text-chart-5" href="/deals" />
-              <StatCard title="Won Deals" value={stats?.wonDeals ?? 0} icon={Trophy} subtitle={formatCurrency(stats?.wonValue ?? 0)} color="bg-success/10 text-success" href="/deals" />
-              <StatCard title="Lost Deals" value={stats?.lostDeals ?? 0} icon={TrendingUp} color="bg-destructive/10 text-destructive" href="/deals" />
-              <StatCard title="Pending Tasks" value={stats?.pendingTasks ?? 0} icon={ListChecks} subtitle={`${stats?.totalTasks ?? 0} total`} color="bg-warning/10 text-warning" href="/tasks" />
-              <StatCard title="Segments" value={(stats as any)?.totalSegments ?? 0} icon={LayoutGrid} color="bg-violet-500/10 text-violet-400" href="/segments" />
+              <StatCard title="Total Contacts" value={stats?.totalContacts ?? 0} icon={Users} color="bg-crm-blue/15 text-crm-blue" href="/contacts" />
+              <StatCard title="Companies" value={stats?.totalCompanies ?? 0} icon={Building2} color="bg-crm-blue/15 text-crm-blue" href="/companies" />
+              <StatCard title="Open Deals" value={stats?.openDeals ?? 0} icon={Kanban} subtitle={`${stats?.totalDeals ?? 0} total`} color="bg-crm-amber/15 text-crm-amber" href="/deals" />
+              <StatCard title="Pipeline Value" value={formatCurrency(stats?.totalValue ?? 0)} icon={DollarSign} color="bg-crm-green/15 text-crm-green" href="/deals" />
+              <StatCard title="Won Deals" value={stats?.wonDeals ?? 0} icon={Trophy} subtitle={formatCurrency(stats?.wonValue ?? 0)} color="bg-crm-green/15 text-crm-green" href="/deals" />
+              <StatCard title="Lost Deals" value={stats?.lostDeals ?? 0} icon={TrendingUp} color="bg-crm-red/15 text-crm-red" href="/deals" />
+              <StatCard title="Pending Tasks" value={stats?.pendingTasks ?? 0} icon={ListChecks} subtitle={`${stats?.totalTasks ?? 0} total`} color="bg-crm-amber/15 text-crm-amber" href="/tasks" />
+              <StatCard title="Segments" value={(stats as any)?.totalSegments ?? 0} icon={LayoutGrid} color="bg-crm-blue/15 text-crm-blue" href="/segments" />
             </div>
           </div>
 
-          {/* Email Operations */}
+          {/* ─── Email Operations (Blue = active, Amber = workflows, Red = suppressed) ─── */}
           <div>
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Email Operations</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard title="Campaigns" value={stats?.totalCampaigns ?? 0} icon={Mail} color="bg-chart-1/10 text-chart-1" href="/campaigns" />
-              <StatCard title="Templates" value={(stats as any)?.totalTemplates ?? 0} icon={FileText} color="bg-cyan-500/10 text-cyan-400" href="/email-templates" />
-              <StatCard title="Workflows" value={(stats as any)?.totalWorkflows ?? 0} icon={Workflow} color="bg-amber-500/10 text-amber-400" href="/workflows" />
-              <StatCard title="Suppressed" value={(stats as any)?.suppressedEmails ?? 0} icon={Shield} subtitle="Blocked addresses" color="bg-red-500/10 text-red-400" href="/suppression" />
+              <StatCard title="Campaigns" value={stats?.totalCampaigns ?? 0} icon={Mail} color="bg-crm-blue/15 text-crm-blue" href="/campaigns" />
+              <StatCard title="Templates" value={(stats as any)?.totalTemplates ?? 0} icon={FileText} color="bg-crm-blue/15 text-crm-blue" href="/email-templates" />
+              <StatCard title="Workflows" value={(stats as any)?.totalWorkflows ?? 0} icon={Workflow} color="bg-crm-amber/15 text-crm-amber" href="/workflows" />
+              <StatCard title="Suppressed" value={(stats as any)?.suppressedEmails ?? 0} icon={Shield} subtitle="Blocked addresses" color="bg-crm-red/15 text-crm-red" href="/suppression" />
             </div>
           </div>
 
-          {/* Paradigm Engine */}
+          {/* ─── Paradigm Engine (Purple = AI/premium, Amber = signals, Red = hot leads) ─── */}
           <div>
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Paradigm Engine</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard title="Prospects" value={(stats as any)?.totalProspects ?? 0} icon={Target} color="bg-indigo-500/10 text-indigo-400" href="/paradigm/prospects" />
-              <StatCard title="Hot Leads" value={(stats as any)?.hotLeads ?? 0} icon={AlertCircle} color="bg-red-500/10 text-red-400" href="/paradigm/prospects" />
-              <StatCard title="Active Sequences" value={(stats as any)?.activeSequences ?? 0} icon={Ghost} color="bg-violet-500/10 text-violet-400" href="/paradigm/sequences" />
-              <StatCard title="New Signals" value={(stats as any)?.newSignals ?? 0} icon={Radar} subtitle="Unreviewed" color="bg-amber-500/10 text-amber-400" href="/paradigm/signals" />
+              <StatCard title="Prospects" value={(stats as any)?.totalProspects ?? 0} icon={Target} color="bg-crm-blue/15 text-crm-blue" href="/paradigm/prospects" />
+              <StatCard title="Hot Leads" value={(stats as any)?.hotLeads ?? 0} icon={AlertCircle} color="bg-crm-red/15 text-crm-red" href="/paradigm/prospects" />
+              <StatCard title="Active Sequences" value={(stats as any)?.activeSequences ?? 0} icon={Ghost} color="bg-crm-purple/15 text-crm-purple" href="/paradigm/sequences" />
+              <StatCard title="New Signals" value={(stats as any)?.newSignals ?? 0} icon={Radar} subtitle="Unreviewed" color="bg-crm-amber/15 text-crm-amber" href="/paradigm/signals" />
+            </div>
+          </div>
+
+          {/* ─── Freight Operations (Green = booked, Blue = active, Purple = AI) ─── */}
+          <div>
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Freight Operations</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard title="Active Loads" value={0} icon={Truck} color="bg-crm-blue/15 text-crm-blue" href="/loads" />
+              <StatCard title="Marketplace" value={0} icon={Package} subtitle="Posted loads" color="bg-crm-green/15 text-crm-green" href="/freight-marketplace" />
+              <StatCard title="Autopilot" value="Active" icon={Brain} color="bg-crm-purple/15 text-crm-purple" href="/apex-autopilot" />
+              <StatCard title="Voice Agent" value={0} icon={Phone} subtitle="Campaigns" color="bg-crm-purple/15 text-crm-purple" href="/voice-agent" />
             </div>
           </div>
         </>
@@ -113,7 +135,7 @@ export default function Dashboard() {
               { label: "Create Deal", href: "/deals", icon: Kanban },
               { label: "New Campaign", href: "/campaigns", icon: Mail },
               { label: "Add Task", href: "/tasks", icon: ListChecks },
-              { label: "Prospect Pipeline", href: "/paradigm/prospects", icon: Target },
+              { label: "Post Load", href: "/freight-marketplace", icon: Truck },
               { label: "Signal Feed", href: "/paradigm/signals", icon: Radar },
             ].map((action) => (
               <Link
@@ -121,7 +143,7 @@ export default function Dashboard() {
                 href={action.href}
                 className="flex items-center gap-3 p-3 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/60 transition-colors"
               >
-                <action.icon className="h-4 w-4 text-primary" />
+                <action.icon className="h-4 w-4 text-crm-blue" />
                 <span className="text-sm font-medium text-foreground">{action.label}</span>
               </Link>
             ))}
@@ -130,18 +152,18 @@ export default function Dashboard() {
 
         <Card className="bg-card border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold">System Integration Status</CardTitle>
+            <CardTitle className="text-base font-semibold">System Status</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {[
               { module: "CRM Core", status: "active", desc: "Contacts, Companies, Deals, Tasks" },
-              { module: "Email Pipeline", status: "active", desc: "Campaigns → Templates → Segments → SMTP → Compliance" },
-              { module: "Paradigm Engine", status: "active", desc: "Prospects → Signals → Sequences → Battle Cards → Quantum Score" },
-              { module: "Cross-Feature Links", status: "active", desc: "Contact↔Company↔Deal↔Task bidirectional queries" },
-              { module: "Compliance Engine", status: "active", desc: "CAN-SPAM, Suppression, Domain Health" },
+              { module: "Email Pipeline", status: "active", desc: "Campaigns → Templates → SMTP → Compliance" },
+              { module: "Paradigm Engine", status: "active", desc: "Prospects → Signals → Sequences → Battle Cards" },
+              { module: "Freight Marketplace", status: "active", desc: "Load Posting → Carrier Match → Tracking → Payment" },
+              { module: "Apex Autopilot", status: "active", desc: "Consolidation → Lane Prediction → Auto-Optimization" },
             ].map((item) => (
               <div key={item.module} className="flex items-center gap-3">
-                <Badge variant="outline" className="text-[10px] bg-green-500/15 text-green-400 border-green-500/30 shrink-0">
+                <Badge variant="outline" className="text-[10px] bg-crm-green/15 text-crm-green border-crm-green/30 shrink-0">
                   {item.status}
                 </Badge>
                 <div className="min-w-0">
