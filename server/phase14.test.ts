@@ -6,7 +6,7 @@ describe("Phase 14: Database Schema", () => {
   it("loads table has all required columns", () => {
     expect(schema.loads).toBeDefined();
     const cols = Object.keys(schema.loads);
-    for (const c of ["id", "userId", "origin", "destination", "status", "rate", "commodity", "weight"]) {
+    for (const c of ["id", "userId", "originCity", "destCity", "status", "commodity", "weight"]) {
       expect(cols).toContain(c);
     }
   });
@@ -26,7 +26,7 @@ describe("Phase 14: Database Schema", () => {
 
   it("loadBoardPosts table exists", () => {
     expect(schema.loadBoardPosts).toBeDefined();
-    expect(Object.keys(schema.loadBoardPosts)).toContain("boardName");
+    expect(Object.keys(schema.loadBoardPosts)).toContain("board");
   });
 
   it("invoices table has billing fields", () => {

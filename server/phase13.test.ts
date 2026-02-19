@@ -99,7 +99,8 @@ describe("callLogs router", () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
     const logs = await caller.callLogs.list({});
-    expect(Array.isArray(logs)).toBe(true);
+    expect(logs).toBeDefined();
+    expect(Array.isArray(logs.items)).toBe(true);
   });
 });
 
@@ -160,7 +161,8 @@ describe("documents router", () => {
       caller.documents.create({
         fileName: "test.pdf",
         fileUrl: "https://example.com/test.pdf",
-        fileType: "application/pdf",
+        fileKey: "docs/test.pdf",
+        documentType: "insurance",
         category: "insurance",
       })
     ).rejects.toThrow();
@@ -172,7 +174,8 @@ describe("documents router", () => {
     const result = await caller.documents.create({
       fileName: "carrier_insurance.pdf",
       fileUrl: "https://example.com/insurance.pdf",
-      fileType: "application/pdf",
+      fileKey: "docs/carrier_insurance.pdf",
+      documentType: "insurance",
       category: "insurance",
     });
     expect(result).toBeDefined();

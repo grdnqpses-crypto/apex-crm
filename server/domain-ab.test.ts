@@ -243,7 +243,7 @@ describe("Continuous A/B Testing Engine", () => {
       const controlRate = 0.20;
       const variantRate = 0.25;
       const lift = ((variantRate - controlRate) / controlRate) * 100;
-      expect(lift).toBe(25); // 25% lift
+      expect(lift).toBeCloseTo(25, 5); // 25% lift
     });
 
     it("should identify the winner correctly", () => {
