@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Building2, Globe, MoreHorizontal, Trash2, Users, ChevronRight, AlertTriangle, MapPin, Phone as PhoneIcon } from "lucide-react";
+import { Plus, Search, Building2, Globe, MoreHorizontal, Trash2, Users, ChevronRight, AlertTriangle, MapPin, Phone as PhoneIcon, DollarSign, Kanban } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
@@ -20,13 +20,13 @@ export default function Companies() {
   const utils = trpc.useUtils();
 
   const searchInput = useMemo(() => ({ search: search || undefined, limit: 50 }), [search]);
-  const { data, isLoading } = trpc.companies.list.useQuery(searchInput);
+  const { data, isLoading } = trpc.companies.listWithMetrics.useQuery(searchInput);
   const createMutation = trpc.companies.create.useMutation({
-    onSuccess: () => { utils.companies.list.invalidate(); setShowCreate(false); toast.success("Company created"); setForm({ name: "", domain: "", industry: "", numberOfEmployees: "", phone: "", website: "", description: "" }); },
+    onSuccess: () => { utils.companies.list.invalidate(); utils.companies.listWithMetrics.invalidate(); setShowCreate(false); toast.success("Company created"); setForm({ name: "", domain: "", industry: "", numberOfEmployees: "", phone: "", website: "", description: "" }); },
     onError: (e) => toast.error(e.message),
   });
   const deleteMutation = trpc.companies.delete.useMutation({
-    onSuccess: () => { utils.companies.list.invalidate(); setDeleteTarget(null); toast.success("Company and all contacts deleted"); },
+    onSuccess: () => { utils.companies.list.invalidate(); utils.companies.listWithMetrics.invalidate(); setDeleteTarget(null); toast.success("Company and all contacts deleted"); },
   });
 
   const [form, setForm] = useState({ name: "", domain: "", industry: "", numberOfEmployees: "", phone: "", website: "", description: "" });
@@ -84,9 +84,10 @@ export default function Companies() {
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70 py-3.5">Company</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Domain</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Industry</TableHead>
-                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Size</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Contacts</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Open Deals</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Pipeline</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Status</TableHead>
-                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Created</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70 w-10"></TableHead>
               </TableRow>
             </TableHeader>
@@ -152,7 +153,32 @@ export default function Companies() {
                         </Badge>
                       ) : <span className="text-xs text-muted-foreground/40">&mdash;</span>}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{company.numberOfEmployees || <span className="text-muted-foreground/40">&mdash;</span>}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-6 w-6 rounded-md bg-blue-50 flex items-center justify-center">
+                          <Users className="h-3 w-3 text-blue-600" />
+                        </div>
+                        <span className="text-sm font-semibold text-foreground">{(company as any).contactCount ?? 0}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-6 w-6 rounded-md bg-emerald-50 flex items-center justify-center">
+                          <Kanban className="h-3 w-3 text-emerald-600" />
+                        </div>
+                        <span className="text-sm font-semibold text-foreground">{(company as any).openDeals ?? 0}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {((company as any).pipelineValue ?? 0) > 0 ? (
+                        <div className="flex items-center gap-1.5">
+                          <div className="h-6 w-6 rounded-md bg-amber-50 flex items-center justify-center">
+                            <DollarSign className="h-3 w-3 text-amber-600" />
+                          </div>
+                          <span className="text-sm font-bold text-foreground">${((company as any).pipelineValue ?? 0).toLocaleString()}</span>
+                        </div>
+                      ) : <span className="text-xs text-muted-foreground/40">&mdash;</span>}
+                    </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className={`text-[10px] font-semibold rounded-lg ${
                         company.leadStatus === "Hot" ? "bg-red-50 text-red-600" :
@@ -164,7 +190,7 @@ export default function Companies() {
                         {company.leadStatus || "Cold"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{new Date(company.createdAt).toLocaleDateString()}</TableCell>
+
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>

@@ -858,3 +858,11 @@
 - [x] Update contacts router to always scope by company
 - [x] Redesign sidebar with polished, warm aesthetic
 - [x] Ensure all status colors (Blue/Green/Amber/Red/Purple/Gray) are beautiful on new theme
+
+## Phase 23: Visual Polish + UX Enhancements
+- [x] Redesign ContactDetail page with warm premium look (rounded cards, soft shadows, warm colors)
+- [x] Redesign CompanyDetail page with warm premium look and aggregate metrics
+- [x] Redesign Deals/Kanban page with warm premium look
+- [x] Add Quick Add Company button inside contact creation dialog
+- [x] Add company-level aggregate metrics (total contacts, open deals, pipeline value) on Companies list page
+- [x] Write/update tests for new features

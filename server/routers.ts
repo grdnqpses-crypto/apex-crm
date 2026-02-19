@@ -149,6 +149,13 @@ export const appRouter = router({
     }).optional()).query(async ({ ctx, input }) => {
       return db.listCompanies(ctx.user.id, input);
     }),
+    listWithMetrics: protectedProcedure.input(z.object({
+      search: z.string().optional(),
+      limit: z.number().min(1).max(100).optional(),
+      offset: z.number().min(0).optional(),
+    }).optional()).query(async ({ ctx, input }) => {
+      return db.listCompaniesWithMetrics(ctx.user.id, input);
+    }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
       return db.getCompany(input.id, ctx.user.id);
     }),

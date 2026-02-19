@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, UserPlus, Mail, Phone, MoreHorizontal, Trash2, Upload, Download, Users, Building2 } from "lucide-react";
+import { Search, UserPlus, Mail, Phone, MoreHorizontal, Trash2, Upload, Download, Users, Building2, Plus } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
@@ -83,6 +83,20 @@ export default function Contacts() {
   });
 
   const [form, setForm] = useState({ ...emptyForm });
+  const [showQuickCompany, setShowQuickCompany] = useState(false);
+  const [quickCompanyName, setQuickCompanyName] = useState("");
+  const [quickCompanyDomain, setQuickCompanyDomain] = useState("");
+  const createCompanyMutation = trpc.companies.create.useMutation({
+    onSuccess: (data: any) => {
+      utils.companies.list.invalidate();
+      setForm(p => ({ ...p, companyId: String(data.id) }));
+      setShowQuickCompany(false);
+      setQuickCompanyName("");
+      setQuickCompanyDomain("");
+      toast.success("Company created — now selected");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
   const f = (key: keyof typeof form) => ({
     value: form[key],
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm(p => ({ ...p, [key]: e.target.value })),
@@ -291,8 +305,34 @@ export default function Contacts() {
                   ))}
                 </SelectContent>
               </Select>
-              {!form.companyId && (
-                <p className="text-[11px] text-blue-600 mt-1.5">Required: contacts must be associated with a company.</p>
+              <div className="flex items-center gap-2 mt-2">
+                <Button type="button" variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8 border-blue-200 text-blue-600 hover:bg-blue-50" onClick={() => setShowQuickCompany(true)}>
+                  <Plus className="h-3.5 w-3.5" /> Quick Add Company
+                </Button>
+                {!form.companyId && (
+                  <p className="text-[11px] text-blue-600">Required</p>
+                )}
+              </div>
+              {showQuickCompany && (
+                <div className="mt-3 p-3.5 rounded-xl bg-card border border-blue-200 space-y-3">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-blue-600">Create New Company</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Company Name *</Label>
+                      <Input value={quickCompanyName} onChange={(e) => setQuickCompanyName(e.target.value)} placeholder="Acme Inc" className="rounded-xl bg-muted/30 border-border/50 h-9 text-sm" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Domain</Label>
+                      <Input value={quickCompanyDomain} onChange={(e) => setQuickCompanyDomain(e.target.value)} placeholder="acme.com" className="rounded-xl bg-muted/30 border-border/50 h-9 text-sm" />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" className="rounded-xl text-xs h-8 shadow-sm" disabled={createCompanyMutation.isPending || !quickCompanyName.trim()} onClick={() => createCompanyMutation.mutate({ name: quickCompanyName, domain: quickCompanyDomain || undefined })}>
+                      {createCompanyMutation.isPending ? "Creating..." : "Create & Select"}
+                    </Button>
+                    <Button size="sm" variant="ghost" className="rounded-xl text-xs h-8" onClick={() => setShowQuickCompany(false)}>Cancel</Button>
+                  </div>
+                </div>
               )}
             </div>
 

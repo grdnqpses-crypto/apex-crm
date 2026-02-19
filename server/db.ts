@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, sql, like, or, isNotNull, count } from "drizzle-orm";
+import { eq, and, desc, asc, sql, like, or, isNotNull, count, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser, users,
@@ -187,6 +187,34 @@ export async function deleteContactsByCompany(companyId: number, userId: number)
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   await db.delete(contacts).where(and(eq(contacts.companyId, companyId), eq(contacts.userId, userId)));
+}
+
+export async function listCompaniesWithMetrics(userId: number, opts?: { search?: string; limit?: number; offset?: number }) {
+  const db = await getDb();
+  if (!db) return { items: [], total: 0 };
+  const conditions = [eq(companies.userId, userId)];
+  if (opts?.search) conditions.push(or(like(companies.name, `%${opts.search}%`), like(companies.domain, `%${opts.search}%`))!);
+  const where = and(...conditions);
+  const [items, countResult] = await Promise.all([
+    db.select().from(companies).where(where).orderBy(desc(companies.createdAt)).limit(opts?.limit ?? 50).offset(opts?.offset ?? 0),
+    db.select({ count: sql<number>`count(*)` }).from(companies).where(where),
+  ]);
+  // Fetch metrics for each company
+  const companyIds = items.map(c => c.id);
+  if (companyIds.length === 0) return { items: [], total: countResult[0]?.count ?? 0 };
+  const [contactCounts, dealMetrics] = await Promise.all([
+    db.select({ companyId: contacts.companyId, count: sql<number>`count(*)` }).from(contacts).where(and(inArray(contacts.companyId, companyIds), eq(contacts.userId, userId))).groupBy(contacts.companyId),
+    db.select({ companyId: deals.companyId, openDeals: sql<number>`SUM(CASE WHEN ${deals.status} = 'open' THEN 1 ELSE 0 END)`, pipelineValue: sql<number>`SUM(CASE WHEN ${deals.status} = 'open' THEN COALESCE(${deals.value}, 0) ELSE 0 END)` }).from(deals).where(and(inArray(deals.companyId, companyIds), eq(deals.userId, userId))).groupBy(deals.companyId),
+  ]);
+  const contactMap = new Map(contactCounts.map(c => [c.companyId, c.count]));
+  const dealMap = new Map(dealMetrics.map(d => [d.companyId, { openDeals: d.openDeals ?? 0, pipelineValue: d.pipelineValue ?? 0 }]));
+  const enrichedItems = items.map(c => ({
+    ...c,
+    contactCount: contactMap.get(c.id) ?? 0,
+    openDeals: dealMap.get(c.id)?.openDeals ?? 0,
+    pipelineValue: dealMap.get(c.id)?.pipelineValue ?? 0,
+  }));
+  return { items: enrichedItems, total: countResult[0]?.count ?? 0 };
 }
 
 export async function getCompanyContactCount(companyId: number, userId: number): Promise<number> {

@@ -90,6 +90,8 @@ describe("contacts CRUD", () => {
   it("creates a contact with expanded fields", async () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
+    // Company-first: create a company first
+    const company = await caller.companies.create({ name: "CRM Test Corp" });
     const result = await caller.contacts.create({
       firstName: "John",
       lastName: "Doe",
@@ -102,6 +104,7 @@ describe("contacts CRUD", () => {
       freightVolume: "50 loads/month",
       customerType: "Shipper",
       decisionMakerRole: "Primary DM",
+      companyId: company.id,
     });
     expect(result.id).toBeDefined();
     expect(typeof result.id).toBe("number");
@@ -119,7 +122,8 @@ describe("contacts CRUD", () => {
   it("gets and updates a contact", async () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
-    const created = await caller.contacts.create({ firstName: "Update", lastName: "Test" });
+    const company = await caller.companies.create({ name: "Update Test Corp" });
+    const created = await caller.contacts.create({ firstName: "Update", lastName: "Test", companyId: company.id });
     const contact = await caller.contacts.get({ id: created.id });
     expect(contact?.firstName).toBe("Update");
     await caller.contacts.update({ id: created.id, leadStatus: "Hot", city: "Dallas" });
@@ -131,7 +135,8 @@ describe("contacts CRUD", () => {
   it("deletes a contact", async () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
-    const created = await caller.contacts.create({ firstName: "Delete", lastName: "Me" });
+    const company = await caller.companies.create({ name: "Delete Test Corp" });
+    const created = await caller.contacts.create({ firstName: "Delete", lastName: "Me", companyId: company.id });
     const result = await caller.contacts.delete({ id: created.id });
     expect(result.success).toBe(true);
   });
@@ -202,7 +207,8 @@ describe("activities", () => {
   it("creates note, call, email, and meeting activities", async () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
-    const contact = await caller.contacts.create({ firstName: "Activity", lastName: "Test" });
+    const company = await caller.companies.create({ name: "Activity Test Corp" });
+    const contact = await caller.contacts.create({ firstName: "Activity", lastName: "Test", companyId: company.id });
     await caller.activities.create({ contactId: contact.id, type: "note", subject: "Test note", body: "Note body" });
     await caller.activities.create({ contactId: contact.id, type: "call", subject: "Outbound call", callOutcome: "Connected", callType: "Outbound", callDuration: 15 });
     await caller.activities.create({ contactId: contact.id, type: "email", subject: "Follow up", emailTo: "test@test.com" });
