@@ -47,6 +47,7 @@ import {
   type MarketplaceLoad, type MarketplaceBid, type MarketplacePayment,
   type MarketplaceTrackingEvent, type MarketplaceDocument,
   type LaneAnalytic, type ConsolidationOpportunity,
+  emailMaskSettings, type EmailMaskSetting,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -3172,4 +3173,90 @@ export async function getMarketplaceStats(companyId?: number) {
   const avgMarginPercent = totalLoads > 0 ? allLoads.reduce((sum, l) => sum + Number(l.marginPercent || 0), 0) / totalLoads : 0;
   
   return { totalLoads, activeLoads, deliveredLoads, totalRevenue, totalMargin, avgMarginPercent };
+}
+
+
+// ─── Email Masking ──────────────────────────────────────────────────
+
+export async function getEmailMask(userId: number, companyId?: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const conditions = [eq(emailMaskSettings.userId, userId), eq(emailMaskSettings.isActive, true)];
+  if (companyId) conditions.push(eq(emailMaskSettings.companyId, companyId));
+  const [mask] = await db.select().from(emailMaskSettings).where(and(...conditions)).limit(1);
+  return mask || null;
+}
+
+export async function listEmailMasks(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(emailMaskSettings).where(eq(emailMaskSettings.userId, userId)).orderBy(desc(emailMaskSettings.createdAt));
+}
+
+export async function saveEmailMask(userId: number, data: {
+  displayName: string;
+  displayEmail: string;
+  replyToName?: string;
+  replyToEmail?: string;
+  organizationName?: string;
+  applyTo?: string;
+  dmarcAlignment?: string;
+  companyId?: number;
+  id?: number;
+}) {
+  const db = await getDb();
+  if (!db) return { id: 0 };
+  const now = Date.now();
+  if (data.id) {
+    await db.update(emailMaskSettings).set({
+      displayName: data.displayName,
+      displayEmail: data.displayEmail,
+      replyToName: data.replyToName || null,
+      replyToEmail: data.replyToEmail || null,
+      organizationName: data.organizationName || null,
+      applyTo: data.applyTo || "all",
+      dmarcAlignment: data.dmarcAlignment || "relaxed",
+      companyId: data.companyId || null,
+      updatedAt: now,
+    }).where(and(eq(emailMaskSettings.id, data.id), eq(emailMaskSettings.userId, userId)));
+    return { id: data.id };
+  }
+  const [result] = await db.insert(emailMaskSettings).values({
+    userId,
+    displayName: data.displayName,
+    displayEmail: data.displayEmail,
+    replyToName: data.replyToName || null,
+    replyToEmail: data.replyToEmail || null,
+    organizationName: data.organizationName || null,
+    applyTo: data.applyTo || "all",
+    dmarcAlignment: data.dmarcAlignment || "relaxed",
+    companyId: data.companyId || null,
+    isActive: true,
+    createdAt: now,
+    updatedAt: now,
+  });
+  return { id: result.insertId };
+}
+
+export async function deleteEmailMask(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return false;
+  await db.delete(emailMaskSettings).where(and(eq(emailMaskSettings.id, id), eq(emailMaskSettings.userId, userId)));
+  return true;
+}
+
+// Apply mask to outbound email headers
+export function applyEmailMask(mask: EmailMaskSetting | null, originalFrom: { name: string; email: string }) {
+  if (!mask || !mask.isActive) {
+    return {
+      from: { name: originalFrom.name, email: originalFrom.email },
+      replyTo: null,
+      envelopeSender: originalFrom.email,
+    };
+  }
+  return {
+    from: { name: mask.displayName, email: mask.displayEmail },
+    replyTo: mask.replyToEmail ? { name: mask.replyToName || mask.displayName, email: mask.replyToEmail } : { name: mask.displayName, email: mask.displayEmail },
+    envelopeSender: originalFrom.email, // actual sending domain for SPF/DKIM
+  };
 }

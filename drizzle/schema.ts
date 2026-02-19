@@ -2179,3 +2179,29 @@ export const consolidationOpportunities = mysqlTable("consolidation_opportunitie
   companyId: int("companyId"),
 });
 export type ConsolidationOpportunity = typeof consolidationOpportunities.$inferSelect;
+
+
+// ─── Email Masking ──────────────────────────────────────────────────
+export const emailMaskSettings = mysqlTable("email_mask_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  // Display "From" — what recipients see
+  displayName: varchar("displayName", { length: 128 }).notNull(), // e.g. "J. Lavallee"
+  displayEmail: varchar("displayEmail", { length: 256 }).notNull(), // e.g. "jlavallee@shiplw.com"
+  // Reply-To — where replies go (can differ from display)
+  replyToName: varchar("replyToName", { length: 128 }),
+  replyToEmail: varchar("replyToEmail", { length: 256 }),
+  // Organization branding in email headers
+  organizationName: varchar("organizationName", { length: 256 }),
+  // Whether this mask is active
+  isActive: boolean("isActive").default(true),
+  // Whether to apply to ALL outbound emails or only campaigns
+  applyTo: varchar("applyTo", { length: 32 }).default("all"), // all, campaigns_only, manual_only
+  // DMARC alignment notes (informational)
+  dmarcAlignment: varchar("dmarcAlignment", { length: 16 }).default("relaxed"), // relaxed, strict
+  // Metadata
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type EmailMaskSetting = typeof emailMaskSettings.$inferSelect;

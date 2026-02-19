@@ -816,3 +816,12 @@
 - [x] Audit all UI pages for errors
 - [x] Fix any issues found (5 test failures fixed, all 219 now pass)
 - [x] Run full test suite and verify all pass (219/219 = 100%)
+
+## Phase 18: Email Masking System
+- [x] Add email_mask_settings table to schema (display name, display email, reply-to, per company)
+- [x] Add db helpers for email mask CRUD
+- [x] Add emailMask router with get/save endpoints
+- [x] Update email queue logic to apply mask (display From vs envelope sender)
+- [x] Build easy Email Masking settings UI page
+- [x] Add masking to DashboardLayout sidebar navigation
+- [x] Write tests for email masking system (15/15 passed)

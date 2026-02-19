@@ -73,6 +73,7 @@ const Subscription = lazy(() => import("./pages/Subscription"));
 const CommandCenter = lazy(() => import("./pages/CommandCenter"));
 const FreightMarketplace = lazy(() => import("./pages/FreightMarketplace"));
 const ApexAutopilot = lazy(() => import("./pages/ApexAutopilot"));
+const EmailMasking = lazy(() => import("./pages/EmailMasking"));
 
 function PageLoader() {
   return (
@@ -154,6 +155,7 @@ function Router() {
           <Route path="/command-center" component={CommandCenter} />
           <Route path="/freight-marketplace" component={FreightMarketplace} />
           <Route path="/apex-autopilot" component={ApexAutopilot} />
+          <Route path="/email-masking" component={EmailMasking} />
           <Route path="/help" component={HelpCenter} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />

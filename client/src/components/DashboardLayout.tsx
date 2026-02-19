@@ -68,6 +68,7 @@ const standardSections = [
       { icon: FlaskConical, label: "A/B Tests", path: "/ab-tests" },
       { icon: Zap, label: "SMTP Accounts", path: "/smtp-accounts" },
       { icon: Activity, label: "Domain Optimizer", path: "/domain-optimizer" },
+      { icon: Mail, label: "Email Masking", path: "/email-masking" },
       { icon: Sparkles, label: "A/B Engine", path: "/ab-engine" },
     ],
   },

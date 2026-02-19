@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `email_mask_settings` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`companyId` int,\n\t`displayName` varchar(128) NOT NULL,\n\t`displayEmail` varchar(256) NOT NULL,\n\t`replyToName` varchar(128),\n\t`replyToEmail` varchar(256),\n\t`organizationName` varchar(256),\n\t`isActive` boolean DEFAULT true,\n\t`applyTo` varchar(32) DEFAULT 'all',\n\t`dmarcAlignment` varchar(16) DEFAULT 'relaxed',\n\t`createdAt` bigint NOT NULL,\n\t`updatedAt` bigint NOT NULL,\n\tCONSTRAINT `email_mask_settings_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute CREATE TABLE `email_mask_settings` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`companyId` int,\n\t`displayName` varchar(128) NOT NULL,\n\t`displayEmail` varchar(256) NOT NULL,\n\t`replyToName` varchar(128),\n\t`replyToEmail` varchar(256),\n\t`organizationName` varchar(256),\n\t`isActive` boolean DEFAULT true,\n\t`applyTo` varchar(32) DEFAULT 'all',\n\t`dmarcAlignment` varchar(16) DEFAULT 'relaxed',\n\t`createdAt` bigint NOT NULL,\n\t`updatedAt` bigint NOT NULL,\n\tCONSTRAINT `email_mask_settings_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1333
+}

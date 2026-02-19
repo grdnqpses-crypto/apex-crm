@@ -3242,5 +3242,41 @@ export const appRouter = router({
       return db.updateConsolidationStatus(input.id, 'executed');
     }),
   }),
+
+  // ─── Email Masking ──────────────────────────────────────────────────
+  emailMask: router({
+    get: protectedProcedure.query(async ({ ctx }) => {
+      return db.getEmailMask(ctx.user.id);
+    }),
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return db.listEmailMasks(ctx.user.id);
+    }),
+    save: protectedProcedure.input(z.object({
+      id: z.number().optional(),
+      displayName: z.string().min(1),
+      displayEmail: z.string().email(),
+      replyToName: z.string().optional(),
+      replyToEmail: z.string().email().optional(),
+      organizationName: z.string().optional(),
+      applyTo: z.enum(['all', 'campaigns_only', 'manual_only']).optional(),
+      dmarcAlignment: z.enum(['relaxed', 'strict']).optional(),
+      companyId: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      return db.saveEmailMask(ctx.user.id, input);
+    }),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      return db.deleteEmailMask(input.id, ctx.user.id);
+    }),
+    // Preview what an email would look like with the mask applied
+    preview: protectedProcedure.input(z.object({
+      maskId: z.number().optional(),
+    })).query(async ({ ctx, input }) => {
+      const mask = input.maskId
+        ? (await db.listEmailMasks(ctx.user.id)).find(m => m.id === input.maskId) || null
+        : await db.getEmailMask(ctx.user.id);
+      const originalFrom = { name: ctx.user.name || 'Unknown', email: ctx.user.email || 'noreply@example.com' };
+      return db.applyEmailMask(mask, originalFrom);
+    }),
+  }),
 });
 export type AppRouter = typeof appRouter;
