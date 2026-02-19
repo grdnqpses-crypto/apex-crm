@@ -1,0 +1,14 @@
+{
+  "query": "SELECT COUNT(*) as total, SUM(CASE WHEN companyId IS NULL THEN 1 ELSE 0 END) as no_company FROM contacts;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT COUNT(*) as total, SUM(CASE WHEN companyId IS NULL THEN 1 ELSE 0 END) as no_company FROM contacts;",
+  "rows": [
+    {
+      "total": "185",
+      "no_company": "167"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\tno_company\n185\t167\n",
+  "stderr": "",
+  "execution_time_ms": 426
+}

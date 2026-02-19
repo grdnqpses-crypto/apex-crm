@@ -88,7 +88,7 @@ export const contacts = mysqlTable("contacts", {
   firstName: varchar("firstName", { length: 128 }).notNull(),
   lastName: varchar("lastName", { length: 128 }),
   jobTitle: varchar("jobTitle", { length: 256 }),
-  companyId: int("companyId"),
+  companyId: int("companyId").notNull(),
   contactOwnerId: int("contactOwnerId"),
   // 2. Communication
   email: varchar("email", { length: 320 }),

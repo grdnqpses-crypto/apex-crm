@@ -53,7 +53,7 @@ export const appRouter = router({
       firstName: z.string().min(1),
       lastName: z.string().optional(),
       jobTitle: z.string().optional(),
-      companyId: z.number().optional(),
+      companyId: z.number(),
       email: z.string().optional(),
       companyPhone: z.string().optional(),
       directPhone: z.string().optional(),
@@ -97,7 +97,7 @@ export const appRouter = router({
       firstName: z.string().min(1).optional(),
       lastName: z.string().optional(),
       jobTitle: z.string().optional(),
-      companyId: z.number().nullable().optional(),
+      companyId: z.number().optional(),
       email: z.string().optional(),
       companyPhone: z.string().optional(),
       directPhone: z.string().optional(),
@@ -228,8 +228,13 @@ export const appRouter = router({
       return { success: true };
     }),
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      // Company-first: cascade delete all contacts belonging to this company
+      await db.deleteContactsByCompany(input.id, ctx.user.id);
       await db.deleteCompany(input.id, ctx.user.id);
       return { success: true };
+    }),
+    contactCount: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
+      return db.getCompanyContactCount(input.companyId, ctx.user.id);
     }),
   }),
 

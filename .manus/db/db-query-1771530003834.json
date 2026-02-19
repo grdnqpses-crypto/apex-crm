@@ -1,0 +1,15 @@
+{
+  "query": "SELECT COUNT(*) as total, SUM(CASE WHEN companyId IS NULL THEN 1 ELSE 0 END) as orphans, SUM(CASE WHEN companyId IS NOT NULL THEN 1 ELSE 0 END) as assigned FROM contacts;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT COUNT(*) as total, SUM(CASE WHEN companyId IS NULL THEN 1 ELSE 0 END) as orphans, SUM(CASE WHEN companyId IS NOT NULL THEN 1 ELSE 0 END) as assigned FROM contacts;",
+  "rows": [
+    {
+      "total": "185",
+      "orphans": "167",
+      "assigned": "18"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\torphans\tassigned\n185\t167\t18\n",
+  "stderr": "",
+  "execution_time_ms": 370
+}

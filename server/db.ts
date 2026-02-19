@@ -183,6 +183,19 @@ export async function deleteCompany(id: number, userId: number) {
   await db.delete(companies).where(and(eq(companies.id, id), eq(companies.userId, userId)));
 }
 
+export async function deleteContactsByCompany(companyId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.delete(contacts).where(and(eq(contacts.companyId, companyId), eq(contacts.userId, userId)));
+}
+
+export async function getCompanyContactCount(companyId: number, userId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select({ count: sql<number>`count(*)` }).from(contacts).where(and(eq(contacts.companyId, companyId), eq(contacts.userId, userId)));
+  return result[0]?.count ?? 0;
+}
+
 // ─── Pipelines & Stages ───
 export async function listPipelines(userId: number) {
   const db = await getDb();

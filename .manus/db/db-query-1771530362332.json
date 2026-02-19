@@ -1,0 +1,70 @@
+{
+  "query": "SELECT id, firstName, lastName, companyId FROM contacts WHERE companyId IS NULL OR companyId = 0 LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, firstName, lastName, companyId FROM contacts WHERE companyId IS NULL OR companyId = 0 LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "firstName": "John",
+      "lastName": "Doe",
+      "companyId": "NULL"
+    },
+    {
+      "id": "2",
+      "firstName": "Update",
+      "lastName": "Test",
+      "companyId": "NULL"
+    },
+    {
+      "id": "4",
+      "firstName": "Activity",
+      "lastName": "Test",
+      "companyId": "NULL"
+    },
+    {
+      "id": "5",
+      "firstName": "John",
+      "lastName": "Doe",
+      "companyId": "NULL"
+    },
+    {
+      "id": "6",
+      "firstName": "Update",
+      "lastName": "Test",
+      "companyId": "NULL"
+    },
+    {
+      "id": "8",
+      "firstName": "Activity",
+      "lastName": "Test",
+      "companyId": "NULL"
+    },
+    {
+      "id": "9",
+      "firstName": "John",
+      "lastName": "Doe",
+      "companyId": "NULL"
+    },
+    {
+      "id": "10",
+      "firstName": "Update",
+      "lastName": "Test",
+      "companyId": "NULL"
+    },
+    {
+      "id": "12",
+      "firstName": "Activity",
+      "lastName": "Test",
+      "companyId": "NULL"
+    },
+    {
+      "id": "30001",
+      "firstName": "John",
+      "lastName": "Doe",
+      "companyId": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tfirstName\tlastName\tcompanyId\n1\tJohn\tDoe\tNULL\n2\tUpdate\tTest\tNULL\n4\tActivity\tTest\tNULL\n5\tJohn\tDoe\tNULL\n6\tUpdate\tTest\tNULL\n8\tActivity\tTest\tNULL\n9\tJohn\tDoe\tNULL\n10\tUpdate\tTest\tNULL\n12\tActivity\tTest\tNULL\n30001\tJohn\tDoe\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 359
+}

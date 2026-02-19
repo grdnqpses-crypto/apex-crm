@@ -827,13 +827,34 @@
 - [x] Write tests for email masking system (15/15 passed)
 
 ## Phase 19: Fix Color Scheme
-- [ ] Update index.css with correct enterprise CRM color system
-- [ ] Blue=standard workflow, Green=success/booked, Amber=pending, Red=critical, Purple=premium, Gray=inactive
-- [ ] Update dashboard cards and status badges to use correct colors
-- [ ] Verify color scheme across all key pages
+- [x] Update index.css with correct enterprise CRM color system
+- [x] Blue=standard workflow, Green=success/booked, Amber=pending, Red=critical, Purple=premium, Gray=inactive
+- [x] Update dashboard cards and status badges to use correct colors
+- [x] Verify color scheme across all key pages
 
 ## Phase 20: Switch to Light Theme
 - [x] Remove dark theme, switch ThemeProvider to "light"
 - [x] Rewrite index.css :root with light theme colors (white bg, dark text)
 - [x] Ensure all CRM status colors are vibrant on light background
 - [x] Verify dashboard and all pages render correctly
+
+## Phase 21: Company-First CRM Architecture
+- [x] Make companyId required (NOT NULL) on contacts table
+- [x] Add cascade delete: deleting a company deletes all its contacts
+- [x] Update contacts router to always scope by companyId
+- [x] Update Companies page to show contacts nested under each company
+- [x] Update Contacts page to require company selection
+- [x] Update sidebar: Companies is primary, Contacts nested under it
+- [x] Prevent creating contacts without a company
+- [x] Write tests for cascade delete and company-scoped contacts
+
+## Phase 22: Beautiful Visual Redesign + Company-First Architecture
+- [x] Design warm, premium color palette (soft gradients, warm tones, elegant typography)
+- [x] Rewrite index.css with beautiful new theme variables
+- [x] Add Google Font (Inter or similar premium font) to index.html
+- [x] Redesign Dashboard with beautiful gradient cards, soft shadows, visual warmth
+- [x] Redesign Companies page as primary entity with nested contacts
+- [x] Update backend: companyId required on contacts, cascade delete on company removal
+- [x] Update contacts router to always scope by company
+- [x] Redesign sidebar with polished, warm aesthetic
+- [x] Ensure all status colors (Blue/Green/Amber/Red/Purple/Gray) are beautiful on new theme

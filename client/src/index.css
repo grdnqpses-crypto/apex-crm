@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -61,57 +61,70 @@
 }
 
 :root {
-  --radius: 0.625rem;
+  --radius: 0.75rem;
 
-  /* ─── Base Theme: Clean Light with Professional White ─── */
-  --background: oklch(0.985 0.002 250);
-  --foreground: oklch(0.15 0.01 250);
-  --card: oklch(1.0 0 0);
-  --card-foreground: oklch(0.15 0.01 250);
-  --popover: oklch(1.0 0 0);
-  --popover-foreground: oklch(0.15 0.01 250);
-  --secondary: oklch(0.955 0.005 250);
-  --secondary-foreground: oklch(0.25 0.01 250);
-  --muted: oklch(0.955 0.005 250);
-  --muted-foreground: oklch(0.45 0.01 250);
-  --accent: oklch(0.95 0.008 250);
-  --accent-foreground: oklch(0.15 0.01 250);
-  --border: oklch(0.90 0.005 250);
-  --input: oklch(0.92 0.005 250);
+  /* ─── Beautiful Warm Premium Theme ─── */
+  /* Warm cream background — not stark white, feels inviting */
+  --background: oklch(0.975 0.008 80);
+  --foreground: oklch(0.18 0.02 260);
 
-  /* ─── Primary = CRM Blue (standard workflow) ─── */
-  --primary: oklch(0.55 0.22 250);
+  /* Cards: pure white with warm undertone */
+  --card: oklch(0.995 0.003 80);
+  --card-foreground: oklch(0.18 0.02 260);
+
+  /* Popovers */
+  --popover: oklch(0.995 0.003 80);
+  --popover-foreground: oklch(0.18 0.02 260);
+
+  /* Secondary: warm light gray */
+  --secondary: oklch(0.955 0.01 80);
+  --secondary-foreground: oklch(0.30 0.02 260);
+
+  /* Muted: warm neutral */
+  --muted: oklch(0.94 0.008 80);
+  --muted-foreground: oklch(0.50 0.015 260);
+
+  /* Accent: soft warm highlight */
+  --accent: oklch(0.94 0.015 80);
+  --accent-foreground: oklch(0.18 0.02 260);
+
+  /* Borders: warm, soft, barely there */
+  --border: oklch(0.90 0.01 80);
+  --input: oklch(0.92 0.01 80);
+
+  /* ─── Primary = Deep Navy Blue (professional, trustworthy) ─── */
+  --primary: oklch(0.45 0.18 255);
   --primary-foreground: oklch(0.99 0 0);
-  --ring: oklch(0.55 0.22 250);
+  --ring: oklch(0.45 0.18 255);
 
-  /* ─── Destructive = CRM Red ─── */
-  --destructive: oklch(0.55 0.24 25);
+  /* ─── Destructive = Warm Red ─── */
+  --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
 
-  /* ─── Success = CRM Green ─── */
-  --success: oklch(0.55 0.20 155);
+  /* ─── Success = Rich Green ─── */
+  --success: oklch(0.55 0.18 155);
   --success-foreground: oklch(0.99 0 0);
 
-  /* ─── Warning = CRM Amber ─── */
-  --warning: oklch(0.78 0.16 75);
-  --warning-foreground: oklch(0.15 0 0);
+  /* ─── Warning = Warm Amber/Gold ─── */
+  --warning: oklch(0.78 0.15 75);
+  --warning-foreground: oklch(0.18 0 0);
 
-  /* ─── Chart Colors (match CRM palette) ─── */
-  --chart-1: oklch(0.55 0.22 250);  /* Blue - workflow */
-  --chart-2: oklch(0.55 0.20 155);  /* Green - success */
-  --chart-3: oklch(0.78 0.16 75);   /* Amber - pending */
-  --chart-4: oklch(0.55 0.24 25);   /* Red - critical */
-  --chart-5: oklch(0.55 0.22 300);  /* Purple - premium */
+  /* ─── Chart Colors (CRM palette) ─── */
+  --chart-1: oklch(0.50 0.18 255);   /* Blue - workflow */
+  --chart-2: oklch(0.55 0.18 155);   /* Green - success */
+  --chart-3: oklch(0.78 0.15 75);    /* Amber - pending */
+  --chart-4: oklch(0.55 0.22 25);    /* Red - critical */
+  --chart-5: oklch(0.55 0.20 300);   /* Purple - premium */
 
-  /* ─── Sidebar: Clean white with subtle blue accent ─── */
-  --sidebar: oklch(0.98 0.003 250);
-  --sidebar-foreground: oklch(0.30 0.01 250);
-  --sidebar-primary: oklch(0.55 0.22 250);
+  /* ─── Sidebar: Warm off-white with elegant feel ─── */
+  --sidebar: oklch(0.98 0.006 80);
+  --sidebar-foreground: oklch(0.30 0.02 260);
+  --sidebar-primary: oklch(0.45 0.18 255);
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.94 0.015 250);
-  --sidebar-accent-foreground: oklch(0.15 0.01 250);
-  --sidebar-border: oklch(0.90 0.005 250);
-  --sidebar-ring: oklch(0.55 0.22 250);
+  --sidebar-accent: oklch(0.93 0.02 255);
+  --sidebar-accent-foreground: oklch(0.18 0.02 260);
+  --sidebar-border: oklch(0.90 0.01 80);
+  --sidebar-ring: oklch(0.45 0.18 255);
 
   /* ═══════════════════════════════════════════════════════
      ENTERPRISE CRM COLOR SYSTEM
@@ -124,79 +137,28 @@
      ═══════════════════════════════════════════════════════ */
 
   /* Blue — Standard Workflow */
-  --crm-blue: oklch(0.55 0.22 250);
+  --crm-blue: oklch(0.50 0.18 255);
   --crm-blue-foreground: oklch(0.99 0 0);
 
   /* Green — Success / Booked / Completed */
-  --crm-green: oklch(0.55 0.20 155);
+  --crm-green: oklch(0.55 0.18 155);
   --crm-green-foreground: oklch(0.99 0 0);
 
   /* Amber — Pending / Needs Attention */
-  --crm-amber: oklch(0.78 0.16 75);
-  --crm-amber-foreground: oklch(0.15 0 0);
+  --crm-amber: oklch(0.78 0.15 75);
+  --crm-amber-foreground: oklch(0.18 0 0);
 
   /* Red — Critical / Overdue / Problem */
-  --crm-red: oklch(0.55 0.24 25);
+  --crm-red: oklch(0.55 0.22 25);
   --crm-red-foreground: oklch(0.99 0 0);
 
   /* Purple — Premium / AI / Insights */
-  --crm-purple: oklch(0.55 0.22 300);
+  --crm-purple: oklch(0.55 0.20 300);
   --crm-purple-foreground: oklch(0.99 0 0);
 
   /* Gray — Inactive / Archived */
-  --crm-gray: oklch(0.55 0.005 250);
+  --crm-gray: oklch(0.55 0.005 260);
   --crm-gray-foreground: oklch(0.99 0 0);
-}
-
-.dark {
-  --background: oklch(0.14 0.008 250);
-  --foreground: oklch(0.95 0.003 250);
-  --card: oklch(0.18 0.01 250);
-  --card-foreground: oklch(0.95 0.003 250);
-  --popover: oklch(0.20 0.012 250);
-  --popover-foreground: oklch(0.95 0.003 250);
-  --secondary: oklch(0.23 0.01 250);
-  --secondary-foreground: oklch(0.88 0.003 250);
-  --muted: oklch(0.21 0.008 250);
-  --muted-foreground: oklch(0.62 0.01 250);
-  --accent: oklch(0.23 0.012 250);
-  --accent-foreground: oklch(0.95 0.003 250);
-  --border: oklch(0.26 0.008 250);
-  --input: oklch(0.23 0.01 250);
-  --primary: oklch(0.62 0.19 250);
-  --primary-foreground: oklch(0.98 0 0);
-  --ring: oklch(0.62 0.19 250);
-  --destructive: oklch(0.60 0.22 25);
-  --destructive-foreground: oklch(0.98 0 0);
-  --success: oklch(0.62 0.19 155);
-  --success-foreground: oklch(0.98 0 0);
-  --warning: oklch(0.76 0.16 75);
-  --warning-foreground: oklch(0.15 0 0);
-  --chart-1: oklch(0.62 0.19 250);
-  --chart-2: oklch(0.62 0.19 155);
-  --chart-3: oklch(0.76 0.16 75);
-  --chart-4: oklch(0.60 0.22 25);
-  --chart-5: oklch(0.62 0.20 300);
-  --sidebar: oklch(0.12 0.01 250);
-  --sidebar-foreground: oklch(0.88 0.003 250);
-  --sidebar-primary: oklch(0.62 0.19 250);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.19 0.012 250);
-  --sidebar-accent-foreground: oklch(0.95 0.003 250);
-  --sidebar-border: oklch(0.23 0.008 250);
-  --sidebar-ring: oklch(0.62 0.19 250);
-  --crm-blue: oklch(0.62 0.19 250);
-  --crm-blue-foreground: oklch(0.98 0 0);
-  --crm-green: oklch(0.62 0.19 155);
-  --crm-green-foreground: oklch(0.98 0 0);
-  --crm-amber: oklch(0.76 0.16 75);
-  --crm-amber-foreground: oklch(0.15 0 0);
-  --crm-red: oklch(0.60 0.22 25);
-  --crm-red-foreground: oklch(0.98 0 0);
-  --crm-purple: oklch(0.62 0.20 300);
-  --crm-purple-foreground: oklch(0.98 0 0);
-  --crm-gray: oklch(0.42 0.005 250);
-  --crm-gray-foreground: oklch(0.85 0 0);
 }
 
 @layer base {
@@ -246,5 +208,61 @@
       padding-right: 2rem;
       max-width: 1440px;
     }
+  }
+
+  /* ─── Premium Card Styles ─── */
+  .card-warm {
+    background: linear-gradient(135deg, oklch(0.995 0.003 80), oklch(0.985 0.008 80));
+    border: 1px solid oklch(0.90 0.01 80);
+    box-shadow: 0 1px 3px oklch(0.50 0.01 80 / 0.08), 0 4px 12px oklch(0.50 0.01 80 / 0.04);
+    border-radius: 1rem;
+    transition: all 0.2s ease;
+  }
+  .card-warm:hover {
+    box-shadow: 0 2px 8px oklch(0.50 0.01 80 / 0.12), 0 8px 24px oklch(0.50 0.01 80 / 0.06);
+    transform: translateY(-1px);
+  }
+
+  /* Status badge styles */
+  .badge-blue {
+    background: oklch(0.93 0.04 255);
+    color: oklch(0.35 0.18 255);
+  }
+  .badge-green {
+    background: oklch(0.93 0.04 155);
+    color: oklch(0.35 0.18 155);
+  }
+  .badge-amber {
+    background: oklch(0.93 0.06 75);
+    color: oklch(0.40 0.12 75);
+  }
+  .badge-red {
+    background: oklch(0.93 0.04 25);
+    color: oklch(0.40 0.18 25);
+  }
+  .badge-purple {
+    background: oklch(0.93 0.04 300);
+    color: oklch(0.40 0.18 300);
+  }
+  .badge-gray {
+    background: oklch(0.93 0.005 260);
+    color: oklch(0.40 0.01 260);
+  }
+
+  /* Gradient accent backgrounds for stat cards */
+  .gradient-blue {
+    background: linear-gradient(135deg, oklch(0.94 0.05 255), oklch(0.97 0.02 255));
+  }
+  .gradient-green {
+    background: linear-gradient(135deg, oklch(0.94 0.05 155), oklch(0.97 0.02 155));
+  }
+  .gradient-amber {
+    background: linear-gradient(135deg, oklch(0.94 0.06 75), oklch(0.97 0.03 75));
+  }
+  .gradient-red {
+    background: linear-gradient(135deg, oklch(0.94 0.05 25), oklch(0.97 0.02 25));
+  }
+  .gradient-purple {
+    background: linear-gradient(135deg, oklch(0.94 0.05 300), oklch(0.97 0.02 300));
   }
 }

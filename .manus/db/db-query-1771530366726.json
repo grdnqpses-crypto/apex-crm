@@ -1,0 +1,37 @@
+{
+  "query": "SELECT COUNT(*) as orphan_count FROM contacts WHERE companyId IS NULL OR companyId = 0; SELECT COUNT(*) as company_count FROM companies; SELECT id, name FROM companies LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT COUNT(*) as orphan_count FROM contacts WHERE companyId IS NULL OR companyId = 0; SELECT COUNT(*) as company_count FROM companies; SELECT id, name FROM companies LIMIT 5;",
+  "rows": [
+    {
+      "orphan_count": "167"
+    },
+    {
+      "orphan_count": "company_count"
+    },
+    {
+      "orphan_count": "49"
+    },
+    {
+      "orphan_count": "id\tname"
+    },
+    {
+      "orphan_count": "1\tAcme Logistics"
+    },
+    {
+      "orphan_count": "3\tAcme Logistics"
+    },
+    {
+      "orphan_count": "5\tAcme Logistics"
+    },
+    {
+      "orphan_count": "30001\tAcme Logistics"
+    },
+    {
+      "orphan_count": "30003\tAcme Logistics"
+    }
+  ],
+  "messages": [],
+  "stdout": "orphan_count\n167\ncompany_count\n49\nid\tname\n1\tAcme Logistics\n3\tAcme Logistics\n5\tAcme Logistics\n30001\tAcme Logistics\n30003\tAcme Logistics\n",
+  "stderr": "",
+  "execution_time_ms": 466
+}

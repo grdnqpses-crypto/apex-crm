@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE `contacts` MODIFY COLUMN `companyId` int NOT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute ALTER TABLE `contacts` MODIFY COLUMN `companyId` int NOT NULL;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1265 (01000) at line 1: Data truncated for column 'companyid' at row 1"
+  ]
+}

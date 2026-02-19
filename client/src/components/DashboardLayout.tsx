@@ -53,8 +53,8 @@ const standardSections = [
   {
     label: "CRM",
     items: [
-      { icon: Users, label: "Contacts", path: "/contacts" },
       { icon: Building2, label: "Companies", path: "/companies" },
+      { icon: Users, label: "Contacts", path: "/contacts" },
       { icon: Kanban, label: "Deals", path: "/deals" },
       { icon: ListChecks, label: "Tasks", path: "/tasks" },
     ],
@@ -171,7 +171,7 @@ const developerSection = {
 
 const DEV_MODE_KEY = "apex-dev-mode";
 const TAP_TARGET = 11;
-const TAP_TIMEOUT = 4000; // 4 seconds to complete all 11 taps
+const TAP_TIMEOUT = 4000;
 
 function useDevMode() {
   const [devMode, setDevMode] = useState(() => {
@@ -181,16 +181,11 @@ function useDevMode() {
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleLogoTap = useCallback(() => {
-    if (devMode) return; // Already unlocked
-
+    if (devMode) return;
     tapCountRef.current += 1;
     const remaining = TAP_TARGET - tapCountRef.current;
-
-    // Clear previous timer
     if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
-
     if (remaining <= 0) {
-      // Unlocked!
       tapCountRef.current = 0;
       sessionStorage.setItem(DEV_MODE_KEY, "true");
       setDevMode(true);
@@ -199,39 +194,27 @@ function useDevMode() {
         duration: 5000,
       });
     } else if (remaining <= 5) {
-      // Show countdown for the last 5 taps
       toast.info(`${remaining} tap${remaining === 1 ? "" : "s"} to unlock developer options`, {
         duration: 1500,
         id: "dev-tap-countdown",
       });
-      // Reset after timeout
-      tapTimerRef.current = setTimeout(() => {
-        tapCountRef.current = 0;
-      }, TAP_TIMEOUT);
+      tapTimerRef.current = setTimeout(() => { tapCountRef.current = 0; }, TAP_TIMEOUT);
     } else {
-      // Silent taps for the first 6, just reset timer
-      tapTimerRef.current = setTimeout(() => {
-        tapCountRef.current = 0;
-      }, TAP_TIMEOUT);
+      tapTimerRef.current = setTimeout(() => { tapCountRef.current = 0; }, TAP_TIMEOUT);
     }
   }, [devMode]);
 
   const disableDevMode = useCallback(() => {
     sessionStorage.removeItem(DEV_MODE_KEY);
     setDevMode(false);
-    toast.info("Developer options hidden", {
-      description: "Tap the logo 11 times to re-enable.",
-      duration: 3000,
-    });
+    toast.info("Developer options hidden", { description: "Tap the logo 11 times to re-enable.", duration: 3000 });
   }, []);
 
   return { devMode, handleLogoTap, disableDevMode };
 }
 
-// Build menu sections dynamically based on dev mode
 function getMenuSections(devMode: boolean) {
   if (devMode) {
-    // Insert developer section before Resources (last section)
     const sections = [...standardSections];
     const resourcesIdx = sections.findIndex(s => s.label === "Resources");
     if (resourcesIdx >= 0) {
@@ -272,22 +255,25 @@ export default function DashboardLayout({
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
-          <div className="flex flex-col items-center gap-4">
-            <div className="flex items-center gap-2.5">
-              <Zap className="h-8 w-8 text-primary" />
+          {/* Premium login card */}
+          <div className="w-full rounded-2xl bg-card p-10 shadow-lg border border-border/50 text-center">
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Zap className="h-5 w-5 text-primary" />
+              </div>
               <span className="text-2xl font-bold tracking-tight text-foreground">Apex CRM</span>
             </div>
-            <p className="text-sm text-muted-foreground text-center max-w-sm">
-              Enterprise-grade customer relationship management with advanced email deliverability.
+            <p className="text-sm text-muted-foreground mb-8 max-w-xs mx-auto leading-relaxed">
+              The most powerful freight broker CRM. Manage companies, contacts, deals, and operations in one place.
             </p>
+            <Button
+              onClick={() => { window.location.href = getLoginUrl(); }}
+              size="lg"
+              className="w-full rounded-xl h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all"
+            >
+              Sign in to continue
+            </Button>
           </div>
-          <Button
-            onClick={() => { window.location.href = getLoginUrl(); }}
-            size="lg"
-            className="w-full shadow-lg hover:shadow-xl transition-all"
-          >
-            Sign in to continue
-          </Button>
         </div>
       </div>
     );
@@ -324,7 +310,6 @@ function DashboardLayoutContent({
   const { canAccessSidebarItem } = useFeatureAccess();
 
   const menuSections = getMenuSections(devMode);
-  // Filter sidebar items based on feature access
   const filteredSections = menuSections.map(section => ({
     ...section,
     items: section.items.filter(item => canAccessSidebarItem(item.path)),
@@ -361,45 +346,49 @@ function DashboardLayoutContent({
   return (
     <>
       <div className="relative" ref={sidebarRef}>
-        <Sidebar collapsible="icon" className="border-r-0" disableTransition={isResizing}>
-          <SidebarHeader className="h-14 justify-center border-b border-sidebar-border">
-            <div className="flex items-center gap-2.5 px-2 transition-all w-full">
+        <Sidebar collapsible="icon" className="border-r border-border/40" disableTransition={isResizing}>
+          {/* ─── Sidebar Header ─── */}
+          <SidebarHeader className="h-16 justify-center border-b border-border/40 px-3">
+            <div className="flex items-center gap-2.5 transition-all w-full">
               <button
                 onClick={toggleSidebar}
-                className="h-8 w-8 flex items-center justify-center hover:bg-sidebar-accent rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
+                className="h-9 w-9 flex items-center justify-center hover:bg-accent rounded-xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
                 aria-label="Toggle navigation"
               >
-                <PanelLeft className="h-4 w-4 text-muted-foreground" />
+                <PanelLeft className="h-4.5 w-4.5 text-muted-foreground" />
               </button>
               {!isCollapsed && (
                 <div
-                  className="flex items-center gap-2 min-w-0 cursor-pointer select-none"
+                  className="flex items-center gap-2.5 min-w-0 cursor-pointer select-none"
                   onClick={handleLogoTap}
                   title={devMode ? "Developer mode active" : undefined}
                 >
-                  <Zap className={`h-5 w-5 shrink-0 transition-colors ${devMode ? "text-amber-400" : "text-primary"}`} />
-                  <span className="font-semibold tracking-tight text-foreground truncate">Apex CRM</span>
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${devMode ? "bg-amber-100" : "bg-primary/10"}`}>
+                    <Zap className={`h-4.5 w-4.5 transition-colors ${devMode ? "text-amber-500" : "text-primary"}`} />
+                  </div>
+                  <span className="font-bold tracking-tight text-foreground text-[15px]">Apex CRM</span>
                   {devMode && (
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-amber-400/80 ml-0.5">DEV</span>
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-amber-500/80 ml-0.5 bg-amber-50 px-1.5 py-0.5 rounded">DEV</span>
                   )}
                 </div>
               )}
             </div>
           </SidebarHeader>
 
-          <SidebarContent className="gap-0 py-2">
-            {filteredSections.map((section) => (
-              <div key={section.label} className="mb-1">
+          {/* ─── Sidebar Navigation ─── */}
+          <SidebarContent className="gap-0 py-3 px-2">
+            {filteredSections.map((section, sectionIdx) => (
+              <div key={section.label} className={sectionIdx > 0 ? "mt-4" : ""}>
                 {!isCollapsed && (
-                  <div className="px-4 py-1.5">
-                    <span className={`text-[10px] font-semibold uppercase tracking-wider ${
-                      section.label === "Developer" ? "text-amber-400/70" : "text-muted-foreground/70"
+                  <div className="px-3 mb-1.5">
+                    <span className={`text-[10px] font-bold uppercase tracking-[0.1em] ${
+                      section.label === "Developer" ? "text-amber-500/70" : "text-muted-foreground/60"
                     }`}>
                       {section.label}
                     </span>
                   </div>
                 )}
-                <SidebarMenu className="px-2 gap-0.5">
+                <SidebarMenu className="gap-0.5">
                   {section.items.map(item => {
                     const isActive = location === item.path || (item.path !== "/" && location.startsWith(item.path));
                     return (
@@ -408,10 +397,14 @@ function DashboardLayoutContent({
                           isActive={isActive}
                           onClick={() => setLocation(item.path)}
                           tooltip={item.label}
-                          className="h-9 transition-all font-normal text-[13px]"
+                          className={`h-9 rounded-lg transition-all duration-200 font-normal text-[13px] ${
+                            isActive
+                              ? "bg-primary/8 text-primary font-medium shadow-sm"
+                              : "hover:bg-accent/60 text-muted-foreground hover:text-foreground"
+                          }`}
                         >
-                          <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
-                          <span className={isActive ? "text-foreground font-medium" : ""}>{item.label}</span>
+                          <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
+                          <span>{item.label}</span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     );
@@ -421,32 +414,33 @@ function DashboardLayoutContent({
             ))}
           </SidebarContent>
 
-          <SidebarFooter className="p-3 border-t border-sidebar-border">
+          {/* ─── Sidebar Footer ─── */}
+          <SidebarFooter className="p-3 border-t border-border/40">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-lg px-1 py-1.5 hover:bg-sidebar-accent transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <Avatar className="h-8 w-8 border border-border shrink-0">
-                    <AvatarFallback className="text-xs font-medium bg-primary/10 text-primary">
+                <button className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-accent/60 transition-all duration-200 w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <Avatar className="h-9 w-9 shrink-0 shadow-sm">
+                    <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary rounded-lg">
                       {user?.name?.charAt(0).toUpperCase() ?? "U"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                    <p className="text-sm font-medium truncate leading-none text-foreground">
+                    <p className="text-sm font-semibold truncate leading-none text-foreground">
                       {user?.name || "User"}
                     </p>
                     <p className="text-[11px] text-muted-foreground truncate mt-1">
                       {user?.email || ""}
                     </p>
                   </div>
-                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-data-[collapsible=icon]:hidden" />
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/60 group-data-[collapsible=icon]:hidden" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-52 rounded-xl shadow-lg border-border/50">
                 {devMode && (
                   <>
                     <DropdownMenuItem
                       onClick={disableDevMode}
-                      className="cursor-pointer text-amber-400 focus:text-amber-400"
+                      className="cursor-pointer text-amber-500 focus:text-amber-500 rounded-lg"
                     >
                       <Zap className="mr-2 h-4 w-4" />
                       <span>Hide Dev Options</span>
@@ -456,7 +450,7 @@ function DashboardLayoutContent({
                 )}
                 <DropdownMenuItem
                   onClick={logout}
-                  className="cursor-pointer text-destructive focus:text-destructive"
+                  className="cursor-pointer text-destructive focus:text-destructive rounded-lg"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sign out</span>
@@ -474,16 +468,16 @@ function DashboardLayoutContent({
 
       <SidebarInset>
         {isMobile && (
-          <div className="flex border-b h-14 items-center justify-between bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
+          <div className="flex border-b border-border/40 h-14 items-center justify-between bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2">
-              <SidebarTrigger className="h-9 w-9 rounded-lg" />
-              <span className="font-medium text-foreground text-sm">
+              <SidebarTrigger className="h-9 w-9 rounded-xl" />
+              <span className="font-semibold text-foreground text-sm">
                 {activeMenuItem?.label ?? "Apex CRM"}
               </span>
             </div>
           </div>
         )}
-        <main className="flex-1 p-4 lg:p-6">{children}</main>
+        <main className="flex-1 p-5 lg:p-7">{children}</main>
       </SidebarInset>
     </>
   );
