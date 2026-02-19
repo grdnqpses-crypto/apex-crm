@@ -106,7 +106,8 @@ export default function Tasks() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Tasks</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-xs text-muted-foreground/70 mt-0.5 mb-1">Stay on top of follow-ups, calls, and to-dos. Link tasks to contacts or companies to keep everything connected.</p>
+          <p className="text-sm text-muted-foreground">
             {pendingCount} pending · {completedCount} completed · {data?.total ?? 0} total
           </p>
         </div>

@@ -39,6 +39,7 @@ import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import AIAssistantPanel from "./AIAssistantPanel";
 
 // ─── Menu Sections (Developer is separate, hidden by default) ───
 
@@ -308,6 +309,7 @@ function DashboardLayoutContent({
   const isMobile = useIsMobile();
   const { devMode, handleLogoTap, disableDevMode } = useDevMode();
   const { canAccessSidebarItem } = useFeatureAccess();
+  const [aiOpen, setAiOpen] = useState(false);
 
   const menuSections = getMenuSections(devMode);
   const filteredSections = menuSections.map(section => ({
@@ -479,6 +481,18 @@ function DashboardLayoutContent({
         )}
         <main className="flex-1 p-5 lg:p-7">{children}</main>
       </SidebarInset>
+
+      {/* AI Assistant floating button */}
+      {!aiOpen && (
+        <button
+          onClick={() => setAiOpen(true)}
+          className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-amber-200/50 flex items-center justify-center hover:scale-105 hover:shadow-xl transition-all duration-200 group"
+          title="Open AI Assistant"
+        >
+          <Sparkles className="w-6 h-6 text-white group-hover:rotate-12 transition-transform" />
+        </button>
+      )}
+      <AIAssistantPanel open={aiOpen} onClose={() => setAiOpen(false)} />
     </>
   );
 }

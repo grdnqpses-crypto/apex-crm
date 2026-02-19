@@ -104,7 +104,8 @@ export default function Deals() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Deals</h1>
-              <div className="flex items-center gap-3 mt-0.5">
+              <p className="text-xs text-muted-foreground/70 mt-0.5 mb-1">Your visual pipeline — move deals across stages to track progress from first contact to closed-won.</p>
+              <div className="flex items-center gap-3">
                 <span className="text-sm text-muted-foreground">{totalOpenDeals} open deals</span>
                 <span className="text-muted-foreground/30">&bull;</span>
                 <span className="text-sm font-semibold text-emerald-600 flex items-center gap-1">

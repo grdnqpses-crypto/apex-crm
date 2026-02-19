@@ -129,7 +129,7 @@ export default function Contacts() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Contacts</h1>
-            <p className="text-sm text-muted-foreground">{data?.total ?? 0} contacts &middot; All contacts belong to a company</p>
+            <p className="text-sm text-muted-foreground">{data?.total ?? 0} contacts &middot; Every contact is linked to a company. Track interactions, log calls, send emails, and nurture relationships from here.</p>
           </div>
         </div>
         <div className="flex items-center gap-2">

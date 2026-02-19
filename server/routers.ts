@@ -3295,5 +3295,18 @@ export const appRouter = router({
       return db.applyEmailMask(mask, originalFrom);
     }),
   }),
+  ai: router({
+    chat: protectedProcedure.input(z.object({
+      messages: z.array(z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string(),
+      })),
+    })).mutation(async ({ ctx, input }) => {
+      const { handleChat } = await import("./ai-assistant");
+      const msgs = input.messages.map(m => ({ role: m.role as any, content: m.content }));
+      const response = await handleChat(msgs, ctx.user.id, ctx.user.name || "User");
+      return { response };
+    }),
+  }),
 });
 export type AppRouter = typeof appRouter;

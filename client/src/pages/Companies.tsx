@@ -55,7 +55,7 @@ export default function Companies() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Companies</h1>
-              <p className="text-sm text-muted-foreground">{data?.total ?? 0} companies &middot; Primary entity</p>
+              <p className="text-sm text-muted-foreground">{data?.total ?? 0} companies &middot; Companies are your primary entity — every contact, deal, and activity belongs to a company. Start here to build your pipeline.</p>
             </div>
           </div>
         </div>

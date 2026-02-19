@@ -208,7 +208,7 @@ export default function Dashboard() {
             {greeting()}, {user?.name?.split(" ")[0] || "there"}
           </h1>
           <p className="text-sm text-muted-foreground mt-1.5 max-w-lg">
-            Here's what's happening across your CRM, operations, and marketplace today.
+            Your dashboard is your daily command center. Every metric below is live — track your pipeline, monitor team performance, and spot opportunities at a glance. Click any card to dive deeper.
           </p>
         </div>
         {/* Decorative circles */}
@@ -234,6 +234,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2 mb-4">
               <div className="h-1.5 w-1.5 rounded-full bg-primary" />
               <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-[0.12em]">CRM Core</h2>
+              <span className="text-[10px] text-muted-foreground/50 ml-1">Your companies, contacts, deals & pipeline</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard title="Companies" value={stats?.totalCompanies ?? 0} icon={Building2} gradient="bg-gradient-to-r from-blue-500 to-blue-400" iconBg="bg-blue-50 text-blue-600" href="/companies" />
@@ -248,6 +249,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2 mb-4">
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-[0.12em]">Performance</h2>
+              <span className="text-[10px] text-muted-foreground/50 ml-1">Win rates, task progress & segment health</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard title="Won Deals" value={stats?.wonDeals ?? 0} icon={Trophy} subtitle={formatCurrency(stats?.wonValue ?? 0)} gradient="bg-gradient-to-r from-emerald-500 to-emerald-400" iconBg="bg-emerald-50 text-emerald-600" href="/deals" />
@@ -263,6 +265,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-2 mb-4">
                 <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                 <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-[0.12em]">Email Operations</h2>
+                <span className="text-[10px] text-muted-foreground/50 ml-1">Campaigns, templates & deliverability</span>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <StatCard title="Campaigns" value={stats?.totalCampaigns ?? 0} icon={Mail} gradient="bg-gradient-to-r from-blue-500 to-blue-400" iconBg="bg-blue-50 text-blue-600" href="/campaigns" />
@@ -276,6 +279,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-2 mb-4">
                 <div className="h-1.5 w-1.5 rounded-full bg-purple-500" />
                 <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-[0.12em]">Paradigm Engine</h2>
+                <span className="text-[10px] text-muted-foreground/50 ml-1">AI-powered sales intelligence</span>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <StatCard title="Prospects" value={(stats as any)?.totalProspects ?? 0} icon={Target} gradient="bg-gradient-to-r from-blue-500 to-blue-400" iconBg="bg-blue-50 text-blue-600" href="/paradigm/prospects" />
@@ -291,6 +295,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2 mb-4">
               <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
               <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-[0.12em]">Freight Operations</h2>
+              <span className="text-[10px] text-muted-foreground/50 ml-1">Loads, marketplace & logistics</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard title="Active Loads" value={0} icon={Truck} gradient="bg-gradient-to-r from-blue-500 to-blue-400" iconBg="bg-blue-50 text-blue-600" href="/loads" />
