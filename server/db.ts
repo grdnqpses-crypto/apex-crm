@@ -10,8 +10,10 @@ import {
   integrationCredentials, prospects, triggerSignals,
   ghostSequences, ghostSequenceSteps, prospectOutreach, battleCards,
   suppressionList, complianceAuditLog, senderSettings,
-  domainSendingStats, prospectScores, brokerFilings,
+  domainSendingStats, prospectScores, brokerFilings, domainHealthRecords,
   tenantCompanies, featureAssignments, companyInvites,
+  voiceCampaigns, callLogs, documents, carrierPackets,
+  dealScores, revenueBriefings, smartNotifications, meetingPreps,
   type TenantCompany, type InsertTenantCompany,
   type FeatureAssignment, type CompanyInvite,
   type Contact, type InsertContact,
@@ -24,6 +26,27 @@ import {
   type ProspectOutreach, type BattleCard,
   type SuppressionEntry, type ComplianceAuditEntry,
   type SenderSetting, type DomainSendingStat, type ProspectScore,
+  type VoiceCampaign, type CallLog, type Document, type CarrierPacket,
+  type DealScore, type RevenueBriefing, type SmartNotification, type MeetingPrep,
+  loads, loadStatusHistory, carrierProfiles, loadBoardPosts,
+  invoices, portalAccess, portalQuotes, callRecordings,
+  b2bContacts, enrichmentLogs, warmupCampaigns, visitorSessions,
+  inboundEmails, whiteLabelConfig, onboardingFlows, onboardingSubmissions,
+  subscriptionPlans, tenantSubscriptions, migrationJobs,
+  type Load, type InsertLoad, type LoadStatusHistory,
+  type CarrierProfile, type InsertCarrierProfile,
+  type LoadBoardPost, type Invoice, type InsertInvoice,
+  type PortalAccess, type PortalQuote, type CallRecording,
+  type B2BContact, type EnrichmentLog, type WarmupCampaign,
+  type VisitorSession, type InboundEmail, type WhiteLabelConfig,
+  type OnboardingFlow, type OnboardingSubmission,
+  type SubscriptionPlan, type TenantSubscription, type MigrationJob,
+  marketplaceLoads, marketplaceBids, marketplacePayments,
+  marketplaceTracking, marketplaceDocuments, laneAnalytics,
+  consolidationOpportunities,
+  type MarketplaceLoad, type MarketplaceBid, type MarketplacePayment,
+  type MarketplaceTrackingEvent, type MarketplaceDocument,
+  type LaneAnalytic, type ConsolidationOpportunity,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -203,6 +226,13 @@ export async function listDeals(userId: number, opts?: { pipelineId?: number; st
     db.select({ count: sql<number>`count(*)` }).from(deals).where(where),
   ]);
   return { items, total: countResult[0]?.count ?? 0 };
+}
+
+export async function getDeal(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(deals).where(and(eq(deals.id, id), eq(deals.userId, userId))).limit(1);
+  return result[0] || null;
 }
 
 export async function createDeal(data: any) {
@@ -1770,4 +1800,1376 @@ export async function getGlobalRecentActivity(limit = 50) {
   }).from(activities)
     .orderBy(desc(activities.createdAt))
     .limit(limit);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Domain Health Auto-Healing Engine
+// ═══════════════════════════════════════════════════════════════
+
+// --- Health Score Calculation ---
+// Weighted composite: Auth (25%), Bounce Rate (25%), Complaint Rate (25%), Open Rate (15%), Delivery Rate (10%)
+export function calculateHealthScore(domain: {
+  spfStatus?: string | null; dkimStatus?: string | null; dmarcStatus?: string | null;
+  bounceRate?: number | null; complaintRate?: number | null; openRate?: number | null;
+  deliveryRate?: number | null; warmupPhase?: number | null;
+}): { score: number; grade: string; recommendations: string[] } {
+  const recs: string[] = [];
+  
+  // Auth score (25%): each of SPF/DKIM/DMARC is worth ~8.33 points
+  let authScore = 0;
+  if (domain.spfStatus === 'pass') authScore += 33; else recs.push('Configure SPF record for this domain');
+  if (domain.dkimStatus === 'pass') authScore += 34; else recs.push('Set up DKIM signing for this domain');
+  if (domain.dmarcStatus === 'pass') authScore += 33; else recs.push('Publish a DMARC policy (start with p=none, then move to p=quarantine)');
+  
+  // Bounce rate score (25%): <1% = 100, 1-2% = 75, 2-5% = 40, >5% = 0
+  const bounceRatePct = (domain.bounceRate ?? 0) / 100; // convert from basis points
+  let bounceScore = 100;
+  if (bounceRatePct > 5) { bounceScore = 0; recs.push('CRITICAL: Bounce rate above 5%. Clean your email list immediately and pause sending.'); }
+  else if (bounceRatePct > 2) { bounceScore = 40; recs.push('Bounce rate above 2%. Remove invalid addresses and reduce sending volume.'); }
+  else if (bounceRatePct > 1) { bounceScore = 75; recs.push('Bounce rate slightly elevated. Verify new addresses before adding to campaigns.'); }
+  
+  // Complaint rate score (25%): <0.05% = 100, 0.05-0.1% = 70, 0.1-0.3% = 30, >0.3% = 0
+  const complaintRatePct = (domain.complaintRate ?? 0) / 1000; // stored as pct*1000
+  let complaintScore = 100;
+  if (complaintRatePct > 0.3) { complaintScore = 0; recs.push('CRITICAL: Complaint rate above 0.3%. Stop sending immediately. Review content and targeting.'); }
+  else if (complaintRatePct > 0.1) { complaintScore = 30; recs.push('Complaint rate above 0.1% (Gmail threshold). Improve content relevance and add easy unsubscribe.'); }
+  else if (complaintRatePct > 0.05) { complaintScore = 70; recs.push('Complaint rate approaching limits. Ensure clear sender identity and relevant content.'); }
+  
+  // Open rate score (15%): >25% = 100, 15-25% = 75, 10-15% = 50, <10% = 25
+  const openRatePct = (domain.openRate ?? 0) / 100;
+  let openScore = 25;
+  if (openRatePct > 25) openScore = 100;
+  else if (openRatePct > 15) openScore = 75;
+  else if (openRatePct > 10) openScore = 50;
+  else if (openRatePct < 10 && (domain.openRate ?? 0) > 0) recs.push('Low open rate. Improve subject lines and sender reputation.');
+  
+  // Delivery rate score (10%): >98% = 100, 95-98% = 75, 90-95% = 40, <90% = 0
+  const deliveryRatePct = (domain.deliveryRate ?? 10000) / 100;
+  let deliveryScore = 100;
+  if (deliveryRatePct < 90) { deliveryScore = 0; recs.push('Delivery rate below 90%. Check for blacklisting and authentication issues.'); }
+  else if (deliveryRatePct < 95) { deliveryScore = 40; recs.push('Delivery rate below 95%. Investigate bounce reasons and clean lists.'); }
+  else if (deliveryRatePct < 98) deliveryScore = 75;
+  
+  // Warm-up bonus: domains actively warming up get a small boost
+  const warmupBonus = (domain.warmupPhase ?? 0) > 0 ? 5 : 0;
+  
+  const rawScore = Math.round(authScore * 0.25 + bounceScore * 0.25 + complaintScore * 0.25 + openScore * 0.15 + deliveryScore * 0.10) + warmupBonus;
+  const score = Math.min(100, Math.max(0, rawScore));
+  
+  let grade = 'F';
+  if (score >= 95) grade = 'A+';
+  else if (score >= 90) grade = 'A';
+  else if (score >= 85) grade = 'A-';
+  else if (score >= 80) grade = 'B+';
+  else if (score >= 75) grade = 'B';
+  else if (score >= 70) grade = 'B-';
+  else if (score >= 65) grade = 'C+';
+  else if (score >= 60) grade = 'C';
+  else if (score >= 50) grade = 'D';
+  
+  if (recs.length === 0) recs.push('Domain health is excellent. Continue current practices.');
+  
+  return { score, grade, recommendations: recs };
+}
+
+// --- Warm-up Schedule ---
+// 8-week graduated ramp: Week 1: 50/day, Week 2: 100, Week 3: 200, Week 4: 500, Week 5: 1000, Week 6: 2000, Week 7: 3000, Week 8: 5000
+export const WARMUP_SCHEDULE = [
+  { phase: 1, dailyLimit: 50, description: 'Week 1: Establishing reputation (50 emails/day)' },
+  { phase: 2, dailyLimit: 100, description: 'Week 2: Building trust (100 emails/day)' },
+  { phase: 3, dailyLimit: 200, description: 'Week 3: Expanding reach (200 emails/day)' },
+  { phase: 4, dailyLimit: 500, description: 'Week 4: Growing volume (500 emails/day)' },
+  { phase: 5, dailyLimit: 1000, description: 'Week 5: Scaling up (1,000 emails/day)' },
+  { phase: 6, dailyLimit: 2000, description: 'Week 6: High volume (2,000 emails/day)' },
+  { phase: 7, dailyLimit: 3000, description: 'Week 7: Full capacity approach (3,000 emails/day)' },
+  { phase: 8, dailyLimit: 5000, description: 'Week 8: Full capacity (5,000 emails/day)' },
+];
+
+export function getWarmupDailyLimit(phase: number): number {
+  const entry = WARMUP_SCHEDULE.find(w => w.phase === phase);
+  return entry?.dailyLimit ?? 5000;
+}
+
+// --- Auto-Pause Thresholds ---
+export const HEALTH_THRESHOLDS = {
+  // Pause triggers
+  maxBounceRate: 200, // 2.00% in basis points
+  maxComplaintRate: 100, // 0.100% stored as pct*1000
+  criticalBounceRate: 500, // 5.00% - immediate full stop
+  criticalComplaintRate: 300, // 0.300% - immediate full stop
+  // Cooldown periods (milliseconds)
+  normalCooldown: 24 * 60 * 60 * 1000, // 24 hours
+  severeCooldown: 72 * 60 * 60 * 1000, // 72 hours
+  // Recovery
+  recoveryVolumeReduction: 0.5, // cut volume by 50% on recovery
+  minHealthScoreForSending: 40, // below this, domain is paused
+};
+
+// --- Auto-Healing: Evaluate all domains and apply actions ---
+export async function runDomainAutoHealing(userId: number): Promise<{
+  healed: number; paused: number; resumed: number; warmedUp: number;
+  actions: { domain: string; action: string; details: string }[];
+}> {
+  const db = await getDb();
+  if (!db) return { healed: 0, paused: 0, resumed: 0, warmedUp: 0, actions: [] };
+  
+  const domains = await db.select().from(domainHealth).where(eq(domainHealth.userId, userId));
+  const stats = await getDomainStatsAggregated(userId);
+  const statsMap = new Map(stats.map((s: any) => [s.domain, s]));
+  const now = Date.now();
+  const today = new Date().toISOString().split('T')[0];
+  const actions: { domain: string; action: string; details: string }[] = [];
+  let healed = 0, paused = 0, resumed = 0, warmedUp = 0;
+  
+  for (const d of domains) {
+    const domainStats = statsMap.get(d.domain) as any;
+    const bounceRate = domainStats?.avgBounceRate ?? 0;
+    const complaintRate = domainStats?.avgComplaintRate ?? 0;
+    const openRate = domainStats?.avgOpenRate ?? 0;
+    const totalSent = domainStats?.totalSent ?? 0;
+    const totalDelivered = domainStats?.totalDelivered ?? 0;
+    const deliveryRate = totalSent > 0 ? Math.round((totalDelivered / totalSent) * 10000) : 10000;
+    
+    // Calculate health score
+    const health = calculateHealthScore({
+      spfStatus: d.spfStatus, dkimStatus: d.dkimStatus, dmarcStatus: d.dmarcStatus,
+      bounceRate, complaintRate, openRate, deliveryRate, warmupPhase: d.warmupPhase,
+    });
+    
+    // --- AUTO-PAUSE: Check if domain should be paused ---
+    if (bounceRate > HEALTH_THRESHOLDS.criticalBounceRate || complaintRate > HEALTH_THRESHOLDS.criticalComplaintRate) {
+      // Critical: immediate pause with severe cooldown
+      await db.update(domainHealth).set({
+        reputationScore: health.score, notes: `AUTO-PAUSED (critical): bounce=${bounceRate/100}%, complaints=${complaintRate/1000}%`,
+        updatedAt: now,
+      }).where(eq(domainHealth.id, d.id));
+      actions.push({ domain: d.domain, action: 'CRITICAL_PAUSE', details: `Bounce rate ${bounceRate/100}% or complaint rate ${complaintRate/1000}% exceeded critical thresholds. Domain paused for 72 hours.` });
+      paused++;
+    } else if (bounceRate > HEALTH_THRESHOLDS.maxBounceRate || complaintRate > HEALTH_THRESHOLDS.maxComplaintRate) {
+      // Warning: pause with normal cooldown
+      await db.update(domainHealth).set({
+        reputationScore: health.score, notes: `AUTO-PAUSED (warning): bounce=${bounceRate/100}%, complaints=${complaintRate/1000}%`,
+        updatedAt: now,
+      }).where(eq(domainHealth.id, d.id));
+      actions.push({ domain: d.domain, action: 'WARNING_PAUSE', details: `Bounce rate ${bounceRate/100}% or complaint rate ${complaintRate/1000}% exceeded thresholds. Domain paused for 24 hours.` });
+      paused++;
+    } else if (health.score < HEALTH_THRESHOLDS.minHealthScoreForSending) {
+      // Low health score: pause
+      await db.update(domainHealth).set({
+        reputationScore: health.score, notes: `AUTO-PAUSED (low health): score=${health.score}`,
+        updatedAt: now,
+      }).where(eq(domainHealth.id, d.id));
+      actions.push({ domain: d.domain, action: 'LOW_HEALTH_PAUSE', details: `Health score ${health.score} below minimum ${HEALTH_THRESHOLDS.minHealthScoreForSending}. Domain paused until health improves.` });
+      paused++;
+    } else {
+      // Domain is healthy - update score and advance warm-up if applicable
+      const updates: any = { reputationScore: health.score, updatedAt: now };
+      
+      // Advance warm-up phase if domain is warming up
+      if ((d.warmupPhase ?? 0) > 0 && (d.warmupPhase ?? 0) < 8) {
+        const daysSinceCreated = Math.floor((now - d.createdAt) / (7 * 86400000));
+        if (daysSinceCreated >= (d.warmupPhase ?? 0)) {
+          const nextPhase = Math.min(8, (d.warmupPhase ?? 0) + 1);
+          updates.warmupPhase = nextPhase;
+          updates.dailySendLimit = getWarmupDailyLimit(nextPhase);
+          actions.push({ domain: d.domain, action: 'WARMUP_ADVANCE', details: `Advanced to warm-up phase ${nextPhase}: ${getWarmupDailyLimit(nextPhase)} emails/day` });
+          warmedUp++;
+        }
+      }
+      
+      updates.notes = `Health: ${health.grade} (${health.score}/100). ${health.recommendations[0]}`;
+      await db.update(domainHealth).set(updates).where(eq(domainHealth.id, d.id));
+      healed++;
+    }
+    
+    // Record daily snapshot
+    await db.insert(domainHealthRecords).values({
+      userId, domainHealthId: d.id, domain: d.domain, date: today,
+      healthScore: health.score,
+      spfStatus: d.spfStatus ?? 'unknown', dkimStatus: d.dkimStatus ?? 'unknown', dmarcStatus: d.dmarcStatus ?? 'unknown',
+      totalSent: totalSent ?? 0, totalDelivered: totalDelivered ?? 0,
+      totalBounced: domainStats?.totalBounced ?? 0, totalComplaints: domainStats?.totalComplaints ?? 0,
+      totalOpens: domainStats?.totalOpens ?? 0, totalClicks: domainStats?.totalClicks ?? 0,
+      bounceRate, complaintRate, openRate, deliveryRate,
+      warmupDay: d.warmupPhase ? Math.floor((now - d.createdAt) / 86400000) : 0,
+      warmupPhase: d.warmupPhase ?? 0, dailySendLimit: d.dailySendLimit ?? 50,
+      isPaused: health.score < HEALTH_THRESHOLDS.minHealthScoreForSending,
+      pauseReason: health.score < HEALTH_THRESHOLDS.minHealthScoreForSending ? 'Auto-paused by health optimizer' : null,
+      recommendations: health.recommendations,
+      createdAt: now,
+    });
+  }
+  
+  return { healed, paused, resumed, warmedUp, actions };
+}
+
+// --- Domain Rotation: Pick the best domain to send from ---
+export async function getBestSendingDomain(userId: number): Promise<{ domainId: number; domain: string; dailyLimit: number; sentToday: number } | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const domains = await db.select().from(domainHealth)
+    .where(and(eq(domainHealth.userId, userId), sql`${domainHealth.reputationScore} >= ${HEALTH_THRESHOLDS.minHealthScoreForSending}`))
+    .orderBy(desc(domainHealth.reputationScore));
+  
+  // Find the healthiest domain that hasn't hit its daily limit
+  for (const d of domains) {
+    if ((d.totalSentToday ?? 0) < (d.dailySendLimit ?? 50)) {
+      return { domainId: d.id, domain: d.domain, dailyLimit: d.dailySendLimit ?? 50, sentToday: d.totalSentToday ?? 0 };
+    }
+  }
+  return null; // all domains exhausted
+}
+
+// --- Start Warm-up for a domain ---
+export async function startDomainWarmup(domainId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(domainHealth).set({
+    warmupPhase: 1, dailySendLimit: 50, totalSentToday: 0,
+    notes: 'Warm-up started: Phase 1 (50 emails/day for 7 days)',
+    updatedAt: Date.now(),
+  }).where(and(eq(domainHealth.id, domainId), eq(domainHealth.userId, userId)));
+}
+
+// --- Get health trend for a domain ---
+export async function getDomainHealthTrend(userId: number, domainHealthId: number, days: number = 30) {
+  const db = await getDb();
+  if (!db) return [];
+  const cutoff = new Date(Date.now() - days * 86400000).toISOString().split('T')[0];
+  return db.select().from(domainHealthRecords)
+    .where(and(
+      eq(domainHealthRecords.userId, userId),
+      eq(domainHealthRecords.domainHealthId, domainHealthId),
+      sql`${domainHealthRecords.date} >= ${cutoff}`
+    ))
+    .orderBy(domainHealthRecords.date);
+}
+
+// --- Get all domain health summaries ---
+export async function getDomainHealthSummary(userId: number) {
+  const db = await getDb();
+  if (!db) return { totalDomains: 0, healthyDomains: 0, warningDomains: 0, criticalDomains: 0, warmingUp: 0, avgScore: 0, domains: [] as any[] };
+  
+  const domains = await db.select().from(domainHealth).where(eq(domainHealth.userId, userId)).orderBy(desc(domainHealth.reputationScore));
+  const stats = await getDomainStatsAggregated(userId);
+  const statsMap = new Map(stats.map((s: any) => [s.domain, s]));
+  
+  let healthy = 0, warning = 0, critical = 0, warmingUp = 0, totalScore = 0;
+  const enriched = domains.map(d => {
+    const domainStats = statsMap.get(d.domain) as any;
+    const health = calculateHealthScore({
+      spfStatus: d.spfStatus, dkimStatus: d.dkimStatus, dmarcStatus: d.dmarcStatus,
+      bounceRate: domainStats?.avgBounceRate ?? 0, complaintRate: domainStats?.avgComplaintRate ?? 0,
+      openRate: domainStats?.avgOpenRate ?? 0,
+      deliveryRate: domainStats?.totalSent > 0 ? Math.round((domainStats.totalDelivered / domainStats.totalSent) * 10000) : 10000,
+      warmupPhase: d.warmupPhase,
+    });
+    totalScore += health.score;
+    if (health.score >= 80) healthy++;
+    else if (health.score >= 50) warning++;
+    else critical++;
+    if ((d.warmupPhase ?? 0) > 0 && (d.warmupPhase ?? 0) < 8) warmingUp++;
+    return { ...d, healthScore: health.score, healthGrade: health.grade, recommendations: health.recommendations, stats: domainStats };
+  });
+  
+  return {
+    totalDomains: domains.length,
+    healthyDomains: healthy,
+    warningDomains: warning,
+    criticalDomains: critical,
+    warmingUp,
+    avgScore: domains.length > 0 ? Math.round(totalScore / domains.length) : 0,
+    domains: enriched,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Continuous A/B Testing Engine
+// ═══════════════════════════════════════════════════════════════
+
+// --- Statistical Significance ---
+export function calculateStatisticalSignificance(
+  controlSent: number, controlOpens: number,
+  variantSent: number, variantOpens: number,
+): { significant: boolean; confidence: number; winner: 'control' | 'variant' | 'tie'; lift: number } {
+  if (controlSent < 30 || variantSent < 30) {
+    return { significant: false, confidence: 0, winner: 'tie', lift: 0 };
+  }
+  
+  const p1 = controlOpens / controlSent;
+  const p2 = variantOpens / variantSent;
+  const pPool = (controlOpens + variantOpens) / (controlSent + variantSent);
+  const se = Math.sqrt(pPool * (1 - pPool) * (1 / controlSent + 1 / variantSent));
+  
+  if (se === 0) return { significant: false, confidence: 0, winner: 'tie', lift: 0 };
+  
+  const z = Math.abs(p2 - p1) / se;
+  
+  // Z-score to confidence: 1.645 = 90%, 1.96 = 95%, 2.576 = 99%
+  let confidence = 0;
+  if (z >= 2.576) confidence = 99;
+  else if (z >= 1.96) confidence = 95;
+  else if (z >= 1.645) confidence = 90;
+  else if (z >= 1.28) confidence = 80;
+  else confidence = Math.round(z / 1.645 * 80);
+  
+  const lift = p1 > 0 ? Math.round(((p2 - p1) / p1) * 10000) / 100 : 0; // percentage lift
+  const winner = confidence >= 95 ? (p2 > p1 ? 'variant' : 'control') : 'tie';
+  
+  return { significant: confidence >= 95, confidence, winner, lift };
+}
+
+// --- Auto-generate A/B variants for a campaign ---
+export function generateABVariants(subject: string, content: string): {
+  subjectVariants: string[];
+  sendTimeVariants: string[];
+  contentTips: string[];
+} {
+  // Generate subject line variants using common optimization patterns
+  const subjectVariants: string[] = [];
+  
+  // Variant 1: Add urgency
+  if (!subject.toLowerCase().includes('urgent') && !subject.toLowerCase().includes('limited')) {
+    subjectVariants.push(`Don't miss out: ${subject}`);
+  }
+  // Variant 2: Add personalization placeholder
+  subjectVariants.push(`{{firstName}}, ${subject.charAt(0).toLowerCase() + subject.slice(1)}`);
+  // Variant 3: Question format
+  if (!subject.endsWith('?')) {
+    subjectVariants.push(`${subject.replace(/\.$/, '')}?`);
+  }
+  // Variant 4: Shorter version
+  if (subject.length > 40) {
+    subjectVariants.push(subject.substring(0, 40).replace(/\s+\S*$/, '...'));
+  }
+  // Variant 5: Emoji variant
+  subjectVariants.push(`🚀 ${subject}`);
+  
+  // Send time variants
+  const sendTimeVariants = [
+    'Tuesday 10:00 AM (highest average open rate)',
+    'Thursday 2:00 PM (strong B2B engagement)',
+    'Wednesday 8:00 AM (early bird advantage)',
+    'Monday 11:00 AM (start of week momentum)',
+  ];
+  
+  // Content optimization tips
+  const contentTips = [
+    'Keep the main CTA above the fold (within first 300px)',
+    'Use a single, clear call-to-action button',
+    'Maintain 60/40 text-to-image ratio for best deliverability',
+    'Add alt text to all images for accessibility and spam filter compliance',
+    'Include a plain-text version for maximum compatibility',
+  ];
+  
+  return { subjectVariants, sendTimeVariants, contentTips };
+}
+
+// --- Minimum sample size calculator ---
+export function calculateMinSampleSize(
+  baselineRate: number, // e.g., 0.20 for 20% open rate
+  minimumDetectableEffect: number, // e.g., 0.05 for 5% absolute improvement
+  confidenceLevel: number = 0.95,
+  power: number = 0.80,
+): number {
+  // Using simplified formula: n = (Z_alpha/2 + Z_beta)^2 * (p1(1-p1) + p2(1-p2)) / (p2-p1)^2
+  const zAlpha = confidenceLevel >= 0.99 ? 2.576 : confidenceLevel >= 0.95 ? 1.96 : 1.645;
+  const zBeta = power >= 0.90 ? 1.28 : power >= 0.80 ? 0.84 : 0.67;
+  
+  const p1 = baselineRate;
+  const p2 = baselineRate + minimumDetectableEffect;
+  
+  const numerator = Math.pow(zAlpha + zBeta, 2) * (p1 * (1 - p1) + p2 * (1 - p2));
+  const denominator = Math.pow(p2 - p1, 2);
+  
+  return Math.ceil(numerator / denominator);
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// PHASE 13: PREMIUM FEATURES — DB HELPERS
+// ═══════════════════════════════════════════════════════════════
+
+// ─── Voice Campaigns ───
+export async function listVoiceCampaigns(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(voiceCampaigns).where(eq(voiceCampaigns.userId, userId)).orderBy(desc(voiceCampaigns.createdAt));
+}
+
+export async function getVoiceCampaign(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(voiceCampaigns).where(and(eq(voiceCampaigns.id, id), eq(voiceCampaigns.userId, userId))).limit(1);
+  return result[0] || null;
+}
+
+export async function createVoiceCampaign(userId: number, data: Partial<typeof voiceCampaigns.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(voiceCampaigns).values({ ...data, userId, createdAt: now, updatedAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateVoiceCampaign(id: number, userId: number, data: Partial<typeof voiceCampaigns.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(voiceCampaigns).set({ ...data, updatedAt: Date.now() } as any).where(and(eq(voiceCampaigns.id, id), eq(voiceCampaigns.userId, userId)));
+}
+
+export async function deleteVoiceCampaign(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(voiceCampaigns).where(and(eq(voiceCampaigns.id, id), eq(voiceCampaigns.userId, userId)));
+}
+
+// ─── Call Logs ───
+export async function listCallLogs(userId: number, opts?: { campaignId?: number; status?: string; limit?: number; offset?: number }) {
+  const db = await getDb();
+  if (!db) return { items: [], total: 0 };
+  const conditions = [eq(callLogs.userId, userId)];
+  if (opts?.campaignId) conditions.push(eq(callLogs.voiceCampaignId, opts.campaignId));
+  if (opts?.status) conditions.push(eq(callLogs.status, opts.status as any));
+  const where = and(...conditions);
+  const [items, countResult] = await Promise.all([
+    db.select().from(callLogs).where(where).orderBy(desc(callLogs.createdAt)).limit(opts?.limit || 50).offset(opts?.offset || 0),
+    db.select({ count: sql<number>`count(*)` }).from(callLogs).where(where),
+  ]);
+  return { items, total: countResult[0]?.count || 0 };
+}
+
+export async function getCallLog(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(callLogs).where(and(eq(callLogs.id, id), eq(callLogs.userId, userId))).limit(1);
+  return result[0] || null;
+}
+
+export async function createCallLog(userId: number, data: Partial<typeof callLogs.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(callLogs).values({ ...data, userId, createdAt: now, updatedAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateCallLog(id: number, userId: number, data: Partial<typeof callLogs.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(callLogs).set({ ...data, updatedAt: Date.now() } as any).where(and(eq(callLogs.id, id), eq(callLogs.userId, userId)));
+}
+
+export async function getCallStats(userId: number, campaignId?: number) {
+  const db = await getDb();
+  if (!db) return { total: 0, connected: 0, qualified: 0, appointments: 0, avgDuration: 0 };
+  const conditions = [eq(callLogs.userId, userId)];
+  if (campaignId) conditions.push(eq(callLogs.voiceCampaignId, campaignId));
+  const where = and(...conditions);
+  const result = await db.select({
+    total: sql<number>`count(*)`,
+    connected: sql<number>`sum(case when callStatus = 'completed' then 1 else 0 end)`,
+    qualified: sql<number>`sum(case when qualResult = 'qualified' then 1 else 0 end)`,
+    appointments: sql<number>`sum(case when appointmentBooked = true then 1 else 0 end)`,
+    avgDuration: sql<number>`avg(durationSeconds)`,
+  }).from(callLogs).where(where);
+  const r = result[0];
+  return { total: r?.total || 0, connected: r?.connected || 0, qualified: r?.qualified || 0, appointments: r?.appointments || 0, avgDuration: Math.round(r?.avgDuration || 0) };
+}
+
+// ─── Documents ───
+export async function listDocuments(userId: number, opts?: { category?: string; type?: string; carrierPacketId?: number; limit?: number; offset?: number }) {
+  const db = await getDb();
+  if (!db) return { items: [], total: 0 };
+  const conditions = [eq(documents.userId, userId)];
+  if (opts?.category) conditions.push(eq(documents.category, opts.category));
+  if (opts?.type) conditions.push(eq(documents.documentType, opts.type));
+  if (opts?.carrierPacketId) conditions.push(eq(documents.carrierPacketId, opts.carrierPacketId));
+  const where = and(...conditions);
+  const [items, countResult] = await Promise.all([
+    db.select().from(documents).where(where).orderBy(desc(documents.createdAt)).limit(opts?.limit || 50).offset(opts?.offset || 0),
+    db.select({ count: sql<number>`count(*)` }).from(documents).where(where),
+  ]);
+  return { items, total: countResult[0]?.count || 0 };
+}
+
+export async function createDocument(userId: number, data: Partial<typeof documents.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(documents).values({ ...data, userId, createdAt: now, updatedAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateDocument(id: number, userId: number, data: Partial<typeof documents.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(documents).set({ ...data, updatedAt: Date.now() } as any).where(and(eq(documents.id, id), eq(documents.userId, userId)));
+}
+
+export async function getDocument(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(documents).where(and(eq(documents.id, id), eq(documents.userId, userId))).limit(1);
+  return result[0] || null;
+}
+
+// ─── Carrier Packets ───
+export async function listCarrierPackets(userId: number, opts?: { status?: string; search?: string; limit?: number; offset?: number }) {
+  const db = await getDb();
+  if (!db) return { items: [], total: 0 };
+  const conditions = [eq(carrierPackets.userId, userId)];
+  if (opts?.status) conditions.push(eq(carrierPackets.packetStatus, opts.status as any));
+  if (opts?.search) conditions.push(or(like(carrierPackets.carrierName, `%${opts.search}%`), like(carrierPackets.mcNumber, `%${opts.search}%`), like(carrierPackets.dotNumber, `%${opts.search}%`))!);
+  const where = and(...conditions);
+  const [items, countResult] = await Promise.all([
+    db.select().from(carrierPackets).where(where).orderBy(desc(carrierPackets.createdAt)).limit(opts?.limit || 50).offset(opts?.offset || 0),
+    db.select({ count: sql<number>`count(*)` }).from(carrierPackets).where(where),
+  ]);
+  return { items, total: countResult[0]?.count || 0 };
+}
+
+export async function getCarrierPacket(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(carrierPackets).where(and(eq(carrierPackets.id, id), eq(carrierPackets.userId, userId))).limit(1);
+  return result[0] || null;
+}
+
+export async function createCarrierPacket(userId: number, data: Partial<typeof carrierPackets.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(carrierPackets).values({ ...data, userId, createdAt: now, updatedAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateCarrierPacket(id: number, userId: number, data: Partial<typeof carrierPackets.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(carrierPackets).set({ ...data, updatedAt: Date.now() } as any).where(and(eq(carrierPackets.id, id), eq(carrierPackets.userId, userId)));
+}
+
+export async function deleteCarrierPacket(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(carrierPackets).where(and(eq(carrierPackets.id, id), eq(carrierPackets.userId, userId)));
+}
+
+export function calculateCarrierComplianceScore(checklist: Record<string, boolean> | null): number {
+  if (!checklist) return 0;
+  const weights: Record<string, number> = {
+    mcAuthority: 15, dotNumber: 10, insuranceCurrent: 20, w9Received: 15,
+    agreementSigned: 15, saferRatingOk: 10, noSafetyViolations: 10, bondVerified: 5,
+  };
+  let score = 0;
+  let maxScore = 0;
+  for (const [key, weight] of Object.entries(weights)) {
+    maxScore += weight;
+    if (checklist[key]) score += weight;
+  }
+  return Math.round((score / maxScore) * 100);
+}
+
+// ─── Deal Scores (Win Probability) ───
+export async function getDealScore(dealId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(dealScores).where(and(eq(dealScores.dealId, dealId), eq(dealScores.userId, userId))).orderBy(desc(dealScores.scoredAt)).limit(1);
+  return result[0] || null;
+}
+
+export async function getDealScoreHistory(dealId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(dealScores).where(and(eq(dealScores.dealId, dealId), eq(dealScores.userId, userId))).orderBy(desc(dealScores.scoredAt)).limit(20);
+}
+
+export async function createDealScore(userId: number, data: Partial<typeof dealScores.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(dealScores).values({ ...data, userId, scoredAt: now, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function getDealsAtRisk(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  // Get latest score per deal where probability is dropping
+  return db.select().from(dealScores).where(and(eq(dealScores.userId, userId), eq(dealScores.probabilityTrend, 'down'))).orderBy(asc(dealScores.winProbability)).limit(10);
+}
+
+export async function getDealsReadyToClose(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(dealScores).where(and(eq(dealScores.userId, userId), sql`winProbability >= 75`)).orderBy(desc(dealScores.winProbability)).limit(10);
+}
+
+export async function getRevenueForecast(userId: number) {
+  const db = await getDb();
+  if (!db) return { totalWeighted: 0, totalForecasted: 0, dealCount: 0 };
+  const result = await db.select({
+    totalWeighted: sql<number>`coalesce(sum(weightedValue), 0)`,
+    totalForecasted: sql<number>`coalesce(sum(forecastedValue), 0)`,
+    dealCount: sql<number>`count(distinct dealId)`,
+  }).from(dealScores).where(eq(dealScores.userId, userId));
+  return result[0] || { totalWeighted: 0, totalForecasted: 0, dealCount: 0 };
+}
+
+// ─── Revenue Briefings ───
+export async function listRevenueBriefings(userId: number, limit: number = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(revenueBriefings).where(eq(revenueBriefings.userId, userId)).orderBy(desc(revenueBriefings.createdAt)).limit(limit);
+}
+
+export async function getRevenueBriefing(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(revenueBriefings).where(and(eq(revenueBriefings.id, id), eq(revenueBriefings.userId, userId))).limit(1);
+  return result[0] || null;
+}
+
+export async function createRevenueBriefing(userId: number, data: Partial<typeof revenueBriefings.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(revenueBriefings).values({ ...data, userId, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function markBriefingRead(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(revenueBriefings).set({ isRead: true }).where(and(eq(revenueBriefings.id, id), eq(revenueBriefings.userId, userId)));
+}
+
+// ─── Smart Notifications ───
+export async function listSmartNotifications(userId: number, opts?: { unreadOnly?: boolean; limit?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [eq(smartNotifications.userId, userId), eq(smartNotifications.isDismissed, false)];
+  if (opts?.unreadOnly) conditions.push(eq(smartNotifications.isRead, false));
+  return db.select().from(smartNotifications).where(and(...conditions)).orderBy(desc(smartNotifications.urgencyScore), desc(smartNotifications.createdAt)).limit(opts?.limit || 20);
+}
+
+export async function createSmartNotification(userId: number, data: Partial<typeof smartNotifications.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(smartNotifications).values({ ...data, userId, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function markNotificationRead(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(smartNotifications).set({ isRead: true, readAt: Date.now() }).where(and(eq(smartNotifications.id, id), eq(smartNotifications.userId, userId)));
+}
+
+export async function dismissNotification(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(smartNotifications).set({ isDismissed: true }).where(and(eq(smartNotifications.id, id), eq(smartNotifications.userId, userId)));
+}
+
+export async function getUnreadNotificationCount(userId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select({ count: sql<number>`count(*)` }).from(smartNotifications).where(and(eq(smartNotifications.userId, userId), eq(smartNotifications.isRead, false), eq(smartNotifications.isDismissed, false)));
+  return result[0]?.count || 0;
+}
+
+// ─── Meeting Preps ───
+export async function listMeetingPreps(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(meetingPreps).where(eq(meetingPreps.userId, userId)).orderBy(desc(meetingPreps.createdAt)).limit(20);
+}
+
+export async function getMeetingPrep(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(meetingPreps).where(and(eq(meetingPreps.id, id), eq(meetingPreps.userId, userId))).limit(1);
+  return result[0] || null;
+}
+
+export async function createMeetingPrep(userId: number, data: Partial<typeof meetingPreps.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(meetingPreps).values({ ...data, userId, generatedAt: now, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+// PHASE 14: COMPETITIVE FEATURE PARITY - DB HELPERS
+// ═══════════════════════════════════════════════════════════════════
+
+// ─── Load Management ────────────────────────────────────────────────
+
+export async function listLoads(userId: number, filters?: { status?: string; search?: string; limit?: number; offset?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  let query = db.select().from(loads).where(eq(loads.userId, userId)).orderBy(desc(loads.createdAt)).$dynamic();
+  if (filters?.status) query = query.where(and(eq(loads.userId, userId), eq(loads.status, filters.status)));
+  if (filters?.limit) query = query.limit(filters.limit);
+  if (filters?.offset) query = query.offset(filters.offset);
+  return query;
+}
+
+export async function getLoad(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(loads).where(and(eq(loads.id, id), eq(loads.userId, userId)));
+  return rows[0] || null;
+}
+
+export async function createLoad(userId: number, data: Partial<InsertLoad>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const ref = `LD-${Date.now().toString(36).toUpperCase()}`;
+  const result = await db.insert(loads).values({ ...data, userId, referenceNumber: data.referenceNumber || ref, createdAt: now, updatedAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateLoad(id: number, userId: number, data: Partial<InsertLoad>) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.update(loads).set({ ...data, updatedAt: Date.now() } as any).where(and(eq(loads.id, id), eq(loads.userId, userId)));
+  return { success: true };
+}
+
+export async function updateLoadStatus(loadId: number, userId: number, toStatus: string, notes?: string, location?: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const load = await getLoad(loadId, userId);
+  if (!load) return null;
+  const now = Date.now();
+  await db.insert(loadStatusHistory).values({ loadId, userId, fromStatus: load.status, toStatus, notes: notes || null, location: location || null, createdAt: now } as any);
+  await db.update(loads).set({ status: toStatus, updatedAt: now } as any).where(eq(loads.id, loadId));
+  return { success: true };
+}
+
+export async function getLoadStatusHistory(loadId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(loadStatusHistory).where(eq(loadStatusHistory.loadId, loadId)).orderBy(desc(loadStatusHistory.createdAt));
+}
+
+export async function getLoadStats(userId: number) {
+  const db = await getDb();
+  if (!db) return { total: 0, draft: 0, dispatched: 0, inTransit: 0, delivered: 0, closed: 0 };
+  const all = await db.select().from(loads).where(eq(loads.userId, userId));
+  return {
+    total: all.length,
+    draft: all.filter(l => l.status === 'draft').length,
+    posted: all.filter(l => l.status === 'posted').length,
+    dispatched: all.filter(l => l.status === 'dispatched').length,
+    inTransit: all.filter(l => l.status === 'in_transit').length,
+    delivered: all.filter(l => l.status === 'delivered').length,
+    closed: all.filter(l => l.status === 'closed').length,
+  };
+}
+
+// ─── Carrier Profiles (Deep Vetting) ────────────────────────────────
+
+export async function listCarrierProfiles(userId: number, filters?: { vetStatus?: string; search?: string; limit?: number; offset?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  let query = db.select().from(carrierProfiles).where(eq(carrierProfiles.userId, userId)).orderBy(desc(carrierProfiles.createdAt)).$dynamic();
+  if (filters?.vetStatus) query = query.where(and(eq(carrierProfiles.userId, userId), eq(carrierProfiles.vetStatus, filters.vetStatus)));
+  if (filters?.limit) query = query.limit(filters.limit);
+  return query;
+}
+
+export async function getCarrierProfile(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(carrierProfiles).where(and(eq(carrierProfiles.id, id), eq(carrierProfiles.userId, userId)));
+  return rows[0] || null;
+}
+
+export async function createCarrierProfile(userId: number, data: Partial<InsertCarrierProfile>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(carrierProfiles).values({ ...data, userId, createdAt: now, updatedAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateCarrierProfile(id: number, userId: number, data: Partial<InsertCarrierProfile>) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.update(carrierProfiles).set({ ...data, updatedAt: Date.now() } as any).where(and(eq(carrierProfiles.id, id), eq(carrierProfiles.userId, userId)));
+  return { success: true };
+}
+
+export async function getExpiredInsuranceCarriers(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const now = Date.now();
+  return db.select().from(carrierProfiles).where(and(eq(carrierProfiles.userId, userId), eq(carrierProfiles.insuranceOnFile, true))).orderBy(asc(carrierProfiles.insuranceExpiry));
+}
+
+// ─── Load Board Posts ───────────────────────────────────────────────
+
+export async function listLoadBoardPosts(userId: number, filters?: { board?: string; status?: string; loadId?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  let query = db.select().from(loadBoardPosts).where(eq(loadBoardPosts.userId, userId)).orderBy(desc(loadBoardPosts.createdAt)).$dynamic();
+  if (filters?.board) query = query.where(and(eq(loadBoardPosts.userId, userId), eq(loadBoardPosts.board, filters.board)));
+  if (filters?.loadId) query = query.where(and(eq(loadBoardPosts.userId, userId), eq(loadBoardPosts.loadId, filters.loadId)));
+  return query;
+}
+
+export async function createLoadBoardPost(userId: number, data: { loadId: number; board: string; expiresAt?: number }) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(loadBoardPosts).values({ ...data, userId, postedAt: now, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateLoadBoardPost(id: number, userId: number, data: Partial<LoadBoardPost>) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.update(loadBoardPosts).set(data as any).where(and(eq(loadBoardPosts.id, id), eq(loadBoardPosts.userId, userId)));
+  return { success: true };
+}
+
+// ─── Invoices ───────────────────────────────────────────────────────
+
+export async function listInvoices(userId: number, filters?: { status?: string; search?: string; limit?: number; offset?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  let query = db.select().from(invoices).where(eq(invoices.userId, userId)).orderBy(desc(invoices.createdAt)).$dynamic();
+  if (filters?.status) query = query.where(and(eq(invoices.userId, userId), eq(invoices.status, filters.status)));
+  if (filters?.limit) query = query.limit(filters.limit);
+  return query;
+}
+
+export async function getInvoice(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(invoices).where(and(eq(invoices.id, id), eq(invoices.userId, userId)));
+  return rows[0] || null;
+}
+
+export async function createInvoice(userId: number, data: Partial<InsertInvoice>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const invNum = `INV-${Date.now().toString(36).toUpperCase()}`;
+  const result = await db.insert(invoices).values({ ...data, userId, invoiceNumber: data.invoiceNumber || invNum, issueDate: data.issueDate || now, createdAt: now, updatedAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateInvoice(id: number, userId: number, data: Partial<InsertInvoice>) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.update(invoices).set({ ...data, updatedAt: Date.now() } as any).where(and(eq(invoices.id, id), eq(invoices.userId, userId)));
+  return { success: true };
+}
+
+export async function createInvoiceFromLoad(userId: number, loadId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const load = await getLoad(loadId, userId);
+  if (!load) return null;
+  const now = Date.now();
+  const invNum = `INV-${Date.now().toString(36).toUpperCase()}`;
+  const lineItems = [{ description: `Freight: ${load.originCity || ''}, ${load.originState || ''} → ${load.destCity || ''}, ${load.destState || ''}`, quantity: 1, unitPrice: Number(load.customerRate || 0), total: Number(load.customerRate || 0) }];
+  const totalAmount = Number(load.customerRate || 0);
+  const result = await db.insert(invoices).values({
+    userId, loadId, billToCompanyId: load.companyId, billToContactId: load.contactId,
+    invoiceNumber: invNum, status: 'draft', issueDate: now, dueDate: now + 30 * 86400000,
+    lineItems, subtotal: BigInt(totalAmount), totalAmount: BigInt(totalAmount), balanceDue: BigInt(totalAmount),
+    createdAt: now, updatedAt: now,
+  } as any);
+  await db.update(loads).set({ invoiceId: result[0].insertId } as any).where(eq(loads.id, loadId));
+  return { id: result[0].insertId };
+}
+
+// ─── Customer Portal ────────────────────────────────────────────────
+
+export async function listPortalAccess(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(portalAccess).orderBy(desc(portalAccess.createdAt));
+}
+
+export async function createPortalAccess(data: { contactId: number; companyId?: number; email: string; permissions?: string[] }) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(portalAccess).values({ ...data, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function listPortalQuotes(companyId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  if (companyId) return db.select().from(portalQuotes).where(eq(portalQuotes.companyId, companyId)).orderBy(desc(portalQuotes.createdAt));
+  return db.select().from(portalQuotes).orderBy(desc(portalQuotes.createdAt));
+}
+
+export async function createPortalQuote(data: Partial<PortalQuote>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(portalQuotes).values({ ...data, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+// ─── Conversation Intelligence ──────────────────────────────────────
+
+export async function listCallRecordings(userId: number, filters?: { analyzed?: boolean; contactId?: number; limit?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  let query = db.select().from(callRecordings).where(eq(callRecordings.userId, userId)).orderBy(desc(callRecordings.createdAt)).$dynamic();
+  if (filters?.limit) query = query.limit(filters.limit);
+  return query;
+}
+
+export async function getCallRecording(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(callRecordings).where(and(eq(callRecordings.id, id), eq(callRecordings.userId, userId)));
+  return rows[0] || null;
+}
+
+export async function createCallRecording(userId: number, data: Partial<CallRecording>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(callRecordings).values({ ...data, userId, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateCallRecording(id: number, userId: number, data: Partial<CallRecording>) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.update(callRecordings).set(data as any).where(and(eq(callRecordings.id, id), eq(callRecordings.userId, userId)));
+  return { success: true };
+}
+
+// ─── B2B Contact Database ───────────────────────────────────────────
+
+export async function listB2BContacts(userId: number, filters?: { search?: string; industry?: string; imported?: boolean; limit?: number; offset?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  let query = db.select().from(b2bContacts).where(eq(b2bContacts.userId, userId)).orderBy(desc(b2bContacts.createdAt)).$dynamic();
+  if (filters?.limit) query = query.limit(filters.limit);
+  return query;
+}
+
+export async function createB2BContact(userId: number, data: Partial<B2BContact>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(b2bContacts).values({ ...data, userId, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function markB2BContactImported(id: number, userId: number, contactId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.update(b2bContacts).set({ imported: true, importedContactId: contactId } as any).where(and(eq(b2bContacts.id, id), eq(b2bContacts.userId, userId)));
+  return { success: true };
+}
+
+// ─── Email Warmup ───────────────────────────────────────────────────
+
+export async function listWarmupCampaigns(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(warmupCampaigns).where(eq(warmupCampaigns.userId, userId)).orderBy(desc(warmupCampaigns.createdAt));
+}
+
+export async function createWarmupCampaign(userId: number, data: Partial<WarmupCampaign>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(warmupCampaigns).values({ ...data, userId, startDate: data.startDate || now, createdAt: now, updatedAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateWarmupCampaign(id: number, userId: number, data: Partial<WarmupCampaign>) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.update(warmupCampaigns).set({ ...data, updatedAt: Date.now() } as any).where(and(eq(warmupCampaigns.id, id), eq(warmupCampaigns.userId, userId)));
+  return { success: true };
+}
+
+// ─── Visitor Tracking ───────────────────────────────────────────────
+
+export async function listVisitorSessions(userId: number, filters?: { identified?: boolean; limit?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  let query = db.select().from(visitorSessions).where(eq(visitorSessions.userId, userId)).orderBy(desc(visitorSessions.lastVisit)).$dynamic();
+  if (filters?.identified) query = query.where(and(eq(visitorSessions.userId, userId), isNotNull(visitorSessions.identifiedCompany)));
+  if (filters?.limit) query = query.limit(filters.limit);
+  return query;
+}
+
+export async function createVisitorSession(userId: number, data: Partial<VisitorSession>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(visitorSessions).values({ ...data, userId, firstVisit: now, lastVisit: now, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+// ─── AI Order Entry (Inbound Emails) ────────────────────────────────
+
+export async function listInboundEmails(userId: number, filters?: { status?: string; limit?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  let query = db.select().from(inboundEmails).where(eq(inboundEmails.userId, userId)).orderBy(desc(inboundEmails.receivedAt)).$dynamic();
+  if (filters?.status) query = query.where(and(eq(inboundEmails.userId, userId), eq(inboundEmails.status, filters.status)));
+  if (filters?.limit) query = query.limit(filters.limit);
+  return query;
+}
+
+export async function getInboundEmail(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(inboundEmails).where(and(eq(inboundEmails.id, id), eq(inboundEmails.userId, userId)));
+  return rows[0] || null;
+}
+
+export async function createInboundEmail(userId: number, data: Partial<InboundEmail>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(inboundEmails).values({ ...data, userId, receivedAt: data.receivedAt || now, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateInboundEmail(id: number, userId: number, data: Partial<InboundEmail>) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.update(inboundEmails).set(data as any).where(and(eq(inboundEmails.id, id), eq(inboundEmails.userId, userId)));
+  return { success: true };
+}
+
+// ─── White-Label Configuration ──────────────────────────────────────
+
+export async function getWhiteLabelConfig(companyId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(whiteLabelConfig).where(eq(whiteLabelConfig.companyId, companyId));
+  return rows[0] || null;
+}
+
+export async function upsertWhiteLabelConfig(companyId: number, data: Partial<WhiteLabelConfig>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const existing = await getWhiteLabelConfig(companyId);
+  if (existing) {
+    await db.update(whiteLabelConfig).set({ ...data, updatedAt: now } as any).where(eq(whiteLabelConfig.companyId, companyId));
+    return { id: existing.id };
+  }
+  const result = await db.insert(whiteLabelConfig).values({ ...data, companyId, brandName: data.brandName || 'My Brokerage', createdAt: now, updatedAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+// ─── Digital Onboarding ─────────────────────────────────────────────
+
+export async function listOnboardingFlows(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(onboardingFlows).where(eq(onboardingFlows.userId, userId)).orderBy(desc(onboardingFlows.createdAt));
+}
+
+export async function getOnboardingFlow(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(onboardingFlows).where(and(eq(onboardingFlows.id, id), eq(onboardingFlows.userId, userId)));
+  return rows[0] || null;
+}
+
+export async function createOnboardingFlow(userId: number, data: Partial<OnboardingFlow>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(onboardingFlows).values({ ...data, userId, createdAt: now, updatedAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function listOnboardingSubmissions(flowId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  if (flowId) return db.select().from(onboardingSubmissions).where(eq(onboardingSubmissions.flowId, flowId)).orderBy(desc(onboardingSubmissions.createdAt));
+  return db.select().from(onboardingSubmissions).orderBy(desc(onboardingSubmissions.createdAt));
+}
+
+export async function createOnboardingSubmission(data: Partial<OnboardingSubmission>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(onboardingSubmissions).values({ ...data, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateOnboardingSubmission(id: number, data: Partial<OnboardingSubmission>) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.update(onboardingSubmissions).set(data as any).where(eq(onboardingSubmissions.id, id));
+  return { success: true };
+}
+
+// ─── Subscription Plans & Trials ────────────────────────────────────
+
+export async function listSubscriptionPlans() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(subscriptionPlans).where(eq(subscriptionPlans.isActive, true)).orderBy(asc(subscriptionPlans.pricePerUser));
+}
+
+export async function getSubscription(companyId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(tenantSubscriptions).where(eq(tenantSubscriptions.companyId, companyId)).orderBy(desc(tenantSubscriptions.createdAt));
+  return rows[0] || null;
+}
+
+export async function createSubscription(companyId: number, planId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const trialEnd = now + 60 * 86400000; // 60 days = 2 months
+  const result = await db.insert(tenantSubscriptions).values({
+    companyId, planId, status: 'trial', trialStart: now, trialEnd,
+    currentUsers: 1, createdAt: now, updatedAt: now,
+  } as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateSubscription(id: number, data: Partial<TenantSubscription>) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.update(tenantSubscriptions).set({ ...data, updatedAt: Date.now() } as any).where(eq(tenantSubscriptions.id, id));
+  return { success: true };
+}
+
+// ─── Migration Jobs ─────────────────────────────────────────────────
+
+export async function listMigrationJobs(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(migrationJobs).where(eq(migrationJobs.userId, userId)).orderBy(desc(migrationJobs.createdAt));
+}
+
+export async function getMigrationJob(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(migrationJobs).where(and(eq(migrationJobs.id, id), eq(migrationJobs.userId, userId)));
+  return rows[0] || null;
+}
+
+export async function createMigrationJob(userId: number, data: Partial<MigrationJob>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(migrationJobs).values({ ...data, userId, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateMigrationJob(id: number, userId: number, data: Partial<MigrationJob>) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.update(migrationJobs).set(data as any).where(and(eq(migrationJobs.id, id), eq(migrationJobs.userId, userId)));
+  return { success: true };
+}
+
+// ─── Enrichment Logs ────────────────────────────────────────────────
+
+export async function createEnrichmentLog(userId: number, data: Partial<EnrichmentLog>) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(enrichmentLogs).values({ ...data, userId, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+
+// ============================================================
+// PHASE 16: MARKETPLACE + AUTOPILOT DB HELPERS
+// ============================================================
+
+// --- Marketplace Loads ---
+export async function listMarketplaceLoads(filters: { status?: string; companyId?: number } = {}) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions: any[] = [];
+  if (filters.status) conditions.push(eq(marketplaceLoads.status, filters.status));
+  if (filters.companyId) conditions.push(eq(marketplaceLoads.companyId, filters.companyId));
+  return db.select().from(marketplaceLoads).where(conditions.length ? and(...conditions) : undefined).orderBy(desc(marketplaceLoads.createdAt)).limit(100);
+}
+
+export async function getMarketplaceLoad(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(marketplaceLoads).where(eq(marketplaceLoads.id, id)).limit(1);
+  return rows[0] || null;
+}
+
+export async function createMarketplaceLoad(data: any) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const loadNumber = `ML-${Date.now().toString(36).toUpperCase()}`;
+  const result = await db.insert(marketplaceLoads).values({ ...data, loadNumber, createdAt: now, updatedAt: now } as any);
+  return { id: result[0].insertId, loadNumber };
+}
+
+export async function updateMarketplaceLoad(id: number, data: any) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.update(marketplaceLoads).set({ ...data, updatedAt: Date.now() } as any).where(eq(marketplaceLoads.id, id));
+  return { success: true };
+}
+
+// --- Marketplace Bids ---
+export async function listBidsForLoad(loadId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(marketplaceBids).where(eq(marketplaceBids.loadId, loadId)).orderBy(desc(marketplaceBids.matchScore));
+}
+
+export async function createMarketplaceBid(data: any) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(marketplaceBids).values({ ...data, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateBidStatus(id: number, status: string) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.update(marketplaceBids).set({ status } as any).where(eq(marketplaceBids.id, id));
+  return { success: true };
+}
+
+// --- Marketplace Payments ---
+export async function getPaymentForLoad(loadId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(marketplacePayments).where(eq(marketplacePayments.loadId, loadId)).limit(1);
+  return rows[0] || null;
+}
+
+export async function createMarketplacePayment(data: any) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(marketplacePayments).values({ ...data, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateMarketplacePayment(loadId: number, data: any) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.update(marketplacePayments).set(data as any).where(eq(marketplacePayments.loadId, loadId));
+  return { success: true };
+}
+
+// --- Marketplace Tracking ---
+export async function listTrackingEvents(loadId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(marketplaceTracking).where(eq(marketplaceTracking.loadId, loadId)).orderBy(desc(marketplaceTracking.createdAt));
+}
+
+export async function addTrackingEvent(data: any) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(marketplaceTracking).values({ ...data, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+// --- Marketplace Documents ---
+export async function listDocumentsForLoad(loadId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(marketplaceDocuments).where(eq(marketplaceDocuments.loadId, loadId)).orderBy(desc(marketplaceDocuments.createdAt));
+}
+
+export async function createMarketplaceDocument(data: any) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(marketplaceDocuments).values({ ...data, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+// --- Lane Analytics ---
+export async function listLaneAnalytics(filters: { originState?: string; destState?: string } = {}) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions: any[] = [];
+  if (filters.originState) conditions.push(eq(laneAnalytics.originState, filters.originState));
+  if (filters.destState) conditions.push(eq(laneAnalytics.destState, filters.destState));
+  return db.select().from(laneAnalytics).where(conditions.length ? and(...conditions) : undefined).orderBy(desc(laneAnalytics.demandScore)).limit(100);
+}
+
+export async function upsertLaneAnalytic(data: any) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(laneAnalytics).values({ ...data, updatedAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+// --- Consolidation Opportunities ---
+export async function listConsolidationOpportunities(status?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions: any[] = [];
+  if (status) conditions.push(eq(consolidationOpportunities.status, status));
+  return db.select().from(consolidationOpportunities).where(conditions.length ? and(...conditions) : undefined).orderBy(desc(consolidationOpportunities.savings)).limit(50);
+}
+
+export async function createConsolidationOpportunity(data: any) {
+  const db = await getDb();
+  if (!db) return null;
+  const now = Date.now();
+  const result = await db.insert(consolidationOpportunities).values({ ...data, createdAt: now } as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateConsolidationStatus(id: number, status: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const updates: any = { status };
+  if (status === 'executed') updates.executedAt = Date.now();
+  await db.update(consolidationOpportunities).set(updates).where(eq(consolidationOpportunities.id, id));
+  return { success: true };
+}
+
+// --- Marketplace Stats ---
+export async function getMarketplaceStats(companyId?: number) {
+  const db = await getDb();
+  if (!db) return { totalLoads: 0, activeLoads: 0, deliveredLoads: 0, totalRevenue: 0, totalMargin: 0, avgMarginPercent: 0 };
+  const conditions: any[] = [];
+  if (companyId) conditions.push(eq(marketplaceLoads.companyId, companyId));
+  
+  const allLoads = await db.select().from(marketplaceLoads).where(conditions.length ? and(...conditions) : undefined);
+  const totalLoads = allLoads.length;
+  const activeLoads = allLoads.filter(l => ['posted', 'matching', 'matched', 'booked', 'dispatched', 'in_transit'].includes(l.status)).length;
+  const deliveredLoads = allLoads.filter(l => ['delivered', 'completed'].includes(l.status)).length;
+  const totalRevenue = allLoads.reduce((sum, l) => sum + Number(l.shipperRate || 0), 0);
+  const totalMargin = allLoads.reduce((sum, l) => sum + Number(l.margin || 0), 0);
+  const avgMarginPercent = totalLoads > 0 ? allLoads.reduce((sum, l) => sum + Number(l.marginPercent || 0), 0) / totalLoads : 0;
+  
+  return { totalLoads, activeLoads, deliveredLoads, totalRevenue, totalMargin, avgMarginPercent };
 }

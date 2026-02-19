@@ -1992,5 +1992,1255 @@ export const appRouter = router({
       };
     }),
   }),
+
+  // ═══════════════════════════════════════════════════════════════
+  // Domain Health Optimizer
+  // ═══════════════════════════════════════════════════════════════
+  domainOptimizer: router({
+    // Get full health summary for all domains
+    summary: protectedProcedure.query(async ({ ctx }) => {
+      return db.getDomainHealthSummary(ctx.user.id);
+    }),
+
+    // Run auto-healing across all domains
+    runAutoHealing: protectedProcedure.mutation(async ({ ctx }) => {
+      return db.runDomainAutoHealing(ctx.user.id);
+    }),
+
+    // Get health trend for a specific domain
+    trend: protectedProcedure.input(z.object({ domainHealthId: z.number(), days: z.number().optional() })).query(async ({ ctx, input }) => {
+      return db.getDomainHealthTrend(ctx.user.id, input.domainHealthId, input.days ?? 30);
+    }),
+
+    // Start warm-up for a domain
+    startWarmup: protectedProcedure.input(z.object({ domainId: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.startDomainWarmup(input.domainId, ctx.user.id);
+      return { success: true };
+    }),
+
+    // Get best sending domain (for campaign sends)
+    bestDomain: protectedProcedure.query(async ({ ctx }) => {
+      return db.getBestSendingDomain(ctx.user.id);
+    }),
+
+    // Get warmup schedule info
+    warmupSchedule: protectedProcedure.query(async () => {
+      return db.WARMUP_SCHEDULE;
+    }),
+
+    // Get health thresholds
+    thresholds: protectedProcedure.query(async () => {
+      return db.HEALTH_THRESHOLDS;
+    }),
+  }),
+
+  // ═══════════════════════════════════════════════════════════════
+  // Continuous A/B Testing Engine
+  // ═══════════════════════════════════════════════════════════════
+  abEngine: router({
+    // Generate A/B variants for a campaign
+    generateVariants: protectedProcedure.input(z.object({
+      subject: z.string(),
+      content: z.string(),
+    })).mutation(async ({ input }) => {
+      return db.generateABVariants(input.subject, input.content);
+    }),
+
+    // AI-powered subject line generation
+    aiGenerateSubjects: protectedProcedure.input(z.object({
+      originalSubject: z.string(),
+      targetAudience: z.string().optional(),
+      tone: z.string().optional(),
+    })).mutation(async ({ input }) => {
+      const { invokeLLM } = await import('./server/_core/llm' as any).catch(() => ({ invokeLLM: null }));
+      if (!invokeLLM) {
+        return db.generateABVariants(input.originalSubject, '').subjectVariants;
+      }
+      try {
+        const resp = await (invokeLLM as any)({
+          messages: [
+            { role: 'system', content: 'You are an email marketing expert. Generate 5 alternative subject lines for A/B testing. Each should test a different psychological trigger: urgency, curiosity, personalization, benefit-focused, and social proof. Return JSON array of strings.' },
+            { role: 'user', content: `Original subject: "${input.originalSubject}"\nTarget audience: ${input.targetAudience || 'B2B professionals'}\nTone: ${input.tone || 'professional'}` },
+          ],
+          response_format: { type: 'json_schema', json_schema: { name: 'subjects', strict: true, schema: { type: 'object', properties: { subjects: { type: 'array', items: { type: 'string' } } }, required: ['subjects'], additionalProperties: false } } },
+        });
+        const parsed = JSON.parse(resp.choices[0].message.content);
+        return parsed.subjects || [];
+      } catch {
+        return db.generateABVariants(input.originalSubject, '').subjectVariants;
+      }
+    }),
+
+    // Calculate statistical significance between two variants
+    checkSignificance: protectedProcedure.input(z.object({
+      controlSent: z.number(),
+      controlOpens: z.number(),
+      variantSent: z.number(),
+      variantOpens: z.number(),
+    })).query(async ({ input }) => {
+      return db.calculateStatisticalSignificance(
+        input.controlSent, input.controlOpens,
+        input.variantSent, input.variantOpens,
+      );
+    }),
+
+    // Calculate minimum sample size needed
+    sampleSize: protectedProcedure.input(z.object({
+      baselineRate: z.number(),
+      minimumDetectableEffect: z.number(),
+      confidenceLevel: z.number().optional(),
+    })).query(async ({ input }) => {
+      return {
+        perVariant: db.calculateMinSampleSize(
+          input.baselineRate,
+          input.minimumDetectableEffect,
+          input.confidenceLevel ?? 0.95,
+        ),
+        total: db.calculateMinSampleSize(
+          input.baselineRate,
+          input.minimumDetectableEffect,
+          input.confidenceLevel ?? 0.95,
+        ) * 2,
+      };
+    }),
+
+    // Get active A/B tests with significance data
+    activeTests: protectedProcedure.query(async ({ ctx }) => {
+      const tests = await db.listAbTests(ctx.user.id);
+      return tests.map((t: any) => {
+        const variants = (t.variants as any[]) || [];
+        if (variants.length >= 2) {
+          const control = variants[0];
+          const variant = variants[1];
+          const sig = db.calculateStatisticalSignificance(
+            control.sent || 0, control.opens || 0,
+            variant.sent || 0, variant.opens || 0,
+          );
+          return { ...t, significance: sig };
+        }
+        return { ...t, significance: null };
+      });
+    }),
+  }),
+
+  // ═══════════════════════════════════════════════════════════════
+  // PHASE 13: PREMIUM FEATURES
+  // ═══════════════════════════════════════════════════════════════
+
+  voiceCampaigns: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return db.listVoiceCampaigns(ctx.user.id);
+    }),
+    get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      return db.getVoiceCampaign(input.id, ctx.user.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      name: z.string(),
+      description: z.string().optional(),
+      objective: z.string().optional(),
+      voicePersona: z.string().optional(),
+      scriptTemplate: z.string().optional(),
+      callWindowStart: z.string().optional(),
+      callWindowEnd: z.string().optional(),
+      callWindowTimezone: z.string().optional(),
+      maxConcurrentCalls: z.number().optional(),
+      maxCallsPerDay: z.number().optional(),
+      maxRetries: z.number().optional(),
+      qualificationCriteria: z.any().optional(),
+      targetContactIds: z.array(z.number()).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      return db.createVoiceCampaign(ctx.user.id, input);
+    }),
+    update: protectedProcedure.input(z.object({
+      id: z.number(),
+      name: z.string().optional(),
+      description: z.string().optional(),
+      status: z.string().optional(),
+      scriptTemplate: z.string().optional(),
+      objective: z.string().optional(),
+      voicePersona: z.string().optional(),
+      callWindowStart: z.string().optional(),
+      callWindowEnd: z.string().optional(),
+      maxConcurrentCalls: z.number().optional(),
+      maxCallsPerDay: z.number().optional(),
+      qualificationCriteria: z.any().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      await db.updateVoiceCampaign(id, ctx.user.id, data as any);
+      return { success: true };
+    }),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.deleteVoiceCampaign(input.id, ctx.user.id);
+      return { success: true };
+    }),
+    generateScript: protectedProcedure.input(z.object({
+      objective: z.string(),
+      industry: z.string().optional(),
+      voicePersona: z.string().optional(),
+      qualificationCriteria: z.any().optional(),
+    })).mutation(async ({ input }) => {
+      const response = await invokeLLM({
+        messages: [
+          { role: 'system', content: `You are an expert sales script writer for freight brokerage cold calling. Generate a natural, conversational AI phone script. The script should: 1) Open with a professional greeting 2) Quickly establish value 3) Ask qualifying questions 4) Handle common objections 5) Book an appointment or gather info. Use {{contactName}}, {{companyName}}, {{callerName}} as placeholders. Keep it under 500 words. Voice persona: ${input.voicePersona || 'professional'}` },
+          { role: 'user', content: `Generate a cold call script for: Objective: ${input.objective}. Industry: ${input.industry || 'freight brokerage'}. Qualification criteria: ${JSON.stringify(input.qualificationCriteria || {})}` },
+        ],
+      });
+      return { script: response.choices?.[0]?.message?.content || '' };
+    }),
+  }),
+
+  callLogs: router({
+    list: protectedProcedure.input(z.object({
+      campaignId: z.number().optional(),
+      status: z.string().optional(),
+      limit: z.number().optional(),
+      offset: z.number().optional(),
+    }).optional()).query(async ({ ctx, input }) => {
+      return db.listCallLogs(ctx.user.id, input);
+    }),
+    get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      return db.getCallLog(input.id, ctx.user.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      voiceCampaignId: z.number().optional(),
+      contactId: z.number().optional(),
+      prospectId: z.number().optional(),
+      phoneNumber: z.string(),
+      direction: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      return db.createCallLog(ctx.user.id, input as any);
+    }),
+    update: protectedProcedure.input(z.object({
+      id: z.number(),
+      status: z.string().optional(),
+      transcription: z.string().optional(),
+      conversationSummary: z.string().optional(),
+      aiSentiment: z.string().optional(),
+      qualificationScore: z.number().optional(),
+      qualificationResult: z.string().optional(),
+      qualificationDetails: z.any().optional(),
+      appointmentBooked: z.boolean().optional(),
+      appointmentDate: z.number().optional(),
+      appointmentNotes: z.string().optional(),
+      followUpRequired: z.boolean().optional(),
+      followUpDate: z.number().optional(),
+      followUpNotes: z.string().optional(),
+      durationSeconds: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      await db.updateCallLog(id, ctx.user.id, data as any);
+      return { success: true };
+    }),
+    stats: protectedProcedure.input(z.object({ campaignId: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.getCallStats(ctx.user.id, input?.campaignId);
+    }),
+    simulateCall: protectedProcedure.input(z.object({
+      contactId: z.number().optional(),
+      prospectId: z.number().optional(),
+      phoneNumber: z.string(),
+      scriptTemplate: z.string(),
+      voiceCampaignId: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      // Create call log
+      const callResult = await db.createCallLog(ctx.user.id, {
+        voiceCampaignId: input.voiceCampaignId,
+        contactId: input.contactId,
+        prospectId: input.prospectId,
+        phoneNumber: input.phoneNumber,
+        direction: 'outbound',
+        status: 'completed',
+        startedAt: Date.now() - 180000,
+        connectedAt: Date.now() - 170000,
+        endedAt: Date.now(),
+        durationSeconds: 170,
+      });
+      // Use AI to simulate conversation and qualification
+      const aiResponse = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are simulating an AI voice agent call result for a freight brokerage CRM. Generate a realistic call summary, qualification details, and sentiment analysis. Return JSON with: transcription (string), conversationSummary (string), aiSentiment (positive/neutral/negative/interested/not_interested), qualificationScore (0-100), qualificationResult (qualified/not_qualified/needs_followup), qualificationDetails (object with freightVolume, currentProvider, painPoints array, budget, timeline, decisionMaker boolean, interests array, objections array, nextSteps), appointmentBooked (boolean), followUpRequired (boolean).' },
+          { role: 'user', content: `Simulate a completed call to ${input.phoneNumber}. Script used: ${input.scriptTemplate.substring(0, 500)}` },
+        ],
+        response_format: { type: 'json_schema', json_schema: { name: 'call_result', strict: true, schema: { type: 'object', properties: { transcription: { type: 'string' }, conversationSummary: { type: 'string' }, aiSentiment: { type: 'string' }, qualificationScore: { type: 'integer' }, qualificationResult: { type: 'string' }, qualificationDetails: { type: 'object', properties: { freightVolume: { type: 'string' }, currentProvider: { type: 'string' }, painPoints: { type: 'array', items: { type: 'string' } }, budget: { type: 'string' }, timeline: { type: 'string' }, decisionMaker: { type: 'boolean' }, interests: { type: 'array', items: { type: 'string' } }, objections: { type: 'array', items: { type: 'string' } }, nextSteps: { type: 'string' } }, required: ['freightVolume', 'currentProvider', 'painPoints', 'budget', 'timeline', 'decisionMaker', 'interests', 'objections', 'nextSteps'], additionalProperties: false }, appointmentBooked: { type: 'boolean' }, followUpRequired: { type: 'boolean' } }, required: ['transcription', 'conversationSummary', 'aiSentiment', 'qualificationScore', 'qualificationResult', 'qualificationDetails', 'appointmentBooked', 'followUpRequired'], additionalProperties: false } } },
+      });
+      let parsed: any = {};
+      try { parsed = JSON.parse(String(aiResponse.choices?.[0]?.message?.content || '{}')); } catch {}
+      if (callResult?.id) {
+        await db.updateCallLog(callResult.id, ctx.user.id, parsed);
+      }
+      return { callId: callResult?.id, ...parsed };
+    }),
+  }),
+
+  documents: router({
+    list: protectedProcedure.input(z.object({
+      category: z.string().optional(),
+      type: z.string().optional(),
+      carrierPacketId: z.number().optional(),
+      limit: z.number().optional(),
+      offset: z.number().optional(),
+    }).optional()).query(async ({ ctx, input }) => {
+      return db.listDocuments(ctx.user.id, input);
+    }),
+    get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      return db.getDocument(input.id, ctx.user.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      fileName: z.string(),
+      fileUrl: z.string(),
+      fileKey: z.string(),
+      mimeType: z.string().optional(),
+      fileSizeBytes: z.number().optional(),
+      documentType: z.string(),
+      category: z.string().optional(),
+      contactId: z.number().optional(),
+      companyId: z.number().optional(),
+      dealId: z.number().optional(),
+      carrierPacketId: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      return db.createDocument(ctx.user.id, input);
+    }),
+    update: protectedProcedure.input(z.object({
+      id: z.number(),
+      documentType: z.string().optional(),
+      category: z.string().optional(),
+      extractedData: z.any().optional(),
+      extractionStatus: z.string().optional(),
+      extractionConfidence: z.number().optional(),
+      isValid: z.boolean().optional(),
+      validationNotes: z.string().optional(),
+      expiresAt: z.number().optional(),
+      tags: z.array(z.string()).optional(),
+      notes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      await db.updateDocument(id, ctx.user.id, data as any);
+      return { success: true };
+    }),
+    extractData: protectedProcedure.input(z.object({
+      documentId: z.number(),
+      fileUrl: z.string(),
+      documentType: z.string(),
+    })).mutation(async ({ ctx, input }) => {
+      await db.updateDocument(input.documentId, ctx.user.id, { extractionStatus: 'processing' });
+      const typePrompts: Record<string, string> = {
+        w9: 'Extract: business name, tax classification, address, TIN/EIN, signature date. Return JSON.',
+        insurance_certificate: 'Extract: insured name, policy number, effective date, expiration date, coverage amounts (general liability, auto liability, cargo, workers comp), certificate holder, insurer name. Return JSON.',
+        mc_authority: 'Extract: MC number, DOT number, legal name, DBA name, address, authority type, effective date, status. Return JSON.',
+        carrier_agreement: 'Extract: carrier name, broker name, effective date, termination clause, payment terms, insurance requirements, indemnification terms. Return JSON.',
+        rate_confirmation: 'Extract: load number, origin, destination, pickup date, delivery date, rate amount, equipment type, weight, commodity, special instructions. Return JSON.',
+        bol: 'Extract: BOL number, shipper, consignee, carrier, date, origin, destination, commodity description, weight, pieces, freight charges, special instructions. Return JSON.',
+      };
+      const prompt = typePrompts[input.documentType] || 'Extract all relevant data fields from this document. Return JSON with field names as keys.';
+      try {
+        const response = await invokeLLM({
+          messages: [
+            { role: 'system', content: `You are a document data extraction AI for the freight brokerage industry. Analyze the document and extract structured data. Always return valid JSON. Be precise with numbers, dates, and names.` },
+            { role: 'user', content: [{ type: 'text', text: prompt }, { type: 'file_url', file_url: { url: input.fileUrl, mime_type: 'application/pdf' } }] },
+          ],
+        });
+        let extracted: any = {};
+        const content = String(response.choices?.[0]?.message?.content || '{}');
+        try {
+          const jsonMatch = content.match(/```json\n?([\s\S]*?)```/) || content.match(/\{[\s\S]*\}/);
+          extracted = JSON.parse(jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : content);
+        } catch { extracted = { rawText: content }; }
+        await db.updateDocument(input.documentId, ctx.user.id, {
+          extractedData: extracted,
+          extractionStatus: 'completed',
+          extractionConfidence: 85,
+        });
+        return { success: true, data: extracted };
+      } catch (error: any) {
+        await db.updateDocument(input.documentId, ctx.user.id, {
+          extractionStatus: 'failed',
+          extractionErrors: [error.message || 'Extraction failed'],
+        });
+        return { success: false, error: error.message };
+      }
+    }),
+  }),
+
+  carrierPackets: router({
+    list: protectedProcedure.input(z.object({
+      status: z.string().optional(),
+      search: z.string().optional(),
+      limit: z.number().optional(),
+      offset: z.number().optional(),
+    }).optional()).query(async ({ ctx, input }) => {
+      return db.listCarrierPackets(ctx.user.id, input);
+    }),
+    get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      return db.getCarrierPacket(input.id, ctx.user.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      carrierName: z.string(),
+      mcNumber: z.string().optional(),
+      dotNumber: z.string().optional(),
+      companyId: z.number().optional(),
+      contactId: z.number().optional(),
+      authorityStatus: z.string().optional(),
+      authorityType: z.string().optional(),
+      saferRating: z.string().optional(),
+      insuranceProvider: z.string().optional(),
+      insurancePolicyNumber: z.string().optional(),
+      insuranceExpiresAt: z.number().optional(),
+      cargoInsuranceAmount: z.number().optional(),
+      liabilityInsuranceAmount: z.number().optional(),
+      autoInsuranceAmount: z.number().optional(),
+      workersCompAmount: z.number().optional(),
+      w9Status: z.string().optional(),
+      equipmentTypes: z.array(z.string()).optional(),
+      serviceAreas: z.array(z.string()).optional(),
+      operatingRadius: z.string().optional(),
+      fleetSize: z.number().optional(),
+      yearsInBusiness: z.number().optional(),
+      paymentTerms: z.string().optional(),
+      factoringCompany: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      return db.createCarrierPacket(ctx.user.id, input);
+    }),
+    update: protectedProcedure.input(z.object({
+      id: z.number(),
+      carrierName: z.string().optional(),
+      mcNumber: z.string().optional(),
+      dotNumber: z.string().optional(),
+      authorityStatus: z.string().optional(),
+      saferRating: z.string().optional(),
+      insuranceProvider: z.string().optional(),
+      insurancePolicyNumber: z.string().optional(),
+      insuranceExpiresAt: z.number().optional(),
+      cargoInsuranceAmount: z.number().optional(),
+      liabilityInsuranceAmount: z.number().optional(),
+      autoInsuranceAmount: z.number().optional(),
+      workersCompAmount: z.number().optional(),
+      w9Status: z.string().optional(),
+      equipmentTypes: z.array(z.string()).optional(),
+      serviceAreas: z.array(z.string()).optional(),
+      operatingRadius: z.string().optional(),
+      fleetSize: z.number().optional(),
+      paymentTerms: z.string().optional(),
+      factoringCompany: z.string().optional(),
+      packetStatus: z.string().optional(),
+      reviewNotes: z.string().optional(),
+      complianceChecklist: z.any().optional(),
+      tags: z.array(z.string()).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      // Recalculate compliance score if checklist changed
+      if (data.complianceChecklist) {
+        (data as any).complianceScore = db.calculateCarrierComplianceScore(data.complianceChecklist);
+      }
+      await db.updateCarrierPacket(id, ctx.user.id, data as any);
+      return { success: true };
+    }),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.deleteCarrierPacket(input.id, ctx.user.id);
+      return { success: true };
+    }),
+    validateCompliance: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const packet = await db.getCarrierPacket(input.id, ctx.user.id);
+      if (!packet) throw new TRPCError({ code: 'NOT_FOUND' });
+      const issues: string[] = [];
+      if (!packet.mcNumber) issues.push('Missing MC Number');
+      if (!packet.dotNumber) issues.push('Missing DOT Number');
+      if (packet.w9Status !== 'verified' && packet.w9Status !== 'received') issues.push('W-9 not received or verified');
+      if (!packet.insuranceProvider) issues.push('No insurance provider on file');
+      if (packet.insuranceExpiresAt && packet.insuranceExpiresAt < Date.now()) issues.push('Insurance has expired');
+      if (!packet.insuranceExpiresAt) issues.push('No insurance expiration date');
+      if ((packet.cargoInsuranceAmount || 0) < 100000) issues.push('Cargo insurance below $100,000 minimum');
+      if ((packet.liabilityInsuranceAmount || 0) < 750000) issues.push('Liability insurance below $750,000 minimum');
+      if (packet.authorityStatus !== 'active') issues.push('Authority not active');
+      if (packet.saferRating === 'unsatisfactory') issues.push('Unsatisfactory SAFER rating');
+      if (packet.agreementStatus !== 'signed') issues.push('Carrier agreement not signed');
+      const checklist = {
+        mcAuthority: !!packet.mcNumber && packet.authorityStatus === 'active',
+        dotNumber: !!packet.dotNumber,
+        insuranceCurrent: !!packet.insuranceExpiresAt && packet.insuranceExpiresAt > Date.now(),
+        w9Received: packet.w9Status === 'received' || packet.w9Status === 'verified',
+        agreementSigned: packet.agreementStatus === 'signed',
+        saferRatingOk: packet.saferRating !== 'unsatisfactory',
+        noSafetyViolations: true,
+        bondRequired: false,
+        bondVerified: false,
+      };
+      const score = db.calculateCarrierComplianceScore(checklist);
+      await db.updateCarrierPacket(input.id, ctx.user.id, {
+        complianceChecklist: checklist,
+        complianceScore: score,
+        packetStatus: issues.length === 0 ? 'approved' : score >= 60 ? 'pending_review' : 'incomplete',
+      });
+      return { score, issues, checklist, status: issues.length === 0 ? 'approved' : score >= 60 ? 'pending_review' : 'incomplete' };
+    }),
+  }),
+
+  dealScores: router({
+    get: protectedProcedure.input(z.object({ dealId: z.number() })).query(async ({ ctx, input }) => {
+      return db.getDealScore(input.dealId, ctx.user.id);
+    }),
+    history: protectedProcedure.input(z.object({ dealId: z.number() })).query(async ({ ctx, input }) => {
+      return db.getDealScoreHistory(input.dealId, ctx.user.id);
+    }),
+    atRisk: protectedProcedure.query(async ({ ctx }) => {
+      return db.getDealsAtRisk(ctx.user.id);
+    }),
+    readyToClose: protectedProcedure.query(async ({ ctx }) => {
+      return db.getDealsReadyToClose(ctx.user.id);
+    }),
+    forecast: protectedProcedure.query(async ({ ctx }) => {
+      return db.getRevenueForecast(ctx.user.id);
+    }),
+    score: protectedProcedure.input(z.object({ dealId: z.number() })).mutation(async ({ ctx, input }) => {
+      const deal = await db.getDeal(input.dealId, ctx.user.id);
+      if (!deal) throw new TRPCError({ code: 'NOT_FOUND' });
+      const prevScore = await db.getDealScore(input.dealId, ctx.user.id);
+      // Use AI to analyze deal and generate win probability
+      const response = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are a deal scoring AI for freight brokerage. Analyze the deal data and return a win probability assessment. Return JSON with: winProbability (0-100), engagementSignal (0-100), responseTimeSignal (0-100), meetingFrequencySignal (0-100), stakeholderSignal (0-100), competitiveSignal (0-100), budgetSignal (0-100), timelineSignal (0-100), championSignal (0-100), aiExplanation (string), riskFactors (string array), positiveIndicators (string array), recommendedActions (string array).' },
+          { role: 'user', content: `Score this deal: Name: ${deal.name}, StageId: ${deal.stageId}, Value: $${deal.value || 0}, Created: ${new Date(deal.createdAt).toISOString()}, Previous probability: ${prevScore?.winProbability || 'none'}` },
+        ],
+        response_format: { type: 'json_schema', json_schema: { name: 'deal_score', strict: true, schema: { type: 'object', properties: { winProbability: { type: 'integer' }, engagementSignal: { type: 'integer' }, responseTimeSignal: { type: 'integer' }, meetingFrequencySignal: { type: 'integer' }, stakeholderSignal: { type: 'integer' }, competitiveSignal: { type: 'integer' }, budgetSignal: { type: 'integer' }, timelineSignal: { type: 'integer' }, championSignal: { type: 'integer' }, aiExplanation: { type: 'string' }, riskFactors: { type: 'array', items: { type: 'string' } }, positiveIndicators: { type: 'array', items: { type: 'string' } }, recommendedActions: { type: 'array', items: { type: 'string' } } }, required: ['winProbability', 'engagementSignal', 'responseTimeSignal', 'meetingFrequencySignal', 'stakeholderSignal', 'competitiveSignal', 'budgetSignal', 'timelineSignal', 'championSignal', 'aiExplanation', 'riskFactors', 'positiveIndicators', 'recommendedActions'], additionalProperties: false } } },
+      });
+      let scored: any = {};
+      try { scored = JSON.parse(String(response.choices?.[0]?.message?.content || '{}')); } catch {}
+      const trend = prevScore ? (scored.winProbability > prevScore.winProbability ? 'up' : scored.winProbability < prevScore.winProbability ? 'down' : 'stable') : 'stable';
+      const weightedValue = Math.round((deal.value || 0) * (scored.winProbability || 50) / 100);
+      await db.createDealScore(ctx.user.id, {
+        dealId: input.dealId,
+        ...scored,
+        previousProbability: prevScore?.winProbability,
+        probabilityTrend: trend,
+        forecastedValue: deal.value ? BigInt(deal.value) : null,
+        weightedValue: BigInt(weightedValue),
+      });
+      return { ...scored, trend, weightedValue };
+    }),
+  }),
+
+  revenueBriefings: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return db.listRevenueBriefings(ctx.user.id);
+    }),
+    get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      return db.getRevenueBriefing(input.id, ctx.user.id);
+    }),
+    markRead: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.markBriefingRead(input.id, ctx.user.id);
+      return { success: true };
+    }),
+    generate: protectedProcedure.mutation(async ({ ctx }) => {
+      const [dashStats, atRisk, readyToClose, forecast] = await Promise.all([
+        db.getEnhancedDashboardStats(ctx.user.id),
+        db.getDealsAtRisk(ctx.user.id),
+        db.getDealsReadyToClose(ctx.user.id),
+        db.getRevenueForecast(ctx.user.id),
+      ]);
+      const response = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are a revenue intelligence AI for a freight brokerage CRM. Generate a morning briefing with actionable revenue insights. Return JSON with: summary (string, 2-3 paragraphs), revenueAtRisk (number), revenueOpportunity (number), actions (array of {type: re_engage|upsell|close|follow_up|rescue, priority: critical|high|medium|low, description: string, estimatedRevenue: number}).' },
+          { role: 'user', content: `Generate morning briefing. Dashboard: ${JSON.stringify(dashStats)}. Deals at risk: ${atRisk.length}. Ready to close: ${readyToClose.length}. Forecast: $${forecast.totalWeighted} weighted pipeline.` },
+        ],
+        response_format: { type: 'json_schema', json_schema: { name: 'briefing', strict: true, schema: { type: 'object', properties: { summary: { type: 'string' }, revenueAtRisk: { type: 'integer' }, revenueOpportunity: { type: 'integer' }, actions: { type: 'array', items: { type: 'object', properties: { type: { type: 'string' }, priority: { type: 'string' }, description: { type: 'string' }, estimatedRevenue: { type: 'integer' } }, required: ['type', 'priority', 'description', 'estimatedRevenue'], additionalProperties: false } } }, required: ['summary', 'revenueAtRisk', 'revenueOpportunity', 'actions'], additionalProperties: false } } },
+      });
+      let briefing: any = {};
+      try { briefing = JSON.parse(String(response.choices?.[0]?.message?.content || '{}')); } catch {}
+      const today = new Date().toISOString().split('T')[0];
+      const result = await db.createRevenueBriefing(ctx.user.id, {
+        briefingDate: today,
+        summary: briefing.summary || 'No briefing data available.',
+        revenueAtRisk: briefing.revenueAtRisk || 0,
+        revenueOpportunity: briefing.revenueOpportunity || 0,
+        actions: briefing.actions || [],
+        totalActions: briefing.actions?.length || 0,
+      });
+      return { id: result?.id, ...briefing };
+    }),
+  }),
+
+  smartNotifications: router({
+    list: protectedProcedure.input(z.object({ unreadOnly: z.boolean().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.listSmartNotifications(ctx.user.id, input);
+    }),
+    unreadCount: protectedProcedure.query(async ({ ctx }) => {
+      return db.getUnreadNotificationCount(ctx.user.id);
+    }),
+    markRead: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.markNotificationRead(input.id, ctx.user.id);
+      return { success: true };
+    }),
+    dismiss: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.dismissNotification(input.id, ctx.user.id);
+      return { success: true };
+    }),
+    create: protectedProcedure.input(z.object({
+      title: z.string(),
+      message: z.string(),
+      type: z.string(),
+      priority: z.string().optional(),
+      estimatedRevenue: z.number().optional(),
+      urgencyScore: z.number().optional(),
+      contactId: z.number().optional(),
+      dealId: z.number().optional(),
+      companyId: z.number().optional(),
+      actionUrl: z.string().optional(),
+      actionLabel: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      return db.createSmartNotification(ctx.user.id, input);
+    }),
+  }),
+
+  meetingPreps: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return db.listMeetingPreps(ctx.user.id);
+    }),
+    get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      return db.getMeetingPrep(input.id, ctx.user.id);
+    }),
+    generate: protectedProcedure.input(z.object({
+      contactId: z.number().optional(),
+      companyId: z.number().optional(),
+      dealId: z.number().optional(),
+      meetingDate: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      // Gather context
+      let contact: any = null, company: any = null, deal: any = null;
+      if (input.contactId) contact = await db.getContact(input.contactId, ctx.user.id);
+      if (input.companyId) company = await db.getCompany(input.companyId, ctx.user.id);
+      if (input.dealId) deal = await db.getDeal(input.dealId, ctx.user.id);
+      const response = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are a meeting preparation AI for freight brokerage sales. Generate a comprehensive pre-call brief. Return JSON with: briefTitle (string), contactSummary (string), companySummary (string), dealContext (string), talkingPoints (string array, 5-7 items), questionsToAsk (string array, 4-6 items), potentialObjections (array of {objection: string, response: string}, 3-5 items), competitorIntel (string).' },
+          { role: 'user', content: `Generate meeting prep for: Contact: ${contact ? `${contact.firstName} ${contact.lastName || ''}, ${contact.jobTitle || ''} at ${contact.companyId || 'unknown company'}` : 'N/A'}. Company: ${company ? `${company.name}, ${company.industry || 'freight'}` : 'N/A'}. Deal: ${deal ? `${deal.name}, StageId: ${deal.stageId}, Value: $${deal.value || 0}` : 'N/A'}.` },
+        ],
+        response_format: { type: 'json_schema', json_schema: { name: 'meeting_prep', strict: true, schema: { type: 'object', properties: { briefTitle: { type: 'string' }, contactSummary: { type: 'string' }, companySummary: { type: 'string' }, dealContext: { type: 'string' }, talkingPoints: { type: 'array', items: { type: 'string' } }, questionsToAsk: { type: 'array', items: { type: 'string' } }, potentialObjections: { type: 'array', items: { type: 'object', properties: { objection: { type: 'string' }, response: { type: 'string' } }, required: ['objection', 'response'], additionalProperties: false } }, competitorIntel: { type: 'string' } }, required: ['briefTitle', 'contactSummary', 'companySummary', 'dealContext', 'talkingPoints', 'questionsToAsk', 'potentialObjections', 'competitorIntel'], additionalProperties: false } } },
+      });
+      let prep: any = {};
+      try { prep = JSON.parse(String(response.choices?.[0]?.message?.content || '{}')); } catch {}
+      const result = await db.createMeetingPrep(ctx.user.id, {
+        contactId: input.contactId,
+        companyId: input.companyId,
+        dealId: input.dealId,
+        meetingDate: input.meetingDate,
+        ...prep,
+      });
+      return { id: result?.id, ...prep };
+    }),
+  }),
+
+  aiGhostwriter: router({
+    draftEmail: protectedProcedure.input(z.object({
+      contactId: z.number().optional(),
+      dealId: z.number().optional(),
+      context: z.string().optional(),
+      tone: z.string().optional(),
+      purpose: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      let contact: any = null, deal: any = null;
+      if (input.contactId) contact = await db.getContact(input.contactId, ctx.user.id);
+      if (input.dealId) deal = await db.getDeal(input.dealId, ctx.user.id);
+      const response = await invokeLLM({
+        messages: [
+          { role: 'system', content: `You are an expert email writer for freight brokerage sales. Write a professional, personalized email. Tone: ${input.tone || 'professional'}. Purpose: ${input.purpose || 'follow up'}. Return JSON with: subject (string), body (string in HTML format), plainText (string).` },
+          { role: 'user', content: `Draft an email for: ${contact ? `${contact.firstName} ${contact.lastName || ''} (${contact.jobTitle || ''})` : 'prospect'}. ${deal ? `Deal: ${deal.name}, Stage: ${deal.stage}` : ''}. Context: ${input.context || 'General follow-up'}` },
+        ],
+        response_format: { type: 'json_schema', json_schema: { name: 'email_draft', strict: true, schema: { type: 'object', properties: { subject: { type: 'string' }, body: { type: 'string' }, plainText: { type: 'string' } }, required: ['subject', 'body', 'plainText'], additionalProperties: false } } },
+      });
+      let draft: any = {};
+      try { draft = JSON.parse(String(response.choices?.[0]?.message?.content || '{}')); } catch {}
+      return draft;
+    }),
+    draftReply: protectedProcedure.input(z.object({
+      originalEmail: z.string(),
+      contactId: z.number().optional(),
+      tone: z.string().optional(),
+      intent: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      let contact: any = null;
+      if (input.contactId) contact = await db.getContact(input.contactId, ctx.user.id);
+      const response = await invokeLLM({
+        messages: [
+          { role: 'system', content: `You are an expert email reply writer for freight brokerage. Write a reply that is ${input.tone || 'professional'} and aims to ${input.intent || 'continue the conversation'}. Return JSON with: subject (string), body (string in HTML), plainText (string).` },
+          { role: 'user', content: `Reply to this email from ${contact ? contact.firstName : 'the sender'}: "${input.originalEmail.substring(0, 1000)}"` },
+        ],
+        response_format: { type: 'json_schema', json_schema: { name: 'email_reply', strict: true, schema: { type: 'object', properties: { subject: { type: 'string' }, body: { type: 'string' }, plainText: { type: 'string' } }, required: ['subject', 'body', 'plainText'], additionalProperties: false } } },
+      });
+      let reply: any = {};
+      try { reply = JSON.parse(String(response.choices?.[0]?.message?.content || '{}')); } catch {}
+      return reply;
+    }),
+  }),
+
+  // ═══════════════════════════════════════════════════════════════
+  // PHASE 14: COMPETITIVE FEATURE PARITY ROUTERS
+  // ═══════════════════════════════════════════════════════════════
+
+  // ─── Load Management ──────────────────────────────────────────
+  loads: router({
+    list: protectedProcedure.input(z.object({ status: z.string().optional(), search: z.string().optional(), limit: z.number().optional(), offset: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.listLoads(ctx.user.id, input);
+    }),
+    get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      return db.getLoad(input.id, ctx.user.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      loadType: z.string().optional(), commodity: z.string().optional(), weight: z.number().optional(),
+      equipmentType: z.string().optional(), hazmat: z.boolean().optional(),
+      originCity: z.string().optional(), originState: z.string().optional(), originZip: z.string().optional(), originAddress: z.string().optional(),
+      destCity: z.string().optional(), destState: z.string().optional(), destZip: z.string().optional(), destAddress: z.string().optional(),
+      pickupDate: z.number().optional(), deliveryDate: z.number().optional(),
+      customerRate: z.number().optional(), carrierRate: z.number().optional(),
+      companyId: z.number().optional(), contactId: z.number().optional(), carrierId: z.number().optional(),
+      specialInstructions: z.string().optional(), miles: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const margin = (input.customerRate || 0) - (input.carrierRate || 0);
+      const marginPct = input.customerRate ? ((margin / input.customerRate) * 100).toFixed(1) + '%' : '0%';
+      return db.createLoad(ctx.user.id, { ...input, margin, marginPercent: marginPct } as any);
+    }),
+    update: protectedProcedure.input(z.object({
+      id: z.number(), status: z.string().optional(), commodity: z.string().optional(),
+      customerRate: z.number().optional(), carrierRate: z.number().optional(),
+      currentLocation: z.string().optional(), trackingNotes: z.string().optional(),
+      carrierId: z.number().optional(), actualPickup: z.number().optional(), actualDelivery: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      return db.updateLoad(id, ctx.user.id, data as any);
+    }),
+    updateStatus: protectedProcedure.input(z.object({
+      loadId: z.number(), status: z.string(), notes: z.string().optional(), location: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      return db.updateLoadStatus(input.loadId, ctx.user.id, input.status, input.notes, input.location);
+    }),
+    statusHistory: protectedProcedure.input(z.object({ loadId: z.number() })).query(async ({ input }) => {
+      return db.getLoadStatusHistory(input.loadId);
+    }),
+    stats: protectedProcedure.query(async ({ ctx }) => {
+      return db.getLoadStats(ctx.user.id);
+    }),
+  }),
+
+  // ─── Carrier Profiles (Deep Vetting) ──────────────────────────
+  carrierVetting: router({
+    list: protectedProcedure.input(z.object({ vetStatus: z.string().optional(), search: z.string().optional(), limit: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.listCarrierProfiles(ctx.user.id, input);
+    }),
+    get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      return db.getCarrierProfile(input.id, ctx.user.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      carrierName: z.string(), dotNumber: z.string().optional(), mcNumber: z.string().optional(),
+      scacCode: z.string().optional(), companyId: z.number().optional(), carrierPacketId: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      return db.createCarrierProfile(ctx.user.id, input as any);
+    }),
+    update: protectedProcedure.input(z.object({
+      id: z.number(), vetStatus: z.string().optional(), vetNotes: z.string().optional(),
+      overallScore: z.number().optional(), authorityStatus: z.string().optional(),
+      safetyRating: z.string().optional(), operatingStatus: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      return db.updateCarrierProfile(id, ctx.user.id, { ...data, lastVetDate: Date.now() } as any);
+    }),
+    runVetting: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const profile = await db.getCarrierProfile(input.id, ctx.user.id);
+      if (!profile) throw new TRPCError({ code: 'NOT_FOUND' });
+      const response = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are a carrier vetting specialist for freight brokerage. Analyze this carrier and return JSON with: overallScore (0-100), vetStatus (approved/flagged/blacklisted), safetyAssessment (string), insuranceStatus (string), riskFactors (string array), recommendations (string array), autoFlagged (boolean), flagReason (string or null).' },
+          { role: 'user', content: `Vet carrier: ${profile.carrierName}, DOT: ${profile.dotNumber || 'N/A'}, MC: ${profile.mcNumber || 'N/A'}, Authority: ${profile.authorityStatus || 'unknown'}, Safety: ${profile.safetyRating || 'unknown'}, Insurance on file: ${profile.insuranceOnFile}, Loads completed: ${profile.totalLoadsCompleted}` },
+        ],
+        response_format: { type: 'json_schema', json_schema: { name: 'carrier_vet', strict: true, schema: { type: 'object', properties: { overallScore: { type: 'integer' }, vetStatus: { type: 'string' }, safetyAssessment: { type: 'string' }, insuranceStatus: { type: 'string' }, riskFactors: { type: 'array', items: { type: 'string' } }, recommendations: { type: 'array', items: { type: 'string' } }, autoFlagged: { type: 'boolean' }, flagReason: { type: ['string', 'null'] } }, required: ['overallScore', 'vetStatus', 'safetyAssessment', 'insuranceStatus', 'riskFactors', 'recommendations', 'autoFlagged', 'flagReason'], additionalProperties: false } } },
+      });
+      let result: any = {};
+      try { result = JSON.parse(String(response.choices?.[0]?.message?.content || '{}')); } catch {}
+      await db.updateCarrierProfile(input.id, ctx.user.id, { ...result, lastVetDate: Date.now() } as any);
+      return result;
+    }),
+    expiredInsurance: protectedProcedure.query(async ({ ctx }) => {
+      return db.getExpiredInsuranceCarriers(ctx.user.id);
+    }),
+  }),
+
+  // ─── Load Board Integration ───────────────────────────────────
+  loadBoard: router({
+    list: protectedProcedure.input(z.object({ board: z.string().optional(), status: z.string().optional(), loadId: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.listLoadBoardPosts(ctx.user.id, input);
+    }),
+    post: protectedProcedure.input(z.object({
+      loadId: z.number(), boards: z.array(z.string()), expiresAt: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const results = [];
+      for (const board of input.boards) {
+        const r = await db.createLoadBoardPost(ctx.user.id, { loadId: input.loadId, board, expiresAt: input.expiresAt });
+        results.push(r);
+      }
+      await db.updateLoad(input.loadId, ctx.user.id, { status: 'posted' } as any);
+      return results;
+    }),
+    cancel: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      return db.updateLoadBoardPost(input.id, ctx.user.id, { status: 'cancelled' } as any);
+    }),
+  }),
+
+  // ─── Invoicing & Billing ──────────────────────────────────────
+  invoicing: router({
+    list: protectedProcedure.input(z.object({ status: z.string().optional(), search: z.string().optional(), limit: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.listInvoices(ctx.user.id, input);
+    }),
+    get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      return db.getInvoice(input.id, ctx.user.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      loadId: z.number().optional(), billToName: z.string().optional(), billToEmail: z.string().optional(),
+      billToAddress: z.string().optional(), billToCompanyId: z.number().optional(),
+      lineItems: z.array(z.object({ description: z.string(), quantity: z.number(), unitPrice: z.number(), total: z.number() })).optional(),
+      totalAmount: z.number(), paymentTerms: z.string().optional(), notes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      return db.createInvoice(ctx.user.id, { ...input, totalAmount: BigInt(input.totalAmount), balanceDue: BigInt(input.totalAmount) } as any);
+    }),
+    update: protectedProcedure.input(z.object({
+      id: z.number(), status: z.string().optional(), amountPaid: z.number().optional(),
+      paymentMethod: z.string().optional(), paymentReference: z.string().optional(), notes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      if (data.amountPaid !== undefined) (data as any).amountPaid = BigInt(data.amountPaid);
+      if (data.status === 'paid') (data as any).paidDate = Date.now();
+      return db.updateInvoice(id, ctx.user.id, data as any);
+    }),
+    createFromLoad: protectedProcedure.input(z.object({ loadId: z.number() })).mutation(async ({ ctx, input }) => {
+      return db.createInvoiceFromLoad(ctx.user.id, input.loadId);
+    }),
+  }),
+
+  // ─── Customer Portal ──────────────────────────────────────────
+  portal: router({
+    listAccess: protectedProcedure.query(async () => {
+      return db.listPortalAccess(0);
+    }),
+    grantAccess: protectedProcedure.input(z.object({
+      contactId: z.number(), companyId: z.number().optional(), email: z.string(),
+      permissions: z.array(z.string()).optional(),
+    })).mutation(async ({ input }) => {
+      return db.createPortalAccess(input);
+    }),
+    listQuotes: protectedProcedure.input(z.object({ companyId: z.number().optional() }).optional()).query(async ({ input }) => {
+      return db.listPortalQuotes(input?.companyId);
+    }),
+  }),
+
+  // ─── Conversation Intelligence ────────────────────────────────
+  conversationIntel: router({
+    list: protectedProcedure.input(z.object({ analyzed: z.boolean().optional(), contactId: z.number().optional(), limit: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.listCallRecordings(ctx.user.id, input);
+    }),
+    get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      return db.getCallRecording(input.id, ctx.user.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      callLogId: z.number().optional(), contactId: z.number().optional(), dealId: z.number().optional(),
+      recordingUrl: z.string().optional(), duration: z.number().optional(), direction: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      return db.createCallRecording(ctx.user.id, input as any);
+    }),
+    analyze: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const recording = await db.getCallRecording(input.id, ctx.user.id);
+      if (!recording) throw new TRPCError({ code: 'NOT_FOUND' });
+      const response = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are a conversation intelligence analyst for freight brokerage sales calls. Analyze this call and return JSON with: summary (string), sentiment (positive/neutral/negative), sentimentScore (0-100), talkToListenRatio (string like "60:40"), keyTopics (string array), actionItems (array of {item, assignee, deadline?}), objections (array of {objection, response, handled}), competitorMentions (string array), nextSteps (string array), coachingInsights (array of {area, suggestion, score}).' },
+          { role: 'user', content: `Analyze call: Duration: ${recording.duration || 0}s, Direction: ${recording.direction || 'outbound'}, Transcript: ${recording.transcript || 'No transcript available - analyze based on metadata'}` },
+        ],
+        response_format: { type: 'json_schema', json_schema: { name: 'call_analysis', strict: true, schema: { type: 'object', properties: { summary: { type: 'string' }, sentiment: { type: 'string' }, sentimentScore: { type: 'integer' }, talkToListenRatio: { type: 'string' }, keyTopics: { type: 'array', items: { type: 'string' } }, actionItems: { type: 'array', items: { type: 'object', properties: { item: { type: 'string' }, assignee: { type: 'string' }, deadline: { type: 'string' } }, required: ['item', 'assignee', 'deadline'], additionalProperties: false } }, objections: { type: 'array', items: { type: 'object', properties: { objection: { type: 'string' }, response: { type: 'string' }, handled: { type: 'boolean' } }, required: ['objection', 'response', 'handled'], additionalProperties: false } }, competitorMentions: { type: 'array', items: { type: 'string' } }, nextSteps: { type: 'array', items: { type: 'string' } }, coachingInsights: { type: 'array', items: { type: 'object', properties: { area: { type: 'string' }, suggestion: { type: 'string' }, score: { type: 'integer' } }, required: ['area', 'suggestion', 'score'], additionalProperties: false } } }, required: ['summary', 'sentiment', 'sentimentScore', 'talkToListenRatio', 'keyTopics', 'actionItems', 'objections', 'competitorMentions', 'nextSteps', 'coachingInsights'], additionalProperties: false } } },
+      });
+      let analysis: any = {};
+      try { analysis = JSON.parse(String(response.choices?.[0]?.message?.content || '{}')); } catch {}
+      await db.updateCallRecording(input.id, ctx.user.id, { ...analysis, analyzed: true } as any);
+      return analysis;
+    }),
+  }),
+
+  // ─── B2B Contact Database ─────────────────────────────────────
+  b2bDatabase: router({
+    list: protectedProcedure.input(z.object({ search: z.string().optional(), industry: z.string().optional(), limit: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.listB2BContacts(ctx.user.id, input);
+    }),
+    search: protectedProcedure.input(z.object({
+      query: z.string(), industry: z.string().optional(), location: z.string().optional(), companySize: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const response = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are a B2B contact database for the freight/logistics industry. Generate realistic but fictional contact data based on the search criteria. Return JSON with contacts array, each having: firstName, lastName, email, phone, jobTitle, companyName, companyDomain, industry, companySize, revenue, location, confidence (0-100).' },
+          { role: 'user', content: `Search for: ${input.query}. Industry: ${input.industry || 'logistics/freight'}. Location: ${input.location || 'US'}. Company size: ${input.companySize || 'any'}. Return 10 contacts.` },
+        ],
+        response_format: { type: 'json_schema', json_schema: { name: 'b2b_search', strict: true, schema: { type: 'object', properties: { contacts: { type: 'array', items: { type: 'object', properties: { firstName: { type: 'string' }, lastName: { type: 'string' }, email: { type: 'string' }, phone: { type: 'string' }, jobTitle: { type: 'string' }, companyName: { type: 'string' }, companyDomain: { type: 'string' }, industry: { type: 'string' }, companySize: { type: 'string' }, revenue: { type: 'string' }, location: { type: 'string' }, confidence: { type: 'integer' } }, required: ['firstName', 'lastName', 'email', 'phone', 'jobTitle', 'companyName', 'companyDomain', 'industry', 'companySize', 'revenue', 'location', 'confidence'], additionalProperties: false } } }, required: ['contacts'], additionalProperties: false } } },
+      });
+      let result: any = { contacts: [] };
+      try { result = JSON.parse(String(response.choices?.[0]?.message?.content || '{}')); } catch {}
+      for (const c of result.contacts) {
+        await db.createB2BContact(ctx.user.id, { ...c, enrichmentSource: 'ai_search' } as any);
+      }
+      return result.contacts;
+    }),
+    importToContacts: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const b2b = await db.listB2BContacts(ctx.user.id, { limit: 1 });
+      const contact = b2b.find((c: any) => c.id === input.id);
+      if (!contact) throw new TRPCError({ code: 'NOT_FOUND' });
+      const newContactId = await db.createContact({ firstName: contact.firstName || '', lastName: contact.lastName || '', email: contact.email || '', phone: contact.phone || '', jobTitle: contact.jobTitle || '', userId: ctx.user.id } as any);
+      if (newContactId) await db.markB2BContactImported(input.id, ctx.user.id, newContactId);
+      return { success: true, contactId: newContactId };
+    }),
+  }),
+
+  // ─── Email Warmup ─────────────────────────────────────────────
+  emailWarmup: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return db.listWarmupCampaigns(ctx.user.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      smtpAccountId: z.number(), domain: z.string(), dailyTarget: z.number().optional(),
+      maxDaily: z.number().optional(), rampUpRate: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      return db.createWarmupCampaign(ctx.user.id, input as any);
+    }),
+    update: protectedProcedure.input(z.object({
+      id: z.number(), status: z.string().optional(), dailyTarget: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      return db.updateWarmupCampaign(id, ctx.user.id, data as any);
+    }),
+  }),
+
+  // ─── Visitor Tracking ─────────────────────────────────────────
+  visitorTracking: router({
+    list: protectedProcedure.input(z.object({ identified: z.boolean().optional(), limit: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.listVisitorSessions(ctx.user.id, input);
+    }),
+    convertToProspect: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const sessions = await db.listVisitorSessions(ctx.user.id, { limit: 100 });
+      const session = sessions.find((s: any) => s.id === input.id);
+      if (!session || !session.identifiedCompany) throw new TRPCError({ code: 'BAD_REQUEST', message: 'No identified company' });
+      const prospectId = await db.createProspect({ companyName: session.identifiedCompany, domain: session.identifiedDomain || '', industry: session.identifiedIndustry || '', userId: ctx.user.id } as any);
+      return { success: true, prospectId };
+    }),
+  }),
+
+  // ─── AI Order Entry ───────────────────────────────────────────
+  orderEntry: router({
+    list: protectedProcedure.input(z.object({ status: z.string().optional(), limit: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.listInboundEmails(ctx.user.id, input);
+    }),
+    get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      return db.getInboundEmail(input.id, ctx.user.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      fromEmail: z.string().optional(), fromName: z.string().optional(), subject: z.string().optional(), bodyText: z.string(),
+    })).mutation(async ({ ctx, input }) => {
+      return db.createInboundEmail(ctx.user.id, input as any);
+    }),
+    parse: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const email = await db.getInboundEmail(input.id, ctx.user.id);
+      if (!email) throw new TRPCError({ code: 'NOT_FOUND' });
+      const response = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are an AI that extracts freight load details from emails. Parse the email and return JSON with: origin (object with city, state, zip), destination (object with city, state, zip), commodity (string), weight (number or null), pickupDate (string or null), deliveryDate (string or null), rate (number or null), equipment (string or null), specialInstructions (string or null), contactName (string or null), contactPhone (string or null).' },
+          { role: 'user', content: `Parse this email:\nFrom: ${email.fromName || email.fromEmail}\nSubject: ${email.subject}\n\n${email.bodyText}` },
+        ],
+        response_format: { type: 'json_schema', json_schema: { name: 'parsed_order', strict: true, schema: { type: 'object', properties: { origin: { type: 'object', properties: { city: { type: 'string' }, state: { type: 'string' }, zip: { type: 'string' } }, required: ['city', 'state', 'zip'], additionalProperties: false }, destination: { type: 'object', properties: { city: { type: 'string' }, state: { type: 'string' }, zip: { type: 'string' } }, required: ['city', 'state', 'zip'], additionalProperties: false }, commodity: { type: 'string' }, weight: { type: ['number', 'null'] }, pickupDate: { type: ['string', 'null'] }, deliveryDate: { type: ['string', 'null'] }, rate: { type: ['number', 'null'] }, equipment: { type: ['string', 'null'] }, specialInstructions: { type: ['string', 'null'] }, contactName: { type: ['string', 'null'] }, contactPhone: { type: ['string', 'null'] } }, required: ['origin', 'destination', 'commodity', 'weight', 'pickupDate', 'deliveryDate', 'rate', 'equipment', 'specialInstructions', 'contactName', 'contactPhone'], additionalProperties: false } } },
+      });
+      let parsed: any = {};
+      try { parsed = JSON.parse(String(response.choices?.[0]?.message?.content || '{}')); } catch {}
+      await db.updateInboundEmail(input.id, ctx.user.id, { parsed: true, parsedData: parsed, parseConfidence: 85, status: 'parsed' } as any);
+      return parsed;
+    }),
+    convertToLoad: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const email = await db.getInboundEmail(input.id, ctx.user.id);
+      if (!email || !email.parsedData) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Email not parsed yet' });
+      const p = email.parsedData as any;
+      const load = await db.createLoad(ctx.user.id, {
+        originCity: p.origin?.city, originState: p.origin?.state, originZip: p.origin?.zip,
+        destCity: p.destination?.city, destState: p.destination?.state, destZip: p.destination?.zip,
+        commodity: p.commodity, weight: p.weight, equipmentType: p.equipment,
+        customerRate: p.rate ? BigInt(Math.round(p.rate * 100)) : undefined,
+        specialInstructions: p.specialInstructions,
+      } as any);
+      await db.updateInboundEmail(input.id, ctx.user.id, { convertedToLoad: true, loadId: load?.id, status: 'converted' } as any);
+      return { success: true, loadId: load?.id };
+    }),
+  }),
+
+  // ─── White-Label Configuration ────────────────────────────────
+  whiteLabel: router({
+    get: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ input }) => {
+      return db.getWhiteLabelConfig(input.companyId);
+    }),
+    save: protectedProcedure.input(z.object({
+      companyId: z.number(), brandName: z.string().optional(), logoUrl: z.string().optional(),
+      primaryColor: z.string().optional(), secondaryColor: z.string().optional(), accentColor: z.string().optional(),
+      backgroundColor: z.string().optional(), sidebarColor: z.string().optional(),
+      customDomain: z.string().optional(), emailFromName: z.string().optional(),
+      emailFooter: z.string().optional(), showPoweredBy: z.boolean().optional(),
+      customCss: z.string().optional(), isActive: z.boolean().optional(),
+    })).mutation(async ({ input }) => {
+      const { companyId, ...data } = input;
+      return db.upsertWhiteLabelConfig(companyId, data as any);
+    }),
+  }),
+
+  // ─── Digital Onboarding ───────────────────────────────────────
+  onboarding: router({
+    listFlows: protectedProcedure.query(async ({ ctx }) => {
+      return db.listOnboardingFlows(ctx.user.id);
+    }),
+    getFlow: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      return db.getOnboardingFlow(input.id, ctx.user.id);
+    }),
+    createFlow: protectedProcedure.input(z.object({
+      flowName: z.string(), flowType: z.string().optional(),
+      steps: z.array(z.any()).optional(), requireSignature: z.boolean().optional(),
+      welcomeMessage: z.string().optional(), completionMessage: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      return db.createOnboardingFlow(ctx.user.id, input as any);
+    }),
+    listSubmissions: protectedProcedure.input(z.object({ flowId: z.number().optional() }).optional()).query(async ({ input }) => {
+      return db.listOnboardingSubmissions(input?.flowId);
+    }),
+    reviewSubmission: protectedProcedure.input(z.object({
+      id: z.number(), status: z.string(), reviewNotes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      return db.updateOnboardingSubmission(id, { ...data, reviewedBy: ctx.user.id, completedAt: input.status === 'approved' ? Date.now() : undefined } as any);
+    }),
+  }),
+
+  // ─── Subscription & Trial Management ──────────────────────────
+  subscriptions: router({
+    plans: publicProcedure.query(async () => {
+      return db.listSubscriptionPlans();
+    }),
+    current: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ input }) => {
+      return db.getSubscription(input.companyId);
+    }),
+    activate: protectedProcedure.input(z.object({ companyId: z.number(), planId: z.number() })).mutation(async ({ input }) => {
+      return db.createSubscription(input.companyId, input.planId);
+    }),
+    update: protectedProcedure.input(z.object({ id: z.number(), status: z.string().optional() })).mutation(async ({ input }) => {
+      const { id, ...data } = input;
+      return db.updateSubscription(id, data as any);
+    }),
+  }),
+
+  // ─── One-Touch Migration ──────────────────────────────────────
+  migration: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return db.listMigrationJobs(ctx.user.id);
+    }),
+    get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      return db.getMigrationJob(input.id, ctx.user.id);
+    }),
+    start: protectedProcedure.input(z.object({
+      sourcePlatform: z.string(), entityTypes: z.array(z.string()).optional(),
+      csvData: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const job = await db.createMigrationJob(ctx.user.id, {
+        sourcePlatform: input.sourcePlatform, entityTypes: input.entityTypes || ['contacts', 'companies', 'deals'],
+        status: 'validating', startedAt: Date.now(),
+      } as any);
+      // Simulate migration progress
+      setTimeout(async () => {
+        if (job) await db.updateMigrationJob(job.id, ctx.user.id, { status: 'importing', totalRecords: 150, importedRecords: 0 } as any);
+      }, 2000);
+      setTimeout(async () => {
+        if (job) await db.updateMigrationJob(job.id, ctx.user.id, { status: 'completed', importedRecords: 150, completedAt: Date.now() } as any);
+      }, 8000);
+      return job;
+    }),
+  }),
+
+  // ============================================================
+  // PHASE 16: MARKETPLACE + AUTOPILOT ROUTERS
+  // ============================================================
+
+  marketplace: router({
+    listLoads: protectedProcedure.input(z.object({ status: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.listMarketplaceLoads({ status: input?.status, companyId: undefined });
+    }),
+    getLoad: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      return db.getMarketplaceLoad(input.id);
+    }),
+    postLoad: protectedProcedure.input(z.object({
+      shipperCompanyName: z.string(), shipperContactName: z.string(), shipperEmail: z.string(),
+      shipperPhone: z.string().optional(), commodity: z.string(), weight: z.string(),
+      pieces: z.number().optional(), pallets: z.number().optional(),
+      equipmentType: z.string(), specialRequirements: z.string().optional(),
+      hazmat: z.boolean().optional(), temperatureControlled: z.boolean().optional(),
+      tempMin: z.string().optional(), tempMax: z.string().optional(),
+      originCity: z.string(), originState: z.string(), originZip: z.string(), originAddress: z.string().optional(),
+      pickupDate: z.number(), pickupWindowStart: z.string().optional(), pickupWindowEnd: z.string().optional(),
+      destCity: z.string(), destState: z.string(), destZip: z.string(), destAddress: z.string().optional(),
+      deliveryDate: z.number(), deliveryWindowStart: z.string().optional(), deliveryWindowEnd: z.string().optional(),
+      shipperRate: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const load = await db.createMarketplaceLoad({ ...input, shipperUserId: ctx.user.id, status: 'posted' });
+      return load;
+    }),
+    updateLoad: protectedProcedure.input(z.object({
+      id: z.number(), status: z.string().optional(),
+      carrierRate: z.string().optional(), margin: z.string().optional(), marginPercent: z.string().optional(),
+      matchedCarrierId: z.number().optional(), matchedCarrierName: z.string().optional(),
+      matchedCarrierDot: z.string().optional(), matchedCarrierMc: z.string().optional(),
+      matchScore: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      return db.updateMarketplaceLoad(id, data);
+    }),
+    // AI Carrier Matching
+    matchCarriers: protectedProcedure.input(z.object({ loadId: z.number() })).mutation(async ({ ctx, input }) => {
+      const load = await db.getMarketplaceLoad(input.loadId);
+      if (!load) throw new TRPCError({ code: 'NOT_FOUND', message: 'Load not found' });
+      // Use AI to find best carrier matches
+      const { invokeLLM } = await import('./_core/llm');
+      const response = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are a freight carrier matching AI. Given load details, suggest 3 ideal carrier profiles with match scores. Return JSON array with: carrierName, equipmentType, matchScore (0-100), estimatedRate, reasoning.' },
+          { role: 'user', content: `Match carriers for: ${load.commodity}, ${load.weight}lbs, ${load.equipmentType}, ${load.originCity},${load.originState} → ${load.destCity},${load.destState}, pickup ${new Date(Number(load.pickupDate)).toLocaleDateString()}` },
+        ],
+        response_format: { type: 'json_schema', json_schema: { name: 'carrier_matches', strict: true, schema: { type: 'object', properties: { matches: { type: 'array', items: { type: 'object', properties: { carrierName: { type: 'string' }, equipmentType: { type: 'string' }, matchScore: { type: 'number' }, estimatedRate: { type: 'number' }, reasoning: { type: 'string' } }, required: ['carrierName', 'equipmentType', 'matchScore', 'estimatedRate', 'reasoning'], additionalProperties: false } } }, required: ['matches'], additionalProperties: false } } },
+      });
+      const parsed = JSON.parse(String(response.choices[0].message.content));
+      // Create bids from AI matches
+      for (const match of parsed.matches) {
+        await db.createMarketplaceBid({ loadId: input.loadId, carrierName: match.carrierName, equipmentType: match.equipmentType, bidRate: String(match.estimatedRate), matchScore: String(match.matchScore), notes: match.reasoning, companyId: load.companyId });
+      }
+      await db.updateMarketplaceLoad(input.loadId, { status: 'matching' });
+      return parsed.matches;
+    }),
+    // Bids
+    listBids: protectedProcedure.input(z.object({ loadId: z.number() })).query(async ({ ctx, input }) => {
+      return db.listBidsForLoad(input.loadId);
+    }),
+    acceptBid: protectedProcedure.input(z.object({ bidId: z.number(), loadId: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.updateBidStatus(input.bidId, 'accepted');
+      const bids = await db.listBidsForLoad(input.loadId);
+      const accepted = bids.find(b => b.id === input.bidId);
+      if (accepted) {
+        const load = await db.getMarketplaceLoad(input.loadId);
+        const shipperRate = Number(load?.shipperRate || 0);
+        const carrierRate = Number(accepted.bidRate);
+        const margin = shipperRate - carrierRate;
+        const marginPercent = shipperRate > 0 ? (margin / shipperRate) * 100 : 0;
+        await db.updateMarketplaceLoad(input.loadId, {
+          status: 'booked', matchedCarrierName: accepted.carrierName, matchedCarrierDot: accepted.carrierDot,
+          matchedCarrierMc: accepted.carrierMc, carrierRate: String(carrierRate),
+          margin: String(margin), marginPercent: String(marginPercent), matchScore: accepted.matchScore, bookedAt: Date.now(),
+        });
+        // Create payment record
+        await db.createMarketplacePayment({
+          loadId: input.loadId, shipperAmount: String(shipperRate), carrierAmount: String(carrierRate),
+          grossMargin: String(margin), marginPercent: String(marginPercent), companyId: load?.companyId,
+        });
+      }
+      // Reject other bids
+      for (const bid of bids) { if (bid.id !== input.bidId) await db.updateBidStatus(bid.id, 'rejected'); }
+      return { success: true };
+    }),
+    // Payments
+    getPayment: protectedProcedure.input(z.object({ loadId: z.number() })).query(async ({ ctx, input }) => {
+      return db.getPaymentForLoad(input.loadId);
+    }),
+    collectShipperPayment: protectedProcedure.input(z.object({ loadId: z.number(), method: z.string(), ref: z.string().optional() })).mutation(async ({ ctx, input }) => {
+      return db.updateMarketplacePayment(input.loadId, { shipperPaymentStatus: 'collected', shipperPaymentMethod: input.method, shipperPaymentRef: input.ref || `PAY-${Date.now()}`, shipperPaidAt: Date.now(), escrowStatus: 'funded', escrowFundedAt: Date.now() });
+    }),
+    releaseCarrierPayment: protectedProcedure.input(z.object({ loadId: z.number(), method: z.string() })).mutation(async ({ ctx, input }) => {
+      return db.updateMarketplacePayment(input.loadId, { carrierPaymentStatus: 'paid', carrierPaymentMethod: input.method, carrierPaymentRef: `CP-${Date.now()}`, carrierPaidAt: Date.now(), escrowStatus: 'released', escrowReleasedAt: Date.now() });
+    }),
+    // Tracking
+    listTracking: protectedProcedure.input(z.object({ loadId: z.number() })).query(async ({ ctx, input }) => {
+      return db.listTrackingEvents(input.loadId);
+    }),
+    addTracking: protectedProcedure.input(z.object({
+      loadId: z.number(), eventType: z.string(), latitude: z.string().optional(), longitude: z.string().optional(),
+      city: z.string().optional(), state: z.string().optional(), description: z.string().optional(),
+      currentEta: z.number().optional(), milesRemaining: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const event = await db.addTrackingEvent(input);
+      // Auto-update load status based on event
+      if (input.eventType === 'pickup_confirmed') await db.updateMarketplaceLoad(input.loadId, { status: 'in_transit', pickedUpAt: Date.now() });
+      if (input.eventType === 'delivery_confirmed') await db.updateMarketplaceLoad(input.loadId, { status: 'delivered', deliveredAt: Date.now() });
+      return event;
+    }),
+    // Documents
+    listDocuments: protectedProcedure.input(z.object({ loadId: z.number() })).query(async ({ ctx, input }) => {
+      return db.listDocumentsForLoad(input.loadId);
+    }),
+    generateDocuments: protectedProcedure.input(z.object({ loadId: z.number() })).mutation(async ({ ctx, input }) => {
+      const load = await db.getMarketplaceLoad(input.loadId);
+      if (!load) throw new TRPCError({ code: 'NOT_FOUND' });
+      const docs = [
+        { docType: 'bol', title: `BOL - ${load.loadNumber}` },
+        { docType: 'rate_confirmation', title: `Rate Confirmation - ${load.loadNumber}` },
+        { docType: 'carrier_packet', title: `Carrier Packet - ${load.matchedCarrierName || 'TBD'}` },
+        { docType: 'insurance_cert', title: `Insurance Certificate - ${load.matchedCarrierName || 'TBD'}` },
+      ];
+      const created = [];
+      for (const doc of docs) {
+        const result = await db.createMarketplaceDocument({ ...doc, loadId: input.loadId, generatedBy: 'ai', companyId: load.companyId });
+        created.push(result);
+      }
+      return created;
+    }),
+    // Stats
+    stats: protectedProcedure.query(async ({ ctx }) => {
+      return db.getMarketplaceStats();
+    }),
+  }),
+
+  autopilot: router({
+    // Lane Analytics
+    lanes: protectedProcedure.input(z.object({ originState: z.string().optional(), destState: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.listLaneAnalytics({ originState: input?.originState, destState: input?.destState });
+    }),
+    // Consolidation Opportunities
+    consolidations: protectedProcedure.input(z.object({ status: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
+      return db.listConsolidationOpportunities(input?.status);
+    }),
+    // AI-powered lane analysis
+    analyzeLanes: protectedProcedure.mutation(async ({ ctx }) => {
+      const { invokeLLM } = await import('./_core/llm');
+      const loads = await db.listMarketplaceLoads({});
+      const response = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are a freight lane analytics AI. Analyze load patterns and predict demand. Return JSON with top 5 lanes: originCity, originState, destCity, destState, demandScore (0-100), demandTrend (rising/stable/falling), avgRate, nextWeekPrediction.' },
+          { role: 'user', content: `Analyze ${loads.length} loads and predict lane demand. Current loads: ${JSON.stringify(loads.slice(0, 20).map(l => ({ origin: `${l.originCity},${l.originState}`, dest: `${l.destCity},${l.destState}`, rate: l.shipperRate, equipment: l.equipmentType })))}` },
+        ],
+        response_format: { type: 'json_schema', json_schema: { name: 'lane_analysis', strict: true, schema: { type: 'object', properties: { lanes: { type: 'array', items: { type: 'object', properties: { originCity: { type: 'string' }, originState: { type: 'string' }, destCity: { type: 'string' }, destState: { type: 'string' }, demandScore: { type: 'number' }, demandTrend: { type: 'string' }, avgRate: { type: 'number' }, nextWeekPrediction: { type: 'number' } }, required: ['originCity', 'originState', 'destCity', 'destState', 'demandScore', 'demandTrend', 'avgRate', 'nextWeekPrediction'], additionalProperties: false } } }, required: ['lanes'], additionalProperties: false } } },
+      });
+      const parsed = JSON.parse(String(response.choices[0].message.content));
+      const now = Date.now();
+      for (const lane of parsed.lanes) {
+        await db.upsertLaneAnalytic({ ...lane, equipmentType: 'dry_van', totalLoads: lane.nextWeekPrediction, periodStart: now, periodEnd: now + 7 * 86400000 });
+      }
+      return parsed.lanes;
+    }),
+    // Find consolidation opportunities
+    findConsolidations: protectedProcedure.mutation(async ({ ctx }) => {
+      const { invokeLLM } = await import('./_core/llm');
+      const loads = await db.listMarketplaceLoads({ status: 'posted' });
+      if (loads.length < 2) return [];
+      const response = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are a freight consolidation AI. Find shipments that can be combined into single truckloads for cost savings. Return JSON with consolidation groups: groupId, loadIds (array of numbers), originRegion, destRegion, individualCost, consolidatedCost, savings, savingsPercent, reasoning.' },
+          { role: 'user', content: `Find consolidation opportunities in these ${loads.length} loads: ${JSON.stringify(loads.map(l => ({ id: l.id, origin: `${l.originCity},${l.originState}`, dest: `${l.destCity},${l.destState}`, weight: l.weight, equipment: l.equipmentType, rate: l.shipperRate })))}` },
+        ],
+        response_format: { type: 'json_schema', json_schema: { name: 'consolidations', strict: true, schema: { type: 'object', properties: { groups: { type: 'array', items: { type: 'object', properties: { groupId: { type: 'string' }, loadIds: { type: 'array', items: { type: 'number' } }, originRegion: { type: 'string' }, destRegion: { type: 'string' }, individualCost: { type: 'number' }, consolidatedCost: { type: 'number' }, savings: { type: 'number' }, savingsPercent: { type: 'number' }, reasoning: { type: 'string' } }, required: ['groupId', 'loadIds', 'originRegion', 'destRegion', 'individualCost', 'consolidatedCost', 'savings', 'savingsPercent', 'reasoning'], additionalProperties: false } } }, required: ['groups'], additionalProperties: false } } },
+      });
+      const parsed = JSON.parse(String(response.choices[0].message.content));
+      for (const group of parsed.groups) {
+        await db.createConsolidationOpportunity({ ...group, loadCount: group.loadIds.length, individualCost: String(group.individualCost), consolidatedCost: String(group.consolidatedCost), savings: String(group.savings), savingsPercent: String(group.savingsPercent), aiReasoning: group.reasoning, confidenceScore: '85', windowStart: Date.now(), windowEnd: Date.now() + 48 * 3600000, expiresAt: Date.now() + 48 * 3600000 });
+      }
+      return parsed.groups;
+    }),
+    executeConsolidation: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      return db.updateConsolidationStatus(input.id, 'executed');
+    }),
+  }),
 });
 export type AppRouter = typeof appRouter;

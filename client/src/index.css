@@ -45,6 +45,19 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  /* Enterprise CRM Status Colors */
+  --color-crm-workflow: var(--crm-workflow);
+  --color-crm-workflow-foreground: var(--crm-workflow-foreground);
+  --color-crm-success: var(--crm-success);
+  --color-crm-success-foreground: var(--crm-success-foreground);
+  --color-crm-pending: var(--crm-pending);
+  --color-crm-pending-foreground: var(--crm-pending-foreground);
+  --color-crm-critical: var(--crm-critical);
+  --color-crm-critical-foreground: var(--crm-critical-foreground);
+  --color-crm-premium: var(--crm-premium);
+  --color-crm-premium-foreground: var(--crm-premium-foreground);
+  --color-crm-inactive: var(--crm-inactive);
+  --color-crm-inactive-foreground: var(--crm-inactive-foreground);
 }
 
 :root {
@@ -86,6 +99,26 @@
   --sidebar-accent-foreground: oklch(0.93 0.005 270);
   --sidebar-border: oklch(0.22 0.012 270);
   --sidebar-ring: oklch(0.65 0.2 265);
+
+  /* Enterprise CRM Status Colors */
+  /* Blue = standard pipeline activity / workflow */
+  --crm-workflow: oklch(0.55 0.18 255);
+  --crm-workflow-foreground: oklch(0.98 0 0);
+  /* Green = booked loads / closed-won / completed */
+  --crm-success: oklch(0.60 0.19 155);
+  --crm-success-foreground: oklch(0.98 0 0);
+  /* Amber = quote pending / follow-up due / needs attention */
+  --crm-pending: oklch(0.72 0.16 75);
+  --crm-pending-foreground: oklch(0.15 0 0);
+  /* Red = credit hold / overdue / churn risk / critical */
+  --crm-critical: oklch(0.58 0.22 25);
+  --crm-critical-foreground: oklch(0.98 0 0);
+  /* Purple = insights / premium / special features */
+  --crm-premium: oklch(0.58 0.2 300);
+  --crm-premium-foreground: oklch(0.98 0 0);
+  /* Gray = inactive accounts / archived */
+  --crm-inactive: oklch(0.40 0.005 270);
+  --crm-inactive-foreground: oklch(0.85 0 0);
 }
 
 @layer base {

@@ -47,6 +47,32 @@ const DevImpersonate = lazy(() => import("./pages/DevImpersonate"));
 const CompanyAdmin = lazy(() => import("./pages/CompanyAdmin"));
 const Settings = lazy(() => import("./pages/Settings"));
 const HubSpotImport = lazy(() => import("./pages/HubSpotImport"));
+const DomainOptimizer = lazy(() => import("./pages/DomainOptimizer"));
+const ABEngine = lazy(() => import("./pages/ABEngine"));
+const VoiceAgent = lazy(() => import("./pages/VoiceAgent"));
+const CarrierPackets = lazy(() => import("./pages/CarrierPackets"));
+const DocScan = lazy(() => import("./pages/DocScan"));
+const WinProbability = lazy(() => import("./pages/WinProbability"));
+const RevenueAutopilot = lazy(() => import("./pages/RevenueAutopilot"));
+const SmartNotifications = lazy(() => import("./pages/SmartNotifications"));
+const AIGhostwriter = lazy(() => import("./pages/AIGhostwriter"));
+const MeetingPrep = lazy(() => import("./pages/MeetingPrep"));
+const LoadManagement = lazy(() => import("./pages/LoadManagement"));
+const CarrierVetting = lazy(() => import("./pages/CarrierVetting"));
+const Invoicing = lazy(() => import("./pages/Invoicing"));
+const CustomerPortal = lazy(() => import("./pages/CustomerPortal"));
+const DigitalOnboarding = lazy(() => import("./pages/DigitalOnboarding"));
+const ConversationIntel = lazy(() => import("./pages/ConversationIntel"));
+const B2BDatabase = lazy(() => import("./pages/B2BDatabase"));
+const EmailWarmup = lazy(() => import("./pages/EmailWarmup"));
+const VisitorTracking = lazy(() => import("./pages/VisitorTracking"));
+const OrderEntry = lazy(() => import("./pages/OrderEntry"));
+const WhiteLabel = lazy(() => import("./pages/WhiteLabel"));
+const MigrationEngine = lazy(() => import("./pages/MigrationEngine"));
+const Subscription = lazy(() => import("./pages/Subscription"));
+const CommandCenter = lazy(() => import("./pages/CommandCenter"));
+const FreightMarketplace = lazy(() => import("./pages/FreightMarketplace"));
+const ApexAutopilot = lazy(() => import("./pages/ApexAutopilot"));
 
 function PageLoader() {
   return (
@@ -102,6 +128,32 @@ function Router() {
           <Route path="/team" component={CompanyAdmin} />
           <Route path="/settings" component={Settings} />
           <Route path="/import/hubspot" component={HubSpotImport} />
+          <Route path="/domain-optimizer" component={DomainOptimizer} />
+          <Route path="/ab-engine" component={ABEngine} />
+          <Route path="/voice-agent" component={VoiceAgent} />
+          <Route path="/carrier-packets" component={CarrierPackets} />
+          <Route path="/docscan" component={DocScan} />
+          <Route path="/win-probability" component={WinProbability} />
+          <Route path="/revenue-autopilot" component={RevenueAutopilot} />
+          <Route path="/smart-notifications" component={SmartNotifications} />
+          <Route path="/ghostwriter" component={AIGhostwriter} />
+          <Route path="/meeting-prep" component={MeetingPrep} />
+          <Route path="/loads" component={LoadManagement} />
+          <Route path="/carrier-vetting" component={CarrierVetting} />
+          <Route path="/invoicing" component={Invoicing} />
+          <Route path="/portal" component={CustomerPortal} />
+          <Route path="/onboarding" component={DigitalOnboarding} />
+          <Route path="/conversation-intel" component={ConversationIntel} />
+          <Route path="/b2b-database" component={B2BDatabase} />
+          <Route path="/email-warmup" component={EmailWarmup} />
+          <Route path="/visitor-tracking" component={VisitorTracking} />
+          <Route path="/order-entry" component={OrderEntry} />
+          <Route path="/white-label" component={WhiteLabel} />
+          <Route path="/migration" component={MigrationEngine} />
+          <Route path="/subscription" component={Subscription} />
+          <Route path="/command-center" component={CommandCenter} />
+          <Route path="/freight-marketplace" component={FreightMarketplace} />
+          <Route path="/apex-autopilot" component={ApexAutopilot} />
           <Route path="/help" component={HelpCenter} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />

@@ -475,3 +475,331 @@
 - [x] Tests for freight property schema (5 tests)
 - [x] Tests for CSV parser (6 tests)
 - [x] All 158 tests passing across 6 test files
+
+## Phase 12: Domain Health Optimization Engine
+
+### Domain Health Optimizer Backend
+- [ ] Create domain_health_records table for tracking daily health metrics per domain
+- [ ] Build automated warm-up scheduler (gradual volume ramp over 4-8 weeks)
+- [ ] Build reputation monitoring system (track bounce rate, complaint rate, open rate per domain)
+- [ ] Auto-pause domains exceeding bounce/complaint thresholds
+- [ ] Auto-resume domains after cooldown period with reduced volume
+- [ ] Domain rotation algorithm (prioritize healthiest domains, rest underperforming ones)
+- [ ] SPF/DKIM/DMARC validation checker per domain
+- [ ] Provider-specific optimization (Gmail, Outlook, Yahoo rules)
+- [ ] Daily health score recalculation based on weighted metrics
+- [ ] Domain warm-up progress tracking (phase, daily limit, days remaining)
+
+### Domain Health Optimizer UI
+- [ ] Build Domain Health Optimizer page with health dashboard
+- [ ] Domain health leaderboard (all domains ranked by score)
+- [ ] Warm-up scheduler interface (start/pause/reset warm-up per domain)
+- [ ] Health trend charts (score over time per domain)
+- [ ] Automated recommendations panel (what to fix per domain)
+- [ ] Bulk actions (pause all unhealthy, restart warm-up, rotate primaries)
+- [ ] Authentication status checker (SPF/DKIM/DMARC per domain)
+
+### Enhance Existing Pages
+- [ ] Update Deliverability page with optimizer integration
+- [ ] Update Domain Stats page with health trend data
+- [ ] Update SMTP Accounts page with warm-up status indicators
+
+### Tests
+- [ ] Tests for health score calculation algorithm
+- [ ] Tests for warm-up scheduler logic
+- [ ] Tests for auto-pause/resume thresholds
+- [ ] Tests for domain rotation algorithm
+
+### Domain Auto-Healing Engine
+- [ ] Auto-pause domains when bounce rate >2% or complaint rate >0.1%
+- [ ] Auto-cooldown: rest paused domains for 24-72 hours based on severity
+- [ ] Auto-volume reduction: cut daily limit by 50% on recovery, gradual ramp back
+- [ ] Auto-rotation: shift traffic from unhealthy domains to healthy ones in real-time
+- [ ] Auto-resume: bring domains back online after cooldown with reduced volume
+- [ ] Bounce list auto-cleanup: suppress all addresses that caused bounces
+- [ ] Authentication auto-check: verify SPF/DKIM/DMARC and flag misconfigurations
+- [ ] Provider-specific thresholds (Gmail <0.1% complaints, Outlook SNDS monitoring, Yahoo CFL)
+- [ ] Health score algorithm: weighted composite of auth, bounce, complaint, open, delivery rates
+- [ ] Daily health recalculation cron job
+- [ ] Domain warm-up auto-scheduler: 8-week graduated ramp (50→100→200→500→1000→2000→3000→5000/day)
+- [ ] Recovery protocol: automatic 3-phase recovery (rest → reduced → normal)
+
+### Continuous A/B Testing Engine
+- [ ] Auto-split every campaign into A/B variants (subject line, content, send time, sender name)
+- [ ] AI-generated variant creation (LLM writes alternative subject lines and content)
+- [ ] Statistical significance calculator (minimum sample size, confidence interval)
+- [ ] Auto-winner selection when significance threshold reached
+- [ ] Auto-apply winning variant to remaining unsent emails
+- [ ] Continuous learning: store winning patterns and apply to future campaigns
+- [ ] Always-on mode: every campaign gets A/B tested by default, no manual setup
+- [ ] Performance history: track which patterns win over time
+- [ ] Multi-variate support: test multiple variables simultaneously
+
+### UI Pages
+- [ ] Domain Health Optimizer dashboard (health scores, trends, auto-healing status, recommendations)
+- [ ] Continuous A/B Testing dashboard (active tests, results, winning patterns, learning history)
+
+### Tests
+- [ ] Tests for health score calculation
+- [ ] Tests for auto-pause/resume thresholds
+- [ ] Tests for warm-up schedule generation
+- [ ] Tests for A/B split logic and significance calculation
+- [ ] Tests for variant generation
+
+## Phase 13: Premium Features — AI Voice Agent, DocScan, Win Probability, Revenue Autopilot
+
+### AI Voice Agent ("Apex Caller")
+- [ ] Build call_logs and voice_campaigns database tables
+- [ ] Build voice agent backend: call initiation, script generation, transcription, lead qualification
+- [ ] Build Apex Caller UI page with call dashboard, script editor, campaign builder
+- [ ] Integrate with Prospect and Contact pages ("Call with Apex Caller" button)
+- [ ] Call recording, transcription, and activity logging
+- [ ] Hot lead flagging and automatic task creation from call results
+
+### Document Intelligence ("DocScan") with Carrier Packets
+- [ ] Research carrier packets: required documents, compliance fields, industry standards
+- [ ] Build documents and carrier_packets database tables
+- [ ] Build AI document extraction engine (LLM-powered parsing)
+- [ ] Build carrier packet builder/validator (all required fields, expiration tracking)
+- [ ] Build DocScan UI: drag-and-drop upload, extraction results, auto-filing
+- [ ] Build Carrier Packet Manager page: create, validate, share carrier packets
+- [ ] Auto-match extracted data to contacts/companies/deals
+- [ ] Compliance watchdog: flag expired insurance, missing authority, blacklisted carriers
+
+### Win Probability Engine
+- [ ] Build deal_scores database table for historical tracking
+- [ ] Build AI scoring algorithm (engagement signals, response times, email opens, call frequency)
+- [ ] Real-time probability score on every deal card (0-100% with trend arrows)
+- [ ] Dashboard widgets: "Deals at Risk" and "Ready to Close"
+- [ ] AI explanation of score changes
+- [ ] Automatic task creation when probability drops
+- [ ] Revenue forecasting based on probability-weighted pipeline
+
+### Revenue Autopilot ("Money Machine")
+- [ ] Morning briefing generator (re-engagement, lane analysis, upsell detection)
+- [ ] Margin optimizer with industry benchmarks
+- [ ] Weekly revenue scorecard with AI commentary
+- [ ] Integrate into Dashboard as "Today's Revenue Actions"
+
+### AI Email Ghostwriter
+- [ ] "Draft Reply" button on contact/deal pages
+- [ ] Context-aware email generation using conversation history and deal stage
+- [ ] Style learning from sent emails
+
+### Smart Notifications
+- [ ] AI-prioritized notification system ranked by revenue impact
+- [ ] "Call them NOW" alerts for high-intent signals
+
+### AI Meeting Prep ("Brief Me")
+- [ ] One-click pre-call intelligence summary
+- [ ] Contact history, deal context, suggested talking points
+
+### SaaS Multi-Tenant Considerations
+- [ ] Ensure all new features respect company-level data isolation
+- [ ] Feature gating: premium features assignable per subscription tier
+- [ ] Usage metering for voice calls, document scans, AI queries
+
+### Tests
+- [ ] Tests for AI Voice Agent endpoints
+- [ ] Tests for DocScan extraction and carrier packet validation
+- [ ] Tests for Win Probability scoring algorithm
+- [ ] Tests for Revenue Autopilot recommendations
+
+### 30-Second Commercial
+- [ ] Create compelling 30-second video commercial for Apex CRM
+- [ ] Showcase AI Voice Agent, DocScan, Win Probability, and automation features
+- [ ] Target audience: freight brokers looking for cutting-edge CRM technology
+
+### Competitive Analysis
+- [x] Research all major freight broker CRM/TMS platforms comprehensively
+- [x] Identify features competitors have that Apex CRM doesn't
+- [x] Document competitive advantages of Apex CRM
+- [x] Create comprehensive competitive analysis report
+
+### Phase 14: Competitive Feature Parity (12 Features)
+
+#### Load Management
+- [ ] Database schema: loads table (origin, destination, commodity, weight, rate, status, carrier, shipper, pickup/delivery dates, tracking)
+- [ ] Load lifecycle: create, dispatch, in-transit, delivered, closed
+- [ ] Load status tracking with real-time updates
+- [ ] Load Management UI page with filters, search, status board
+- [ ] Integration: auto-create loads from deals, link to carriers and contacts
+
+#### Carrier Vetting (DOT/FMCSA Deep Integration)
+- [ ] Database schema: carrier_profiles table (DOT#, MC#, safety rating, insurance, authority status)
+- [ ] Deep FMCSA integration: pull live safety data, insurance verification, authority status
+- [ ] Carrier scorecard with performance metrics
+- [ ] Carrier Vetting UI page
+- [ ] Integration: link to carrier packets, auto-flag expired insurance
+
+#### Load Board Integration
+- [ ] Database schema: load_board_posts table (board, post_id, load_id, status, responses)
+- [ ] Simulated integration with DAT, Truckstop, 123Loadboard
+- [ ] Post loads to boards, receive carrier responses
+- [ ] Load Board UI page
+- [ ] Integration: auto-post from load management, carrier matching
+
+#### Invoicing & Billing
+- [ ] Database schema: invoices table (load_id, shipper, carrier, amount, status, due_date, paid_date)
+- [ ] Invoice generation from completed loads
+- [ ] Invoice status tracking (draft, sent, paid, overdue)
+- [ ] Invoicing UI page with templates and PDF generation
+- [ ] Integration: auto-generate from closed loads, link to accounting
+
+#### Customer Portal
+- [ ] Database schema: portal_sessions, portal_quotes, portal_tracking
+- [ ] Self-service portal for shippers: submit quotes, track loads, view invoices
+- [ ] Portal authentication and access control
+- [ ] Customer Portal UI pages
+- [ ] Integration: real-time load tracking, invoice viewing
+
+#### Conversation Intelligence
+- [ ] Database schema: call_recordings, call_analyses
+- [ ] AI analysis of call recordings (sentiment, talk ratio, action items)
+- [ ] Call coaching insights and recommendations
+- [ ] Conversation Intelligence UI page
+- [ ] Integration: analyze Voice Agent calls, link insights to contacts/deals
+
+#### B2B Contact Database
+- [ ] Database schema: b2b_contacts, enrichment_logs
+- [ ] AI-powered contact/company search and enrichment
+- [ ] Company and contact data enrichment from public sources
+- [ ] B2B Database UI page with search and import
+- [ ] Integration: import enriched contacts into CRM, auto-enrich existing contacts
+
+#### Email Warmup
+- [ ] Database schema: warmup_campaigns, warmup_progress
+- [ ] Domain warmup scheduling and monitoring
+- [ ] Warmup progress tracking with deliverability metrics
+- [ ] Email Warmup UI page
+- [ ] Integration: link to SMTP accounts, auto-start warmup for new domains
+
+#### Anonymous Visitor Tracking
+- [ ] Database schema: visitor_sessions, visitor_companies
+- [ ] Track anonymous website visitors and identify companies
+- [ ] AI company identification from IP/behavior signals
+- [ ] Visitor Tracking UI page
+- [ ] Integration: auto-create prospects from identified visitors
+
+#### AI Order Entry (Email-to-Load)
+- [ ] Database schema: inbound_emails, parsed_orders
+- [ ] AI parsing of inbound emails to extract load details
+- [ ] One-click conversion of parsed emails to loads
+- [ ] AI Order Entry UI page
+- [ ] Integration: auto-create loads from parsed emails, link to contacts
+
+#### White-Labeling
+- [ ] Database schema: white_label_config (logo, colors, domain, company_name)
+- [ ] Per-tenant branding configuration
+- [ ] Dynamic theme application based on tenant config
+- [ ] White-Label Settings UI page
+- [ ] Integration: apply branding across all pages, customer portal, invoices
+
+#### Digital Customer Onboarding
+- [ ] Database schema: onboarding_flows, onboarding_steps, e_signatures
+- [ ] Digital credit application and onboarding forms
+- [ ] E-signature capture for agreements
+- [ ] Digital Onboarding UI page
+- [ ] Integration: auto-create contacts/companies from completed onboarding
+
+#### Cross-Feature Integration
+- [ ] Load Management ↔ Carrier Vetting (auto-assign vetted carriers)
+- [ ] Load Management ↔ Invoicing (auto-generate invoices from closed loads)
+- [ ] Load Management ↔ Load Board (auto-post/remove from boards)
+- [ ] AI Order Entry ↔ Load Management (email → load creation)
+- [ ] Conversation Intelligence ↔ Voice Agent (analyze AI calls)
+- [ ] B2B Database ↔ Paradigm Engine (enrich prospects)
+- [ ] Email Warmup ↔ Deliverability Engine (warmup new domains)
+- [ ] Visitor Tracking ↔ Paradigm Engine (auto-create prospects)
+- [ ] White-Labeling ↔ Customer Portal (branded portal)
+- [ ] Digital Onboarding ↔ CRM (auto-create contacts)
+- [ ] All features work autonomously and individually
+
+#### Tests & Documentation
+- [ ] Comprehensive tests for all 12 new features
+- [ ] Update system guide with all competitive features
+- [ ] Create 30-second commercial video
+
+#### 2-Month Free Trial System
+- [ ] Database schema: subscription_plans, tenant_subscriptions (plan, trial_start, trial_end, status, billing)
+- [ ] Trial activation on signup — automatic 2 months free, no credit card required
+- [ ] Trial status tracking, expiration warnings, upgrade prompts
+- [ ] Subscription management UI (plan selection, billing status, upgrade/downgrade)
+- [ ] Integration: trial banner across app, feature gating after trial expires
+
+#### One-Touch Migration / Integration
+- [ ] Database schema: migration_jobs (source_platform, status, progress, imported_records)
+- [ ] One-touch import from HubSpot (contacts, companies, deals, emails)
+- [ ] One-touch import from Salesforce (contacts, accounts, opportunities)
+- [ ] One-touch import from DAT/Tai TMS (loads, carriers, lanes)
+- [ ] One-touch import from Zoho CRM (contacts, deals, accounts)
+- [ ] One-touch import from spreadsheets/CSV (universal import)
+- [ ] Migration wizard UI with progress tracking and validation
+- [ ] Integration: map imported data to Apex CRM fields, auto-deduplicate
+- [ ] Feature in commercial: "Switch in 60 seconds — bring everything with you"
+
+### Phase 15: Complete Build + Autonomous Command Center
+- [ ] Invoicing UI page
+- [ ] Customer Portal UI page
+- [ ] Digital Onboarding UI page
+- [ ] Conversation Intelligence UI page
+- [ ] B2B Database UI page
+- [ ] Email Warmup UI page
+- [ ] Visitor Tracking UI page
+- [ ] AI Order Entry UI page
+- [ ] White-Labeling UI page
+- [ ] One-Touch Migration Engine UI page
+- [ ] SaaS Subscription & 2-Month Free Trial UI page
+- [ ] Autonomous Command Center — single-screen AI copilot
+- [ ] Wire all cross-feature integrations
+- [ ] Comprehensive tests for all features
+- [ ] Update system guide
+- [ ] Create 30-second commercial
+
+### Enterprise CRM Color System
+- [x] Apply enterprise color system: Blue=workflow, Green=success, Amber=pending, Red=critical, Purple=premium, Gray=inactive
+- [x] Update index.css with semantic CRM color variables
+- [x] Apply color system across all status badges, indicators, and UI elements
+
+## Phase 16: Autonomous Digital Freight Marketplace + Apex Autopilot
+
+### Shipper Self-Service Portal (FREE for Manufacturers/Distributors)
+- [ ] Database: marketplace_loads (shipper posts load specs: origin, destination, commodity, weight, dimensions, pickup/delivery dates, special requirements)
+- [ ] Database: marketplace_bids (carrier bids on loads, rate, ETA, equipment type)
+- [ ] Database: marketplace_payments (shipper pays us at booking, we pay carrier after delivery, margin tracking)
+- [ ] Database: marketplace_tracking (real-time GPS tracking events, status updates, ETAs)
+- [ ] Database: marketplace_documents (auto-generated BOLs, rate confirmations, carrier packets, insurance certs, delivery receipts)
+- [ ] Shipper registration (free, no cost to post loads)
+- [ ] Load posting form: origin, destination, commodity, weight, dimensions, pickup/delivery windows, special handling
+- [ ] AI Carrier Matching: automatically find best carrier based on route, equipment, safety rating, price, availability
+- [ ] Autonomous paperwork: auto-generate BOL, rate confirmation, carrier packet, insurance verification
+- [ ] Payment collection: shipper pays at time of booking
+- [ ] Carrier payment: pay carrier after confirmed delivery (escrow model)
+- [ ] Margin calculation: automatic profit margin on every load
+- [ ] Real-time tracking: shipper and broker can track carrier from pickup to delivery
+- [ ] Delivery confirmation: POD upload, signature capture, auto-close load
+- [ ] All documentation handled autonomously — zero manual paperwork
+
+### Apex Autopilot (Freight Consolidation + Lane Prediction)
+- [ ] Database: lane_analytics (historical lane data, demand patterns, seasonal trends)
+- [ ] Database: consolidation_opportunities (AI-identified shipment combinations)
+- [ ] Freight consolidation algorithm: combine LTL shipments into FTL on same routes
+- [ ] Lane demand prediction: predict which lanes will have freight before it's posted
+- [ ] Auto-rate negotiation: AI suggests optimal pricing based on market conditions
+- [ ] Backhaul optimization: find return loads so carriers never deadhead
+- [ ] Volume scaling: handle 300-400% more loads without additional staff
+- [ ] Continuous route optimization across all active loads
+
+### Marketplace UI Pages
+- [ ] Shipper Portal: load posting, tracking, payment, document access
+- [ ] Carrier Matching Dashboard: AI matches, bid management, carrier selection
+- [ ] Payment & Escrow: payment collection, carrier payouts, margin reports
+- [ ] Live Tracking: real-time map view of all active shipments
+- [ ] Autonomous Documents: auto-generated paperwork library
+- [ ] Apex Autopilot Dashboard: consolidation opportunities, lane predictions, optimization metrics
+
+### Tests
+- [ ] Tests for marketplace load posting and carrier matching
+- [ ] Tests for payment/escrow flow
+- [ ] Tests for autonomous document generation
+- [ ] Tests for Apex Autopilot consolidation algorithm

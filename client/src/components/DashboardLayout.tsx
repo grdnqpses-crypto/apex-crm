@@ -29,6 +29,9 @@ import {
   Brain, Target, Radar, Ghost, Flame, Plug,
   ShieldCheck, Ban, Settings, Globe, Sparkles, BookOpen, FileSearch,
   Activity, Database, Eye, ScrollText, UserCog, Download,
+  Phone, FileText, TrendingUp, Rocket, Bell, PenTool, Briefcase, ScanLine, Truck,
+  Receipt, Globe2, UserPlus, Headphones, Database as DatabaseIcon, Flame as FlameIcon,
+  EyeIcon, MailOpen, Paintbrush, ArrowRightLeft, Crown, Command, Package,
 } from "lucide-react";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -64,6 +67,8 @@ const standardSections = [
       { icon: Shield, label: "Deliverability", path: "/deliverability" },
       { icon: FlaskConical, label: "A/B Tests", path: "/ab-tests" },
       { icon: Zap, label: "SMTP Accounts", path: "/smtp-accounts" },
+      { icon: Activity, label: "Domain Optimizer", path: "/domain-optimizer" },
+      { icon: Sparkles, label: "A/B Engine", path: "/ab-engine" },
     ],
   },
   {
@@ -95,6 +100,42 @@ const standardSections = [
     ],
   },
   {
+    label: "Operations",
+    items: [
+      { icon: Truck, label: "Load Management", path: "/loads" },
+      { icon: ShieldCheck, label: "Carrier Vetting", path: "/carrier-vetting" },
+      { icon: Receipt, label: "Invoicing", path: "/invoicing" },
+      { icon: Globe, label: "Customer Portal", path: "/portal" },
+      { icon: UserPlus, label: "Onboarding", path: "/onboarding" },
+      { icon: MailOpen, label: "Order Entry", path: "/order-entry" },
+    ],
+  },
+  {
+    label: "AI Premium",
+    items: [
+      { icon: Phone, label: "Voice Agent", path: "/voice-agent" },
+      { icon: ScanLine, label: "DocScan", path: "/docscan" },
+      { icon: FileText, label: "Carrier Packets", path: "/carrier-packets" },
+      { icon: TrendingUp, label: "Win Probability", path: "/win-probability" },
+      { icon: Rocket, label: "Revenue Autopilot", path: "/revenue-autopilot" },
+      { icon: Bell, label: "Smart Notifications", path: "/smart-notifications" },
+      { icon: PenTool, label: "AI Ghostwriter", path: "/ghostwriter" },
+      { icon: Briefcase, label: "Meeting Prep", path: "/meeting-prep" },
+      { icon: Headphones, label: "Call Intelligence", path: "/conversation-intel" },
+      { icon: DatabaseIcon, label: "B2B Database", path: "/b2b-database" },
+      { icon: FlameIcon, label: "Email Warmup", path: "/email-warmup" },
+      { icon: EyeIcon, label: "Visitor Tracking", path: "/visitor-tracking" },
+      { icon: Command, label: "Command Center", path: "/command-center" },
+    ],
+  },
+  {
+    label: "Marketplace",
+    items: [
+      { icon: Package, label: "Freight Marketplace", path: "/freight-marketplace" },
+      { icon: Brain, label: "Apex Autopilot", path: "/apex-autopilot" },
+    ],
+  },
+  {
     label: "Analytics",
     items: [
       { icon: BarChart3, label: "Reports", path: "/analytics" },
@@ -106,6 +147,9 @@ const standardSections = [
       { icon: BookOpen, label: "Help Center", path: "/help" },
       { icon: Settings, label: "Settings", path: "/settings" },
       { icon: Download, label: "HubSpot Import", path: "/import/hubspot" },
+      { icon: Paintbrush, label: "White Label", path: "/white-label" },
+      { icon: ArrowRightLeft, label: "Migration", path: "/migration" },
+      { icon: Crown, label: "Subscription", path: "/subscription" },
     ],
   },
 ];

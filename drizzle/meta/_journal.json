@@ -29,6 +29,34 @@
       "when": 1771450108861,
       "tag": "0003_large_pandemic",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1771468577426,
+      "tag": "0004_warm_echo",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1771470408175,
+      "tag": "0005_peaceful_dazzler",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1771472957408,
+      "tag": "0006_minor_union_jack",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1771520703115,
+      "tag": "0007_lumpy_moondragon",
+      "breakpoints": true
     }
   ]
 }
