@@ -30,6 +30,12 @@ export const appRouter = router({
     }).optional()).query(async ({ ctx, input }) => {
       return db.getRecentActivitiesWithContext(ctx.user.id, input?.limit ?? 15);
     }),
+    globalSearch: protectedProcedure.input(z.object({
+      query: z.string().min(1).max(200),
+      limit: z.number().min(1).max(30).optional(),
+    })).query(async ({ ctx, input }) => {
+      return db.globalSearch(ctx.user.id, input.query, input.limit ?? 15);
+    }),
   }),
 
   leadStatuses: router({

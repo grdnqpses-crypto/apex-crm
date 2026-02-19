@@ -3334,3 +3334,45 @@ export function applyEmailMask(mask: EmailMaskSetting | null, originalFrom: { na
     envelopeSender: originalFrom.email, // actual sending domain for SPF/DKIM
   };
 }
+
+// ─── Global Search ───
+export async function globalSearch(userId: number, query: string, limit = 15) {
+  const db = await getDb();
+  if (!db || !query.trim()) return { companies: [], contacts: [], deals: [] };
+  const term = `%${query.trim()}%`;
+
+  const [companyResults, contactResults, dealResults] = await Promise.all([
+    db.select({
+      id: companies.id,
+      name: companies.name,
+      industry: companies.industry,
+      leadStatus: companies.leadStatus,
+    })
+      .from(companies)
+      .where(and(eq(companies.userId, userId), or(like(companies.name, term), like(companies.industry, term), like(companies.website, term))))
+      .limit(limit),
+
+    db.select({
+      id: contacts.id,
+      firstName: contacts.firstName,
+      lastName: contacts.lastName,
+      email: contacts.email,
+      companyId: contacts.companyId,
+    })
+      .from(contacts)
+      .where(and(eq(contacts.userId, userId), or(like(contacts.firstName, term), like(contacts.lastName, term), like(contacts.email, term))))
+      .limit(limit),
+
+    db.select({
+      id: deals.id,
+      name: deals.name,
+      value: deals.value,
+      status: deals.status,
+    })
+      .from(deals)
+      .where(and(eq(deals.userId, userId), or(like(deals.name, term))))
+      .limit(limit),
+  ]);
+
+  return { companies: companyResults, contacts: contactResults, deals: dealResults };
+}

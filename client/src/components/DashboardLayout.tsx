@@ -36,6 +36,7 @@ import {
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
+import GlobalSearch from './GlobalSearch';
 import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
@@ -376,6 +377,13 @@ function DashboardLayoutContent({
               )}
             </div>
           </SidebarHeader>
+
+          {/* ─── Global Search ─── */}
+          {!isCollapsed && (
+            <div className="px-3 pt-3 pb-1">
+              <GlobalSearch />
+            </div>
+          )}
 
           {/* ─── Sidebar Navigation ─── */}
           <SidebarContent className="gap-0 py-3 px-2">

@@ -1,7 +1,9 @@
 import { trpc } from "@/lib/trpc";
+import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import OnboardingWizard from "@/components/OnboardingWizard";
 import {
   Users, Building2, Kanban, DollarSign, Mail, ListChecks,
   TrendingUp, Trophy, Target, Radar, Ghost, Shield,
@@ -185,6 +187,8 @@ function RecentActivityFeed() {
 export default function Dashboard() {
   const { user } = useAuth();
   const { data: stats, isLoading } = trpc.dashboard.stats.useQuery();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const utils = trpc.useUtils();
 
   const formatCurrency = (val: number) => {
     if (val >= 1_000_000) return `$${(val / 1_000_000).toFixed(1)}M`;
@@ -204,12 +208,22 @@ export default function Dashboard() {
       {/* ─── Welcome Header ─── */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/8 via-primary/4 to-transparent border border-primary/10 p-7">
         <div className="relative z-10">
-          <h1 className="text-2xl font-bold text-foreground">
-            {greeting()}, {user?.name?.split(" ")[0] || "there"}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1.5 max-w-lg">
-            Your dashboard is your daily command center. Every metric below is live — track your pipeline, monitor team performance, and spot opportunities at a glance. Click any card to dive deeper.
-          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">
+                {greeting()}, {user?.name?.split(" ")[0] || "there"}
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1.5 max-w-lg">
+                Your dashboard is your daily command center. Every metric below is live — track your pipeline, monitor team performance, and spot opportunities at a glance. Click any card to dive deeper.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="shrink-0 ml-4 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-bold shadow-lg shadow-amber-500/20 transition-all flex items-center gap-1.5"
+            >
+              <Sparkles className="h-3.5 w-3.5" /> Getting Started
+            </button>
+          </div>
         </div>
         {/* Decorative circles */}
         <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-primary/5" />
@@ -355,6 +369,14 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* ─── Onboarding Wizard ─── */}
+      {showOnboarding && (
+        <OnboardingWizard
+          onClose={() => setShowOnboarding(false)}
+          onComplete={() => utils.dashboard.stats.invalidate()}
+        />
+      )}
     </div>
   );
 }

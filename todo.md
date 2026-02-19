@@ -912,3 +912,18 @@
 - [x] Rebuild Help Center into a phenomenal, inspiring, comprehensive guide (30 guides, 8 categories, hero section, pro tips)
 - [x] Create stunning one-minute commercial page (eye-catching, informative, astounding)
 - [x] Run full test suite and ensure all tests pass (14 files, 313 tests, all passed)
+
+## Phase 28: Global Search + Onboarding Wizard + Cinematic Commercial
+
+- [x] Build backend global search endpoint (searches companies, contacts, deals simultaneously)
+- [x] Build global search bar UI in sidebar header with keyboard shortcut (Cmd+K)
+- [x] Search results show type icons, names, and quick-navigate on click
+- [x] Build Getting Started onboarding wizard for new users
+- [x] Wizard walks through: create first company → add first contact → create first deal
+- [x] Wizard shows progress steps and celebrates completion
+- [x] Create downloadable video commercial (MP4) for social media posting
+- [x] Video includes animated text, AI demo showcases, feature highlights
+- [x] Video has background music and compelling sales narrative
+- [x] Video formatted for Facebook/Instagram/LinkedIn/TikTok posting
+- [x] Video makes people intrigued, amazed, and wanting to buy immediately
+- [x] Run full test suite and ensure all tests pass (14 files, 313 tests, all passed)
