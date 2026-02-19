@@ -25,6 +25,11 @@ export const appRouter = router({
     stats: protectedProcedure.query(async ({ ctx }) => {
       return db.getEnhancedDashboardStats(ctx.user.id);
     }),
+    recentActivities: protectedProcedure.input(z.object({
+      limit: z.number().min(1).max(50).optional(),
+    }).optional()).query(async ({ ctx, input }) => {
+      return db.getRecentActivitiesWithContext(ctx.user.id, input?.limit ?? 15);
+    }),
   }),
 
   leadStatuses: router({

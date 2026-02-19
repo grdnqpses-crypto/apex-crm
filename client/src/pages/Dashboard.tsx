@@ -7,6 +7,7 @@ import {
   TrendingUp, Trophy, Target, Radar, Ghost, Shield,
   FileText, Workflow, LayoutGrid, AlertCircle, Truck,
   Package, Brain, Phone, ArrowRight, Sparkles,
+  StickyNote, PhoneCall, MailOpen, Calendar, Clock, User,
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -61,6 +62,123 @@ function QuickAction({ label, href, icon: Icon, color }: { label: string; href: 
       <span className="text-sm font-medium text-foreground">{label}</span>
       <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
     </Link>
+  );
+}
+
+const ACTIVITY_CONFIG: Record<string, { icon: any; bg: string; text: string; label: string }> = {
+  note: { icon: StickyNote, bg: "bg-amber-50", text: "text-amber-600", label: "Note" },
+  call: { icon: PhoneCall, bg: "bg-blue-50", text: "text-blue-600", label: "Call" },
+  email: { icon: MailOpen, bg: "bg-emerald-50", text: "text-emerald-600", label: "Email" },
+  meeting: { icon: Calendar, bg: "bg-purple-50", text: "text-purple-600", label: "Meeting" },
+};
+
+function formatTimeAgo(ts: number): string {
+  const diff = Date.now() - ts;
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function RecentActivityFeed() {
+  const { data: activities, isLoading } = trpc.dashboard.recentActivities.useQuery({ limit: 12 });
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+          <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-[0.12em]">Recent Activity</h2>
+        </div>
+        <span className="text-[11px] text-muted-foreground/50">{activities?.length ?? 0} latest</span>
+      </div>
+
+      <Card className="rounded-2xl border-border/40 shadow-sm overflow-hidden">
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="p-6 space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 animate-pulse">
+                  <div className="h-10 w-10 rounded-xl bg-muted" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-48 bg-muted rounded-full" />
+                    <div className="h-2.5 w-32 bg-muted/60 rounded-full" />
+                  </div>
+                  <div className="h-3 w-12 bg-muted rounded-full" />
+                </div>
+              ))}
+            </div>
+          ) : !activities || activities.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-14">
+              <div className="h-14 w-14 rounded-2xl bg-muted/50 flex items-center justify-center mb-3">
+                <Clock className="h-7 w-7 text-muted-foreground/40" />
+              </div>
+              <p className="text-sm font-medium text-foreground">No recent activity</p>
+              <p className="text-xs text-muted-foreground mt-1">Activities will appear here as you log notes, calls, emails, and meetings.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border/30">
+              {activities.map((activity: any) => {
+                const config = ACTIVITY_CONFIG[activity.type] || ACTIVITY_CONFIG.note;
+                const Icon = config.icon;
+                const contactName = [activity.contactFirstName, activity.contactLastName].filter(Boolean).join(" ") || null;
+                return (
+                  <div key={activity.id} className="flex items-start gap-3.5 p-4 hover:bg-accent/20 transition-colors group">
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${config.bg} ${config.text} transition-transform duration-200 group-hover:scale-105`}>
+                      <Icon className="h-4.5 w-4.5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className={`text-[9px] font-bold uppercase rounded-md px-1.5 py-0 ${config.bg} ${config.text} border-0`}>
+                          {config.label}
+                        </Badge>
+                        {contactName && (
+                          <Link href={activity.contactId ? `/contacts/${activity.contactId}` : "#"} className="text-xs font-semibold text-foreground hover:text-primary transition-colors flex items-center gap-1">
+                            <User className="h-3 w-3 text-muted-foreground/50" />
+                            {contactName}
+                          </Link>
+                        )}
+                        {activity.companyName && (
+                          <span className="text-[11px] text-muted-foreground/60 flex items-center gap-1">
+                            <Building2 className="h-3 w-3" />
+                            {activity.companyName}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-foreground mt-0.5 truncate">
+                        {activity.subject || <span className="text-muted-foreground/50 italic">No subject</span>}
+                      </p>
+                      {activity.type === "call" && activity.callOutcome && (
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Outcome: {activity.callOutcome}{activity.callDuration ? ` · ${activity.callDuration} min` : ""}
+                        </p>
+                      )}
+                      {activity.type === "email" && activity.emailTo && (
+                        <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                          To: {activity.emailTo}
+                        </p>
+                      )}
+                      {activity.type === "meeting" && activity.meetingLocation && (
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          {activity.meetingLocation}{activity.meetingOutcome ? ` · ${activity.meetingOutcome}` : ""}
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-muted-foreground/50 whitespace-nowrap shrink-0 pt-0.5">
+                      {formatTimeAgo(activity.createdAt)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -183,6 +301,9 @@ export default function Dashboard() {
           </div>
         </>
       )}
+
+      {/* ─── Recent Activity Feed ─── */}
+      <RecentActivityFeed />
 
       {/* ─── Quick Actions & System Status ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

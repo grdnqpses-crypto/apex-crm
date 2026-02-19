@@ -866,3 +866,9 @@
 - [x] Add Quick Add Company button inside contact creation dialog
 - [x] Add company-level aggregate metrics (total contacts, open deals, pipeline value) on Companies list page
 - [x] Write/update tests for new features
+
+## Phase 24: Recent Activity Feed on Dashboard
+- [x] Add backend endpoint for recent activities (all contacts, sorted by date, limited)
+- [x] Build Recent Activity feed UI on Dashboard with warm premium design
+- [x] Show activity type icons (note, call, email, meeting), contact name, timestamp
+- [x] Write tests for recent activities endpoint

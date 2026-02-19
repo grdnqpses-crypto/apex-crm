@@ -308,6 +308,39 @@ export async function listActivities(userId: number, opts?: { contactId?: number
   return db.select().from(activities).where(and(...conditions)).orderBy(desc(activities.createdAt)).limit(opts?.limit ?? 50);
 }
 
+export async function getRecentActivitiesWithContext(userId: number, limit: number = 15) {
+  const db = await getDb();
+  if (!db) return [];
+  // Join activities -> contacts -> companies (via contact.companyId) to resolve company name
+  // even when activity.companyId is not set
+  const rows = await db
+    .select({
+      id: activities.id,
+      type: activities.type,
+      subject: activities.subject,
+      body: activities.body,
+      callOutcome: activities.callOutcome,
+      callDuration: activities.callDuration,
+      emailTo: activities.emailTo,
+      meetingLocation: activities.meetingLocation,
+      meetingOutcome: activities.meetingOutcome,
+      createdAt: activities.createdAt,
+      contactId: activities.contactId,
+      companyId: activities.companyId,
+      dealId: activities.dealId,
+      contactFirstName: contacts.firstName,
+      contactLastName: contacts.lastName,
+      companyName: companies.name,
+    })
+    .from(activities)
+    .leftJoin(contacts, eq(activities.contactId, contacts.id))
+    .leftJoin(companies, sql`${companies.id} = COALESCE(${activities.companyId}, ${contacts.companyId})`)
+    .where(eq(activities.userId, userId))
+    .orderBy(desc(activities.createdAt))
+    .limit(limit);
+  return rows;
+}
+
 export async function createActivity(data: any) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
