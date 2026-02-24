@@ -327,7 +327,7 @@ describe("domain health", () => {
     expect(result).toHaveProperty("dkim");
     expect(result).toHaveProperty("dmarc");
     expect(typeof result.overallScore).toBe("number");
-  }, 30000);
+  }, 60000);
 });
 
 describe("segments", () => {

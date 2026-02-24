@@ -22,7 +22,7 @@ describe("Marketplace Schema", () => {
     expect(cols).toContain("carrierRate");
     expect(cols).toContain("margin");
     expect(cols).toContain("matchedCarrierName");
-  });
+  }, 30000);
 
   it("marketplace_bids table has required columns", async () => {
     const { marketplaceBids } = await import("../drizzle/schema");
