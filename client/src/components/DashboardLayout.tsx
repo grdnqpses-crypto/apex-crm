@@ -477,16 +477,48 @@ function DashboardLayoutContent({
       </div>
 
       <SidebarInset>
-        {isMobile && (
-          <div className="flex border-b border-border/40 h-14 items-center justify-between bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger className="h-9 w-9 rounded-xl" />
-              <span className="font-semibold text-foreground text-sm">
-                {activeMenuItem?.label ?? "Apex CRM"}
-              </span>
-            </div>
+        {/* ─── Persistent Top Header Bar ─── */}
+        <div className="flex border-b border-border/40 h-14 items-center justify-between bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
+          <div className="flex items-center gap-3">
+            {isMobile && <SidebarTrigger className="h-9 w-9 rounded-xl" />}
+            <button
+              onClick={() => setLocation("/")}
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              title="Go to Dashboard"
+            >
+              <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Zap className="h-4 w-4 text-primary" />
+              </div>
+              <span className="font-bold text-foreground text-sm tracking-tight">Apex CRM</span>
+            </button>
+            <span className="text-muted-foreground/40 text-sm">/</span>
+            <span className="text-sm font-medium text-foreground">
+              {activeMenuItem?.label ?? "Dashboard"}
+            </span>
           </div>
-        )}
+          <div className="flex items-center gap-2">
+            {location !== "/" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation("/")}
+                className="h-8 rounded-lg text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+              >
+                <LayoutDashboard className="h-3.5 w-3.5" />
+                Dashboard
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setAiOpen(true)}
+              className="h-8 rounded-lg text-xs gap-1.5 bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 hover:from-amber-100 hover:to-orange-100 border border-amber-200/50"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              AI Assistant
+            </Button>
+          </div>
+        </div>
         <main className="flex-1 p-5 lg:p-7">{children}</main>
       </SidebarInset>
 

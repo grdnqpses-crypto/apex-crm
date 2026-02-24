@@ -939,3 +939,22 @@
 - [x] Compelling sales narrative that makes people want to buy immediately
 - [x] Fix test timeouts (domain health LLM 60s, marketplace schema 30s)
 - [x] All 313 tests passing across 14 test files
+
+## Phase 30: Real CRM Screen Recording Video Commercial
+- [x] Set up screen recording tools (ffmpeg X11 capture or headless browser recording)
+- [x] Record Dashboard interaction: mouse scrolling through live metrics, clicking cards
+- [x] Record AI Assistant: opening chat, typing commands, watching it create company/contact
+- [x] Record Deals pipeline: clicking through stages, viewing deal details
+- [x] Record Companies/Contacts: browsing list, opening detail pages
+- [x] Record Campaigns: viewing campaign builder, templates
+- [x] Edit recordings into 47-second cinematic vertical commercial
+- [x] Add overlay text highlighting unique features vs competitors
+- [x] Add epic background music and transitions
+- [x] Vertical format (1080x1920) for social media
+- [x] Show real mouse movement, clicks, animations — not static screenshots
+
+## Phase 31: CRM UX Fixes - AI Everywhere + Top Navigation
+- [x] AI Assistant chat button/panel available on every single page
+- [x] Apex CRM branding/logo at the top of every page
+- [x] Dashboard link always accessible at the top for easy navigation back
+- [x] Top header bar persistent across all pages
