@@ -969,3 +969,37 @@
 - [x] Competitor comparison animated (not static)
 - [x] Vertical format 1080x1920 for social media
 - [x] 60 seconds of continuous motion
+
+## Phase 33: CRM Market Research, Pricing Strategy, Voiceover Commercial, Pricing Page
+
+### Market Research
+- [ ] Research pricing for all major CRMs (HubSpot, Salesforce, Pipedrive, Zoho, Monday, Freshsales, Close, Copper, Insightly, Nutshell, etc.)
+- [ ] Compare functionality: AI assistant, email deliverability, prospecting, automation, compliance
+- [ ] Create competitive analysis matrix (features vs price)
+- [ ] Determine where Apex CRM stands vs competitors
+- [ ] Set competitive tier pricing below market
+
+### Video Commercial with Voiceover
+- [ ] Write professional voiceover narration script
+- [ ] Generate voiceover audio using text-to-speech
+- [ ] Find better cinematic background music
+- [ ] Rebuild video with voiceover narration + better music
+- [ ] Include correct pricing after the demo section
+- [ ] Mention 2 free months trial
+
+### Pricing Page
+- [ ] Build pricing page in the CRM with tier levels
+- [ ] Add pricing to sidebar navigation
+- [ ] Show feature comparison across tiers
+
+## Phase 33 Fixes
+- [x] Hide Manus platform billing banner that blocks dashboard on published site
+
+## Phase 34: Competitive Pricing Analysis & Video with Voiceover
+- [ ] Complete feature-by-feature comparison: Apex CRM vs all major competitors
+- [ ] Calculate average market pricing across all tiers
+- [ ] Set Apex CRM pricing tiers that undercut the market
+- [ ] Add voiceover narration to commercial
+- [ ] Get better cinematic music
+- [ ] Include pricing at the end of the commercial
+- [ ] 2 free months promotional offer

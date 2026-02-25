@@ -8,6 +8,29 @@ import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
 
+// Remove any platform-injected banners (billing notices, etc.)
+(function removePlatformBanners() {
+  const remove = () => {
+    const root = document.getElementById('root');
+    if (!root) return;
+    Array.from(document.body.children).forEach(child => {
+      if (child !== root && child.tagName !== 'SCRIPT' && child.tagName !== 'LINK' && child.tagName !== 'STYLE') {
+        (child as HTMLElement).style.display = 'none';
+        (child as HTMLElement).style.height = '0';
+        (child as HTMLElement).style.overflow = 'hidden';
+      }
+    });
+  };
+  remove();
+  // Run again after a short delay in case banners are injected after load
+  setTimeout(remove, 100);
+  setTimeout(remove, 500);
+  setTimeout(remove, 1500);
+  // Also observe for dynamically injected elements
+  const observer = new MutationObserver(() => remove());
+  observer.observe(document.body, { childList: true });
+})();
+
 const queryClient = new QueryClient();
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {

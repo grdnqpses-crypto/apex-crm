@@ -7,6 +7,26 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <title>Apex CRM</title>
+    <style>
+      /* Hide Manus platform-injected billing/status banners */
+      body > div:first-child:not(#root),
+      body > [class*="banner"],
+      body > [class*="notice"],
+      body > [class*="billing"],
+      body > [class*="paused"],
+      body > [style*="background"][style*="color"]:not(#root),
+      body > div[style]:not(#root):not([id]) {
+        display: none !important;
+        height: 0 !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+    </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
