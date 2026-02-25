@@ -8,20 +8,15 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <title>Apex CRM</title>
     <style>
-      /* Hide Manus platform-injected billing/status banners */
-      body > div:first-child:not(#root),
-      body > [class*="banner"],
-      body > [class*="notice"],
-      body > [class*="billing"],
-      body > [class*="paused"],
-      body > [style*="background"][style*="color"]:not(#root),
-      body > div[style]:not(#root):not([id]) {
+      /* Hide Manus platform-injected billing/status banners.
+         Target ONLY the specific banner structure: a div before #root with inline styles.
+         Must NOT interfere with Radix/shadcn portals, sidebar overlays, or dialogs. */
+      body > div:first-child:not(#root):not([data-radix-portal]):not([data-state]):not([class]) {
         display: none !important;
         height: 0 !important;
         max-height: 0 !important;
         overflow: hidden !important;
         visibility: hidden !important;
-        opacity: 0 !important;
         pointer-events: none !important;
         margin: 0 !important;
         padding: 0 !important;

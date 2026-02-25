@@ -1003,3 +1003,8 @@
 - [ ] Get better cinematic music
 - [ ] Include pricing at the end of the commercial
 - [ ] 2 free months promotional offer
+
+## Phase 35: Mobile Navigation Fixes
+- [x] Fix top header buttons not working on mobile (sidebar toggle, navigation)
+- [x] Ensure sidebar is accessible on mobile via hamburger/toggle button
+- [ ] Fix AI Assistant error (LLM usage exhaustion - show better error message)

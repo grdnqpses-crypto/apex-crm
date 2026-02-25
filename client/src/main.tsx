@@ -8,27 +8,27 @@ import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
 
-// Remove any platform-injected banners (billing notices, etc.)
+// Remove platform-injected billing banners (targeted — only the first non-root div before #root)
 (function removePlatformBanners() {
   const remove = () => {
     const root = document.getElementById('root');
     if (!root) return;
-    Array.from(document.body.children).forEach(child => {
-      if (child !== root && child.tagName !== 'SCRIPT' && child.tagName !== 'LINK' && child.tagName !== 'STYLE') {
-        (child as HTMLElement).style.display = 'none';
-        (child as HTMLElement).style.height = '0';
-        (child as HTMLElement).style.overflow = 'hidden';
+    // Only hide elements that appear BEFORE #root in the DOM (banners are injected at top)
+    let sibling = document.body.firstElementChild;
+    while (sibling && sibling !== root) {
+      const el = sibling as HTMLElement;
+      if (el.tagName === 'DIV' && !el.id && !el.getAttribute('data-radix-portal') && !el.getAttribute('data-state')) {
+        el.style.display = 'none';
+        el.style.height = '0';
+        el.style.overflow = 'hidden';
       }
-    });
+      sibling = sibling.nextElementSibling;
+    }
   };
   remove();
-  // Run again after a short delay in case banners are injected after load
   setTimeout(remove, 100);
   setTimeout(remove, 500);
   setTimeout(remove, 1500);
-  // Also observe for dynamically injected elements
-  const observer = new MutationObserver(() => remove());
-  observer.observe(document.body, { childList: true });
 })();
 
 const queryClient = new QueryClient();
