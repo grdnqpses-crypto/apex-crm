@@ -958,3 +958,14 @@
 - [x] Apex CRM branding/logo at the top of every page
 - [x] Dashboard link always accessible at the top for easy navigation back
 - [x] Top header bar persistent across all pages
+
+## Phase 32: EPIC Fully Animated Motion Graphics Commercial
+- [x] Pure motion graphics — every frame has movement, nothing static
+- [x] Animated text flying in, shapes morphing, UI elements building on screen
+- [x] Counters ticking up, pipeline bars growing, cards flipping
+- [x] Cinematic music synced to visual beats
+- [x] Emotional story arc: pain → discovery → transformation → excitement
+- [x] Highlight unique features: AI assistant, automation, 535 prospects, email campaigns
+- [x] Competitor comparison animated (not static)
+- [x] Vertical format 1080x1920 for social media
+- [x] 60 seconds of continuous motion
