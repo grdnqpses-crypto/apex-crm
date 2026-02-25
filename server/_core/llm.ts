@@ -209,14 +209,16 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveApiUrl = () =>
+const resolveForgeApiUrl = () =>
   ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
     ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
     : "https://forge.manus.im/v1/chat/completions";
 
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+
 const assertApiKey = () => {
-  if (!ENV.forgeApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
+  if (!ENV.geminiApiKey && !ENV.forgeApiKey) {
+    throw new Error("No LLM API key configured (neither GOOGLE_GEMINI_API_KEY nor BUILT_IN_FORGE_API_KEY)");
   }
 };
 
@@ -265,6 +267,35 @@ const normalizeResponseFormat = ({
   };
 };
 
+async function callGemini(payload: Record<string, unknown>): Promise<Response> {
+  // Use Gemini's OpenAI-compatible endpoint
+  const geminiPayload = { ...payload };
+  // Gemini supports gemini-2.0-flash via OpenAI compat
+  geminiPayload.model = "gemini-2.0-flash";
+  // Remove thinking param not supported by Gemini OpenAI compat
+  delete geminiPayload.thinking;
+
+  return fetch(GEMINI_API_URL, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${ENV.geminiApiKey}`,
+    },
+    body: JSON.stringify(geminiPayload),
+  });
+}
+
+async function callForge(payload: Record<string, unknown>): Promise<Response> {
+  return fetch(resolveForgeApiUrl(), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${ENV.forgeApiKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   assertApiKey();
 
@@ -296,10 +327,10 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.tool_choice = normalizedToolChoice;
   }
 
-  payload.max_tokens = 32768
+  payload.max_tokens = 32768;
   payload.thinking = {
     "budget_tokens": 128
-  }
+  };
 
   const normalizedResponseFormat = normalizeResponseFormat({
     responseFormat,
@@ -312,20 +343,41 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  const response = await fetch(resolveApiUrl(), {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
+  // Strategy: Try Gemini first (user's own key), fall back to Forge
+  let response: Response | null = null;
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
-    );
+  if (ENV.geminiApiKey) {
+    try {
+      response = await callGemini(payload);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.warn(`[LLM] Gemini failed (${response.status}): ${errorText.substring(0, 200)}`);
+        response = null; // Fall through to Forge
+      }
+    } catch (err: any) {
+      console.warn(`[LLM] Gemini network error: ${err.message}`);
+      response = null;
+    }
+  }
+
+  // Fallback to Forge if Gemini failed or not configured
+  if (!response && ENV.forgeApiKey) {
+    try {
+      response = await callForge(payload);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
+        );
+      }
+    } catch (err: any) {
+      if (err.message.startsWith("LLM invoke failed")) throw err;
+      throw new Error(`LLM invoke failed: network error – ${err.message}`);
+    }
+  }
+
+  if (!response) {
+    throw new Error("All LLM providers failed. Please check your API keys.");
   }
 
   return (await response.json()) as InvokeResult;

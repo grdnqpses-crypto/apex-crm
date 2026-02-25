@@ -1007,4 +1007,17 @@
 ## Phase 35: Mobile Navigation Fixes
 - [x] Fix top header buttons not working on mobile (sidebar toggle, navigation)
 - [x] Ensure sidebar is accessible on mobile via hamburger/toggle button
-- [ ] Fix AI Assistant error (LLM usage exhaustion - show better error message)
+- [x] Fix AI Assistant error — rebuilt as self-contained, no external API needed
+
+## Phase 36: Self-Contained AI Assistant (No External API)
+- [x] Build smart command parser that understands natural language CRM commands
+- [x] Create company/contact/deal via natural language
+- [x] Search and lookup contacts, companies, deals
+- [x] Get dashboard stats and summaries
+- [x] Navigate to any page via command
+- [x] Run campaign actions
+- [x] Task management via AI
+- [x] Smart suggestions and recommendations based on CRM data
+- [x] Help and guidance for all CRM features
+- [x] Always available, no external API credits needed
+- [x] Falls back to LLM when available for enhanced responses
