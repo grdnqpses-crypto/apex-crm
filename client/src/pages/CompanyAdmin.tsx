@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Users, UserPlus, Shield, ShieldCheck, UserCog, User, Mail, Settings, ToggleLeft, ToggleRight, CheckCircle } from "lucide-react";
+import { Users, UserPlus, Shield, ShieldCheck, UserCog, User, Mail, Settings, ToggleLeft, ToggleRight, CheckCircle, KeyRound, Eye, EyeOff } from "lucide-react";
 import PageGuide from "@/components/PageGuide";
 
 const roleColors: Record<string, string> = {
@@ -46,11 +46,39 @@ export default function CompanyAdmin() {
   );
   const utils = trpc.useUtils();
 
+  // Create User state
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [newUser, setNewUser] = useState({
+    username: "", password: "", name: "", email: "", systemRole: "user" as "company_admin" | "manager" | "user",
+    jobTitle: "", phone: "",
+  });
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [newUserFeatures, setNewUserFeatures] = useState<string[]>([]);
+
+  // Invite state
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"company_admin" | "manager" | "user">("user");
+
+  // Feature editor state
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [featureUserId, setFeatureUserId] = useState<number | null>(null);
+
+  // Reset password state
+  const [resetUserId, setResetUserId] = useState<number | null>(null);
+  const [resetPassword, setResetPassword] = useState("");
+  const [showResetPassword, setShowResetPassword] = useState(false);
+
+  const createUserMutation = trpc.userManagement.createUser.useMutation({
+    onSuccess: (data) => {
+      utils.tenants.users.invalidate();
+      setShowCreateUser(false);
+      setNewUser({ username: "", password: "", name: "", email: "", systemRole: "user", jobTitle: "", phone: "" });
+      setNewUserFeatures([]);
+      toast.success("User created", { description: `Username: ${data.username}` });
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   const createInviteMutation = trpc.invites.create.useMutation({
     onSuccess: (data) => {
@@ -85,17 +113,16 @@ export default function CompanyAdmin() {
     onSuccess: () => { utils.tenants.users.invalidate(); toast.success("User activated"); },
   });
 
+  const resetPasswordMutation = trpc.userManagement.resetPassword.useMutation({
+    onSuccess: () => { setResetUserId(null); setResetPassword(""); toast.success("Password reset successfully"); },
+    onError: (e) => toast.error(e.message),
+  });
+
   // Load user features when editing
   const { data: editingFeatures } = trpc.userManagement.getFeatures.useQuery(
     { userId: featureUserId! },
     { enabled: !!featureUserId }
   );
-
-  // Sync features when opening editor
-  const openFeatureEditor = (userId: number) => {
-    setFeatureUserId(userId);
-    setSelectedFeatures([]);
-  };
 
   const featureGroups = useMemo(() => {
     if (!allFeatures) return {};
@@ -107,7 +134,6 @@ export default function CompanyAdmin() {
     return groups;
   }, [allFeatures]);
 
-  // Get managers for team view
   const managers = useMemo(() => {
     if (!companyUsers) return [];
     return companyUsers.filter((u: any) => u.systemRole === "manager");
@@ -128,40 +154,152 @@ export default function CompanyAdmin() {
     <div className="space-y-6">
       <PageGuide title="Team Management" description="Manage your company's team, roles, and feature access" sections={[
         { title: "Roles", content: "Company Admin can manage all users and features. Managers can manage their assigned users. Users have access to assigned features only.", icon: "purpose" },
-        { title: "Features", content: "Assign specific CRM features to each user. Managers can only assign features they themselves have access to.", icon: "actions" },
+        { title: "Create Users", content: "Create users with username and password. They can log in at /login with their credentials.", icon: "actions" },
       ]} />
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold">Team Management</h1>
           <p className="text-muted-foreground text-sm mt-1">{companyUsers?.length || 0} team members</p>
         </div>
         {(isAdmin || isManager) && (
-          <Dialog open={showInvite} onOpenChange={setShowInvite}>
-            <DialogTrigger asChild>
-              <Button><UserPlus className="h-4 w-4 mr-2" />Invite Member</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Invite Team Member</DialogTitle></DialogHeader>
-              <div className="space-y-4">
-                <div><Label>Email Address</Label><Input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="colleague@company.com" /></div>
-                <div>
-                  <Label>Role</Label>
-                  <Select value={inviteRole} onValueChange={(v: any) => setInviteRole(v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {isAdmin && <SelectItem value="company_admin">Company Admin</SelectItem>}
-                      {isAdmin && <SelectItem value="manager">Manager</SelectItem>}
-                      <SelectItem value="user">User</SelectItem>
-                    </SelectContent>
-                  </Select>
+          <div className="flex gap-2">
+            <Dialog open={showCreateUser} onOpenChange={setShowCreateUser}>
+              <DialogTrigger asChild>
+                <Button><UserPlus className="h-4 w-4 mr-2" />Create User</Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Create New User</DialogTitle>
+                  <p className="text-sm text-muted-foreground">Create a user with username and password login</p>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2">
+                      <Label>Full Name *</Label>
+                      <Input value={newUser.name} onChange={e => setNewUser(p => ({ ...p, name: e.target.value }))} placeholder="John Smith" />
+                    </div>
+                    <div>
+                      <Label>Username *</Label>
+                      <Input value={newUser.username} onChange={e => setNewUser(p => ({ ...p, username: e.target.value }))} placeholder="john.smith" />
+                    </div>
+                    <div>
+                      <Label>Password *</Label>
+                      <div className="relative">
+                        <Input
+                          type={showNewPassword ? "text" : "password"}
+                          value={newUser.password}
+                          onChange={e => setNewUser(p => ({ ...p, password: e.target.value }))}
+                          placeholder="Min 8 characters"
+                          className="pr-9"
+                        />
+                        <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                          {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Email</Label>
+                      <Input type="email" value={newUser.email} onChange={e => setNewUser(p => ({ ...p, email: e.target.value }))} placeholder="john@company.com" />
+                    </div>
+                    <div>
+                      <Label>Role</Label>
+                      <Select value={newUser.systemRole} onValueChange={(v: any) => setNewUser(p => ({ ...p, systemRole: v }))}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {isAdmin && <SelectItem value="company_admin">Company Admin</SelectItem>}
+                          {isAdmin && <SelectItem value="manager">Manager</SelectItem>}
+                          <SelectItem value="user">User</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Job Title</Label>
+                      <Input value={newUser.jobTitle} onChange={e => setNewUser(p => ({ ...p, jobTitle: e.target.value }))} placeholder="Sales Rep" />
+                    </div>
+                    <div>
+                      <Label>Phone</Label>
+                      <Input value={newUser.phone} onChange={e => setNewUser(p => ({ ...p, phone: e.target.value }))} placeholder="+1 555-0123" />
+                    </div>
+                  </div>
+
+                  {/* Feature selection */}
+                  <div>
+                    <Label className="mb-2 block">Feature Access</Label>
+                    <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-3">
+                      {Object.entries(featureGroups).map(([group, features]) => (
+                        <div key={group}>
+                          <p className="text-xs font-semibold text-muted-foreground mb-1">{group}</p>
+                          <div className="grid grid-cols-2 gap-1">
+                            {(features as any[]).map((f: any) => (
+                              <label key={f.key} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                                <Checkbox
+                                  checked={newUserFeatures.includes(f.key)}
+                                  onCheckedChange={(c) => {
+                                    if (c) setNewUserFeatures(prev => [...prev, f.key]);
+                                    else setNewUserFeatures(prev => prev.filter(k => k !== f.key));
+                                  }}
+                                />
+                                {f.label}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setNewUserFeatures((allFeatures || []).map((f: any) => f.key))}>Select All</Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => setNewUserFeatures([])}>Clear</Button>
+                    </div>
+                  </div>
+
+                  <Button
+                    className="w-full"
+                    onClick={() => createUserMutation.mutate({
+                      username: newUser.username,
+                      password: newUser.password,
+                      name: newUser.name,
+                      email: newUser.email || undefined,
+                      systemRole: newUser.systemRole,
+                      tenantCompanyId: companyId!,
+                      jobTitle: newUser.jobTitle || undefined,
+                      phone: newUser.phone || undefined,
+                      features: newUserFeatures.length > 0 ? newUserFeatures : undefined,
+                    })}
+                    disabled={!newUser.username || !newUser.password || !newUser.name || newUser.password.length < 8 || createUserMutation.isPending}
+                  >
+                    {createUserMutation.isPending ? "Creating..." : "Create User"}
+                  </Button>
                 </div>
-                <Button className="w-full" onClick={() => createInviteMutation.mutate({ companyId: companyId!, email: inviteEmail, role: inviteRole })} disabled={!inviteEmail || createInviteMutation.isPending}>
-                  {createInviteMutation.isPending ? "Sending..." : "Send Invite"}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={showInvite} onOpenChange={setShowInvite}>
+              <DialogTrigger asChild>
+                <Button variant="outline"><Mail className="h-4 w-4 mr-2" />Invite via Email</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Invite Team Member</DialogTitle></DialogHeader>
+                <div className="space-y-4">
+                  <div><Label>Email Address</Label><Input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="colleague@company.com" /></div>
+                  <div>
+                    <Label>Role</Label>
+                    <Select value={inviteRole} onValueChange={(v: any) => setInviteRole(v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {isAdmin && <SelectItem value="company_admin">Company Admin</SelectItem>}
+                        {isAdmin && <SelectItem value="manager">Manager</SelectItem>}
+                        <SelectItem value="user">User</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button className="w-full" onClick={() => createInviteMutation.mutate({ companyId: companyId!, email: inviteEmail, role: inviteRole })} disabled={!inviteEmail || createInviteMutation.isPending}>
+                    {createInviteMutation.isPending ? "Sending..." : "Send Invite"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         )}
       </div>
 
@@ -179,6 +317,7 @@ export default function CompanyAdmin() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Member</TableHead>
+                    <TableHead>Username</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Manager</TableHead>
                     <TableHead>Status</TableHead>
@@ -187,7 +326,7 @@ export default function CompanyAdmin() {
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                    <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
                   ) : (companyUsers || []).map((u: any) => {
                     const RoleIcon = roleIcons[u.systemRole || "user"] || User;
                     const manager = managers.find((m: any) => m.id === u.managerId);
@@ -203,6 +342,13 @@ export default function CompanyAdmin() {
                               <p className="text-xs text-muted-foreground">{u.email}</p>
                             </div>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {u.username ? (
+                            <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{u.username}</code>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">OAuth</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           {isAdmin ? (
@@ -231,8 +377,13 @@ export default function CompanyAdmin() {
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
                             {(isAdmin || isManager) && (
-                              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => openFeatureEditor(u.id)}>
+                              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setFeatureUserId(u.id); setSelectedFeatures([]); }}>
                                 <Settings className="h-3 w-3 mr-1" />Features
+                              </Button>
+                            )}
+                            {isAdmin && u.username && (
+                              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setResetUserId(u.id); setResetPassword(""); }}>
+                                <KeyRound className="h-3 w-3 mr-1" />Reset PW
                               </Button>
                             )}
                             {isAdmin && (
@@ -364,6 +515,37 @@ export default function CompanyAdmin() {
               }
             }} disabled={assignFeaturesMutation.isPending}>
               {assignFeaturesMutation.isPending ? "Saving..." : "Save Feature Assignments"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={!!resetUserId} onOpenChange={(open) => !open && setResetUserId(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Reset User Password</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>New Password</Label>
+              <div className="relative">
+                <Input
+                  type={showResetPassword ? "text" : "password"}
+                  value={resetPassword}
+                  onChange={e => setResetPassword(e.target.value)}
+                  placeholder="Min 8 characters"
+                  className="pr-9"
+                />
+                <button type="button" onClick={() => setShowResetPassword(!showResetPassword)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  {showResetPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            <Button
+              className="w-full"
+              onClick={() => resetUserId && resetPasswordMutation.mutate({ userId: resetUserId, newPassword: resetPassword })}
+              disabled={resetPassword.length < 8 || resetPasswordMutation.isPending}
+            >
+              {resetPasswordMutation.isPending ? "Resetting..." : "Reset Password"}
             </Button>
           </div>
         </DialogContent>

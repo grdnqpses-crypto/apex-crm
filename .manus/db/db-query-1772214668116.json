@@ -1,0 +1,21 @@
+{
+  "query": "SELECT id, name, slug, subscriptionTier, subscriptionStatus FROM tenant_companies LIMIT 10; SELECT id, name, email, role, systemRole, tenantCompanyId, isActive FROM users LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, name, slug, subscriptionTier, subscriptionStatus FROM tenant_companies LIMIT 10; SELECT id, name, email, role, systemRole, tenantCompanyId, isActive FROM users LIMIT 10;",
+  "rows": [
+    {
+      "id": "2",
+      "name": "Logistics Worldwide",
+      "slug": "log-wor",
+      "subscriptionTier": "enterprise",
+      "subscriptionStatus": "active"
+    }
+  ],
+  "messages": [
+    "id\tname\temail\trole\tsystemRole\ttenantCompanyId\tisActive",
+    "1\tcrm\tcrm@shiplw.com\tadmin\tdeveloper\tNULL\t1",
+    "12\tCrypto- GRDN\tgrdn.qpses@gmail.com\tadmin\tdeveloper\tNULL\t1"
+  ],
+  "stdout": "id\tname\tslug\tsubscriptionTier\tsubscriptionStatus\n2\tLogistics Worldwide\tlog-wor\tenterprise\tactive\nid\tname\temail\trole\tsystemRole\ttenantCompanyId\tisActive\n1\tcrm\tcrm@shiplw.com\tadmin\tdeveloper\tNULL\t1\n12\tCrypto- GRDN\tgrdn.qpses@gmail.com\tadmin\tdeveloper\tNULL\t1\n",
+  "stderr": "",
+  "execution_time_ms": 995
+}

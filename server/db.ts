@@ -87,6 +87,62 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getUserByUsername(username: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createCredentialUser(data: {
+  username: string;
+  passwordHash: string;
+  name: string;
+  email?: string;
+  systemRole: "company_admin" | "manager" | "user";
+  tenantCompanyId: number;
+  managerId?: number;
+  jobTitle?: string;
+  phone?: string;
+  invitedBy?: number;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+  // Generate a unique openId for credential-based users (prefixed to distinguish from OAuth)
+  const openId = `cred_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  const [result] = await db.insert(users).values({
+    openId,
+    username: data.username,
+    passwordHash: data.passwordHash,
+    name: data.name,
+    email: data.email ?? null,
+    loginMethod: "credentials",
+    role: data.systemRole === "company_admin" ? "admin" : "user",
+    systemRole: data.systemRole,
+    tenantCompanyId: data.tenantCompanyId,
+    managerId: data.managerId ?? null,
+    jobTitle: data.jobTitle ?? null,
+    phone: data.phone ?? null,
+    invitedBy: data.invitedBy ?? null,
+    isActive: true,
+    lastSignedIn: new Date(),
+  });
+  return result.insertId;
+}
+
+export async function updateUserPassword(userId: number, passwordHash: string) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ passwordHash }).where(eq(users.id, userId));
+}
+
 // ─── Lead Status Options ───
 export async function listLeadStatuses() {
   const db = await getDb();

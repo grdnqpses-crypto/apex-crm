@@ -75,6 +75,7 @@ const FreightMarketplace = lazy(() => import("./pages/FreightMarketplace"));
 const ApexAutopilot = lazy(() => import("./pages/ApexAutopilot"));
 const EmailMasking = lazy(() => import("./pages/EmailMasking"));
 const Commercial = lazy(() => import("./pages/Commercial"));
+const Login = lazy(() => import("./pages/Login"));
 
 function PageLoader() {
   return (
@@ -173,7 +174,16 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <Switch>
+            <Route path="/login">
+              <Suspense fallback={<PageLoader />}>
+                <Login />
+              </Suspense>
+            </Route>
+            <Route>
+              <Router />
+            </Route>
+          </Switch>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

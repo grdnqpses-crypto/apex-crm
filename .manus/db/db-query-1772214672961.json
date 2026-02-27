@@ -1,0 +1,29 @@
+{
+  "query": "SELECT * FROM tenant_companies LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT * FROM tenant_companies LIMIT 5;",
+  "rows": [
+    {
+      "id": "2",
+      "name": "Logistics Worldwide",
+      "slug": "log-wor",
+      "industry": "Freight Broker",
+      "website": "www.logisticsworldwide.com",
+      "logoUrl": "NULL",
+      "address": "6030 Bowdendale Avenue",
+      "phone": "904-990-5500",
+      "contactEmail": "jlavallee@shiplw.com",
+      "maxUsers": "25",
+      "subscriptionTier": "enterprise",
+      "subscriptionStatus": "active",
+      "trialEndsAt": "NULL",
+      "enabledFeatures": "[\"crm_contacts\", \"crm_companies\", \"crm_deals\", \"crm_tasks\", \"marketing_campaigns\", \"marketing_templates\", \"marketing_deliverability\", \"marketing_ab_tests\", \"marketing_smtp\", \"automation_workflows\", \"automation_segments\", \"paradigm_pulse\", \"paradigm_prospects\", \"paradigm_signals\", \"paradigm_sequences\", \"paradigm_battle_cards\", \"paradigm_integrations\", \"paradigm_quantum_score\", \"compliance_center\", \"compliance_suppression\", \"compliance_sender_settings\", \"compliance_domain_stats\", \"analytics_reports\"]",
+      "settings": "NULL",
+      "createdAt": "1771606519036",
+      "updatedAt": "1771606519036"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tslug\tindustry\twebsite\tlogoUrl\taddress\tphone\tcontactEmail\tmaxUsers\tsubscriptionTier\tsubscriptionStatus\ttrialEndsAt\tenabledFeatures\tsettings\tcreatedAt\tupdatedAt\n2\tLogistics Worldwide\tlog-wor\tFreight Broker\twww.logisticsworldwide.com\tNULL\t6030 Bowdendale Avenue\t904-990-5500\tjlavallee@shiplw.com\t25\tenterprise\tactive\tNULL\t[\"crm_contacts\", \"crm_companies\", \"crm_deals\", \"crm_tasks\", \"marketing_campaigns\", \"marketing_templates\", \"marketing_deliverability\", \"marketing_ab_tests\", \"marketing_smtp\", \"automation_workflows\", \"automation_segments\", \"paradigm_pulse\", \"paradigm_prospects\", \"paradigm_signals\", \"paradigm_sequences\", \"paradigm_battle_cards\", \"paradigm_integrations\", \"paradigm_quantum_score\", \"compliance_center\", \"compliance_suppression\", \"compliance_sender_settings\", \"compliance_domain_stats\", \"analytics_reports\"]\tNULL\t1771606519036\t1771606519036\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}

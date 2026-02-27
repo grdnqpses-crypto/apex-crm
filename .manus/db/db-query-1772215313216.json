@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, name, slug, subscriptionTier, subscriptionStatus, maxUsers FROM tenant_companies ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, name, slug, subscriptionTier, subscriptionStatus, maxUsers FROM tenant_companies ORDER BY id;",
+  "rows": [
+    {
+      "id": "2",
+      "name": "Logistics Worldwide",
+      "slug": "log-wor",
+      "subscriptionTier": "enterprise",
+      "subscriptionStatus": "active",
+      "maxUsers": "25"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tslug\tsubscriptionTier\tsubscriptionStatus\tmaxUsers\n2\tLogistics Worldwide\tlog-wor\tenterprise\tactive\t25\n",
+  "stderr": "",
+  "execution_time_ms": 131
+}

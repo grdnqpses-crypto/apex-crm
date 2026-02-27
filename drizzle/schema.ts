@@ -30,6 +30,8 @@ export const users = mysqlTable("users", {
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
+  username: varchar("username", { length: 128 }).unique(),
+  passwordHash: varchar("passwordHash", { length: 512 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   // Multi-tenant hierarchy fields
@@ -84,6 +86,7 @@ export type CompanyInvite = typeof companyInvites.$inferSelect;
 export const contacts = mysqlTable("contacts", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
+  tenantId: int("tenantId"),
   // 1. Core Identity
   firstName: varchar("firstName", { length: 128 }).notNull(),
   lastName: varchar("lastName", { length: 128 }),
@@ -184,6 +187,7 @@ export type InsertContact = typeof contacts.$inferInsert;
 export const companies = mysqlTable("companies", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
+  tenantId: int("tenantId"),
   // 1. Basic Identity
   name: varchar("name", { length: 256 }).notNull(),
   domain: varchar("domain", { length: 256 }),
@@ -250,6 +254,7 @@ export type InsertCompany = typeof companies.$inferInsert;
 export const pipelines = mysqlTable("pipelines", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
+  tenantId: int("tenantId"),
   name: varchar("name", { length: 256 }).notNull(),
   isDefault: boolean("isDefault").default(false).notNull(),
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
@@ -267,6 +272,7 @@ export const pipelineStages = mysqlTable("pipeline_stages", {
 export const deals = mysqlTable("deals", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
+  tenantId: int("tenantId"),
   pipelineId: int("pipelineId").notNull(),
   stageId: int("stageId").notNull(),
   contactId: int("contactId"),
@@ -292,6 +298,7 @@ export type InsertDeal = typeof deals.$inferInsert;
 export const activities = mysqlTable("activities", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
+  tenantId: int("tenantId"),
   contactId: int("contactId"),
   companyId: int("companyId"),
   dealId: int("dealId"),
@@ -326,6 +333,7 @@ export type Activity = typeof activities.$inferSelect;
 export const tasks = mysqlTable("tasks", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
+  tenantId: int("tenantId"),
   // Core fields
   title: varchar("title", { length: 512 }).notNull(),
   taskType: varchar("taskType", { length: 64 }).default("to_do"),

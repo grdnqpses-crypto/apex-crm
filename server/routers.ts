@@ -9,6 +9,7 @@ import * as db from "./db";
 import { nanoid } from "nanoid";
 import { NEW_BROKER_TEMPLATE_HTML, RENEWING_BROKER_TEMPLATE_HTML } from "./fmcsa-templates";
 import { createHash } from "crypto";
+import bcrypt from "bcryptjs";
 
 export const appRouter = router({
   system: systemRouter,
@@ -1801,6 +1802,92 @@ export const appRouter = router({
     // Developer-only: get all users across all companies
     allUsers: adminProcedure.query(async () => {
       return db.getAllUsersWithCompany();
+    }),
+
+    // Create user with username/password (admin, company_admin, or manager)
+    createUser: protectedProcedure.input(z.object({
+      username: z.string().min(3).max(64).regex(/^[a-zA-Z0-9._-]+$/, "Username can only contain letters, numbers, dots, hyphens, and underscores"),
+      password: z.string().min(8).max(128),
+      name: z.string().min(1),
+      email: z.string().email().optional(),
+      systemRole: z.enum(["company_admin", "manager", "user"]),
+      tenantCompanyId: z.number(),
+      managerId: z.number().optional(),
+      jobTitle: z.string().optional(),
+      phone: z.string().optional(),
+      features: z.array(z.string()).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      // Permission checks
+      const callerRole = ctx.user.systemRole;
+      if (callerRole !== "developer" && callerRole !== "company_admin" && callerRole !== "manager") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only developers, admins, and managers can create users" });
+      }
+      // Managers can only create regular users
+      if (callerRole === "manager" && input.systemRole !== "user") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Managers can only create regular users" });
+      }
+      // Company admins can't create developers
+      if (callerRole === "company_admin" && input.systemRole === "company_admin") {
+        // admins can create other admins within their company - that's fine
+      }
+      // Check company exists
+      const company = await db.getTenantCompanyById(input.tenantCompanyId);
+      if (!company) throw new TRPCError({ code: "NOT_FOUND", message: "Company not found" });
+      // Check max users
+      const currentCount = await db.getTenantCompanyUserCount(input.tenantCompanyId);
+      if (company.maxUsers && currentCount >= company.maxUsers) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `Company has reached its user limit (${company.maxUsers})` });
+      }
+      // Check username uniqueness
+      const existing = await db.getUserByUsername(input.username);
+      if (existing) throw new TRPCError({ code: "CONFLICT", message: "Username already taken" });
+      // Hash password
+      const passwordHash = await bcrypt.hash(input.password, 12);
+      // Create user
+      const userId = await db.createCredentialUser({
+        username: input.username,
+        passwordHash,
+        name: input.name,
+        email: input.email,
+        systemRole: input.systemRole,
+        tenantCompanyId: input.tenantCompanyId,
+        managerId: input.managerId || (callerRole === "manager" ? ctx.user.id : undefined),
+        jobTitle: input.jobTitle,
+        phone: input.phone,
+        invitedBy: ctx.user.id,
+      });
+      // Assign features if provided
+      if (input.features && input.features.length > 0 && userId) {
+        await db.assignFeaturesToUser(userId, input.features, ctx.user.id, input.tenantCompanyId);
+      }
+      return { id: userId, username: input.username };
+    }),
+
+    // Reset user password (admin or developer)
+    resetPassword: protectedProcedure.input(z.object({
+      userId: z.number(),
+      newPassword: z.string().min(8).max(128),
+    })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.systemRole !== "developer" && ctx.user.systemRole !== "company_admin") {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const passwordHash = await bcrypt.hash(input.newPassword, 12);
+      await db.updateUserPassword(input.userId, passwordHash);
+      return { success: true };
+    }),
+
+    // Change own password
+    changePassword: protectedProcedure.input(z.object({
+      currentPassword: z.string(),
+      newPassword: z.string().min(8).max(128),
+    })).mutation(async ({ ctx, input }) => {
+      const user = await db.getUserById(ctx.user.id);
+      if (!user?.passwordHash) throw new TRPCError({ code: "BAD_REQUEST", message: "Account does not use password authentication" });
+      const valid = await bcrypt.compare(input.currentPassword, user.passwordHash);
+      if (!valid) throw new TRPCError({ code: "UNAUTHORIZED", message: "Current password is incorrect" });
+      const passwordHash = await bcrypt.hash(input.newPassword, 12);
+      await db.updateUserPassword(ctx.user.id, passwordHash);
+      return { success: true };
     }),
 
     // Update user role (developer can set any, admin can set within company)

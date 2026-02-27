@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE email_campaigns ADD COLUMN tenantId INT; ALTER TABLE email_templates ADD COLUMN tenantId INT; ALTER TABLE segments ADD COLUMN tenantId INT; ALTER TABLE workflows ADD COLUMN tenantId INT; ALTER TABLE prospects ADD COLUMN tenantId INT; ALTER TABLE ghost_sequences ADD COLUMN tenantId INT;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute ALTER TABLE email_campaigns ADD COLUMN tenantId INT; ALTER TABLE email_templates ADD COLUMN tenantId INT; ALTER TABLE segments ADD COLUMN tenantId INT; ALTER TABLE workflows ADD COLUMN tenantId INT; ALTER TABLE prospects ADD COLUMN tenantId INT; ALTER TABLE ghost_sequences ADD COLUMN tenantId INT;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1282
+}

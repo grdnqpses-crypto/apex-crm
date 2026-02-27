@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE users ADD COLUMN username VARCHAR(128) AFTER email, ADD COLUMN passwordHash VARCHAR(512) AFTER username;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute ALTER TABLE users ADD COLUMN username VARCHAR(128) AFTER email, ADD COLUMN passwordHash VARCHAR(512) AFTER username;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'username' in 'users'"
+  ]
+}

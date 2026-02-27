@@ -269,12 +269,23 @@ export default function DashboardLayout({
               The most powerful freight broker CRM. Manage companies, contacts, deals, and operations in one place.
             </p>
             <Button
-              onClick={() => { window.location.href = getLoginUrl(); }}
+              onClick={() => { window.location.href = "/login"; }}
               size="lg"
               className="w-full rounded-xl h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all"
             >
               Sign in to continue
             </Button>
+            <div className="mt-4 pt-4 border-t border-border/30">
+              <p className="text-xs text-muted-foreground mb-2">Platform administrators</p>
+              <Button
+                variant="outline"
+                onClick={() => { window.location.href = getLoginUrl(); }}
+                size="sm"
+                className="w-full"
+              >
+                Sign in with Manus OAuth
+              </Button>
+            </div>
           </div>
         </div>
       </div>
