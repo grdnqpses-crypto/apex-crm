@@ -106,7 +106,7 @@ export async function createCredentialUser(data: {
   passwordHash: string;
   name: string;
   email?: string;
-  systemRole: "company_admin" | "manager" | "user";
+  systemRole: "apex_owner" | "company_admin" | "manager" | "user";
   tenantCompanyId: number;
   managerId?: number;
   jobTitle?: string;
@@ -1694,7 +1694,7 @@ export async function getAllUsersWithCompany() {
     .orderBy(desc(users.lastSignedIn));
 }
 
-export async function updateUserRole(userId: number, systemRole: "developer" | "company_admin" | "manager" | "user") {
+export async function updateUserRole(userId: number, systemRole: "developer" | "apex_owner" | "company_admin" | "manager" | "user") {
   const db = await getDb();
   if (!db) return null as any;
   await db.update(users).set({ systemRole }).where(eq(users.id, userId));
@@ -3431,4 +3431,251 @@ export async function globalSearch(userId: number, query: string, limit = 15) {
   ]);
 
   return { companies: companyResults, contacts: contactResults, deals: dealResults };
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// ROLE-BASED ACCESS CONTROL — Team & Manager Queries
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Get all user IDs that a manager can see (their direct reports + themselves).
+ * For company_admin: all users in their tenant.
+ * For developer: all users.
+ * For regular user: only themselves.
+ */
+export async function getVisibleUserIds(user: { id: number; systemRole: string; tenantCompanyId: number | null; }): Promise<number[]> {
+  const db = await getDb();
+  if (!db) return [user.id];
+
+  if (user.systemRole === "developer" || user.systemRole === "super_admin") {
+    // Developer sees all users
+    const allUsers = await db.select({ id: users.id }).from(users);
+    return allUsers.map(u => u.id);
+  }
+
+  if (user.systemRole === "company_admin") {
+    // Company admin sees all users in their tenant
+    if (!user.tenantCompanyId) return [user.id];
+    const tenantUsers = await db.select({ id: users.id }).from(users)
+      .where(eq(users.tenantCompanyId, user.tenantCompanyId));
+    return tenantUsers.map(u => u.id);
+  }
+
+  if (user.systemRole === "manager") {
+    // Manager sees their direct reports + themselves
+    const directReports = await db.select({ id: users.id }).from(users)
+      .where(eq(users.managerId, user.id));
+    return [user.id, ...directReports.map(u => u.id)];
+  }
+
+  // Regular user: only themselves
+  return [user.id];
+}
+
+/**
+ * List companies visible to a user based on their role.
+ * Sales Rep: only their own. Manager: their team's. Admin: all in tenant.
+ */
+export async function listCompaniesByRole(user: { id: number; systemRole: string; tenantCompanyId: number | null; }, opts?: { search?: string; leadStatus?: string; limit?: number; offset?: number }) {
+  const db = await getDb();
+  if (!db) return { items: [], total: 0 };
+
+  const visibleIds = await getVisibleUserIds(user);
+  const conditions = [inArray(companies.userId, visibleIds)];
+  if (opts?.leadStatus) conditions.push(eq(companies.leadStatus, opts.leadStatus));
+  if (opts?.search) conditions.push(or(like(companies.name, `%${opts.search}%`), like(companies.domain, `%${opts.search}%`))!);
+  const where = and(...conditions);
+  const [items, countResult] = await Promise.all([
+    db.select().from(companies).where(where).orderBy(desc(companies.createdAt)).limit(opts?.limit ?? 50).offset(opts?.offset ?? 0),
+    db.select({ count: sql<number>`count(*)` }).from(companies).where(where),
+  ]);
+  return { items, total: countResult[0]?.count ?? 0 };
+}
+
+/**
+ * List contacts visible to a user based on their role.
+ */
+export async function listContactsByRole(user: { id: number; systemRole: string; tenantCompanyId: number | null; }, opts?: { search?: string; stage?: string; leadStatus?: string; limit?: number; offset?: number }) {
+  const db = await getDb();
+  if (!db) return { items: [], total: 0 };
+
+  const visibleIds = await getVisibleUserIds(user);
+  const conditions = [inArray(contacts.userId, visibleIds)];
+  if (opts?.stage) conditions.push(eq(contacts.lifecycleStage, opts.stage));
+  if (opts?.leadStatus) conditions.push(eq(contacts.leadStatus, opts.leadStatus));
+  if (opts?.search) conditions.push(or(like(contacts.firstName, `%${opts.search}%`), like(contacts.lastName, `%${opts.search}%`), like(contacts.email, `%${opts.search}%`))!);
+  const where = and(...conditions);
+  const [items, countResult] = await Promise.all([
+    db.select().from(contacts).where(where).orderBy(desc(contacts.createdAt)).limit(opts?.limit ?? 50).offset(opts?.offset ?? 0),
+    db.select({ count: sql<number>`count(*)` }).from(contacts).where(where),
+  ]);
+  return { items, total: countResult[0]?.count ?? 0 };
+}
+
+/**
+ * List deals visible to a user based on their role.
+ */
+export async function listDealsByRole(user: { id: number; systemRole: string; tenantCompanyId: number | null; }, opts?: { pipelineId?: number; status?: string; limit?: number; offset?: number }) {
+  const db = await getDb();
+  if (!db) return { items: [], total: 0 };
+
+  const visibleIds = await getVisibleUserIds(user);
+  const conditions = [inArray(deals.userId, visibleIds)];
+  if (opts?.pipelineId) conditions.push(eq(deals.pipelineId, opts.pipelineId));
+  if (opts?.status) conditions.push(eq(deals.status, opts.status as "open" | "won" | "lost"));
+  const where = and(...conditions);
+  const [items, countResult] = await Promise.all([
+    db.select().from(deals).where(where).orderBy(desc(deals.createdAt)).limit(opts?.limit ?? 50).offset(opts?.offset ?? 0),
+    db.select({ count: sql<number>`count(*)` }).from(deals).where(where),
+  ]);
+  return { items, total: countResult[0]?.count ?? 0 };
+}
+
+/**
+ * List tasks visible to a user based on their role.
+ */
+export async function listTasksByRole(user: { id: number; systemRole: string; tenantCompanyId: number | null; }, opts?: { status?: string; taskType?: string; queue?: string; limit?: number; offset?: number }) {
+  const db = await getDb();
+  if (!db) return { items: [], total: 0 };
+
+  const visibleIds = await getVisibleUserIds(user);
+  const conditions = [inArray(tasks.userId, visibleIds)];
+  if (opts?.status) conditions.push(eq(tasks.status, opts.status as "not_started" | "completed"));
+  if (opts?.taskType) conditions.push(eq(tasks.taskType, opts.taskType));
+  if (opts?.queue) conditions.push(eq(tasks.queue, opts.queue));
+  const where = and(...conditions);
+  const [items, countResult] = await Promise.all([
+    db.select().from(tasks).where(where).orderBy(desc(tasks.createdAt)).limit(opts?.limit ?? 50).offset(opts?.offset ?? 0),
+    db.select({ count: sql<number>`count(*)` }).from(tasks).where(where),
+  ]);
+  return { items, total: countResult[0]?.count ?? 0 };
+}
+
+/**
+ * Get dashboard stats aggregated across visible users (for managers/admins).
+ */
+export async function getDashboardStatsByRole(user: { id: number; systemRole: string; tenantCompanyId: number | null; }) {
+  const db = await getDb();
+  if (!db) return { totalContacts: 0, totalCompanies: 0, totalDeals: 0, openDeals: 0, wonDeals: 0, lostDeals: 0, totalValue: 0, wonValue: 0, totalCampaigns: 0, totalTasks: 0, pendingTasks: 0, totalSmtpAccounts: 0, emailsSentToday: 0, teamSize: 0 };
+
+  const visibleIds = await getVisibleUserIds(user);
+  const [contactCount, companyCount, dealStats, campaignCount, taskStats, smtpStats] = await Promise.all([
+    db.select({ count: sql<number>`count(*)` }).from(contacts).where(inArray(contacts.userId, visibleIds)),
+    db.select({ count: sql<number>`count(*)` }).from(companies).where(inArray(companies.userId, visibleIds)),
+    db.select({
+      total: sql<number>`count(*)`,
+      open: sql<number>`SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END)`,
+      won: sql<number>`SUM(CASE WHEN status = 'won' THEN 1 ELSE 0 END)`,
+      lost: sql<number>`SUM(CASE WHEN status = 'lost' THEN 1 ELSE 0 END)`,
+      totalValue: sql<number>`COALESCE(SUM(dealValue), 0)`,
+      wonValue: sql<number>`COALESCE(SUM(CASE WHEN status = 'won' THEN dealValue ELSE 0 END), 0)`,
+    }).from(deals).where(inArray(deals.userId, visibleIds)),
+    db.select({ count: sql<number>`count(*)` }).from(emailCampaigns).where(inArray(emailCampaigns.userId, visibleIds)),
+    db.select({
+      total: sql<number>`count(*)`,
+      pending: sql<number>`SUM(CASE WHEN taskStatus = 'not_started' THEN 1 ELSE 0 END)`,
+    }).from(tasks).where(inArray(tasks.userId, visibleIds)),
+    db.select({
+      total: sql<number>`count(*)`,
+      sentToday: sql<number>`COALESCE(SUM(sentToday), 0)`,
+    }).from(smtpAccounts).where(inArray(smtpAccounts.userId, visibleIds)),
+  ]);
+
+  return {
+    totalContacts: contactCount[0]?.count ?? 0,
+    totalCompanies: companyCount[0]?.count ?? 0,
+    totalDeals: dealStats[0]?.total ?? 0,
+    openDeals: dealStats[0]?.open ?? 0,
+    wonDeals: dealStats[0]?.won ?? 0,
+    lostDeals: dealStats[0]?.lost ?? 0,
+    totalValue: dealStats[0]?.totalValue ?? 0,
+    wonValue: dealStats[0]?.wonValue ?? 0,
+    totalCampaigns: campaignCount[0]?.count ?? 0,
+    totalTasks: taskStats[0]?.total ?? 0,
+    pendingTasks: taskStats[0]?.pending ?? 0,
+    totalSmtpAccounts: smtpStats[0]?.total ?? 0,
+    emailsSentToday: smtpStats[0]?.sentToday ?? 0,
+    teamSize: visibleIds.length,
+  };
+}
+
+/**
+ * Manager oversight: get team member performance stats.
+ */
+export async function getTeamPerformanceStats(managerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const teamMembers = await db.select().from(users).where(eq(users.managerId, managerId));
+  
+  const stats = await Promise.all(teamMembers.map(async (member) => {
+    const [companyCount, contactCount, dealStats, taskStats] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` }).from(companies).where(eq(companies.userId, member.id)),
+      db.select({ count: sql<number>`count(*)` }).from(contacts).where(eq(contacts.userId, member.id)),
+      db.select({
+        total: sql<number>`count(*)`,
+        open: sql<number>`SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END)`,
+        won: sql<number>`SUM(CASE WHEN status = 'won' THEN 1 ELSE 0 END)`,
+        totalValue: sql<number>`COALESCE(SUM(dealValue), 0)`,
+        wonValue: sql<number>`COALESCE(SUM(CASE WHEN status = 'won' THEN dealValue ELSE 0 END), 0)`,
+      }).from(deals).where(eq(deals.userId, member.id)),
+      db.select({
+        total: sql<number>`count(*)`,
+        completed: sql<number>`SUM(CASE WHEN taskStatus = 'completed' THEN 1 ELSE 0 END)`,
+        overdue: sql<number>`SUM(CASE WHEN taskStatus != 'completed' AND dueDate < ${Date.now()} THEN 1 ELSE 0 END)`,
+      }).from(tasks).where(eq(tasks.userId, member.id)),
+    ]);
+
+    return {
+      userId: member.id,
+      name: member.name ?? member.username ?? "Unknown",
+      email: member.email,
+      systemRole: member.systemRole,
+      isActive: member.isActive,
+      lastActiveAt: member.lastActiveAt,
+      companies: companyCount[0]?.count ?? 0,
+      contacts: contactCount[0]?.count ?? 0,
+      totalDeals: dealStats[0]?.total ?? 0,
+      openDeals: dealStats[0]?.open ?? 0,
+      wonDeals: dealStats[0]?.won ?? 0,
+      totalDealValue: dealStats[0]?.totalValue ?? 0,
+      wonDealValue: dealStats[0]?.wonValue ?? 0,
+      totalTasks: taskStats[0]?.total ?? 0,
+      completedTasks: taskStats[0]?.completed ?? 0,
+      overdueTasks: taskStats[0]?.overdue ?? 0,
+    };
+  }));
+
+  return stats;
+}
+
+/**
+ * Reassign a company (and its contacts) from one user to another.
+ * Only managers/admins can do this.
+ */
+export async function reassignCompany(companyId: number, fromUserId: number, toUserId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(companies).set({ userId: toUserId, updatedAt: Date.now() }).where(and(eq(companies.id, companyId), eq(companies.userId, fromUserId)));
+  // Also reassign all contacts under this company
+  await db.update(contacts).set({ userId: toUserId, updatedAt: Date.now() }).where(and(eq(contacts.companyId, companyId), eq(contacts.userId, fromUserId)));
+}
+
+/**
+ * Reassign a deal from one user to another.
+ */
+export async function reassignDeal(dealId: number, fromUserId: number, toUserId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(deals).set({ userId: toUserId, updatedAt: Date.now() }).where(and(eq(deals.id, dealId), eq(deals.userId, fromUserId)));
+}
+
+/**
+ * Reassign a task from one user to another.
+ */
+export async function reassignTask(taskId: number, fromUserId: number, toUserId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(tasks).set({ userId: toUserId, updatedAt: Date.now() }).where(and(eq(tasks.id, taskId), eq(tasks.userId, fromUserId)));
 }

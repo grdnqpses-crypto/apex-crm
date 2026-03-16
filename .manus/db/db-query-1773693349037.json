@@ -1,0 +1,9 @@
+{
+  "query": "\n-- Get the apex-platform company ID first\nSET @companyId = (SELECT id FROM tenant_companies WHERE slug = 'apex-platform');\n\n-- Create the apex_owner user\nINSERT INTO users (openId, name, email, username, passwordHash, loginMethod, role, systemRole, tenantCompanyId, isActive, lastSignedIn)\nVALUES (\n  CONCAT('cred_', UNIX_TIMESTAMP(NOW()), '_apexowner'),\n  'Apex Platform Owner',\n  'owner@apexcrm.com',\n  'apexowner',\n  '$2b$12$Iv3NAiP/9u34HJXOnNVO5OoYQ/1uLDJQjhudf6FYV4qH89HtDpkxS',\n  'credentials',\n  'admin',\n  'apex_owner',\n  @companyId,\n  1,\n  NOW()\n);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute \n-- Get the apex-platform company ID first\nSET @companyId = (SELECT id FROM tenant_companies WHERE slug = 'apex-platform');\n\n-- Create the apex_owner user\nINSERT INTO users (openId, name, email, username, passwordHash, loginMethod, role, systemRole, tenantCompanyId, isActive, lastSignedIn)\nVALUES (\n  CONCAT('cred_', UNIX_TIMESTAMP(NOW()), '_apexowner'),\n  'Apex Platform Owner',\n  'owner@apexcrm.com',\n  'apexowner',\n  '$2b$12$Iv3NAiP/9u34HJXOnNVO5OoYQ/1uLDJQjhudf6FYV4qH89HtDpkxS',\n  'credentials',\n  'admin',\n  'apex_owner',\n  @companyId,\n  1,\n  NOW()\n);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 102
+}

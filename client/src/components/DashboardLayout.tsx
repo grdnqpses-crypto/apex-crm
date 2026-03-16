@@ -41,6 +41,7 @@ import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import AIAssistantPanel from "./AIAssistantPanel";
+import OnboardingTutorial from "./OnboardingTutorial";
 
 // ─── Menu Sections (Developer is separate, hidden by default) ───
 
@@ -50,6 +51,7 @@ const standardSections = [
     items: [
       { icon: LayoutDashboard, label: "Dashboard", path: "/" },
       { icon: Users, label: "Team", path: "/team" },
+      { icon: BarChart3, label: "Team Performance", path: "/team-performance" },
     ],
   },
   {
@@ -157,6 +159,13 @@ const standardSections = [
   },
 ];
 
+const apexPlatformSection = {
+  label: "Apex Platform",
+  items: [
+    { icon: Crown, label: "Platform Dashboard", path: "/apex" },
+  ],
+};
+
 const developerSection = {
   label: "Developer",
   items: [
@@ -215,18 +224,31 @@ function useDevMode() {
   return { devMode, handleLogoTap, disableDevMode };
 }
 
-function getMenuSections(devMode: boolean) {
-  if (devMode) {
-    const sections = [...standardSections];
-    const resourcesIdx = sections.findIndex(s => s.label === "Resources");
-    if (resourcesIdx >= 0) {
-      sections.splice(resourcesIdx, 0, developerSection);
+function getMenuSections(devMode: boolean, userRole?: string) {
+  const sections = [...standardSections];
+  const resourcesIdx = sections.findIndex(s => s.label === "Resources");
+  
+  // Add Apex Platform section for apex_owner and developer roles
+  if (userRole === "apex_owner" || userRole === "developer") {
+    const overviewIdx = sections.findIndex(s => s.label === "Overview");
+    if (overviewIdx >= 0) {
+      sections.splice(overviewIdx + 1, 0, apexPlatformSection);
+    } else {
+      sections.unshift(apexPlatformSection);
+    }
+  }
+  
+  // Add Developer section for developer role (when dev mode is active)
+  if (devMode && userRole === "developer") {
+    const resIdx = sections.findIndex(s => s.label === "Resources");
+    if (resIdx >= 0) {
+      sections.splice(resIdx, 0, developerSection);
     } else {
       sections.push(developerSection);
     }
-    return sections;
   }
-  return standardSections;
+  
+  return sections;
 }
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -323,7 +345,7 @@ function DashboardLayoutContent({
   const { canAccessSidebarItem } = useFeatureAccess();
   const [aiOpen, setAiOpen] = useState(false);
 
-  const menuSections = getMenuSections(devMode);
+  const menuSections = getMenuSections(devMode, user?.systemRole);
   const filteredSections = menuSections.map(section => ({
     ...section,
     items: section.items.filter(item => canAccessSidebarItem(item.path)),
@@ -544,6 +566,7 @@ function DashboardLayoutContent({
         </button>
       )}
       <AIAssistantPanel open={aiOpen} onClose={() => setAiOpen(false)} />
+      <OnboardingTutorial />
     </>
   );
 }

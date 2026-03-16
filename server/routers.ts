@@ -2,7 +2,7 @@ import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, adminProcedure, managerProcedure, companyAdminProcedure, apexOwnerProcedure, developerProcedure, router, getRoleLevel } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { invokeLLM } from "./_core/llm";
 import * as db from "./db";
@@ -24,7 +24,24 @@ export const appRouter = router({
 
   dashboard: router({
     stats: protectedProcedure.query(async ({ ctx }) => {
-      return db.getEnhancedDashboardStats(ctx.user.id);
+      // Role-based: managers/admins see aggregated team stats
+      const roleStats = await db.getDashboardStatsByRole(ctx.user);
+      const enhanced = await db.getEnhancedDashboardStats(ctx.user.id);
+      // Merge: use role-based counts for core metrics, enhanced for extras
+      return {
+        ...enhanced,
+        totalContacts: roleStats.totalContacts,
+        totalCompanies: roleStats.totalCompanies,
+        totalDeals: roleStats.totalDeals,
+        openDeals: roleStats.openDeals,
+        wonDeals: roleStats.wonDeals,
+        lostDeals: roleStats.lostDeals,
+        totalValue: roleStats.totalValue,
+        wonValue: roleStats.wonValue,
+        totalTasks: roleStats.totalTasks,
+        pendingTasks: roleStats.pendingTasks,
+        teamSize: roleStats.teamSize,
+      };
     }),
     recentActivities: protectedProcedure.input(z.object({
       limit: z.number().min(1).max(50).optional(),
@@ -53,10 +70,21 @@ export const appRouter = router({
       limit: z.number().min(1).max(100).optional(),
       offset: z.number().min(0).optional(),
     }).optional()).query(async ({ ctx, input }) => {
-      return db.listContacts(ctx.user.id, input);
+      return db.listContactsByRole(ctx.user, input);
     }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-      return db.getContact(input.id, ctx.user.id);
+      // Role-based: managers/admins can view contacts of their team
+      const visibleIds = await db.getVisibleUserIds(ctx.user);
+      const contact = await db.getContact(input.id, ctx.user.id);
+      if (!contact) {
+        // Try with visible user IDs for managers/admins
+        for (const uid of visibleIds) {
+          if (uid === ctx.user.id) continue;
+          const c = await db.getContact(input.id, uid);
+          if (c) return c;
+        }
+      }
+      return contact;
     }),
     byCompany: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
       return db.getContactsByCompany(input.companyId, ctx.user.id);
@@ -159,14 +187,15 @@ export const appRouter = router({
       limit: z.number().min(1).max(100).optional(),
       offset: z.number().min(0).optional(),
     }).optional()).query(async ({ ctx, input }) => {
-      return db.listCompanies(ctx.user.id, input);
+      return db.listCompaniesByRole(ctx.user, input);
     }),
     listWithMetrics: protectedProcedure.input(z.object({
       search: z.string().optional(),
       limit: z.number().min(1).max(100).optional(),
       offset: z.number().min(0).optional(),
     }).optional()).query(async ({ ctx, input }) => {
-      return db.listCompaniesWithMetrics(ctx.user.id, input);
+      // For metrics view, use role-based listing
+      return db.listCompaniesByRole(ctx.user, input);
     }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
       return db.getCompany(input.id, ctx.user.id);
@@ -284,7 +313,7 @@ export const appRouter = router({
       limit: z.number().min(1).max(200).optional(),
       offset: z.number().min(0).optional(),
     }).optional()).query(async ({ ctx, input }) => {
-      return db.listDeals(ctx.user.id, input);
+      return db.listDealsByRole(ctx.user, input);
     }),
     create: protectedProcedure.input(z.object({
       name: z.string().min(1),
@@ -381,7 +410,7 @@ export const appRouter = router({
       limit: z.number().optional(),
       offset: z.number().optional(),
     }).optional()).query(async ({ ctx, input }) => {
-      return db.listTasks(ctx.user.id, input);
+      return db.listTasksByRole(ctx.user, input);
     }),
     create: protectedProcedure.input(z.object({
       title: z.string().min(1),
@@ -1707,8 +1736,8 @@ export const appRouter = router({
   // ═══════════════════════════════════════════════════════════════
 
   tenants: router({
-    // Developer-only: list all companies
-    list: adminProcedure.query(async () => {
+    // Apex Owner+: list all companies
+    list: apexOwnerProcedure.query(async () => {
       const companies = await db.getTenantCompanies();
       const withCounts = await Promise.all(companies.map(async (c: any) => ({
         ...c,
@@ -1717,16 +1746,16 @@ export const appRouter = router({
       return withCounts;
     }),
 
-    // Developer-only: get single company
-    get: adminProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+    // Apex Owner+: get single company
+    get: apexOwnerProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
       const company = await db.getTenantCompanyById(input.id);
       if (!company) throw new TRPCError({ code: "NOT_FOUND", message: "Company not found" });
       const userCount = await db.getTenantCompanyUserCount(company.id);
       return { ...company, userCount };
     }),
 
-    // Developer-only: create company
-    create: adminProcedure.input(z.object({
+    // Apex Owner+: create company
+    create: apexOwnerProcedure.input(z.object({
       name: z.string().min(1),
       slug: z.string().min(1).regex(/^[a-z0-9-]+$/),
       industry: z.string().optional(),
@@ -1751,8 +1780,8 @@ export const appRouter = router({
       return { id };
     }),
 
-    // Developer-only: update company
-    update: adminProcedure.input(z.object({
+    // Apex Owner+: update company
+    update: apexOwnerProcedure.input(z.object({
       id: z.number(),
       name: z.string().optional(),
       industry: z.string().optional(),
@@ -1770,15 +1799,16 @@ export const appRouter = router({
       return { success: true };
     }),
 
-    // Developer-only: delete company
-    delete: adminProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+    // Developer-only: delete company (destructive - developer only)
+    delete: developerProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
       await db.deleteTenantCompany(input.id);
       return { success: true };
     }),
 
-    // Get company users (admin of that company or developer)
+    // Get company users (apex_owner+, or admin of that company)
     users: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
-      if (ctx.user.systemRole !== "developer" && ctx.user.tenantCompanyId !== input.companyId) {
+      const canViewAny = ["developer", "apex_owner"].includes(ctx.user.systemRole);
+      if (!canViewAny && ctx.user.tenantCompanyId !== input.companyId) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       return db.getUsersByCompany(input.companyId);
@@ -1786,7 +1816,8 @@ export const appRouter = router({
 
     // Get users under a manager
     managerUsers: protectedProcedure.input(z.object({ managerId: z.number() })).query(async ({ ctx, input }) => {
-      if (ctx.user.systemRole !== "developer" && ctx.user.id !== input.managerId && ctx.user.systemRole !== "company_admin") {
+      const canViewAny = ["developer", "apex_owner"].includes(ctx.user.systemRole);
+      if (!canViewAny && ctx.user.id !== input.managerId && ctx.user.systemRole !== "company_admin") {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       return db.getUsersByManager(input.managerId);
@@ -1810,25 +1841,37 @@ export const appRouter = router({
       password: z.string().min(8).max(128),
       name: z.string().min(1),
       email: z.string().email().optional(),
-      systemRole: z.enum(["company_admin", "manager", "user"]),
+      systemRole: z.enum(["apex_owner", "company_admin", "manager", "user"]),
       tenantCompanyId: z.number(),
       managerId: z.number().optional(),
       jobTitle: z.string().optional(),
       phone: z.string().optional(),
       features: z.array(z.string()).optional(),
     })).mutation(async ({ ctx, input }) => {
-      // Permission checks
+      // Permission checks — each role can only create roles below them
       const callerRole = ctx.user.systemRole;
-      if (callerRole !== "developer" && callerRole !== "company_admin" && callerRole !== "manager") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Only developers, admins, and managers can create users" });
+      const callerLevel = getRoleLevel(callerRole);
+      const targetLevel = getRoleLevel(input.systemRole);
+      
+      // Must be at least manager to create users
+      if (callerLevel < 2) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Insufficient permissions to create users" });
+      }
+      // Can only create roles below your own level
+      if (targetLevel >= callerLevel) {
+        throw new TRPCError({ code: "FORBIDDEN", message: `Cannot create a ${input.systemRole} — you can only create roles below your own level` });
       }
       // Managers can only create regular users
       if (callerRole === "manager" && input.systemRole !== "user") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Managers can only create regular users" });
       }
-      // Company admins can't create developers
-      if (callerRole === "company_admin" && input.systemRole === "company_admin") {
-        // admins can create other admins within their company - that's fine
+      // Company admins can create managers and users within their company
+      if (callerRole === "company_admin" && !["manager", "user"].includes(input.systemRole)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Company admins can only create managers and users" });
+      }
+      // Apex owners can create company_admins, managers, users
+      if (callerRole === "apex_owner" && !["company_admin", "manager", "user"].includes(input.systemRole)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Apex owners can create company admins, managers, and users" });
       }
       // Check company exists
       const company = await db.getTenantCompanyById(input.tenantCompanyId);
@@ -1863,12 +1906,12 @@ export const appRouter = router({
       return { id: userId, username: input.username };
     }),
 
-    // Reset user password (admin or developer)
+    // Reset user password (apex_owner+ or company_admin)
     resetPassword: protectedProcedure.input(z.object({
       userId: z.number(),
       newPassword: z.string().min(8).max(128),
     })).mutation(async ({ ctx, input }) => {
-      if (ctx.user.systemRole !== "developer" && ctx.user.systemRole !== "company_admin") {
+      if (getRoleLevel(ctx.user.systemRole) < getRoleLevel("company_admin")) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const passwordHash = await bcrypt.hash(input.newPassword, 12);
@@ -1890,19 +1933,20 @@ export const appRouter = router({
       return { success: true };
     }),
 
-    // Update user role (developer can set any, admin can set within company)
+    // Update user role (each level can only set roles below them)
     setRole: protectedProcedure.input(z.object({
       userId: z.number(),
-      systemRole: z.enum(["developer", "company_admin", "manager", "user"]),
+      systemRole: z.enum(["developer", "apex_owner", "company_admin", "manager", "user"]),
     })).mutation(async ({ ctx, input }) => {
-      if (ctx.user.systemRole === "developer") {
-        await db.updateUserRole(input.userId, input.systemRole);
-      } else if (ctx.user.systemRole === "company_admin") {
-        if (input.systemRole === "developer") throw new TRPCError({ code: "FORBIDDEN", message: "Cannot promote to developer" });
-        await db.updateUserRole(input.userId, input.systemRole);
-      } else {
+      const callerLevel = getRoleLevel(ctx.user.systemRole);
+      const targetLevel = getRoleLevel(input.systemRole);
+      if (callerLevel < getRoleLevel("company_admin")) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
+      if (targetLevel >= callerLevel) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Cannot set a role equal to or above your own" });
+      }
+      await db.updateUserRole(input.userId, input.systemRole);
       return { success: true };
     }),
 
@@ -1925,7 +1969,8 @@ export const appRouter = router({
       isActive: z.boolean().optional(),
     })).mutation(async ({ ctx, input }) => {
       const { userId, ...data } = input;
-      if (ctx.user.systemRole !== "developer" && ctx.user.systemRole !== "company_admin" && ctx.user.id !== userId) {
+      const canManageOthers = getRoleLevel(ctx.user.systemRole) >= getRoleLevel("company_admin");
+      if (!canManageOthers && ctx.user.id !== userId) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       await db.updateUserProfile(userId, data);
@@ -1934,7 +1979,7 @@ export const appRouter = router({
 
     // Deactivate user
     deactivate: protectedProcedure.input(z.object({ userId: z.number() })).mutation(async ({ ctx, input }) => {
-      if (ctx.user.systemRole !== "developer" && ctx.user.systemRole !== "company_admin") {
+      if (getRoleLevel(ctx.user.systemRole) < getRoleLevel("company_admin")) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       await db.deactivateUser(input.userId);
@@ -1943,7 +1988,7 @@ export const appRouter = router({
 
     // Activate user
     activate: protectedProcedure.input(z.object({ userId: z.number() })).mutation(async ({ ctx, input }) => {
-      if (ctx.user.systemRole !== "developer" && ctx.user.systemRole !== "company_admin") {
+      if (getRoleLevel(ctx.user.systemRole) < getRoleLevel("company_admin")) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       await db.activateUser(input.userId);
@@ -1982,6 +2027,93 @@ export const appRouter = router({
         return db.ALL_FEATURES.map(f => f.key);
       }
       return db.getUserFeatures(ctx.user.id);
+    }),
+  }),
+
+  // ─── Team Oversight (Manager+) ───
+  teamOversight: router({
+    // Get team performance stats (manager sees direct reports, admin sees all tenant users)
+    performance: managerProcedure.query(async ({ ctx }) => {
+      if (ctx.user.systemRole === "manager") {
+        return db.getTeamPerformanceStats(ctx.user.id);
+      }
+      // Company admin or developer: get all users in tenant
+      if (ctx.user.tenantCompanyId) {
+        const tenantUsers = await db.getUsersByCompany(ctx.user.tenantCompanyId);
+        if (!tenantUsers) return [];
+        const stats = await Promise.all(tenantUsers.filter((u: any) => u.id !== ctx.user.id).map(async (member: any) => {
+          const memberStats = await db.getDashboardStats(member.id);
+          return {
+            userId: member.id,
+            name: member.name ?? member.username ?? "Unknown",
+            email: member.email,
+            systemRole: member.systemRole,
+            isActive: member.isActive,
+            lastActiveAt: member.lastActiveAt,
+            companies: memberStats.totalCompanies,
+            contacts: memberStats.totalContacts,
+            totalDeals: memberStats.totalDeals,
+            openDeals: memberStats.openDeals,
+            wonDeals: memberStats.wonDeals,
+            totalDealValue: memberStats.totalValue,
+            wonDealValue: memberStats.wonValue,
+            totalTasks: memberStats.totalTasks,
+            completedTasks: 0,
+            overdueTasks: 0,
+          };
+        }));
+        return stats;
+      }
+      return [];
+    }),
+
+    // Reassign a company from one user to another
+    reassignCompany: managerProcedure.input(z.object({
+      companyId: z.number(),
+      fromUserId: z.number(),
+      toUserId: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      // Verify both users are visible to this manager
+      const visibleIds = await db.getVisibleUserIds(ctx.user);
+      if (!visibleIds.includes(input.fromUserId) || !visibleIds.includes(input.toUserId)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Cannot reassign between users outside your team" });
+      }
+      await db.reassignCompany(input.companyId, input.fromUserId, input.toUserId);
+      return { success: true };
+    }),
+
+    // Reassign a deal
+    reassignDeal: managerProcedure.input(z.object({
+      dealId: z.number(),
+      fromUserId: z.number(),
+      toUserId: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      const visibleIds = await db.getVisibleUserIds(ctx.user);
+      if (!visibleIds.includes(input.fromUserId) || !visibleIds.includes(input.toUserId)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Cannot reassign between users outside your team" });
+      }
+      await db.reassignDeal(input.dealId, input.fromUserId, input.toUserId);
+      return { success: true };
+    }),
+
+    // Reassign a task
+    reassignTask: managerProcedure.input(z.object({
+      taskId: z.number(),
+      fromUserId: z.number(),
+      toUserId: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      const visibleIds = await db.getVisibleUserIds(ctx.user);
+      if (!visibleIds.includes(input.fromUserId) || !visibleIds.includes(input.toUserId)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Cannot reassign between users outside your team" });
+      }
+      await db.reassignTask(input.taskId, input.fromUserId, input.toUserId);
+      return { success: true };
+    }),
+
+    // Get visible user IDs for current user (for frontend filtering)
+    visibleUsers: protectedProcedure.query(async ({ ctx }) => {
+      const ids = await db.getVisibleUserIds(ctx.user);
+      return { userIds: ids, role: ctx.user.systemRole };
     }),
   }),
 

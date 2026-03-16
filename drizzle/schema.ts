@@ -35,7 +35,7 @@ export const users = mysqlTable("users", {
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   // Multi-tenant hierarchy fields
-  systemRole: mysqlEnum("systemRole", ["developer", "super_admin", "company_admin", "manager", "user"]).default("user").notNull(),
+  systemRole: mysqlEnum("systemRole", ["developer", "apex_owner", "super_admin", "company_admin", "manager", "user"]).default("user").notNull(),
   tenantCompanyId: int("tenantCompanyId"),
   managerId: int("managerId"),
   isActive: boolean("isActive").default(true).notNull(),

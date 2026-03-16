@@ -1,0 +1,13 @@
+{
+  "query": "SELECT id FROM tenant_companies WHERE slug = 'apex-platform';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id FROM tenant_companies WHERE slug = 'apex-platform';",
+  "rows": [
+    {
+      "id": "30001"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\n30001\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

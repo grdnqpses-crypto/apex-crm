@@ -65,13 +65,45 @@ export const SIDEBAR_FEATURE_MAP: Record<string, string> = {
   "/analytics": "analytics_reports",
 };
 
+// ─── Role-Based Access Control ───
+// Role hierarchy: developer > apex_owner > company_admin > manager > user
+
+// Developer-only routes
+const DEVELOPER_ROUTES = [
+  "/dev/companies", "/dev/users", "/dev/health", "/dev/activity", "/dev/impersonate",
+  "/fmcsa-scanner", "/api-keys", "/webhooks",
+];
+
+// Apex Owner+ routes (apex_owner, developer)
+const APEX_OWNER_ROUTES = [
+  "/apex",
+];
+
+// Manager+ routes (manager, company_admin, apex_owner, developer)
+const MANAGER_ROUTES = [
+  "/team-performance",
+];
+
+// Admin+ routes (company_admin, apex_owner, developer)
+const ADMIN_ROUTES = [
+  "/team", "/white-label", "/subscription", "/migration",
+  "/settings", "/import/hubspot",
+];
+
+// Routes accessible to all authenticated users
+const ALWAYS_ACCESSIBLE = ["/", "/help", "/commercial"];
+
 export function useFeatureAccess() {
   const { user } = useAuth();
-  const isDeveloper = user?.systemRole === "developer";
-  const isAdmin = user?.systemRole === "company_admin";
+  const role = user?.systemRole;
+  const isDeveloper = role === "developer";
+  const isApexOwner = role === "apex_owner";
+  const isAdmin = role === "company_admin";
+  const isManager = role === "manager";
+  const isUser = role === "user";
   
-  // Developers and admins get full access
-  const shouldFetchFeatures = !!user && !isDeveloper && !isAdmin;
+  // Developers, apex owners, and company admins get full feature access
+  const shouldFetchFeatures = !!user && !isDeveloper && !isApexOwner && !isAdmin;
   
   const { data: features } = trpc.userManagement.myFeatures.useQuery(
     undefined,
@@ -79,27 +111,56 @@ export function useFeatureAccess() {
   );
 
   const hasFeature = (featureKey: string): boolean => {
-    // Developers and admins have all features
-    if (isDeveloper || isAdmin) return true;
+    // Developers, apex owners, and admins have all features
+    if (isDeveloper || isApexOwner || isAdmin) return true;
     // If features haven't loaded yet, show everything to avoid flash
     if (!features) return true;
     return features.includes(featureKey);
   };
 
-  const canAccessRoute = (path: string): boolean => {
-    // Always accessible routes
-    if (path === "/" || path === "/help" || path === "/team") return true;
-    // Developer routes
-    if (path.startsWith("/dev/") || path === "/fmcsa-scanner" || path === "/api-keys" || path === "/webhooks") {
+  const hasRoleAccess = (path: string): boolean => {
+    // Always accessible
+    if (ALWAYS_ACCESSIBLE.includes(path)) return true;
+    
+    // Developer-only routes
+    if (DEVELOPER_ROUTES.includes(path) || path.startsWith("/dev/")) {
       return isDeveloper;
     }
-    // Feature-gated routes
+    
+    // Apex Owner+ routes
+    if (APEX_OWNER_ROUTES.includes(path)) {
+      return isDeveloper || isApexOwner;
+    }
+    
+    // Admin+ routes
+    if (ADMIN_ROUTES.includes(path)) {
+      return isDeveloper || isApexOwner || isAdmin;
+    }
+    
+    // Manager+ routes
+    if (MANAGER_ROUTES.includes(path)) {
+      return isDeveloper || isApexOwner || isAdmin || isManager;
+    }
+    
+    // All other routes: accessible to all roles (feature-gated separately)
+    return true;
+  };
+
+  const canAccessRoute = (path: string): boolean => {
+    // Check role first
+    if (!hasRoleAccess(path)) return false;
+    
+    // Then check feature access
     const featureKey = ROUTE_FEATURE_MAP[path];
     if (!featureKey) return true; // Unknown routes are accessible
     return hasFeature(featureKey);
   };
 
   const canAccessSidebarItem = (path: string): boolean => {
+    // Check role access first
+    if (!hasRoleAccess(path)) return false;
+    
+    // Then check feature access
     const featureKey = SIDEBAR_FEATURE_MAP[path];
     if (!featureKey) return true; // Items without feature mapping are always visible
     return hasFeature(featureKey);
@@ -107,12 +168,16 @@ export function useFeatureAccess() {
 
   return {
     hasFeature,
+    hasRoleAccess,
     canAccessRoute,
     canAccessSidebarItem,
     isDeveloper,
+    isApexOwner,
     isAdmin,
-    isManager: user?.systemRole === "manager",
-    features: isDeveloper || isAdmin ? null : features,
+    isManager,
+    isUser,
+    role,
+    features: isDeveloper || isApexOwner || isAdmin ? null : features,
     loading: shouldFetchFeatures && !features,
   };
 }

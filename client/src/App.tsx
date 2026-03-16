@@ -45,6 +45,7 @@ const DevSystemHealth = lazy(() => import("./pages/DevSystemHealth"));
 const DevActivityLog = lazy(() => import("./pages/DevActivityLog"));
 const DevImpersonate = lazy(() => import("./pages/DevImpersonate"));
 const CompanyAdmin = lazy(() => import("./pages/CompanyAdmin"));
+const TeamPerformance = lazy(() => import("./pages/TeamPerformance"));
 const Settings = lazy(() => import("./pages/Settings"));
 const HubSpotImport = lazy(() => import("./pages/HubSpotImport"));
 const DomainOptimizer = lazy(() => import("./pages/DomainOptimizer"));
@@ -76,6 +77,8 @@ const ApexAutopilot = lazy(() => import("./pages/ApexAutopilot"));
 const EmailMasking = lazy(() => import("./pages/EmailMasking"));
 const Commercial = lazy(() => import("./pages/Commercial"));
 const Login = lazy(() => import("./pages/Login"));
+const ApexDashboard = lazy(() => import("./pages/ApexDashboard"));
+const Signup = lazy(() => import("./pages/Signup"));
 
 function PageLoader() {
   return (
@@ -129,6 +132,7 @@ function Router() {
           <Route path="/dev/activity" component={DevActivityLog} />
           <Route path="/dev/impersonate" component={DevImpersonate} />
           <Route path="/team" component={CompanyAdmin} />
+          <Route path="/team-performance" component={TeamPerformance} />
           <Route path="/settings" component={Settings} />
           <Route path="/import/hubspot" component={HubSpotImport} />
           <Route path="/domain-optimizer" component={DomainOptimizer} />
@@ -159,6 +163,7 @@ function Router() {
           <Route path="/apex-autopilot" component={ApexAutopilot} />
           <Route path="/email-masking" component={EmailMasking} />
           <Route path="/commercial" component={Commercial} />
+          <Route path="/apex" component={ApexDashboard} />
           <Route path="/help" component={HelpCenter} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
@@ -178,6 +183,11 @@ function App() {
             <Route path="/login">
               <Suspense fallback={<PageLoader />}>
                 <Login />
+              </Suspense>
+            </Route>
+            <Route path="/signup">
+              <Suspense fallback={<PageLoader />}>
+                <Signup />
               </Suspense>
             </Route>
             <Route>

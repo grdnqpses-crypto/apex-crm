@@ -124,7 +124,20 @@ export default function Login() {
             </Button>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-slate-700/50">
+          {/* Signup link */}
+          <div className="mt-4 text-center">
+            <p className="text-sm text-slate-400">
+              Don't have an account?{" "}
+              <button
+                onClick={() => navigate("/signup")}
+                className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+              >
+                Sign up for free
+              </button>
+            </p>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-slate-700/50">
             <p className="text-xs text-center text-slate-500 mb-3">
               Platform administrators can also sign in with
             </p>

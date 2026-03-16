@@ -1042,3 +1042,52 @@
 - [x] Test tasks function - schedule tasks for companies
 - [x] Test HubSpot import function
 - [x] Showcase additional features
+
+## Phase 8: Role-Based Access Control (RBAC) Hierarchy
+- [x] Sales Rep: Can only see their own companies, contacts, deals, tasks (backend enforcement)
+- [x] Sales Rep: Cannot access team management, admin settings, or other users' data
+- [x] Sales Rep: Cannot see developer tools or company admin features
+- [x] Sales Rep: Frontend hides unauthorized nav items and blocks routes
+- [x] Manager: Can see all team members' data (companies, contacts, deals, tasks)
+- [x] Manager: Has oversight dashboard with team performance metrics
+- [x] Manager: Can reassign companies/contacts/deals between team members
+- [x] Manager: Cannot access developer tools or modify company settings
+- [x] Company Admin: Can manage all users, features, branding within their tenant
+- [x] Company Admin: Cannot access developer-level tools
+- [x] Developer: Has safe backend access - read-only view of tenant data
+- [x] Developer: Separate dev tools isolated from live tenant data
+- [x] Frontend route guards per role (hide nav items, block routes)
+- [x] Backend procedure guards per role (enforce at API level)
+- [x] Write vitest tests for all role-based access scenarios (33 RBAC tests passing)
+
+## Phase 9: 5-Tier Role Hierarchy (Developer → Apex Owner → Company Admin → Manager → Sales Rep)
+- [x] Add "apex_owner" to systemRole enum in database and schema
+- [x] Developer dashboard: god-mode, sees everything, manages entire platform
+- [x] Developer can create Apex Owner accounts
+- [x] Apex Owner dashboard: business oversight, onboard companies, manage subscriptions
+- [x] Apex Owner can create Company Admin accounts and onboard new tenant companies
+- [x] Company Admin dashboard: manage own company (create managers + reps, branding, imports)
+- [x] Company Admin can create Managers and Sales Reps
+- [x] Manager dashboard: team performance, oversight of assigned sales reps
+- [x] Manager can create Sales Reps under them
+- [x] Sales Rep dashboard: own data only
+- [x] Unified login screen (username + password) for all 5 roles
+- [x] Easy-to-use user management panel at each level
+- [x] Update sidebar navigation per role (5 tiers)
+- [x] Update route guards per role (5 tiers)
+- [x] Create Apex Owner account and test full hierarchy flow
+- [x] Write tests for 5-tier hierarchy (38 new tests)
+
+## Phase 9b: Apex Owner Dashboard & Self-Service Signup
+- [x] Apex Owner dashboard: view all companies, subscription tiers, revenue overview
+- [x] Apex Owner: manage company tiers (upgrade/downgrade)
+- [x] Apex Owner: onboard new companies directly
+- [x] Apex Owner: view company health metrics and user counts
+- [x] Self-service signup: public landing page with video and pricing
+- [x] Self-service signup: registration form (company name, admin details, tier selection)
+- [x] Self-service signup: payment integration placeholder
+- [x] Self-service signup: auto-provision tenant company on signup
+- [x] AI-driven onboarding tutorials: contextual pop-ups on first use
+- [x] AI-driven onboarding tutorials: step-by-step guided walkthrough
+- [x] AI-driven onboarding tutorials: adaptive based on user role
+- [x] AI-driven onboarding tutorials: "How to" help button on every page
