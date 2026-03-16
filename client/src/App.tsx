@@ -79,6 +79,7 @@ const Commercial = lazy(() => import("./pages/Commercial"));
 const Login = lazy(() => import("./pages/Login"));
 const ApexDashboard = lazy(() => import("./pages/ApexDashboard"));
 const Signup = lazy(() => import("./pages/Signup"));
+const MarketingHome = lazy(() => import("./pages/MarketingHome"));
 
 function PageLoader() {
   return (
@@ -96,6 +97,7 @@ function Router() {
     <DashboardLayout>
       <Suspense fallback={<PageLoader />}>
         <Switch>
+          <Route path="/dashboard" component={Dashboard} />
           <Route path="/" component={Dashboard} />
           <Route path="/contacts" component={Contacts} />
           <Route path="/contacts/:id" component={ContactDetail} />
@@ -188,6 +190,11 @@ function App() {
             <Route path="/signup">
               <Suspense fallback={<PageLoader />}>
                 <Signup />
+              </Suspense>
+            </Route>
+            <Route path="/home">
+              <Suspense fallback={<PageLoader />}>
+                <MarketingHome />
               </Suspense>
             </Route>
             <Route>

@@ -1091,3 +1091,37 @@
 - [x] AI-driven onboarding tutorials: step-by-step guided walkthrough
 - [x] AI-driven onboarding tutorials: adaptive based on user role
 - [x] AI-driven onboarding tutorials: "How to" help button on every page
+
+## Phase 10: Public Marketing Homepage
+- [ ] Create /home route as the public marketing homepage (separate from /dashboard)
+- [ ] Sticky top navigation with Login and Sign Up buttons linking to /login and /signup
+- [ ] Hero section: bold headline, subheadline, demo video with play overlay, CTA buttons
+- [ ] Stats bar: key numbers (companies served, deals closed, etc.)
+- [ ] Feature showcase: animated feature cards for all major modules with icons and descriptions
+- [ ] How It Works: 3-step visual explainer (Import → Automate → Close)
+- [ ] Competitor comparison table: Apex CRM vs HubSpot vs Salesforce vs Pipedrive
+- [ ] Pricing section: 3 tiers (Starter/Growth/Enterprise) with feature lists and monthly/annual toggle
+- [ ] Testimonials/social proof: customer quotes with avatars, company logos, key stats
+- [ ] Video section: embedded demo video with play button overlay
+- [ ] FAQ accordion section
+- [ ] Footer with links (Features, Pricing, Login, Sign Up, Support)
+- [ ] Smooth scroll navigation between sections
+- [ ] Mobile-responsive design throughout
+- [ ] Update App.tsx: / goes to marketing homepage, /dashboard goes to authenticated CRM
+
+## Phase 10: Public Marketing Homepage
+- [x] Full public marketing homepage at /home with dark premium design
+- [x] Sticky navigation with smooth scroll to sections
+- [x] Hero section with headline, CTA buttons, dashboard mockup preview
+- [x] Watch Demo button with video modal (placeholder for video embed)
+- [x] Stats bar (500+ companies, $2.1B+ pipeline, 98.7% deliverability, etc.)
+- [x] Features section with 9 feature cards (CRM Core, Paradigm Engine, etc.)
+- [x] How It Works (3-step process)
+- [x] Competitor comparison table (Apex vs HubSpot vs Salesforce vs Pipedrive)
+- [x] Pricing section with monthly/annual toggle and 3 plans
+- [x] Testimonials section (6 customer stories)
+- [x] FAQ accordion (8 questions)
+- [x] Final CTA section with login + signup buttons
+- [x] Footer with navigation links
+- [x] Unauthenticated users redirected to /home from any CRM route
+- [x] Sign In and Start Free Trial links in nav go to /login and /signup

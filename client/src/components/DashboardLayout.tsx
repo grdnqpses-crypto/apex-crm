@@ -276,42 +276,9 @@ export default function DashboardLayout({
   }
 
   if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
-          {/* Premium login card */}
-          <div className="w-full rounded-2xl bg-card p-10 shadow-lg border border-border/50 text-center">
-            <div className="flex items-center justify-center gap-3 mb-3">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Zap className="h-5 w-5 text-primary" />
-              </div>
-              <span className="text-2xl font-bold tracking-tight text-foreground">Apex CRM</span>
-            </div>
-            <p className="text-sm text-muted-foreground mb-8 max-w-xs mx-auto leading-relaxed">
-              The most powerful freight broker CRM. Manage companies, contacts, deals, and operations in one place.
-            </p>
-            <Button
-              onClick={() => { window.location.href = "/login"; }}
-              size="lg"
-              className="w-full rounded-xl h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all"
-            >
-              Sign in to continue
-            </Button>
-            <div className="mt-4 pt-4 border-t border-border/30">
-              <p className="text-xs text-muted-foreground mb-2">Platform administrators</p>
-              <Button
-                variant="outline"
-                onClick={() => { window.location.href = getLoginUrl(); }}
-                size="sm"
-                className="w-full"
-              >
-                Sign in with Manus OAuth
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    // Redirect unauthenticated users to the marketing homepage
+    window.location.replace("/home");
+    return <DashboardLayoutSkeleton />;
   }
 
   return (
