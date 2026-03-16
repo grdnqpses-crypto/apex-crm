@@ -245,26 +245,14 @@ function Hero() {
             >
               <X className="h-4 w-4" />
             </button>
-            {/* Video placeholder — replace src with actual YouTube/Vimeo embed */}
-            <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-center p-8">
-              <div className="h-20 w-20 rounded-full bg-orange-500/20 flex items-center justify-center">
-                <Play className="h-10 w-10 text-orange-400 fill-orange-400 ml-1" />
-              </div>
-              <div>
-                <p className="text-white text-xl font-bold mb-2">Apex CRM Product Demo</p>
-                <p className="text-gray-400 text-sm max-w-md">
-                  To embed your demo video, replace this section with an iframe pointing to your YouTube or Vimeo video URL.
-                </p>
-                <p className="text-gray-500 text-xs mt-2">
-                  Example: <code className="text-orange-400">https://www.youtube.com/embed/YOUR_VIDEO_ID</code>
-                </p>
-              </div>
-              <Link href="/signup">
-                <Button className="bg-orange-500 hover:bg-orange-600 text-white mt-2">
-                  Start Free Trial Instead
-                </Button>
-              </Link>
-            </div>
+            {/* YouTube embed */}
+            <iframe
+              src="https://www.youtube.com/embed/Y91YVB-yZhs?autoplay=1&rel=0&modestbranding=1"
+              title="Apex CRM Product Demo"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              className="w-full h-full"
+            />
           </div>
         </div>
       )}
