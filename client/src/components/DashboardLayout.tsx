@@ -49,7 +49,7 @@ const standardSections = [
   {
     label: "Overview",
     items: [
-      { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+      { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
       { icon: Users, label: "Team", path: "/team" },
       { icon: BarChart3, label: "Team Performance", path: "/team-performance" },
     ],
@@ -277,7 +277,7 @@ export default function DashboardLayout({
 
   if (!user) {
     // Redirect unauthenticated users to the marketing homepage
-    window.location.replace("/home");
+    window.location.replace("/");
     return <DashboardLayoutSkeleton />;
   }
 

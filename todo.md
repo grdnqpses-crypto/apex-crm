@@ -1138,3 +1138,19 @@
 - [ ] Lighter pricing cards — clean white cards with subtle shadows
 - [ ] Modernize testimonials section
 - [ ] Keep interactive demo tour but restyle for light theme
+
+## Phase 12: World-Class Homepage Redesign (Universal Messaging)
+- [ ] Remove all freight-specific language — make it universal for any business
+- [ ] Dark premium theme like Linear — deep black/near-black with vivid accent colors
+- [ ] Massive bold typography — 80-100px headlines, tight tracking, high contrast
+- [ ] Autoplay inline product video (no button required) in hero section
+- [ ] Animated product UI mockup that scrolls/transitions through features
+- [ ] Trusted-by logo bar with well-known brand logos
+- [ ] Feature sections with large visual demonstrations (not just text cards)
+- [ ] Inline interactive demo tour (no modal, embedded in page)
+- [ ] Comparison section redesigned as visual side-by-side
+- [ ] Testimonials as full-width cinematic quotes
+- [ ] Pricing with clear value differentiation
+- [ ] Sticky nav with blur/glass effect
+- [ ] Smooth scroll animations on every section
+- [ ] Mobile-first responsive design

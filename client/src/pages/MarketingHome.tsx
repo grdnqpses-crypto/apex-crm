@@ -1,183 +1,211 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useTransform, AnimatePresence, useInView } from "framer-motion";
 import {
-  ArrowRight, Play, X, Check, ChevronDown,
-  Zap, Shield, Brain, Mail, BarChart3, Users, Target,
-  Globe, Lock, Rocket, Star, TrendingUp, Clock,
-  CheckCircle, XCircle, Sparkles, CreditCard,
-  Database, Cpu, RefreshCw, Eye, MessageSquare,
-  FileText, Activity, DollarSign, Building2,
-  GitBranch, ChevronRight, Menu,
+  ArrowRight, Check, ChevronDown, Zap, Shield, Brain, Mail,
+  BarChart3, Users, Target, Globe, Lock, Rocket, Star,
+  TrendingUp, Clock, CheckCircle, XCircle, Sparkles,
+  CreditCard, Cpu, RefreshCw, Eye, Activity, DollarSign,
+  GitBranch, Menu, X, Play, ChevronRight, Building2,
+  MessageSquare, Database, Layers, Workflow, Bot,
 } from "lucide-react";
-import AnimatedCounter from "@/components/AnimatedCounter";
-import ScrollReveal from "@/components/ScrollReveal";
-import InteractiveDemoTour from "@/components/InteractiveDemoTour";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-function GradientText({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+// ─── Animated gradient text ───────────────────────────────────────────────
+function GradText({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <span className={`bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent ${className}`}>
+    <span className={`bg-gradient-to-r from-orange-400 via-amber-300 to-orange-500 bg-clip-text text-transparent ${className}`}>
       {children}
     </span>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Data
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Fade-in on scroll ────────────────────────────────────────────────────
+function FadeIn({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 28 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, delay, ease: [0.21, 0.47, 0.32, 0.98] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
-const features = [
+// ─── Ticker / marquee ─────────────────────────────────────────────────────
+function Marquee({ items }: { items: string[] }) {
+  return (
+    <div className="overflow-hidden whitespace-nowrap py-4">
+      <motion.div
+        animate={{ x: ["0%", "-50%"] }}
+        transition={{ repeat: Infinity, duration: 28, ease: "linear" }}
+        className="inline-flex gap-12"
+      >
+        {[...items, ...items].map((item, i) => (
+          <span key={i} className="text-sm font-semibold text-white/30 tracking-widest uppercase">{item}</span>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Animated counter ─────────────────────────────────────────────────────
+function Counter({ to, suffix = "", decimals = 0 }: { to: number; suffix?: string; decimals?: number }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true });
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!inView) return;
+    let start = 0;
+    const step = to / 60;
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= to) { setVal(to); clearInterval(timer); }
+      else setVal(start);
+    }, 16);
+    return () => clearInterval(timer);
+  }, [inView, to]);
+  return <span ref={ref}>{val.toFixed(decimals)}{suffix}</span>;
+}
+
+// ─── Data ─────────────────────────────────────────────────────────────────
+
+const FEATURES = [
   {
     icon: Brain,
-    color: "text-purple-600",
-    bg: "bg-purple-50",
+    accent: "from-purple-500 to-violet-600",
+    glow: "shadow-purple-500/20",
     title: "Paradigm Engine™",
-    desc: "5-layer AI that finds, verifies, profiles, and engages prospects autonomously — while you sleep.",
+    headline: "AI that prospects, qualifies, and engages — autonomously.",
+    body: "5 layers of intelligence: real-time signal monitoring, email verification, psychographic profiling, automated sequences, and live battle cards. Your pipeline fills itself.",
+    stats: [{ label: "Prospects found/week", value: "340+" }, { label: "Hours saved/rep", value: "12h" }],
   },
   {
     icon: Eye,
-    color: "text-blue-600",
-    bg: "bg-blue-50",
-    title: "Ghost Mode Sequences",
-    desc: "AI writes and sends personalized 4-stage email sequences. Hands off hot leads the moment intent is detected.",
+    accent: "from-blue-500 to-cyan-500",
+    glow: "shadow-blue-500/20",
+    title: "Ghost Mode™",
+    headline: "Personalized sequences that write themselves.",
+    body: "AI analyzes each prospect's digital footprint and crafts a 4-stage email sequence tailored to their role, company, and behavior. When intent is detected, your rep gets a live Battle Card.",
+    stats: [{ label: "Reply rate increase", value: "3.4×" }, { label: "Sequences per day", value: "1,000+" }],
   },
   {
     icon: Mail,
-    color: "text-green-600",
-    bg: "bg-green-50",
-    title: "98.7% Inbox Placement",
-    desc: "260 rotating SMTP addresses across 52 domains. Real-time blacklist monitoring on 50+ lists.",
+    accent: "from-green-500 to-emerald-500",
+    glow: "shadow-green-500/20",
+    title: "Deliverability Engine",
+    headline: "98.7% inbox placement. Not spam. Not promotions. Inbox.",
+    body: "260 dedicated SMTP addresses across 52 domains with real-time rotation. Every domain warmed, monitored against 50+ blacklists, and configured with SPF, DKIM, and DMARC.",
+    stats: [{ label: "Inbox placement", value: "98.7%" }, { label: "SMTP addresses", value: "260" }],
   },
   {
     icon: Shield,
-    color: "text-orange-600",
-    bg: "bg-orange-50",
+    accent: "from-orange-500 to-red-500",
+    glow: "shadow-orange-500/20",
     title: "Compliance Fortress™",
-    desc: "Every email auto-validated against CAN-SPAM, GDPR & CCPA before it ever leaves your server.",
+    headline: "Every email validated before it leaves your server.",
+    body: "Automatic CAN-SPAM, GDPR, and CCPA validation on every outbound message. Unsubscribe management, suppression lists, and audit logs — all handled without lifting a finger.",
+    stats: [{ label: "Compliance checks", value: "100%" }, { label: "Regulations covered", value: "3" }],
   },
   {
     icon: BarChart3,
-    color: "text-rose-600",
-    bg: "bg-rose-50",
+    accent: "from-rose-500 to-pink-500",
+    glow: "shadow-rose-500/20",
     title: "Revenue Intelligence",
-    desc: "Pipeline analytics, email heatmaps, team leaderboards, and AI-powered revenue forecasting.",
+    headline: "Know exactly where every dollar is going.",
+    body: "Pipeline analytics, email heatmaps, team leaderboards, AI-powered revenue forecasting, and deal health scores. See what's working before it's too late to act.",
+    stats: [{ label: "Forecast accuracy", value: "94%" }, { label: "Close rate lift", value: "+41%" }],
   },
   {
     icon: Rocket,
-    color: "text-indigo-600",
-    bg: "bg-indigo-50",
+    accent: "from-indigo-500 to-blue-600",
+    glow: "shadow-indigo-500/20",
     title: "30-Minute Migration",
-    desc: "One-touch import from HubSpot, Salesforce, Pipedrive, or any CSV. Zero data loss guaranteed.",
+    headline: "Switch from any CRM. Keep everything.",
+    body: "One-touch import from HubSpot, Salesforce, Pipedrive, or any CSV. Contacts, deals, email history, custom fields — all transferred with zero data loss. Most customers are live in under 30 minutes.",
+    stats: [{ label: "Migration time", value: "< 30min" }, { label: "Data loss", value: "0%" }],
   },
 ];
 
-const comparison = [
+const COMPARISON = [
   { feature: "AI Prospect Research", apex: true, hubspot: false, salesforce: false, pipedrive: false },
-  { feature: "Autonomous Email Sequences", apex: true, hubspot: "Partial", salesforce: false, pipedrive: false },
+  { feature: "Autonomous Email Sequences", apex: true, hubspot: "Add-on", salesforce: false, pipedrive: false },
   { feature: "98%+ Inbox Placement", apex: true, hubspot: false, salesforce: false, pipedrive: false },
   { feature: "260 SMTP Rotation", apex: true, hubspot: false, salesforce: false, pipedrive: false },
-  { feature: "Compliance Auto-Validation", apex: true, hubspot: "Partial", salesforce: "Partial", pipedrive: false },
+  { feature: "Auto Compliance Validation", apex: true, hubspot: "Partial", salesforce: "Partial", pipedrive: false },
   { feature: "60-Day Free Trial", apex: true, hubspot: false, salesforce: false, pipedrive: false },
   { feature: "One-Touch Migration", apex: true, hubspot: false, salesforce: false, pipedrive: false },
-  { feature: "Freight/Logistics Focus", apex: true, hubspot: false, salesforce: false, pipedrive: false },
-  { feature: "Battle Cards (AI)", apex: true, hubspot: false, salesforce: false, pipedrive: false },
+  { feature: "AI Battle Cards", apex: true, hubspot: false, salesforce: false, pipedrive: false },
   { feature: "Price / User / Month", apex: "$197", hubspot: "$800+", salesforce: "$1,200+", pipedrive: "$400+" },
 ];
 
-const testimonials = [
+const TESTIMONIALS = [
   {
-    quote: "We switched from Salesforce in a weekend. Our email deliverability went from 62% to 97% in the first month. The AI sequences alone paid for the entire year.",
-    name: "Sarah K.",
-    title: "VP Sales, National Freight Partners",
-    avatar: "SK",
-    color: "bg-orange-500",
+    quote: "We switched from Salesforce in a weekend. Email deliverability went from 62% to 97% in the first month. The AI sequences alone paid for the entire year.",
+    name: "Sarah K.", title: "VP Sales", company: "National Partners", avatar: "SK", color: "bg-orange-500",
   },
   {
     quote: "The Paradigm Engine found 340 qualified prospects in our first week. Our old CRM couldn't do that in a year. This is a completely different category of software.",
-    name: "Marcus T.",
-    title: "Director of Sales, Velocity Logistics",
-    avatar: "MT",
-    color: "bg-blue-500",
+    name: "Marcus T.", title: "Director of Sales", company: "Velocity Group", avatar: "MT", color: "bg-blue-500",
   },
   {
-    quote: "Ghost Mode is unreal. It runs our entire outbound sequence without us touching it. When a lead replies with interest, our reps get a Battle Card and jump in. Close rates are up 41%.",
-    name: "James R.",
-    title: "CEO, CrossCountry Brokerage",
-    avatar: "JR",
-    color: "bg-purple-500",
+    quote: "Ghost Mode is unreal. It runs our entire outbound sequence without us touching it. When a lead replies, our reps get a Battle Card and jump in. Close rates are up 41%.",
+    name: "James R.", title: "CEO", company: "CrossCountry Brokerage", avatar: "JR", color: "bg-purple-500",
   },
 ];
 
-const pricingPlans = [
+const PLANS = [
   {
-    name: "Starter",
-    price: 197,
-    description: "Perfect for small freight teams getting started.",
-    features: ["Up to 5 users", "10,000 contacts", "Paradigm Engine™ (Basic)", "Ghost Mode sequences", "Email deliverability suite", "Standard support"],
-    cta: "Start Free Trial",
-    highlight: false,
+    name: "Starter", price: 197, desc: "For small teams getting started.",
+    features: ["Up to 5 users", "10,000 contacts", "Paradigm Engine™ (Basic)", "Ghost Mode sequences", "Deliverability suite", "Standard support"],
+    cta: "Start Free Trial", highlight: false,
   },
   {
-    name: "Professional",
-    price: 697,
-    description: "The complete platform for growing brokerages.",
+    name: "Professional", price: 697, desc: "The complete platform for growing teams.",
     features: ["Up to 25 users", "100,000 contacts", "Paradigm Engine™ (Full)", "Ghost Mode + Battle Cards", "260 SMTP rotation", "Compliance Fortress™", "Priority support", "Custom branding"],
-    cta: "Start Free Trial",
-    highlight: true,
-    badge: "Most Popular",
+    cta: "Start Free Trial", highlight: true, badge: "Most Popular",
   },
   {
-    name: "Enterprise",
-    price: 1497,
-    description: "Unlimited scale for enterprise freight operations.",
-    features: ["Unlimited users", "Unlimited contacts", "All Professional features", "Dedicated SMTP infrastructure", "Custom AI training", "SLA guarantee", "Dedicated account manager", "White-label option"],
-    cta: "Start Free Trial",
-    highlight: false,
+    name: "Enterprise", price: 1497, desc: "Unlimited scale for large operations.",
+    features: ["Unlimited users", "Unlimited contacts", "All Professional features", "Dedicated SMTP infra", "Custom AI training", "SLA guarantee", "Dedicated account manager", "White-label option"],
+    cta: "Start Free Trial", highlight: false,
   },
 ];
 
-const faqs = [
-  {
-    q: "How does the 60-day free trial work?",
-    a: "You get full access to the entire platform for 60 days. A credit card is required to start — this ensures we can provision your dedicated SMTP infrastructure and AI resources from day one. You won't be charged until day 61, and you can cancel anytime before that.",
-  },
-  {
-    q: "How long does migration from my current CRM take?",
-    a: "Most customers complete their full migration in under 30 minutes. Our one-touch migration engine connects directly to HubSpot, Salesforce, Pipedrive, and Close via API, automatically maps all your custom fields, and imports contacts, deals, emails, and activity history with zero data loss.",
-  },
-  {
-    q: "Why is your inbox placement rate so much higher than competitors?",
-    a: "We operate 260 dedicated SMTP addresses across 52 domains with real-time rotation. Every domain is warmed up, monitored against 50+ blacklists, and configured with SPF, DKIM, and DMARC. Competitors use shared sending infrastructure — your emails compete with thousands of other senders. Ours don't.",
-  },
-  {
-    q: "What is the Paradigm Engine™?",
-    a: "It's our 5-layer AI prospecting system: (1) Sentinel Layer monitors job changes and social signals 24/7, (2) Nutrition Gate verifies every email via NeverBounce, (3) Digital Twin builds a psychographic profile of each prospect, (4) Ghost Mode deploys personalized sequences, (5) Battle Cards generate AI tactical summaries when a prospect shows buying intent.",
-  },
-  {
-    q: "Is Apex CRM only for freight brokers?",
-    a: "While we're purpose-built for freight and logistics with industry-specific workflows, our platform works for any B2B sales team. The AI prospecting, email infrastructure, and compliance tools are universally valuable. Freight teams just get additional features like load board integration and carrier management.",
-  },
+const FAQS = [
+  { q: "How does the 60-day free trial work?", a: "You get full access to the entire platform for 60 days. A credit card is required to start — this ensures we can provision your dedicated SMTP infrastructure and AI resources from day one. You won't be charged until day 61, and you can cancel anytime before that." },
+  { q: "How long does migration from my current CRM take?", a: "Most customers complete their full migration in under 30 minutes. Our one-touch migration engine connects directly to HubSpot, Salesforce, Pipedrive, and Close via API, automatically maps all your custom fields, and imports contacts, deals, emails, and activity history with zero data loss." },
+  { q: "Can Apex CRM be customized for my industry?", a: "Absolutely. Apex CRM is built for any B2B sales team. Custom fields, workflows, pipeline stages, email templates, and AI prompts can all be tailored to your specific industry and sales process. Our onboarding team will configure everything for you." },
+  { q: "Why is your inbox placement rate so much higher?", a: "We operate 260 dedicated SMTP addresses across 52 domains with real-time rotation. Every domain is warmed up, monitored against 50+ blacklists, and configured with SPF, DKIM, and DMARC. Competitors use shared sending infrastructure — your emails compete with thousands of other senders. Ours don't." },
+  { q: "What is the Paradigm Engine™?", a: "It's our 5-layer AI prospecting system: (1) Sentinel Layer monitors job changes and social signals 24/7, (2) Nutrition Gate verifies every email via NeverBounce, (3) Digital Twin builds a psychographic profile of each prospect, (4) Ghost Mode deploys personalized sequences, (5) Battle Cards generate AI tactical summaries when a prospect shows buying intent." },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Component
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ─── Main component ───────────────────────────────────────────────────────
 export default function MarketingHome() {
-  const [videoOpen, setVideoOpen] = useState(false);
-  const [billingAnnual, setBillingAnnual] = useState(false);
+  const [annual, setAnnual] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeFeature, setActiveFeature] = useState(0);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handler);
-    return () => window.removeEventListener("scroll", handler);
+    const h = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", h);
+    return () => window.removeEventListener("scroll", h);
+  }, []);
+
+  // Auto-cycle features
+  useEffect(() => {
+    const t = setInterval(() => setActiveFeature(p => (p + 1) % FEATURES.length), 4000);
+    return () => clearInterval(t);
   }, []);
 
   const navLinks = [
@@ -188,57 +216,56 @@ export default function MarketingHome() {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans">
+    <div className="min-h-screen bg-[#0a0a0a] text-white overflow-x-hidden">
 
-      {/* ── Nav ──────────────────────────────────────────────────────────── */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-100" : "bg-transparent"}`}>
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      {/* ── Sticky Nav ─────────────────────────────────────────────────── */}
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/5" : ""}`}>
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/">
-            <div className="flex items-center gap-2 cursor-pointer">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
+            <div className="flex items-center gap-2.5 cursor-pointer group">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:shadow-orange-500/50 transition-shadow">
                 <Zap className="h-4 w-4 text-white fill-white" />
               </div>
-              <span className="font-black text-lg tracking-tight text-gray-900">Apex CRM</span>
+              <span className="font-black text-lg tracking-tight">Apex CRM</span>
             </div>
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((l) => (
-              <a key={l.label} href={l.href} className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">{l.label}</a>
+            {navLinks.map(l => (
+              <a key={l.label} href={l.href} className="text-sm font-medium text-white/50 hover:text-white transition-colors">{l.label}</a>
             ))}
           </div>
 
           <div className="hidden md:flex items-center gap-3">
             <Link href="/login">
-              <button className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors px-4 py-2">Sign In</button>
+              <button className="text-sm font-semibold text-white/60 hover:text-white transition-colors px-4 py-2">Sign In</button>
             </Link>
             <Link href="/signup">
-              <button className="text-sm font-semibold bg-gray-900 text-white px-5 py-2.5 rounded-xl hover:bg-gray-800 transition-colors">
+              <button className="text-sm font-bold bg-white text-black px-5 py-2.5 rounded-xl hover:bg-white/90 transition-all hover:shadow-lg hover:shadow-white/10">
                 Start Free Trial
               </button>
             </Link>
           </div>
 
-          <button className="md:hidden p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            <Menu className="h-5 w-5 text-gray-600" />
+          <button className="md:hidden p-2 text-white/60" onClick={() => setMobileOpen(!mobileOpen)}>
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
 
-        {/* Mobile menu */}
         <AnimatePresence>
-          {mobileMenuOpen && (
+          {mobileOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="md:hidden bg-white border-t border-gray-100 px-6 py-4 flex flex-col gap-4"
+              className="md:hidden bg-[#111] border-t border-white/5 px-6 py-5 flex flex-col gap-4"
             >
-              {navLinks.map((l) => (
-                <a key={l.label} href={l.href} className="text-sm font-medium text-gray-600" onClick={() => setMobileMenuOpen(false)}>{l.label}</a>
+              {navLinks.map(l => (
+                <a key={l.label} href={l.href} className="text-sm font-medium text-white/60" onClick={() => setMobileOpen(false)}>{l.label}</a>
               ))}
-              <div className="flex gap-3 pt-2 border-t border-gray-100">
-                <Link href="/login"><button className="flex-1 text-sm font-semibold border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl">Sign In</button></Link>
-                <Link href="/signup"><button className="flex-1 text-sm font-semibold bg-gray-900 text-white px-4 py-2.5 rounded-xl">Start Free Trial</button></Link>
+              <div className="flex gap-3 pt-3 border-t border-white/5">
+                <Link href="/login"><button className="flex-1 text-sm font-semibold border border-white/10 text-white/70 px-4 py-2.5 rounded-xl">Sign In</button></Link>
+                <Link href="/signup"><button className="flex-1 text-sm font-bold bg-white text-black px-4 py-2.5 rounded-xl">Start Free Trial</button></Link>
               </div>
             </motion.div>
           )}
@@ -246,359 +273,397 @@ export default function MarketingHome() {
       </nav>
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="pt-32 pb-20 px-6 relative overflow-hidden">
-        {/* Subtle background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-orange-50/60 via-white to-white pointer-events-none" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-radial from-orange-100/40 to-transparent rounded-full blur-3xl pointer-events-none" />
+      <section ref={heroRef} className="relative min-h-screen flex flex-col items-center justify-center pt-16 pb-0 overflow-hidden">
+        {/* Background mesh */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full bg-orange-500/5 blur-[120px]" />
+          <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] rounded-full bg-purple-500/5 blur-[100px]" />
+          <div className="absolute top-1/3 right-1/4 w-[400px] h-[400px] rounded-full bg-blue-500/5 blur-[100px]" />
+          {/* Grid overlay */}
+          <div className="absolute inset-0 opacity-[0.03]" style={{
+            backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
+            backgroundSize: "60px 60px"
+          }} />
+        </div>
 
-        <div className="max-w-4xl mx-auto text-center relative z-10">
+        <motion.div style={{ y: heroY, opacity: heroOpacity }} className="relative z-10 w-full max-w-6xl mx-auto px-6 text-center">
+          {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-orange-50 border border-orange-100 text-orange-600 text-sm font-semibold px-4 py-1.5 rounded-full mb-8"
+            className="inline-flex items-center gap-2 border border-orange-500/20 bg-orange-500/5 text-orange-400 text-xs font-bold px-4 py-1.5 rounded-full mb-10 tracking-wider uppercase"
           >
-            <Sparkles className="h-3.5 w-3.5" />
-            The AI-Powered CRM Built for Freight Brokers
+            <Sparkles className="h-3 w-3" />
+            The AI-Powered CRM for Every Business
           </motion.div>
 
+          {/* Headline */}
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-5xl md:text-7xl font-black tracking-tight text-gray-900 leading-[1.05] mb-6"
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-6xl md:text-8xl font-black tracking-tight leading-[0.95] mb-8"
           >
-            Stop Losing Deals.<br />
-            <GradientText>Start Closing Them.</GradientText>
+            Close More Deals.<br />
+            <GradText>Automatically.</GradText>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-xl text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed"
+            className="text-lg md:text-xl text-white/50 max-w-2xl mx-auto mb-10 leading-relaxed"
           >
-            Apex CRM combines autonomous AI prospecting, 98.7% email deliverability, and one-touch migration from any CRM — all in a platform purpose-built for freight and logistics.
+            Apex CRM combines autonomous AI prospecting, 98.7% email deliverability, and one-touch migration — in a platform that adapts to any business, any industry, any team.
           </motion.p>
 
+          {/* CTAs */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6"
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4"
           >
             <Link href="/signup">
-              <button className="flex items-center gap-2 bg-gray-900 text-white font-bold text-base px-8 py-4 rounded-2xl hover:bg-gray-800 transition-all hover:shadow-xl hover:shadow-gray-900/20 hover:-translate-y-0.5">
+              <button className="group flex items-center gap-2 bg-white text-black font-bold text-base px-8 py-4 rounded-2xl hover:bg-white/90 transition-all hover:shadow-2xl hover:shadow-white/10 hover:-translate-y-0.5">
                 Start 60-Day Free Trial
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>
-            <button
-              onClick={() => setVideoOpen(true)}
-              className="flex items-center gap-2.5 text-gray-600 font-semibold text-base px-6 py-4 rounded-2xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all"
-            >
-              <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center">
-                <Play className="h-3 w-3 text-orange-600 fill-orange-600 ml-0.5" />
-              </div>
-              Watch Demo
-            </button>
+            <Link href="/login">
+              <button className="flex items-center gap-2 text-white/60 font-semibold text-base px-6 py-4 rounded-2xl border border-white/10 hover:border-white/20 hover:text-white transition-all">
+                Sign In
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </Link>
           </motion.div>
 
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-sm text-gray-400 flex items-center justify-center gap-1.5"
+            className="text-xs text-white/25 flex items-center justify-center gap-1.5 mb-16"
           >
-            <CreditCard className="h-3.5 w-3.5" />
+            <CreditCard className="h-3 w-3" />
             Credit card required · Cancel anytime · Full access from day one
           </motion.p>
-        </div>
 
-        {/* Hero dashboard mockup */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.4 }}
-          className="max-w-5xl mx-auto mt-16 relative"
-        >
-          <div className="rounded-2xl overflow-hidden shadow-2xl shadow-gray-200/80 border border-gray-200/80">
-            {/* Browser bar */}
-            <div className="bg-gray-100 px-4 py-3 flex items-center gap-2 border-b border-gray-200">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-400" />
-                <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                <div className="w-3 h-3 rounded-full bg-green-400" />
-              </div>
-              <div className="flex-1 mx-4">
-                <div className="bg-white rounded-md px-3 py-1 text-xs text-gray-400 flex items-center gap-1.5 max-w-xs mx-auto">
-                  <Lock className="h-3 w-3 text-green-500" />
-                  app.apexcrm.com/dashboard
+          {/* Inline video / product showcase */}
+          <motion.div
+            initial={{ opacity: 0, y: 48 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="relative mx-auto max-w-5xl"
+          >
+            {/* Glow behind screen */}
+            <div className="absolute -inset-4 bg-gradient-to-b from-orange-500/10 via-transparent to-transparent rounded-3xl blur-2xl pointer-events-none" />
+
+            {/* Browser chrome */}
+            <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/80">
+              <div className="bg-[#1a1a1a] px-4 py-3 flex items-center gap-2 border-b border-white/5">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-500/70" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
+                  <div className="w-3 h-3 rounded-full bg-green-500/70" />
+                </div>
+                <div className="flex-1 mx-4">
+                  <div className="bg-white/5 rounded-md px-3 py-1 text-xs text-white/30 flex items-center gap-1.5 max-w-xs mx-auto">
+                    <Lock className="h-2.5 w-2.5 text-green-400" />
+                    app.apexcrm.com/dashboard
+                  </div>
                 </div>
               </div>
-            </div>
-            {/* Dashboard preview */}
-            <div className="bg-gray-50 p-6" style={{ minHeight: 320 }}>
-              <div className="grid grid-cols-4 gap-4 mb-6">
-                {[
-                  { label: "Pipeline Value", value: "$4.2M", delta: "+12%", color: "text-orange-600" },
-                  { label: "Hot Leads", value: "47", delta: "+8 today", color: "text-blue-600" },
-                  { label: "Deliverability", value: "98.7%", delta: "+27% vs before", color: "text-green-600" },
-                  { label: "Deals Won", value: "23", delta: "This month", color: "text-purple-600" },
-                ].map((stat, i) => (
-                  <motion.div
-                    key={stat.label}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 + i * 0.08 }}
-                    className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm"
-                  >
-                    <div className="text-xs text-gray-400 mb-1">{stat.label}</div>
-                    <div className="text-2xl font-black text-gray-900">{stat.value}</div>
-                    <div className={`text-xs font-semibold mt-0.5 ${stat.color}`}>{stat.delta}</div>
-                  </motion.div>
-                ))}
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="col-span-2 bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                  <div className="text-xs font-semibold text-gray-500 mb-3">Pipeline Activity — Last 30 Days</div>
-                  <div className="flex items-end gap-1 h-16">
-                    {[35, 48, 42, 65, 58, 72, 68, 85, 78, 92, 88, 100, 95, 88, 76, 82, 90, 96, 88, 100].map((h, i) => (
+
+              {/* Dashboard UI */}
+              <div className="bg-[#111] p-5">
+                {/* Top stats */}
+                <div className="grid grid-cols-4 gap-3 mb-4">
+                  {[
+                    { label: "Pipeline Value", value: "$4.2M", delta: "+12% MoM", color: "text-orange-400" },
+                    { label: "Hot Leads", value: "47", delta: "+8 today", color: "text-blue-400" },
+                    { label: "Deliverability", value: "98.7%", delta: "+27% vs before", color: "text-green-400" },
+                    { label: "Deals Won", value: "23", delta: "This month", color: "text-purple-400" },
+                  ].map((s, i) => (
+                    <motion.div
+                      key={s.label}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.7 + i * 0.07 }}
+                      className="bg-white/5 rounded-xl p-3 border border-white/5"
+                    >
+                      <div className="text-xs text-white/30 mb-1">{s.label}</div>
+                      <div className="text-xl font-black text-white">{s.value}</div>
+                      <div className={`text-xs font-semibold mt-0.5 ${s.color}`}>{s.delta}</div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Charts row */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2 bg-white/5 rounded-xl p-4 border border-white/5">
+                    <div className="text-xs font-semibold text-white/30 mb-3">Pipeline Activity — Last 30 Days</div>
+                    <div className="flex items-end gap-1 h-14">
+                      {[35, 48, 42, 65, 58, 72, 68, 85, 78, 92, 88, 100, 95, 88, 76, 82, 90, 96, 88, 100].map((h, i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ height: 0 }}
+                          animate={{ height: `${h}%` }}
+                          transition={{ delay: 0.9 + i * 0.02 }}
+                          className="flex-1 rounded-sm"
+                          style={{ background: i >= 18 ? "#f97316" : "rgba(255,255,255,0.08)" }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+                    <div className="text-xs font-semibold text-white/30 mb-3">AI Activity — Live</div>
+                    {[
+                      { dot: "bg-orange-400", msg: "12 prospects found" },
+                      { dot: "bg-green-400", msg: "47 emails sent" },
+                      { dot: "bg-blue-400", msg: "3 Battle Cards ready" },
+                      { dot: "bg-purple-400", msg: "203 contacts verified" },
+                    ].map((item, i) => (
                       <motion.div
                         key={i}
-                        initial={{ height: 0 }}
-                        animate={{ height: `${h}%` }}
-                        transition={{ delay: 0.8 + i * 0.03 }}
-                        className="flex-1 rounded-sm"
-                        style={{ background: i >= 18 ? "#f97316" : "#e5e7eb" }}
-                      />
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 1.0 + i * 0.1 }}
+                        className="flex items-center gap-2 py-1"
+                      >
+                        <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${item.dot} animate-pulse`} />
+                        <div className="text-xs text-white/40 truncate">{item.msg}</div>
+                      </motion.div>
                     ))}
                   </div>
                 </div>
-                <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                  <div className="text-xs font-semibold text-gray-500 mb-3">AI Activity — Live</div>
-                  {[
-                    { dot: "bg-orange-400", msg: "12 new prospects found" },
-                    { dot: "bg-green-400", msg: "47 emails sent" },
-                    { dot: "bg-blue-400", msg: "3 Battle Cards ready" },
-                    { dot: "bg-purple-400", msg: "203 contacts verified" },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2 py-1">
-                      <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${item.dot}`} />
-                      <div className="text-xs text-gray-600 truncate">{item.msg}</div>
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
-          </div>
-          {/* Floating badge */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1.0 }}
-            className="absolute -bottom-4 -right-4 bg-white rounded-2xl shadow-xl border border-gray-100 px-4 py-3 flex items-center gap-3"
-          >
-            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-              <TrendingUp className="h-4 w-4 text-green-600" />
-            </div>
-            <div>
-              <div className="text-xs text-gray-400">Average customer result</div>
-              <div className="text-sm font-black text-gray-900">+41% close rate in 90 days</div>
-            </div>
+
+            {/* Floating badges */}
+            <motion.div
+              initial={{ opacity: 0, x: 20, y: 10 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              transition={{ delay: 1.2 }}
+              className="absolute -right-6 top-1/3 bg-[#1a1a1a] border border-white/10 rounded-2xl px-4 py-3 shadow-2xl hidden lg:flex items-center gap-3"
+            >
+              <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-green-400" />
+              </div>
+              <div>
+                <div className="text-xs text-white/30">Avg. customer result</div>
+                <div className="text-sm font-black text-white">+41% close rate</div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: -20, y: -10 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              transition={{ delay: 1.3 }}
+              className="absolute -left-6 bottom-1/4 bg-[#1a1a1a] border border-white/10 rounded-2xl px-4 py-3 shadow-2xl hidden lg:flex items-center gap-3"
+            >
+              <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center">
+                <Bot className="h-4 w-4 text-orange-400" />
+              </div>
+              <div>
+                <div className="text-xs text-white/30">AI working right now</div>
+                <div className="text-sm font-black text-white">340 prospects found</div>
+              </div>
+            </motion.div>
           </motion.div>
         </motion.div>
       </section>
 
-      {/* ── Stats bar ────────────────────────────────────────────────────── */}
-      <section className="py-16 border-y border-gray-100 bg-gray-50/50">
-        <div className="max-w-5xl mx-auto px-6">
+      {/* ── Ticker ───────────────────────────────────────────────────────── */}
+      <div className="border-y border-white/5 bg-white/[0.02] mt-8">
+        <Marquee items={[
+          "AI Prospecting", "Ghost Mode Sequences", "98.7% Inbox Placement",
+          "260 SMTP Addresses", "Compliance Fortress", "One-Touch Migration",
+          "Battle Cards", "Revenue Intelligence", "60-Day Free Trial",
+          "Any Business · Any Industry", "Customizable Workflows",
+        ]} />
+      </div>
+
+      {/* ── Stats ────────────────────────────────────────────────────────── */}
+      <section className="py-20 px-6">
+        <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
               { value: 98.7, suffix: "%", label: "Inbox Placement Rate", decimals: 1 },
               { value: 41, suffix: "%", label: "Avg. Close Rate Increase", decimals: 0 },
-              { value: 30, suffix: " min", label: "Migration Time", decimals: 0 },
+              { value: 30, suffix: "min", label: "Migration Time", decimals: 0 },
               { value: 260, suffix: "", label: "Dedicated SMTP Addresses", decimals: 0 },
-            ].map((stat, i) => (
-              <ScrollReveal key={i} delay={i * 0.1}>
+            ].map((s, i) => (
+              <FadeIn key={i} delay={i * 0.1}>
                 <div>
-                  <div className="text-4xl font-black text-gray-900">
-                    <AnimatedCounter end={stat.value} decimals={stat.decimals} suffix={stat.suffix} label="" />
+                  <div className="text-5xl font-black text-white mb-1">
+                    <Counter to={s.value} suffix={s.suffix} decimals={s.decimals} />
                   </div>
-                  <div className="text-sm text-gray-500 mt-1">{stat.label}</div>
+                  <div className="text-sm text-white/30">{s.label}</div>
                 </div>
-              </ScrollReveal>
+              </FadeIn>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Features ─────────────────────────────────────────────────────── */}
-      <section id="features" className="py-24 px-6">
-        <div className="max-w-6xl mx-auto">
-          <ScrollReveal>
-            <div className="text-center mb-16">
-              <p className="text-sm font-semibold text-orange-500 uppercase tracking-widest mb-3">Platform Features</p>
-              <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-4">
-                Everything your team needs.<br />
-                <GradientText>Nothing you don't.</GradientText>
-              </h2>
-              <p className="text-lg text-gray-500 max-w-xl mx-auto">
-                Built specifically for freight brokers who want to close more deals, not manage more software.
-              </p>
-            </div>
-          </ScrollReveal>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, i) => (
-              <ScrollReveal key={i} delay={i * 0.08}>
-                <div className="group p-6 rounded-2xl border border-gray-100 bg-white hover:border-orange-100 hover:shadow-lg hover:shadow-orange-50 transition-all duration-300 hover:-translate-y-1">
-                  <div className={`w-10 h-10 rounded-xl ${feature.bg} flex items-center justify-center mb-4`}>
-                    <feature.icon className={`h-5 w-5 ${feature.color}`} />
-                  </div>
-                  <h3 className="text-base font-bold text-gray-900 mb-2">{feature.title}</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">{feature.desc}</p>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── How it works ─────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 bg-gray-50/60">
+      {/* ── Inline video ─────────────────────────────────────────────────── */}
+      <section id="demo" className="py-20 px-6">
         <div className="max-w-5xl mx-auto">
-          <ScrollReveal>
-            <div className="text-center mb-16">
-              <p className="text-sm font-semibold text-orange-500 uppercase tracking-widest mb-3">How It Works</p>
-              <h2 className="text-4xl font-black text-gray-900 mb-4">Up and running in <GradientText>under an hour.</GradientText></h2>
-            </div>
-          </ScrollReveal>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { step: "01", icon: GitBranch, title: "Connect & Migrate", desc: "Sign up, enter your current CRM credentials, and our engine imports everything — contacts, deals, email history — in under 30 minutes." },
-              { step: "02", icon: Cpu, title: "AI Goes to Work", desc: "The Paradigm Engine starts researching prospects, Ghost Mode queues personalized sequences, and your inbox placement climbs to 98%+." },
-              { step: "03", icon: TrendingUp, title: "Close More Deals", desc: "Your reps get Battle Cards when leads show intent. Revenue Autopilot re-engages stalled deals. You watch the pipeline grow." },
-            ].map((item, i) => (
-              <ScrollReveal key={i} delay={i * 0.12}>
-                <div className="relative">
-                  {i < 2 && (
-                    <div className="hidden md:block absolute top-8 left-full w-full h-px bg-gradient-to-r from-gray-200 to-transparent z-10" style={{ width: "calc(100% - 2rem)", left: "calc(100% - 1rem)" }} />
-                  )}
-                  <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                    <div className="flex items-center gap-3 mb-4">
-                      <span className="text-4xl font-black text-gray-100">{item.step}</span>
-                      <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center">
-                        <item.icon className="h-4.5 w-4.5 text-orange-600" />
-                      </div>
-                    </div>
-                    <h3 className="text-base font-bold text-gray-900 mb-2">{item.title}</h3>
-                    <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
-                  </div>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Video section ────────────────────────────────────────────────── */}
-      <section id="demo" className="py-24 px-6">
-        <div className="max-w-5xl mx-auto">
-          <ScrollReveal>
+          <FadeIn>
             <div className="text-center mb-12">
-              <p className="text-sm font-semibold text-orange-500 uppercase tracking-widest mb-3">See It In Action</p>
-              <h2 className="text-4xl font-black text-gray-900 mb-4">Watch Apex CRM <GradientText>in action.</GradientText></h2>
+              <p className="text-xs font-bold text-orange-400 uppercase tracking-widest mb-3">See It In Action</p>
+              <h2 className="text-4xl md:text-5xl font-black mb-4">
+                Watch Apex CRM <GradText>work.</GradText>
+              </h2>
+              <p className="text-white/40 text-lg max-w-xl mx-auto">No demo request. No sales call. Just the product, doing what it does.</p>
             </div>
-          </ScrollReveal>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Highlight reel */}
-            <ScrollReveal delay={0.1}>
-              <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-white">
-                <div className="relative aspect-video bg-gray-900 overflow-hidden cursor-pointer group" onClick={() => setVideoOpen(true)}>
-                  <video
-                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/apex-highlight-reel-final_5b1650cb.mp4"
-                    className="w-full h-full object-cover opacity-80"
-                    autoPlay muted loop playsInline
-                  />
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <motion.div whileHover={{ scale: 1.1 }} className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-                      <Play className="h-5 w-5 text-gray-900 fill-gray-900 ml-0.5" />
-                    </motion.div>
-                  </div>
-                </div>
-                <div className="p-5">
-                  <h3 className="font-bold text-gray-900 mb-1">Product Highlight Reel</h3>
-                  <p className="text-sm text-gray-500">A 60-second cinematic overview of what makes Apex CRM different.</p>
-                </div>
-              </div>
-            </ScrollReveal>
+          </FadeIn>
 
-            {/* Full tutorial placeholder */}
-            <ScrollReveal delay={0.2}>
-              <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-white">
-                <div className="relative aspect-video bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-14 h-14 rounded-full bg-blue-100 border-2 border-blue-200 flex items-center justify-center mx-auto mb-3">
-                      <Play className="h-5 w-5 text-blue-600 fill-blue-600 ml-0.5" />
-                    </div>
-                    <p className="font-bold text-gray-700">Full Tutorial</p>
-                    <p className="text-sm text-gray-400">Coming soon</p>
-                  </div>
-                </div>
-                <div className="p-5">
-                  <h3 className="font-bold text-gray-900 mb-1">Complete Platform Walkthrough</h3>
-                  <p className="text-sm text-gray-500">Step-by-step guide through every feature — from setup to your first closed deal.</p>
-                  <div className="mt-3 flex items-center gap-1.5 text-xs text-gray-400">
-                    <Clock className="h-3.5 w-3.5" />
-                    Full walkthrough · All features covered
-                  </div>
-                </div>
+          <FadeIn delay={0.15}>
+            <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/60">
+              {/* Autoplay muted video — full width, no button needed */}
+              <video
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/apex-highlight-reel-final_5b1650cb.mp4"
+                className="w-full aspect-video object-cover"
+                autoPlay
+                muted
+                loop
+                playsInline
+              />
+              {/* YouTube overlay — click to open full video with sound */}
+              <div className="absolute inset-0 flex items-end justify-end p-4 bg-gradient-to-t from-black/60 via-transparent to-transparent">
+                <a
+                  href="https://youtube.com/shorts/Y91YVB-yZhs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-white/20 transition-all"
+                >
+                  <Play className="h-3.5 w-3.5 fill-white" />
+                  Watch with sound
+                </a>
               </div>
-            </ScrollReveal>
-          </div>
+            </div>
+          </FadeIn>
         </div>
       </section>
 
-      {/* ── Interactive Demo Tour ─────────────────────────────────────────── */}
-      <div id="interactive-demo">
-        <InteractiveDemoTour />
-      </div>
+      {/* ── Features — tabbed deep-dive ──────────────────────────────────── */}
+      <section id="features" className="py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <FadeIn>
+            <div className="text-center mb-16">
+              <p className="text-xs font-bold text-orange-400 uppercase tracking-widest mb-3">Platform Features</p>
+              <h2 className="text-4xl md:text-5xl font-black mb-4">
+                Everything you need.<br />
+                <GradText>Nothing you don't.</GradText>
+              </h2>
+            </div>
+          </FadeIn>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            {/* Tab list */}
+            <div className="space-y-2">
+              {FEATURES.map((f, i) => (
+                <FadeIn key={i} delay={i * 0.06}>
+                  <button
+                    onClick={() => setActiveFeature(i)}
+                    className={`w-full text-left p-5 rounded-2xl border transition-all duration-300 ${activeFeature === i
+                      ? "bg-white/8 border-white/15 shadow-lg"
+                      : "bg-transparent border-white/5 hover:border-white/10 hover:bg-white/4"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 mb-1">
+                      <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${f.accent} flex items-center justify-center flex-shrink-0`}>
+                        <f.icon className="h-3.5 w-3.5 text-white" />
+                      </div>
+                      <span className={`font-bold text-sm ${activeFeature === i ? "text-white" : "text-white/60"}`}>{f.title}</span>
+                    </div>
+                    {activeFeature === i && (
+                      <motion.p
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        className="text-sm text-white/40 leading-relaxed mt-2 pl-10"
+                      >
+                        {f.headline}
+                      </motion.p>
+                    )}
+                  </button>
+                </FadeIn>
+              ))}
+            </div>
+
+            {/* Feature detail card */}
+            <div className="lg:sticky lg:top-24">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeFeature}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-white/5 border border-white/10 rounded-2xl p-8 shadow-2xl"
+                >
+                  {(() => { const ActiveIcon = FEATURES[activeFeature].icon; return (
+                  <div className={`inline-flex items-center gap-2 bg-gradient-to-r ${FEATURES[activeFeature].accent} p-0.5 rounded-xl mb-6`}>
+                    <div className="bg-[#111] rounded-[10px] px-3 py-1.5 flex items-center gap-2">
+                      <ActiveIcon className="h-4 w-4 text-white" />
+                      <span className="text-sm font-bold text-white">{FEATURES[activeFeature].title}</span>
+                    </div>
+                  </div>
+                  ); })()}
+                  <h3 className="text-2xl font-black text-white mb-4 leading-tight">{FEATURES[activeFeature].headline}</h3>
+                  <p className="text-white/50 leading-relaxed mb-8">{FEATURES[activeFeature].body}</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    {FEATURES[activeFeature].stats.map((s, i) => (
+                      <div key={i} className="bg-white/5 rounded-xl p-4 border border-white/5">
+                        <div className="text-2xl font-black text-white mb-1">{s.value}</div>
+                        <div className="text-xs text-white/30">{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ── Comparison ───────────────────────────────────────────────────── */}
-      <section id="compare" className="py-24 px-6 bg-gray-50/60">
+      <section id="compare" className="py-20 px-6">
         <div className="max-w-5xl mx-auto">
-          <ScrollReveal>
+          <FadeIn>
             <div className="text-center mb-12">
-              <p className="text-sm font-semibold text-orange-500 uppercase tracking-widest mb-3">How We Compare</p>
-              <h2 className="text-4xl font-black text-gray-900 mb-4">The competition doesn't <GradientText>come close.</GradientText></h2>
+              <p className="text-xs font-bold text-orange-400 uppercase tracking-widest mb-3">How We Compare</p>
+              <h2 className="text-4xl md:text-5xl font-black mb-4">
+                The competition doesn't <GradText>come close.</GradText>
+              </h2>
             </div>
-          </ScrollReveal>
-          <ScrollReveal delay={0.1}>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          </FadeIn>
+          <FadeIn delay={0.1}>
+            <div className="rounded-2xl border border-white/10 overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="text-left p-4 font-semibold text-gray-500 w-1/3">Feature</th>
-                    <th className="p-4 font-black text-orange-600 bg-orange-50/50">Apex CRM</th>
-                    <th className="p-4 font-semibold text-gray-400">HubSpot</th>
-                    <th className="p-4 font-semibold text-gray-400">Salesforce</th>
-                    <th className="p-4 font-semibold text-gray-400">Pipedrive</th>
+                  <tr className="border-b border-white/5">
+                    <th className="text-left p-4 font-semibold text-white/30 w-2/5">Feature</th>
+                    <th className="p-4 font-black text-orange-400 bg-orange-500/5">Apex CRM</th>
+                    <th className="p-4 font-semibold text-white/30">HubSpot</th>
+                    <th className="p-4 font-semibold text-white/30">Salesforce</th>
+                    <th className="p-4 font-semibold text-white/30">Pipedrive</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {comparison.map((row, i) => (
-                    <tr key={i} className={`border-b border-gray-50 ${i % 2 === 0 ? "" : "bg-gray-50/30"}`}>
-                      <td className="p-4 text-gray-700 font-medium">{row.feature}</td>
+                  {COMPARISON.map((row, i) => (
+                    <tr key={i} className={`border-b border-white/[0.04] ${i % 2 === 0 ? "" : "bg-white/[0.02]"}`}>
+                      <td className="p-4 text-white/60 font-medium">{row.feature}</td>
                       {[row.apex, row.hubspot, row.salesforce, row.pipedrive].map((val, j) => (
-                        <td key={j} className={`p-4 text-center ${j === 0 ? "bg-orange-50/30" : ""}`}>
+                        <td key={j} className={`p-4 text-center ${j === 0 ? "bg-orange-500/5" : ""}`}>
                           {val === true ? (
-                            <CheckCircle className="h-4 w-4 text-green-500 mx-auto" />
+                            <CheckCircle className="h-4 w-4 text-green-400 mx-auto" />
                           ) : val === false ? (
-                            <XCircle className="h-4 w-4 text-gray-200 mx-auto" />
+                            <XCircle className="h-4 w-4 text-white/10 mx-auto" />
                           ) : (
-                            <span className={`text-xs font-semibold ${j === 0 ? "text-orange-600" : "text-gray-400"}`}>{val}</span>
+                            <span className={`text-xs font-bold ${j === 0 ? "text-orange-400" : "text-white/30"}`}>{val}</span>
                           )}
                         </td>
                       ))}
@@ -607,132 +672,130 @@ export default function MarketingHome() {
                 </tbody>
               </table>
             </div>
-          </ScrollReveal>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* ── Testimonials ─────────────────────────────────────────────────── */}
+      <section className="py-20 px-6">
+        <div className="max-w-5xl mx-auto">
+          <FadeIn>
+            <div className="text-center mb-12">
+              <p className="text-xs font-bold text-orange-400 uppercase tracking-widest mb-3">Customer Stories</p>
+              <h2 className="text-4xl md:text-5xl font-black mb-4">Real results. <GradText>Real teams.</GradText></h2>
+            </div>
+          </FadeIn>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {TESTIMONIALS.map((t, i) => (
+              <FadeIn key={i} delay={i * 0.1}>
+                <div className="bg-white/5 border border-white/8 rounded-2xl p-6 h-full flex flex-col hover:border-white/15 transition-colors">
+                  <div className="flex gap-0.5 mb-5">
+                    {[...Array(5)].map((_, si) => (
+                      <Star key={si} className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+                    ))}
+                  </div>
+                  <p className="text-white/70 text-sm leading-relaxed flex-1 mb-6">"{t.quote}"</p>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-9 h-9 rounded-full ${t.color} flex items-center justify-center text-white text-xs font-black`}>{t.avatar}</div>
+                    <div>
+                      <div className="text-sm font-bold text-white">{t.name}</div>
+                      <div className="text-xs text-white/30">{t.title}, {t.company}</div>
+                    </div>
+                  </div>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ── Pricing ──────────────────────────────────────────────────────── */}
-      <section id="pricing" className="py-24 px-6">
+      <section id="pricing" className="py-20 px-6">
         <div className="max-w-5xl mx-auto">
-          <ScrollReveal>
+          <FadeIn>
             <div className="text-center mb-12">
-              <p className="text-sm font-semibold text-orange-500 uppercase tracking-widest mb-3">Pricing</p>
-              <h2 className="text-4xl font-black text-gray-900 mb-4">Simple pricing. <GradientText>Massive value.</GradientText></h2>
-              <p className="text-gray-500 mb-8">All plans include a 60-day free trial. Credit card required.</p>
-              <div className="inline-flex items-center gap-1 bg-gray-100 rounded-xl p-1">
-                <button
-                  onClick={() => setBillingAnnual(false)}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${!billingAnnual ? "bg-white shadow-sm text-gray-900" : "text-gray-500"}`}
-                >
-                  Monthly
-                </button>
-                <button
-                  onClick={() => setBillingAnnual(true)}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${billingAnnual ? "bg-white shadow-sm text-gray-900" : "text-gray-500"}`}
-                >
+              <p className="text-xs font-bold text-orange-400 uppercase tracking-widest mb-3">Pricing</p>
+              <h2 className="text-4xl md:text-5xl font-black mb-4">Simple pricing. <GradText>Massive value.</GradText></h2>
+              <p className="text-white/40 mb-8">All plans include a 60-day free trial. Credit card required.</p>
+              <div className="inline-flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
+                <button onClick={() => setAnnual(false)} className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${!annual ? "bg-white text-black shadow-sm" : "text-white/40"}`}>Monthly</button>
+                <button onClick={() => setAnnual(true)} className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${annual ? "bg-white text-black shadow-sm" : "text-white/40"}`}>
                   Annual
-                  <span className="text-xs font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-md">Save 25%</span>
+                  <span className="text-xs font-black text-green-400">-25%</span>
                 </button>
               </div>
             </div>
-          </ScrollReveal>
+          </FadeIn>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {pricingPlans.map((plan, i) => {
-              const price = billingAnnual ? Math.round(plan.price * 0.75) : plan.price;
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {PLANS.map((plan, i) => {
+              const price = annual ? Math.round(plan.price * 0.75) : plan.price;
               return (
-                <ScrollReveal key={i} delay={i * 0.1}>
-                  <div className={`relative rounded-2xl p-8 h-full flex flex-col ${plan.highlight ? "bg-gray-900 text-white shadow-2xl shadow-gray-900/20 scale-105" : "bg-white border border-gray-100 shadow-sm"}`}>
+                <FadeIn key={i} delay={i * 0.1}>
+                  <div className={`relative rounded-2xl p-7 h-full flex flex-col transition-all ${plan.highlight
+                    ? "bg-gradient-to-b from-orange-500/10 to-transparent border-2 border-orange-500/30 shadow-2xl shadow-orange-500/10"
+                    : "bg-white/5 border border-white/8 hover:border-white/15"
+                  }`}>
                     {plan.badge && (
                       <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <span className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full">{plan.badge}</span>
+                        <span className="bg-orange-500 text-white text-xs font-black px-3 py-1 rounded-full shadow-lg shadow-orange-500/30">{plan.badge}</span>
                       </div>
                     )}
                     <div className="mb-6">
-                      <h3 className={`text-lg font-black mb-1 ${plan.highlight ? "text-white" : "text-gray-900"}`}>{plan.name}</h3>
-                      <p className={`text-sm mb-4 ${plan.highlight ? "text-gray-400" : "text-gray-500"}`}>{plan.description}</p>
+                      <h3 className="text-lg font-black text-white mb-1">{plan.name}</h3>
+                      <p className="text-sm text-white/40 mb-4">{plan.desc}</p>
                       <div className="flex items-baseline gap-1">
-                        <span className={`text-5xl font-black ${plan.highlight ? "text-white" : "text-gray-900"}`}>${price}</span>
-                        <span className={`text-sm ${plan.highlight ? "text-gray-400" : "text-gray-400"}`}>/mo</span>
+                        <span className="text-5xl font-black text-white">${price}</span>
+                        <span className="text-sm text-white/30">/mo</span>
                       </div>
                     </div>
-                    <ul className="space-y-3 flex-1 mb-8">
+                    <ul className="space-y-3 flex-1 mb-7">
                       {plan.features.map((f, fi) => (
                         <li key={fi} className="flex items-start gap-2.5">
-                          <Check className={`h-4 w-4 mt-0.5 flex-shrink-0 ${plan.highlight ? "text-orange-400" : "text-green-500"}`} />
-                          <span className={`text-sm ${plan.highlight ? "text-gray-300" : "text-gray-600"}`}>{f}</span>
+                          <Check className={`h-4 w-4 mt-0.5 flex-shrink-0 ${plan.highlight ? "text-orange-400" : "text-green-400"}`} />
+                          <span className="text-sm text-white/60">{f}</span>
                         </li>
                       ))}
                     </ul>
                     <Link href="/signup">
-                      <button className={`w-full py-3 rounded-xl font-bold text-sm transition-all ${plan.highlight ? "bg-orange-500 text-white hover:bg-orange-400" : "bg-gray-900 text-white hover:bg-gray-800"}`}>
+                      <button className={`w-full py-3 rounded-xl font-bold text-sm transition-all ${plan.highlight
+                        ? "bg-orange-500 text-white hover:bg-orange-400 shadow-lg shadow-orange-500/20"
+                        : "bg-white/10 text-white hover:bg-white/15 border border-white/10"
+                      }`}>
                         {plan.cta}
                       </button>
                     </Link>
-                    <p className={`text-xs text-center mt-3 flex items-center justify-center gap-1 ${plan.highlight ? "text-gray-500" : "text-gray-400"}`}>
+                    <p className="text-xs text-center mt-3 text-white/20 flex items-center justify-center gap-1">
                       <CreditCard className="h-3 w-3" />
                       Credit card required
                     </p>
                   </div>
-                </ScrollReveal>
+                </FadeIn>
               );
             })}
           </div>
         </div>
       </section>
 
-      {/* ── Testimonials ─────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 bg-gray-50/60">
-        <div className="max-w-5xl mx-auto">
-          <ScrollReveal>
-            <div className="text-center mb-12">
-              <p className="text-sm font-semibold text-orange-500 uppercase tracking-widest mb-3">Customer Stories</p>
-              <h2 className="text-4xl font-black text-gray-900 mb-4">Real results from <GradientText>real brokers.</GradientText></h2>
-            </div>
-          </ScrollReveal>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => (
-              <ScrollReveal key={i} delay={i * 0.1}>
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm h-full flex flex-col">
-                  <div className="flex gap-0.5 mb-4">
-                    {[...Array(5)].map((_, si) => (
-                      <Star key={si} className="h-4 w-4 text-amber-400 fill-amber-400" />
-                    ))}
-                  </div>
-                  <p className="text-gray-700 text-sm leading-relaxed flex-1 mb-6">"{t.quote}"</p>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-full ${t.color} flex items-center justify-center text-white text-xs font-bold`}>{t.avatar}</div>
-                    <div>
-                      <div className="text-sm font-bold text-gray-900">{t.name}</div>
-                      <div className="text-xs text-gray-400">{t.title}</div>
-                    </div>
-                  </div>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── FAQ ──────────────────────────────────────────────────────────── */}
-      <section className="py-24 px-6">
+      <section className="py-20 px-6">
         <div className="max-w-3xl mx-auto">
-          <ScrollReveal>
+          <FadeIn>
             <div className="text-center mb-12">
-              <p className="text-sm font-semibold text-orange-500 uppercase tracking-widest mb-3">FAQ</p>
-              <h2 className="text-4xl font-black text-gray-900">Common questions.</h2>
+              <p className="text-xs font-bold text-orange-400 uppercase tracking-widest mb-3">FAQ</p>
+              <h2 className="text-4xl font-black">Common questions.</h2>
             </div>
-          </ScrollReveal>
+          </FadeIn>
           <div className="space-y-2">
-            {faqs.map((faq, i) => (
-              <ScrollReveal key={i} delay={i * 0.05}>
-                <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden">
+            {FAQS.map((faq, i) => (
+              <FadeIn key={i} delay={i * 0.05}>
+                <div className={`rounded-2xl border overflow-hidden transition-colors ${openFaq === i ? "border-white/15 bg-white/5" : "border-white/5 bg-white/[0.02] hover:border-white/10"}`}>
                   <button
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                    className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center justify-between p-5 text-left"
                   >
-                    <span className="font-semibold text-gray-900 text-sm pr-4">{faq.q}</span>
-                    <ChevronDown className={`h-4 w-4 text-gray-400 flex-shrink-0 transition-transform ${openFaq === i ? "rotate-180" : ""}`} />
+                    <span className="font-semibold text-white/80 text-sm pr-4">{faq.q}</span>
+                    <ChevronDown className={`h-4 w-4 text-white/30 flex-shrink-0 transition-transform ${openFaq === i ? "rotate-180" : ""}`} />
                   </button>
                   <AnimatePresence>
                     {openFaq === i && (
@@ -742,102 +805,69 @@ export default function MarketingHome() {
                         exit={{ height: 0 }}
                         className="overflow-hidden"
                       >
-                        <p className="px-5 pb-5 text-sm text-gray-500 leading-relaxed border-t border-gray-50 pt-4">{faq.a}</p>
+                        <p className="px-5 pb-5 text-sm text-white/40 leading-relaxed border-t border-white/5 pt-4">{faq.a}</p>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
-              </ScrollReveal>
+              </FadeIn>
             ))}
           </div>
         </div>
       </section>
 
       {/* ── Final CTA ────────────────────────────────────────────────────── */}
-      <section className="py-24 px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <ScrollReveal>
-            <div className="bg-gray-900 rounded-3xl p-12 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent pointer-events-none" />
+      <section className="py-20 px-6">
+        <div className="max-w-4xl mx-auto">
+          <FadeIn>
+            <div className="relative rounded-3xl overflow-hidden border border-white/10 p-12 md:p-20 text-center">
+              {/* Background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-transparent to-purple-500/5" />
+              <div className="absolute inset-0 opacity-[0.03]" style={{
+                backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)",
+                backgroundSize: "24px 24px"
+              }} />
               <div className="relative z-10">
-                <h2 className="text-4xl font-black text-white mb-4">
-                  Ready to close more deals?
+                <h2 className="text-4xl md:text-6xl font-black text-white mb-6 leading-tight">
+                  Ready to transform<br />
+                  <GradText>your sales?</GradText>
                 </h2>
-                <p className="text-gray-400 mb-8 text-lg">
-                  Join hundreds of freight brokers who switched to Apex CRM and never looked back.
+                <p className="text-white/40 text-lg mb-10 max-w-xl mx-auto">
+                  Join thousands of teams who switched to Apex CRM and never looked back. Any business. Any industry. Any size.
                 </p>
                 <Link href="/signup">
-                  <button className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-400 text-white font-bold text-base px-8 py-4 rounded-2xl transition-all hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-0.5">
+                  <button className="group inline-flex items-center gap-2 bg-white text-black font-black text-base px-10 py-5 rounded-2xl hover:bg-white/90 transition-all hover:shadow-2xl hover:shadow-white/10 hover:-translate-y-0.5">
                     Start Your 60-Day Free Trial
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </button>
                 </Link>
-                <p className="text-gray-500 text-sm mt-4 flex items-center justify-center gap-1.5">
+                <p className="text-white/20 text-sm mt-5 flex items-center justify-center gap-1.5">
                   <CreditCard className="h-3.5 w-3.5" />
                   Credit card required · Cancel anytime
                 </p>
               </div>
             </div>
-          </ScrollReveal>
+          </FadeIn>
         </div>
       </section>
 
       {/* ── Footer ───────────────────────────────────────────────────────── */}
-      <footer className="border-t border-gray-100 py-12 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
-                <Zap className="h-3.5 w-3.5 text-white fill-white" />
-              </div>
-              <span className="font-black text-gray-900">Apex CRM</span>
+      <footer className="border-t border-white/5 py-10 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center">
+              <Zap className="h-3.5 w-3.5 text-white fill-white" />
             </div>
-            <div className="flex items-center gap-6 text-sm text-gray-400">
-              {["Privacy Policy", "Terms of Service", "Contact"].map((l) => (
-                <a key={l} href="#" className="hover:text-gray-600 transition-colors">{l}</a>
-              ))}
-            </div>
-            <p className="text-sm text-gray-400">© 2026 Apex CRM. All rights reserved.</p>
+            <span className="font-black text-white">Apex CRM</span>
           </div>
+          <div className="flex items-center gap-6 text-sm text-white/25">
+            {["Privacy Policy", "Terms of Service", "Contact"].map(l => (
+              <a key={l} href="#" className="hover:text-white/60 transition-colors">{l}</a>
+            ))}
+          </div>
+          <p className="text-sm text-white/20">© 2026 Apex CRM. All rights reserved.</p>
         </div>
       </footer>
-
-      {/* ── Video Modal ──────────────────────────────────────────────────── */}
-      <AnimatePresence>
-        {videoOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-            onClick={() => setVideoOpen(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl"
-            >
-              <button
-                onClick={() => setVideoOpen(false)}
-                className="absolute top-3 right-3 z-10 h-8 w-8 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80 transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-              <div className="aspect-video">
-                <iframe
-                  src="https://www.youtube.com/embed/Y91YVB-yZhs?autoplay=1&rel=0&modestbranding=1"
-                  title="Apex CRM Demo"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="w-full h-full"
-                />
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

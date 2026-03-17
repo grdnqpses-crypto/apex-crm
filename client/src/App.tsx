@@ -98,7 +98,7 @@ function Router() {
       <Suspense fallback={<PageLoader />}>
         <Switch>
           <Route path="/dashboard" component={Dashboard} />
-          <Route path="/" component={Dashboard} />
+          <Route path="/app" component={Dashboard} />
           <Route path="/contacts" component={Contacts} />
           <Route path="/contacts/:id" component={ContactDetail} />
           <Route path="/companies" component={Companies} />
@@ -193,6 +193,11 @@ function App() {
               </Suspense>
             </Route>
             <Route path="/home">
+              <Suspense fallback={<PageLoader />}>
+                <MarketingHome />
+              </Suspense>
+            </Route>
+            <Route path="/">
               <Suspense fallback={<PageLoader />}>
                 <MarketingHome />
               </Suspense>
