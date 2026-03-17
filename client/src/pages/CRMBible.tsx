@@ -40,7 +40,9 @@ const SECTION_MIN_LEVEL: Record<string, number> = {
   operations: 30,     // Everyone
   ai: 60,             // Sales Manager, Office Manager, and above
   analytics: 60,      // Sales Manager, Office Manager, and above (team-scoped)
-  settings: 80,       // Company Admin and above
+  settings: 80,     // Company Admin and above (general settings)
+  billing: 80,       // Company Admin and above (payment history/schedule - read-only)
+  billingManage: 90, // Apex Owner and Developer only (change plan, update payment method)
 };
 
 // ─── Data ────────────────────────────────────────────────────────────────────
@@ -411,11 +413,11 @@ const SECTIONS = [
       {
         id: "billing",
         title: "Billing & Plans",
-        what: "Manage your subscription, view invoices, upgrade or downgrade your plan, and access the Stripe billing portal for payment method management.",
-        why: "Transparent billing and easy plan management reduce friction and build trust with your customers.",
-        how: "Navigate to Billing to see your current plan, next billing date, and usage metrics. Click Upgrade to see available plans and pricing. Click Manage Billing to open the Stripe portal.",
-        automation: "Subscription status is checked automatically on every login. If a payment fails, the system sends automated reminder emails and provides a direct link to update the payment method.",
-        outcome: "Frictionless billing management that keeps your team focused on selling, not on administrative subscription tasks.",
+        what: "The Billing section gives your company visibility into its Apex CRM subscription — the plan your company is on, the next billing date, and a full payment history. Access is split into two tiers: Company Admins can view payment history and the upcoming billing schedule (read-only). Apex Owners and Developers have full management access — they can change plans, update the payment method, download invoices, and cancel through the Stripe billing portal.",
+        why: "Company Admins need to see what the company is paying and when, for budgeting and accounting purposes. However, the ability to change or cancel the subscription is a financial decision that belongs at the ownership level only. This split ensures transparency without risk.",
+        how: "Company Admins: Navigate to Billing to view the current plan, next billing date, and payment history. All controls are read-only. Apex Owners and Developers: All of the above, plus the ability to click Upgrade to compare plans and initiate a Stripe checkout, or click Manage Billing to open the Stripe portal for payment method updates, invoice downloads, or cancellation.",
+        automation: "Subscription status is checked automatically on every login. If a payment fails, the system sends automated reminder emails to the Apex Owner with a direct link to update the payment method. Subscription changes take effect immediately and are reflected in the billing history for all authorized viewers.",
+        outcome: "Full financial transparency for Company Admins without the risk of accidental plan changes or cancellations. Ownership retains complete control over the subscription while the admin team stays informed.",
       },
     ],
   },

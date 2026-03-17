@@ -1220,3 +1220,7 @@
 - [ ] Revoke button for share grantor
 - [ ] Role badge on CRM Bible header showing current access level
 - [ ] Update Bible content to document role access levels and Share system
+
+## Billing Access Split
+- [x] Company Admin sees payment history/schedule (read-only); Apex Owner/Developer see full billing management
+- [x] Update CRM Bible billing section to document the two-tier access
