@@ -1,4 +1,4 @@
-import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS, THIRTY_DAYS_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
@@ -14,7 +14,7 @@ export function registerOAuthRoutes(app: Express) {
   // ─── Credential-based Login ───
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
-      const { username, password } = req.body;
+      const { username, password, rememberMe } = req.body;
       if (!username || !password) {
         res.status(400).json({ error: "Username and password are required" });
         return;
@@ -33,15 +33,19 @@ export function registerOAuthRoutes(app: Express) {
         res.status(401).json({ error: "Invalid username or password" });
         return;
       }
+      // Session duration: 30 days if rememberMe, otherwise 1 day (session cookie)
+      const sessionDurationMs = rememberMe ? THIRTY_DAYS_MS : ONE_YEAR_MS;
       // Create session token using the user's openId
       const sessionToken = await sdk.createSessionToken(user.openId, {
         name: user.name || "",
-        expiresInMs: ONE_YEAR_MS,
+        expiresInMs: sessionDurationMs,
       });
       // Update last signed in
       await db.upsertUser({ openId: user.openId, lastSignedIn: new Date() });
       const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      // rememberMe: persistent 30-day cookie; otherwise: session cookie (no maxAge)
+      const cookieMaxAge = rememberMe ? THIRTY_DAYS_MS : undefined;
+      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, ...(cookieMaxAge ? { maxAge: cookieMaxAge } : { expires: undefined }) });
       res.json({
         success: true,
         user: {

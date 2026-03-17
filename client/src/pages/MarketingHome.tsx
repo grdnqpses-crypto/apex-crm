@@ -198,6 +198,7 @@ export default function MarketingHome() {
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [loginView, setLoginView] = useState<'login' | 'forgot' | 'forgot-sent'>('login');
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
@@ -229,7 +230,7 @@ export default function MarketingHome() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ username: loginUsername, password: loginPassword }),
+        body: JSON.stringify({ username: loginUsername, password: loginPassword, rememberMe }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -411,6 +412,26 @@ export default function MarketingHome() {
                         </button>
                       </div>
                     </div>
+
+                    <label className="flex items-center gap-2.5 cursor-pointer select-none group">
+                      <div
+                        onClick={() => setRememberMe(v => !v)}
+                        className={`w-4 h-4 rounded flex items-center justify-center border transition-all flex-shrink-0 ${
+                          rememberMe
+                            ? 'bg-orange-500 border-orange-500'
+                            : 'bg-white/5 border-white/20 group-hover:border-white/40'
+                        }`}
+                      >
+                        {rememberMe && <Check className="h-2.5 w-2.5 text-black" strokeWidth={3} />}
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={e => setRememberMe(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <span className="text-sm text-white/50 group-hover:text-white/70 transition-colors">Remember me for 30 days</span>
+                    </label>
 
                     {loginError && (
                       <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">
