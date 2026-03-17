@@ -497,12 +497,12 @@ export default function MarketingHome() {
               >
                 <X className="h-4 w-4" />
               </button>
-              <iframe
-                src="https://www.youtube.com/embed/Y91YVB-yZhs?autoplay=1&rel=0&modestbranding=1"
-                title="Apex CRM Demo"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full"
+              <video
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/apex-demo-video_ca6bcb62.mp4"
+                autoPlay
+                controls
+                playsInline
+                className="w-full h-full bg-black"
               />
             </motion.div>
           </motion.div>
