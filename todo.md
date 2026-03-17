@@ -1183,3 +1183,12 @@
 - [x] Billing portal for managing subscription
 - [x] Webhook handler for subscription events (activate, cancel, expire)
 - [x] Subscription status shown in Company Settings
+
+## Billing Pricing Sync
+- [ ] Sync Billing page pricing with marketing homepage pricing
+
+## Homepage Pricing → Stripe Checkout
+- [x] Read homepage pricing section to get exact plan names, prices, and features
+- [x] Sync stripe-products.ts with homepage pricing
+- [x] Add "Get Started" / "Choose Plan" buttons on homepage pricing cards that link to Stripe checkout
+- [x] For logged-in users: trigger checkout directly; for guests: redirect to signup with plan pre-selected

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { toast } from "sonner";
 import { motion, useScroll, useTransform, AnimatePresence, useInView } from "framer-motion";
 import {
   ArrowRight, Check, ChevronDown, Zap, Shield, Brain, Mail,
@@ -161,16 +163,19 @@ const TESTIMONIALS = [
 
 const PLANS = [
   {
+    id: "starter",
     name: "Starter", price: 197, desc: "For small teams getting started.",
     features: ["Up to 5 users", "10,000 contacts", "Paradigm Engine™ (Basic)", "Ghost Mode sequences", "Deliverability suite", "Standard support"],
     cta: "Start Free Trial", highlight: false,
   },
   {
+    id: "professional",
     name: "Professional", price: 697, desc: "The complete platform for growing teams.",
     features: ["Up to 25 users", "100,000 contacts", "Paradigm Engine™ (Full)", "Ghost Mode + Battle Cards", "260 SMTP rotation", "Compliance Fortress™", "Priority support", "Custom branding"],
     cta: "Start Free Trial", highlight: true, badge: "Most Popular",
   },
   {
+    id: "enterprise",
     name: "Enterprise", price: 1497, desc: "Unlimited scale for large operations.",
     features: ["Unlimited users", "Unlimited contacts", "All Professional features", "Dedicated SMTP infra", "Custom AI training", "SLA guarantee", "Dedicated account manager", "White-label option"],
     cta: "Start Free Trial", highlight: false,
@@ -204,6 +209,34 @@ export default function MarketingHome() {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [, navigate] = useLocation();
   const [videoOpen, setVideoOpen] = useState(false);
+  const [checkoutLoadingPlan, setCheckoutLoadingPlan] = useState<string | null>(null);
+
+  const { user } = useAuth();
+
+  const createCheckout = trpc.billing.createCheckout.useMutation({
+    onSuccess: (data) => {
+      if (data.checkoutUrl) {
+        window.open(data.checkoutUrl, "_blank");
+        toast.success("Redirecting to secure checkout...");
+      }
+      setCheckoutLoadingPlan(null);
+    },
+    onError: (e) => {
+      toast.error(e.message);
+      setCheckoutLoadingPlan(null);
+    },
+  });
+
+  const handlePlanCTA = (planId: string, billing: "monthly" | "annual") => {
+    if (user) {
+      // Logged-in user: go straight to Stripe checkout
+      setCheckoutLoadingPlan(planId);
+      createCheckout.mutate({ planId: planId as any, billing, origin: window.location.origin });
+    } else {
+      // Guest: go to signup with plan pre-selected
+      navigate(`/signup?plan=${planId}&billing=${billing}`);
+    }
+  };
 
   const forgotPasswordMutation = trpc.auth.forgotPassword.useMutation();
 
@@ -1034,14 +1067,20 @@ export default function MarketingHome() {
                         </li>
                       ))}
                     </ul>
-                    <Link href="/signup">
-                      <button className={`w-full py-3 rounded-xl font-bold text-sm transition-all ${plan.highlight
+                    <button
+                      onClick={() => handlePlanCTA(plan.id, annual ? "annual" : "monthly")}
+                      disabled={checkoutLoadingPlan === plan.id}
+                      className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed ${plan.highlight
                         ? "bg-orange-500 text-white hover:bg-orange-400 shadow-lg shadow-orange-500/20"
                         : "bg-white/10 text-white hover:bg-white/15 border border-white/10"
-                      }`}>
-                        {plan.cta}
-                      </button>
-                    </Link>
+                      }`}
+                    >
+                      {checkoutLoadingPlan === plan.id ? (
+                        <><div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> Redirecting...</>
+                      ) : (
+                        <>{plan.cta} <ArrowRight className="h-4 w-4" /></>
+                      )}
+                    </button>
                     <p className="text-xs text-center mt-3 text-white/20 flex items-center justify-center gap-1">
                       <CreditCard className="h-3 w-3" />
                       Credit card required
