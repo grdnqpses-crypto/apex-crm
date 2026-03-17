@@ -1125,3 +1125,16 @@
 - [x] Footer with navigation links
 - [x] Unauthenticated users redirected to /home from any CRM route
 - [x] Sign In and Start Free Trial links in nav go to /login and /signup
+
+## Phase 11: Marketing Homepage Redesign
+- [ ] Switch to light/white premium theme (like Linear, Stripe, Vercel)
+- [ ] Add generous whitespace — reduce section density by 40%
+- [ ] Simplify hero: one bold headline, one subline, two CTAs
+- [ ] Remove dark backgrounds, use white/light gray with subtle gradients
+- [ ] Update all trial messaging to "Credit card required"
+- [ ] Declutter feature sections — fewer items, more breathing room
+- [ ] Cleaner navigation bar — minimal, sticky, frosted glass
+- [ ] Streamline comparison table — simpler, more elegant
+- [ ] Lighter pricing cards — clean white cards with subtle shadows
+- [ ] Modernize testimonials section
+- [ ] Keep interactive demo tour but restyle for light theme
