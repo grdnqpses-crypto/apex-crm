@@ -10,6 +10,8 @@ import { nanoid } from "nanoid";
 import { NEW_BROKER_TEMPLATE_HTML, RENEWING_BROKER_TEMPLATE_HTML } from "./fmcsa-templates";
 import { createHash } from "crypto";
 import bcrypt from "bcryptjs";
+import nodemailer from "nodemailer";
+import { randomBytes } from "crypto";
 
 export const appRouter = router({
   system: systemRouter,
@@ -19,6 +21,62 @@ export const appRouter = router({
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
+    }),
+
+    forgotPassword: publicProcedure.input(z.object({
+      email: z.string().email(),
+      origin: z.string().url(),
+    })).mutation(async ({ input }) => {
+      // Always return success to prevent email enumeration
+      const user = await db.getUserByEmail(input.email);
+      if (!user || !user.email) return { success: true };
+      const token = randomBytes(32).toString('hex');
+      await db.createPasswordResetToken(user.id, token);
+      const resetUrl = `${input.origin}/reset-password?token=${token}`;
+      // Send email via nodemailer using ethereal or SMTP env vars if available
+      try {
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST || 'smtp.ethereal.email',
+          port: parseInt(process.env.SMTP_PORT || '587'),
+          secure: false,
+          auth: process.env.SMTP_USER ? {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          } : undefined,
+        });
+        await transporter.sendMail({
+          from: process.env.SMTP_FROM || '"Apex CRM" <noreply@apexcrm.com>',
+          to: user.email,
+          subject: 'Reset your Apex CRM password',
+          html: `
+            <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px">
+              <h2 style="color:#f97316;margin-bottom:8px">Reset your password</h2>
+              <p style="color:#333">Hi ${user.name || 'there'},</p>
+              <p style="color:#555">We received a request to reset your Apex CRM password. Click the button below to set a new password. This link expires in 1 hour.</p>
+              <a href="${resetUrl}" style="display:inline-block;margin:24px 0;padding:14px 28px;background:#f97316;color:#fff;font-weight:700;border-radius:8px;text-decoration:none">Reset Password</a>
+              <p style="color:#999;font-size:13px">If you didn't request this, you can safely ignore this email. Your password won't change.</p>
+              <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
+              <p style="color:#bbb;font-size:12px">&copy; Apex CRM</p>
+            </div>
+          `,
+        });
+      } catch (err) {
+        console.error('[ForgotPassword] Email send failed:', err);
+        // Don't expose error to client
+      }
+      return { success: true };
+    }),
+
+    resetPassword: publicProcedure.input(z.object({
+      token: z.string().min(1),
+      newPassword: z.string().min(8),
+    })).mutation(async ({ input }) => {
+      const resetToken = await db.getValidPasswordResetToken(input.token);
+      if (!resetToken) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid or expired reset link. Please request a new one.' });
+      const hash = await bcrypt.hash(input.newPassword, 12);
+      await db.updateUserPassword(resetToken.userId, hash);
+      await db.markPasswordResetTokenUsed(input.token);
+      return { success: true };
     }),
   }),
 

@@ -80,6 +80,7 @@ const Login = lazy(() => import("./pages/Login"));
 const ApexDashboard = lazy(() => import("./pages/ApexDashboard"));
 const Signup = lazy(() => import("./pages/Signup"));
 const MarketingHome = lazy(() => import("./pages/MarketingHome"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
 function PageLoader() {
   return (
@@ -195,6 +196,11 @@ function App() {
             <Route path="/home">
               <Suspense fallback={<PageLoader />}>
                 <MarketingHome />
+              </Suspense>
+            </Route>
+            <Route path="/reset-password">
+              <Suspense fallback={<PageLoader />}>
+                <ResetPassword />
               </Suspense>
             </Route>
             <Route path="/">

@@ -48,6 +48,7 @@ import {
   type MarketplaceTrackingEvent, type MarketplaceDocument,
   type LaneAnalytic, type ConsolidationOpportunity,
   emailMaskSettings, type EmailMaskSetting,
+  passwordResetTokens, type PasswordResetToken,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -141,6 +142,51 @@ export async function updateUserPassword(userId: number, passwordHash: string) {
   const db = await getDb();
   if (!db) return;
   await db.update(users).set({ passwordHash }).where(eq(users.id, userId));
+}
+
+// ─── Password Reset Tokens ───
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createPasswordResetToken(userId: number, token: string) {
+  const db = await getDb();
+  if (!db) return;
+  // Expire any existing tokens for this user
+  await db.update(passwordResetTokens)
+    .set({ usedAt: Date.now() })
+    .where(and(eq(passwordResetTokens.userId, userId), sql`usedAt IS NULL`));
+  // Create new token valid for 1 hour
+  await db.insert(passwordResetTokens).values({
+    userId,
+    token,
+    expiresAt: Date.now() + 60 * 60 * 1000,
+    createdAt: Date.now(),
+  });
+}
+
+export async function getValidPasswordResetToken(token: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(passwordResetTokens)
+    .where(and(
+      eq(passwordResetTokens.token, token),
+      sql`usedAt IS NULL`,
+      sql`expiresAt > ${Date.now()}`
+    ))
+    .limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function markPasswordResetTokenUsed(token: string) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(passwordResetTokens)
+    .set({ usedAt: Date.now() })
+    .where(eq(passwordResetTokens.token, token));
 }
 
 // ─── Lead Status Options ───

@@ -2213,3 +2213,14 @@ export const emailMaskSettings = mysqlTable("email_mask_settings", {
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
 });
 export type EmailMaskSetting = typeof emailMaskSettings.$inferSelect;
+
+// ─── Password Reset Tokens ───
+export const passwordResetTokens = mysqlTable("password_reset_tokens", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  token: varchar("token", { length: 128 }).notNull().unique(),
+  expiresAt: bigint("expiresAt", { mode: "number" }).notNull(),
+  usedAt: bigint("usedAt", { mode: "number" }),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;

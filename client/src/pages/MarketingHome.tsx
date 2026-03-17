@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
 import { motion, useScroll, useTransform, AnimatePresence, useInView } from "framer-motion";
 import {
   ArrowRight, Check, ChevronDown, Zap, Shield, Brain, Mail,
@@ -196,7 +197,26 @@ export default function MarketingHome() {
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
+  const [loginView, setLoginView] = useState<'login' | 'forgot' | 'forgot-sent'>('login');
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
   const [, navigate] = useLocation();
+
+  const forgotPasswordMutation = trpc.auth.forgotPassword.useMutation();
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    try {
+      await forgotPasswordMutation.mutateAsync({ email: forgotEmail, origin: window.location.origin });
+      setLoginView('forgot-sent');
+    } catch {
+      // Still show sent to prevent enumeration
+      setLoginView('forgot-sent');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -340,57 +360,112 @@ export default function MarketingHome() {
                   </div>
                 </div>
 
-                <form onSubmit={handleLogin} className="flex flex-col gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-white/60 mb-1.5">Username</label>
-                    <input
-                      type="text"
-                      value={loginUsername}
-                      onChange={e => setLoginUsername(e.target.value)}
-                      placeholder="Enter your username"
-                      autoFocus
-                      required
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-orange-500/50 focus:bg-white/8 transition-all text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-white/60 mb-1.5">Password</label>
-                    <input
-                      type="password"
-                      value={loginPassword}
-                      onChange={e => setLoginPassword(e.target.value)}
-                      placeholder="Enter your password"
-                      required
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-orange-500/50 focus:bg-white/8 transition-all text-sm"
-                    />
-                  </div>
-
-                  {loginError && (
-                    <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">
-                      <XCircle className="h-4 w-4 flex-shrink-0" />
-                      {loginError}
+                {loginView === 'login' && (
+                  <form onSubmit={handleLogin} className="flex flex-col gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-white/60 mb-1.5">Username</label>
+                      <input
+                        type="text"
+                        value={loginUsername}
+                        onChange={e => setLoginUsername(e.target.value)}
+                        placeholder="Enter your username"
+                        autoFocus
+                        required
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-orange-500/50 transition-all text-sm"
+                      />
                     </div>
-                  )}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-sm font-semibold text-white/60">Password</label>
+                        <button
+                          type="button"
+                          onClick={() => { setLoginView('forgot'); setLoginError(''); }}
+                          className="text-xs text-orange-400 hover:text-orange-300 transition-colors font-medium"
+                        >
+                          Forgot password?
+                        </button>
+                      </div>
+                      <input
+                        type="password"
+                        value={loginPassword}
+                        onChange={e => setLoginPassword(e.target.value)}
+                        placeholder="Enter your password"
+                        required
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-orange-500/50 transition-all text-sm"
+                      />
+                    </div>
 
-                  <button
-                    type="submit"
-                    disabled={loginLoading}
-                    className="w-full bg-gradient-to-r from-orange-500 to-amber-400 text-black font-bold py-3.5 rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm mt-1"
-                  >
-                    {loginLoading ? (
-                      <><RefreshCw className="h-4 w-4 animate-spin" /> Signing in...</>
-                    ) : (
-                      <>Sign In <ArrowRight className="h-4 w-4" /></>
+                    {loginError && (
+                      <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">
+                        <XCircle className="h-4 w-4 flex-shrink-0" />
+                        {loginError}
+                      </div>
                     )}
-                  </button>
 
-                  <p className="text-center text-sm text-white/30">
-                    Don't have an account?{" "}
-                    <Link href="/signup">
-                      <span onClick={() => setLoginOpen(false)} className="text-orange-400 hover:text-orange-300 cursor-pointer font-semibold">Start free trial</span>
-                    </Link>
-                  </p>
-                </form>
+                    <button
+                      type="submit"
+                      disabled={loginLoading}
+                      className="w-full bg-gradient-to-r from-orange-500 to-amber-400 text-black font-bold py-3.5 rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm mt-1"
+                    >
+                      {loginLoading ? (
+                        <><RefreshCw className="h-4 w-4 animate-spin" /> Signing in...</>
+                      ) : (
+                        <>Sign In <ArrowRight className="h-4 w-4" /></>
+                      )}
+                    </button>
+
+                    <p className="text-center text-sm text-white/30">
+                      Don't have an account?{" "}
+                      <Link href="/signup">
+                        <span onClick={() => setLoginOpen(false)} className="text-orange-400 hover:text-orange-300 cursor-pointer font-semibold">Start free trial</span>
+                      </Link>
+                    </p>
+                  </form>
+                )}
+
+                {loginView === 'forgot' && (
+                  <form onSubmit={handleForgotPassword} className="flex flex-col gap-4">
+                    <p className="text-sm text-white/50">Enter your email address and we'll send you a link to reset your password.</p>
+                    <div>
+                      <label className="block text-sm font-semibold text-white/60 mb-1.5">Email address</label>
+                      <input
+                        type="email"
+                        value={forgotEmail}
+                        onChange={e => setForgotEmail(e.target.value)}
+                        placeholder="you@company.com"
+                        autoFocus
+                        required
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-orange-500/50 transition-all text-sm"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={forgotLoading}
+                      className="w-full bg-gradient-to-r from-orange-500 to-amber-400 text-black font-bold py-3.5 rounded-xl hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
+                    >
+                      {forgotLoading ? <><RefreshCw className="h-4 w-4 animate-spin" /> Sending...</> : <>Send Reset Link <ArrowRight className="h-4 w-4" /></>}
+                    </button>
+                    <button type="button" onClick={() => setLoginView('login')} className="text-sm text-white/30 hover:text-white/60 transition-colors text-center">
+                      ← Back to Sign In
+                    </button>
+                  </form>
+                )}
+
+                {loginView === 'forgot-sent' && (
+                  <div className="flex flex-col items-center gap-4 py-4">
+                    <div className="w-16 h-16 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+                      <CheckCircle className="h-8 w-8 text-green-400" />
+                    </div>
+                    <h3 className="text-lg font-bold">Check your email</h3>
+                    <p className="text-sm text-white/50 text-center">If an account exists for <span className="text-white/70 font-medium">{forgotEmail}</span>, you'll receive a password reset link within a few minutes.</p>
+                    <button
+                      onClick={() => { setLoginView('login'); setForgotEmail(''); }}
+                      className="text-sm text-orange-400 hover:text-orange-300 transition-colors font-medium"
+                    >
+                      ← Back to Sign In
+                    </button>
+                  </div>
+                )}
               </motion.div>
             </motion.div>
           )}

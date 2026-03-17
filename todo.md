@@ -1159,3 +1159,9 @@
 - [ ] Add login modal/dropdown to marketing homepage Sign In button
 - [ ] On successful login redirect directly to /dashboard
 - [ ] No separate /login page needed for homepage users
+
+## Phase 13: Forgot Password
+- [ ] Add password_reset_tokens table to schema
+- [ ] Backend: generate reset token and send email
+- [ ] Frontend: forgot password view in login modal
+- [ ] Frontend: reset password page at /reset-password

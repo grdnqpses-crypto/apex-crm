@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `password_reset_tokens` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `userId` int NOT NULL,\n  `token` varchar(128) NOT NULL,\n  `expiresAt` bigint NOT NULL,\n  `usedAt` bigint,\n  `createdAt` bigint NOT NULL,\n  CONSTRAINT `password_reset_tokens_id` PRIMARY KEY(`id`),\n  CONSTRAINT `password_reset_tokens_token_unique` UNIQUE(`token`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute CREATE TABLE IF NOT EXISTS `password_reset_tokens` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `userId` int NOT NULL,\n  `token` varchar(128) NOT NULL,\n  `expiresAt` bigint NOT NULL,\n  `usedAt` bigint,\n  `createdAt` bigint NOT NULL,\n  CONSTRAINT `password_reset_tokens_id` PRIMARY KEY(`id`),\n  CONSTRAINT `password_reset_tokens_token_unique` UNIQUE(`token`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 3512
+}

@@ -71,6 +71,13 @@
       "when": 1771530347954,
       "tag": "0009_mushy_nightshade",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1773761809565,
+      "tag": "0010_regular_centennial",
+      "breakpoints": true
     }
   ]
 }
