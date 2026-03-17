@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT \n  tu.username,\n  tu.full_name,\n  tu.email,\n  tu.system_role,\n  tc.name AS company_name,\n  tc.subscription_tier,\n  tu.created_at\nFROM tenant_users tu\nLEFT JOIN tenant_companies tc ON tu.company_id = tc.id\nORDER BY tu.system_role, tc.name, tu.username;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute \nSELECT \n  tu.username,\n  tu.full_name,\n  tu.email,\n  tu.system_role,\n  tc.name AS company_name,\n  tc.subscription_tier,\n  tu.created_at\nFROM tenant_users tu\nLEFT JOIN tenant_companies tc ON tu.company_id = tc.id\nORDER BY tu.system_role, tc.name, tu.username;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 2: Table 'mllzefmfseuh47dfejgvgy.tenant_users' doesn't exist"
+  ]
+}

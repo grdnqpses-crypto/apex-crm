@@ -1154,3 +1154,8 @@
 - [ ] Sticky nav with blur/glass effect
 - [ ] Smooth scroll animations on every section
 - [ ] Mobile-first responsive design
+
+## Phase 13: Inline Login on Homepage
+- [ ] Add login modal/dropdown to marketing homepage Sign In button
+- [ ] On successful login redirect directly to /dashboard
+- [ ] No separate /login page needed for homepage users

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { motion, useScroll, useTransform, AnimatePresence, useInView } from "framer-motion";
 import {
   ArrowRight, Check, ChevronDown, Zap, Shield, Brain, Mail,
@@ -191,6 +191,36 @@ export default function MarketingHome() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [, navigate] = useLocation();
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+    setLoginLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ username: loginUsername, password: loginPassword }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        navigate("/dashboard");
+      } else {
+        setLoginError(data.error || "Invalid username or password");
+      }
+    } catch {
+      setLoginError("Connection error. Please try again.");
+    } finally {
+      setLoginLoading(false);
+    }
+  };
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
@@ -236,20 +266,24 @@ export default function MarketingHome() {
             ))}
           </div>
 
-          <div className="hidden md:flex items-center gap-3">
-            <Link href="/login">
-              <button className="text-sm font-semibold text-white/60 hover:text-white transition-colors px-4 py-2">Sign In</button>
-            </Link>
+          {/* Always-visible nav buttons — desktop */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setLoginOpen(true)}
+              className="text-sm font-semibold text-white/70 hover:text-white transition-colors px-4 py-2 rounded-xl border border-white/10 hover:border-white/20 hidden sm:block"
+            >
+              Sign In
+            </button>
             <Link href="/signup">
-              <button className="text-sm font-bold bg-white text-black px-5 py-2.5 rounded-xl hover:bg-white/90 transition-all hover:shadow-lg hover:shadow-white/10">
+              <button className="text-sm font-bold bg-gradient-to-r from-orange-500 to-amber-400 text-black px-5 py-2.5 rounded-xl hover:opacity-90 transition-all hover:shadow-lg hover:shadow-orange-500/20 hidden sm:block">
                 Start Free Trial
               </button>
             </Link>
+            {/* Mobile hamburger — only for nav links */}
+            <button className="sm:hidden p-2 text-white/60" onClick={() => setMobileOpen(!mobileOpen)}>
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
-
-          <button className="md:hidden p-2 text-white/60" onClick={() => setMobileOpen(!mobileOpen)}>
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
         </div>
 
         <AnimatePresence>
@@ -258,15 +292,106 @@ export default function MarketingHome() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="md:hidden bg-[#111] border-t border-white/5 px-6 py-5 flex flex-col gap-4"
+              className="sm:hidden bg-[#111] border-t border-white/5 px-6 py-5 flex flex-col gap-4"
             >
               {navLinks.map(l => (
                 <a key={l.label} href={l.href} className="text-sm font-medium text-white/60" onClick={() => setMobileOpen(false)}>{l.label}</a>
               ))}
               <div className="flex gap-3 pt-3 border-t border-white/5">
-                <Link href="/login"><button className="flex-1 text-sm font-semibold border border-white/10 text-white/70 px-4 py-2.5 rounded-xl">Sign In</button></Link>
-                <Link href="/signup"><button className="flex-1 text-sm font-bold bg-white text-black px-4 py-2.5 rounded-xl">Start Free Trial</button></Link>
+                <button onClick={() => { setMobileOpen(false); setLoginOpen(true); }} className="flex-1 text-sm font-semibold border border-white/10 text-white/70 px-4 py-2.5 rounded-xl">Sign In</button>
+                <Link href="/signup"><button className="flex-1 text-sm font-bold bg-gradient-to-r from-orange-500 to-amber-400 text-black px-4 py-2.5 rounded-xl">Start Free Trial</button></Link>
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Inline Login Modal ─────────────────────────────────────────── */}
+        <AnimatePresence>
+          {loginOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+              onClick={(e) => { if (e.target === e.currentTarget) setLoginOpen(false); }}
+            >
+              <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 16 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 16 }}
+                transition={{ duration: 0.2 }}
+                className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl p-8 shadow-2xl"
+              >
+                <button
+                  onClick={() => setLoginOpen(false)}
+                  className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center shadow-lg shadow-orange-500/30">
+                    <Zap className="h-5 w-5 text-white fill-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black">Welcome back</h2>
+                    <p className="text-sm text-white/40">Sign in to your Apex CRM account</p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleLogin} className="flex flex-col gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-white/60 mb-1.5">Username</label>
+                    <input
+                      type="text"
+                      value={loginUsername}
+                      onChange={e => setLoginUsername(e.target.value)}
+                      placeholder="Enter your username"
+                      autoFocus
+                      required
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-orange-500/50 focus:bg-white/8 transition-all text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-white/60 mb-1.5">Password</label>
+                    <input
+                      type="password"
+                      value={loginPassword}
+                      onChange={e => setLoginPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      required
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-orange-500/50 focus:bg-white/8 transition-all text-sm"
+                    />
+                  </div>
+
+                  {loginError && (
+                    <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">
+                      <XCircle className="h-4 w-4 flex-shrink-0" />
+                      {loginError}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={loginLoading}
+                    className="w-full bg-gradient-to-r from-orange-500 to-amber-400 text-black font-bold py-3.5 rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm mt-1"
+                  >
+                    {loginLoading ? (
+                      <><RefreshCw className="h-4 w-4 animate-spin" /> Signing in...</>
+                    ) : (
+                      <>Sign In <ArrowRight className="h-4 w-4" /></>
+                    )}
+                  </button>
+
+                  <p className="text-center text-sm text-white/30">
+                    Don't have an account?{" "}
+                    <Link href="/signup">
+                      <span onClick={() => setLoginOpen(false)} className="text-orange-400 hover:text-orange-300 cursor-pointer font-semibold">Start free trial</span>
+                    </Link>
+                  </p>
+                </form>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -331,12 +456,13 @@ export default function MarketingHome() {
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>
-            <Link href="/login">
-              <button className="flex items-center gap-2 text-white/60 font-semibold text-base px-6 py-4 rounded-2xl border border-white/10 hover:border-white/20 hover:text-white transition-all">
-                Sign In
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </Link>
+            <button
+              onClick={() => setLoginOpen(true)}
+              className="flex items-center gap-2 text-white/60 font-semibold text-base px-6 py-4 rounded-2xl border border-white/10 hover:border-white/20 hover:text-white transition-all"
+            >
+              Sign In
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </motion.div>
 
           <motion.p
