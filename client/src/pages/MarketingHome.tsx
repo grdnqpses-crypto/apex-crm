@@ -6,7 +6,7 @@ import {
   ArrowRight, Check, ChevronDown, Zap, Shield, Brain, Mail,
   BarChart3, Users, Target, Globe, Lock, Rocket, Star,
   TrendingUp, Clock, CheckCircle, XCircle, Sparkles,
-  CreditCard, Cpu, RefreshCw, Eye, Activity, DollarSign,
+  CreditCard, Cpu, RefreshCw, Eye, EyeOff, Activity, DollarSign,
   GitBranch, Menu, X, Play, ChevronRight, Building2,
   MessageSquare, Database, Layers, Workflow, Bot,
 } from "lucide-react";
@@ -197,6 +197,7 @@ export default function MarketingHome() {
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loginView, setLoginView] = useState<'login' | 'forgot' | 'forgot-sent'>('login');
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
@@ -326,24 +327,28 @@ export default function MarketingHome() {
           )}
         </AnimatePresence>
 
-        {/* ── Inline Login Modal ─────────────────────────────────────────── */}
-        <AnimatePresence>
-          {loginOpen && (
+      </nav>
+
+      {/* ── Login Modal (outside nav for proper mobile rendering) ────────── */}
+      <AnimatePresence>
+        {loginOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] overflow-y-auto overscroll-contain"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setLoginOpen(false)} />
+            <div className="relative min-h-full flex items-start justify-center p-4 py-8">
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-              onClick={(e) => { if (e.target === e.currentTarget) setLoginOpen(false); }}
+              initial={{ opacity: 0, scale: 0.95, y: -16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -16 }}
+              transition={{ duration: 0.2 }}
+              className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl p-8 shadow-2xl"
+              onClick={e => e.stopPropagation()}
             >
-              <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 16 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 16 }}
-                transition={{ duration: 0.2 }}
-                className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl p-8 shadow-2xl"
-              >
                 <button
                   onClick={() => setLoginOpen(false)}
                   className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors"
@@ -386,14 +391,25 @@ export default function MarketingHome() {
                           Forgot password?
                         </button>
                       </div>
-                      <input
-                        type="password"
-                        value={loginPassword}
-                        onChange={e => setLoginPassword(e.target.value)}
-                        placeholder="Enter your password"
-                        required
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-orange-500/50 transition-all text-sm"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={loginPassword}
+                          onChange={e => setLoginPassword(e.target.value)}
+                          placeholder="Enter your password"
+                          required
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-11 text-white placeholder-white/20 focus:outline-none focus:border-orange-500/50 transition-all text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(v => !v)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors p-1"
+                          tabIndex={-1}
+                          aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                     </div>
 
                     {loginError && (
@@ -467,11 +483,11 @@ export default function MarketingHome() {
                     </button>
                   </div>
                 )}
-              </motion.div>
             </motion.div>
+            </div>
+          </motion.div>
           )}
         </AnimatePresence>
-      </nav>
 
       {/* ── YouTube Video Modal ──────────────────────────────────────────── */}
       <AnimatePresence>
