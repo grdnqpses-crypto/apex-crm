@@ -1192,3 +1192,6 @@
 - [x] Sync stripe-products.ts with homepage pricing
 - [x] Add "Get Started" / "Choose Plan" buttons on homepage pricing cards that link to Stripe checkout
 - [x] For logged-in users: trigger checkout directly; for guests: redirect to signup with plan pre-selected
+
+## Video Fix
+- [x] Fix homepage video being cut off on both sides

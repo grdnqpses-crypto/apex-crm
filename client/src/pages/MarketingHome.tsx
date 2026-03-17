@@ -572,7 +572,7 @@ export default function MarketingHome() {
                 autoPlay
                 controls
                 playsInline
-                className="w-full h-full bg-black"
+                className="w-full h-full object-contain bg-black"
               />
             </motion.div>
           </motion.div>
@@ -835,7 +835,7 @@ export default function MarketingHome() {
               {/* Autoplay muted video — full width, no button needed */}
               <video
                 src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/apex-highlight-reel-final_5b1650cb.mp4"
-                className="w-full aspect-video object-cover"
+                className="w-full aspect-video object-contain bg-black"
                 autoPlay
                 muted
                 loop
