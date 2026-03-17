@@ -151,6 +151,7 @@ const standardSections = [
     label: "Resources",
     items: [
       { icon: BookOpen, label: "Help Center", path: "/help" },
+      { icon: BookOpen, label: "CRM Bible", path: "/crm-bible" },
       { icon: Settings, label: "Settings", path: "/settings" },
       { icon: Download, label: "HubSpot Import", path: "/import/hubspot" },
       { icon: Paintbrush, label: "White Label", path: "/white-label" },

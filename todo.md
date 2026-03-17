@@ -1195,3 +1195,15 @@
 
 ## Video Fix
 - [x] Fix homepage video being cut off on both sides
+
+## CRM Bible
+- [ ] Audit all CRM features from source files
+- [ ] Write full CRM Bible document (what/why/how/automation/sales outcome per feature)
+- [ ] Build in-app CRM Bible page with table of contents and search
+
+## CRM Bible
+- [x] Audit all CRM features across all pages and routers
+- [x] Write comprehensive CRM Bible (What/Why/How/Automation/Outcome for 60+ features)
+- [x] Build in-app CRM Bible page with sticky TOC, search, and The Sales Machine section
+- [x] Add CRM Bible to sidebar nav under Resources
+- [x] Add /crm-bible route to App.tsx
