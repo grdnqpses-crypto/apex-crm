@@ -31,7 +31,7 @@ import {
   Activity, Database, Eye, ScrollText, UserCog, Download,
   Phone, FileText, TrendingUp, Rocket, Bell, PenTool, Briefcase, ScanLine, Truck,
   Receipt, Globe2, UserPlus, Headphones, Database as DatabaseIcon, Flame as FlameIcon,
-  EyeIcon, MailOpen, Paintbrush, ArrowRightLeft, Crown, Command, Package,
+  EyeIcon, MailOpen, Paintbrush, ArrowRightLeft, Crown, Command, Package, CreditCard,
 } from "lucide-react";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -42,6 +42,7 @@ import { toast } from "sonner";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import AIAssistantPanel from "./AIAssistantPanel";
 import OnboardingTutorial from "./OnboardingTutorial";
+import { trpc } from "@/lib/trpc";
 
 // ─── Menu Sections (Developer is separate, hidden by default) ───
 
@@ -155,6 +156,7 @@ const standardSections = [
       { icon: Paintbrush, label: "White Label", path: "/white-label" },
       { icon: ArrowRightLeft, label: "Migration", path: "/migration" },
       { icon: Crown, label: "Subscription", path: "/subscription" },
+      { icon: CreditCard, label: "Billing & Plans", path: "/billing" },
     ],
   },
 ];
@@ -311,6 +313,7 @@ function DashboardLayoutContent({
   const { devMode, handleLogoTap, disableDevMode } = useDevMode();
   const { canAccessSidebarItem } = useFeatureAccess();
   const [aiOpen, setAiOpen] = useState(false);
+  const { data: myCompany } = trpc.tenants.myCompany.useQuery(undefined, { enabled: !!user });
 
   const menuSections = getMenuSections(devMode, user?.systemRole);
   const filteredSections = menuSections.map(section => ({
@@ -366,10 +369,23 @@ function DashboardLayoutContent({
                   onClick={handleLogoTap}
                   title={devMode ? "Developer mode active" : undefined}
                 >
-                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${devMode ? "bg-amber-100" : "bg-primary/10"}`}>
-                    <Zap className={`h-4.5 w-4.5 transition-colors ${devMode ? "text-amber-500" : "text-primary"}`} />
+                  {myCompany?.logoUrl ? (
+                    <img
+                      src={myCompany.logoUrl}
+                      alt={myCompany.name}
+                      className={`h-8 w-8 rounded-lg object-contain shrink-0 ${devMode ? "ring-2 ring-amber-400" : ""}`}
+                    />
+                  ) : (
+                    <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 font-bold text-sm ${devMode ? "bg-amber-100 text-amber-500" : "bg-primary/10 text-primary"}`}>
+                      {devMode ? <Zap className="h-4.5 w-4.5" /> : (myCompany?.name?.charAt(0).toUpperCase() ?? <Zap className="h-4.5 w-4.5" />)}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <span className="font-bold tracking-tight text-foreground text-[15px] block truncate">
+                      {myCompany?.name || "Apex CRM"}
+                    </span>
+                    {myCompany?.name && <span className="text-[10px] text-muted-foreground/60 block -mt-0.5">powered by Apex</span>}
                   </div>
-                  <span className="font-bold tracking-tight text-foreground text-[15px]">Apex CRM</span>
                   {devMode && (
                     <span className="text-[9px] font-bold uppercase tracking-widest text-amber-500/80 ml-0.5 bg-amber-50 px-1.5 py-0.5 rounded">DEV</span>
                   )}
@@ -439,7 +455,7 @@ function DashboardLayoutContent({
                       {user?.name || "User"}
                     </p>
                     <p className="text-[11px] text-muted-foreground truncate mt-1">
-                      {user?.email || ""}
+                      {myCompany?.name || user?.email || ""}
                     </p>
                   </div>
                   <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/60 group-data-[collapsible=icon]:hidden" />
@@ -486,10 +502,14 @@ function DashboardLayoutContent({
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
               title="Go to Dashboard"
             >
-              <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Zap className="h-4 w-4 text-primary" />
-              </div>
-              <span className="font-bold text-foreground text-sm tracking-tight">Apex CRM</span>
+              {myCompany?.logoUrl ? (
+                <img src={myCompany.logoUrl} alt={myCompany.name} className="h-7 w-7 rounded-lg object-contain" />
+              ) : (
+                <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Zap className="h-4 w-4 text-primary" />
+                </div>
+              )}
+              <span className="font-bold text-foreground text-sm tracking-tight">{myCompany?.name || "Apex CRM"}</span>
             </button>
             <span className="text-muted-foreground/40 text-sm">/</span>
             <span className="text-sm font-medium text-foreground">

@@ -1885,6 +1885,67 @@ export const appRouter = router({
     allFeatures: protectedProcedure.query(() => {
       return db.ALL_FEATURES;
     }),
+
+    // Get current user's company branding info
+    myCompany: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user.tenantCompanyId) return null;
+      const company = await db.getTenantCompanyById(ctx.user.tenantCompanyId);
+      return company ? { id: company.id, name: company.name, logoUrl: company.logoUrl, industry: company.industry } : null;
+    }),
+
+    // Update company branding (logo URL, name) - company_admin or higher
+    updateBranding: protectedProcedure.input(z.object({
+      name: z.string().min(1).optional(),
+      logoUrl: z.string().url().nullable().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN", message: "Only company admins can update branding" });
+      if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST", message: "No company associated" });
+      await db.updateTenantCompany(ctx.user.tenantCompanyId, { ...input, updatedAt: Date.now() } as any);
+      return { success: true };
+    }),
+
+    // Generate AI logo for company
+    generateLogo: protectedProcedure.input(z.object({
+      companyName: z.string().min(1),
+      industry: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
+      const { generateImage } = await import("./_core/imageGeneration.js");
+      const prompt = `Professional business logo for a company called "${input.companyName}"${
+        input.industry ? ` in the ${input.industry} industry` : ""
+      }. Modern, clean, vector-style logo on a transparent or dark background. Bold typography, minimal design, suitable for a CRM software platform. No text other than the company initials or a simple icon mark.`;
+      const result = await generateImage({ prompt });
+      if (!result?.url) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Logo generation failed" });
+      // Save to S3
+      const { storagePut } = await import("./storage.js");
+      const response = await fetch(result.url);
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const key = `company-logos/${ctx.user.tenantCompanyId}-logo-${Date.now()}.png`;
+      const { url: s3Url } = await storagePut(key, buffer, "image/png");
+      // Save to company record
+      await db.updateTenantCompany(ctx.user.tenantCompanyId!, { logoUrl: s3Url, updatedAt: Date.now() } as any);
+      return { logoUrl: s3Url };
+    }),
+
+    // Upload logo file (accepts base64 data URL)
+    uploadLogo: protectedProcedure.input(z.object({
+      dataUrl: z.string().min(1),
+      mimeType: z.string().default("image/png"),
+    })).mutation(async ({ ctx, input }) => {
+      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
+      if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST" });
+      const { storagePut } = await import("./storage.js");
+      const base64Data = input.dataUrl.replace(/^data:[^;]+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+      const ext = input.mimeType.split("/")[1] || "png";
+      const key = `company-logos/${ctx.user.tenantCompanyId}-logo-${Date.now()}.${ext}`;
+      const { url } = await storagePut(key, buffer, input.mimeType);
+      await db.updateTenantCompany(ctx.user.tenantCompanyId, { logoUrl: url, updatedAt: Date.now() } as any);
+      return { logoUrl: url };
+    }),
   }),
 
   userManagement: router({
@@ -1899,7 +1960,7 @@ export const appRouter = router({
       password: z.string().min(8).max(128),
       name: z.string().min(1),
       email: z.string().email().optional(),
-      systemRole: z.enum(["apex_owner", "company_admin", "manager", "user"]),
+      systemRole: z.enum(["apex_owner", "company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"]),
       tenantCompanyId: z.number(),
       managerId: z.number().optional(),
       jobTitle: z.string().optional(),
@@ -1919,17 +1980,20 @@ export const appRouter = router({
       if (targetLevel >= callerLevel) {
         throw new TRPCError({ code: "FORBIDDEN", message: `Cannot create a ${input.systemRole} — you can only create roles below your own level` });
       }
-      // Managers can only create regular users
-      if (callerRole === "manager" && input.systemRole !== "user") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Managers can only create regular users" });
+      // Managers can only create their sub-roles
+      if (["sales_manager", "manager"].includes(callerRole) && !["account_manager"].includes(input.systemRole)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Sales Managers can only create Account Managers" });
       }
-      // Company admins can create managers and users within their company
-      if (callerRole === "company_admin" && !["manager", "user"].includes(input.systemRole)) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Company admins can only create managers and users" });
+      if (callerRole === "office_manager" && input.systemRole !== "coordinator") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Office Managers can only create Coordinators" });
       }
-      // Apex owners can create company_admins, managers, users
-      if (callerRole === "apex_owner" && !["company_admin", "manager", "user"].includes(input.systemRole)) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Apex owners can create company admins, managers, and users" });
+      // Company admins can create managers and their sub-roles
+      if (callerRole === "company_admin" && !["sales_manager", "office_manager", "account_manager", "coordinator"].includes(input.systemRole)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Company admins can only create managers and their sub-roles" });
+      }
+      // Apex owners can create company_admins and below
+      if (callerRole === "apex_owner" && !["company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"].includes(input.systemRole)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Apex owners can create company admins and below" });
       }
       // Check company exists
       const company = await db.getTenantCompanyById(input.tenantCompanyId);
@@ -1952,7 +2016,7 @@ export const appRouter = router({
         email: input.email,
         systemRole: input.systemRole,
         tenantCompanyId: input.tenantCompanyId,
-        managerId: input.managerId || (callerRole === "manager" ? ctx.user.id : undefined),
+        managerId: input.managerId || (["manager", "sales_manager", "office_manager"].includes(callerRole) ? ctx.user.id : undefined),
         jobTitle: input.jobTitle,
         phone: input.phone,
         invitedBy: ctx.user.id,
@@ -1994,7 +2058,7 @@ export const appRouter = router({
     // Update user role (each level can only set roles below them)
     setRole: protectedProcedure.input(z.object({
       userId: z.number(),
-      systemRole: z.enum(["developer", "apex_owner", "company_admin", "manager", "user"]),
+      systemRole: z.enum(["developer", "apex_owner", "company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"]),
     })).mutation(async ({ ctx, input }) => {
       const callerLevel = getRoleLevel(ctx.user.systemRole);
       const targetLevel = getRoleLevel(input.systemRole);
@@ -2180,15 +2244,19 @@ export const appRouter = router({
     create: protectedProcedure.input(z.object({
       companyId: z.number(),
       email: z.string().email(),
-      role: z.enum(["company_admin", "manager", "user"]),
+      role: z.enum(["company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"]),
       managerId: z.number().optional(),
       features: z.array(z.string()).optional(),
     })).mutation(async ({ ctx, input }) => {
-      if (ctx.user.systemRole !== "developer" && ctx.user.systemRole !== "company_admin" && ctx.user.systemRole !== "manager") {
+      const callerRole = ctx.user.systemRole;
+      if (!["developer", "company_admin", "sales_manager", "office_manager", "manager"].includes(callerRole)) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
-      if (ctx.user.systemRole === "manager" && input.role !== "user") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Managers can only invite users" });
+      if (["sales_manager", "manager"].includes(callerRole) && input.role !== "account_manager") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Sales Managers can only invite Account Managers" });
+      }
+      if (callerRole === "office_manager" && input.role !== "coordinator") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Office Managers can only invite Coordinators" });
       }
       const token = nanoid(48);
       const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -2196,7 +2264,7 @@ export const appRouter = router({
         tenantCompanyId: input.companyId,
         email: input.email,
         inviteRole: input.role,
-        managerId: input.managerId || (ctx.user.systemRole === "manager" ? ctx.user.id : undefined),
+        managerId: input.managerId || (["manager", "sales_manager", "office_manager"].includes(ctx.user.systemRole) ? ctx.user.id : undefined),
         token,
         invitedBy: ctx.user.id,
         features: input.features,
@@ -3589,6 +3657,90 @@ export const appRouter = router({
       const msgs = input.messages.map(m => ({ role: m.role as any, content: m.content }));
       const response = await handleChat(msgs, ctx.user.id, ctx.user.name || "User");
       return { response };
+    }),
+  }),
+
+  billing: router({
+    // Get available plans
+    plans: publicProcedure.query(async () => {
+      const { PLANS } = await import("./stripe-products.js");
+      return PLANS;
+    }),
+
+    // Get current subscription info for the company
+    subscription: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user.tenantCompanyId) return null;
+      const company = await db.getTenantCompanyById(ctx.user.tenantCompanyId);
+      if (!company) return null;
+      return {
+        tier: company.subscriptionTier,
+        status: company.subscriptionStatus,
+        trialEndsAt: company.trialEndsAt,
+        stripeCustomerId: company.stripeCustomerId,
+        stripeSubscriptionId: company.stripeSubscriptionId,
+      };
+    }),
+
+    // Create Stripe checkout session for a plan upgrade
+    createCheckout: protectedProcedure.input(z.object({
+      planId: z.enum(["starter", "professional", "enterprise"]),
+      billing: z.enum(["monthly", "annual"]).default("monthly"),
+      origin: z.string().url(),
+    })).mutation(async ({ ctx, input }) => {
+      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN", message: "Only company admins can manage billing" });
+      if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST", message: "No company associated" });
+
+      const { stripe } = await import("./stripe.js");
+      if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe is not configured. Please add your Stripe keys in Settings → Payment." });
+
+      const { PLANS } = await import("./stripe-products.js");
+      const plan = PLANS.find(p => p.id === input.planId);
+      if (!plan) throw new TRPCError({ code: "NOT_FOUND", message: "Plan not found" });
+
+      const priceId = input.billing === "annual" ? plan.annualPriceId : plan.monthlyPriceId;
+
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        payment_method_types: ["card"],
+        line_items: [{ price: priceId, quantity: 1 }],
+        customer_email: ctx.user.email || undefined,
+        allow_promotion_codes: true,
+        client_reference_id: ctx.user.id.toString(),
+        metadata: {
+          user_id: ctx.user.id.toString(),
+          tenant_company_id: ctx.user.tenantCompanyId.toString(),
+          plan_tier: plan.tier,
+          customer_email: ctx.user.email || "",
+          customer_name: ctx.user.name || "",
+        },
+        success_url: `${input.origin}/billing?success=true&plan=${plan.id}`,
+        cancel_url: `${input.origin}/billing?cancelled=true`,
+      });
+
+      return { checkoutUrl: session.url };
+    }),
+
+    // Create Stripe billing portal session
+    createPortal: protectedProcedure.input(z.object({
+      origin: z.string().url(),
+    })).mutation(async ({ ctx, input }) => {
+      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
+      if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST" });
+
+      const { stripe } = await import("./stripe.js");
+      if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe is not configured" });
+
+      const company = await db.getTenantCompanyById(ctx.user.tenantCompanyId);
+      if (!company?.stripeCustomerId) throw new TRPCError({ code: "BAD_REQUEST", message: "No Stripe customer found. Please subscribe to a plan first." });
+
+      const session = await stripe.billingPortal.sessions.create({
+        customer: company.stripeCustomerId,
+        return_url: `${input.origin}/billing`,
+      });
+
+      return { portalUrl: session.url };
     }),
   }),
 });

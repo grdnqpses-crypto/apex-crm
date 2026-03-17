@@ -11,16 +11,20 @@ export const router = t.router;
 export const publicProcedure = t.procedure;
 
 // ─── Role hierarchy (highest to lowest) ───
-// developer > apex_owner > company_admin > manager > user
-// super_admin is legacy alias for company_admin
+// developer > apex_owner > company_admin > sales_manager / office_manager > account_manager / coordinator
+// super_admin and manager are legacy aliases; user is legacy alias for account_manager
 
 const ROLE_LEVELS: Record<string, number> = {
   developer: 5,
   apex_owner: 4,
   super_admin: 3, // legacy alias for company_admin
   company_admin: 3,
-  manager: 2,
-  user: 1,
+  sales_manager: 2,
+  office_manager: 2,
+  manager: 2,         // legacy alias for sales_manager
+  account_manager: 1,
+  coordinator: 1,
+  user: 1,            // legacy alias for account_manager
 };
 
 export function getRoleLevel(role: string): number {

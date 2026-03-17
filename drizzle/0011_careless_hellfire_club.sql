@@ -1,0 +1,2 @@
+ALTER TABLE `company_invites` MODIFY COLUMN `inviteRole` enum('company_admin','sales_manager','office_manager','manager','account_manager','coordinator','sales_rep','user') NOT NULL DEFAULT 'sales_rep';--> statement-breakpoint
+ALTER TABLE `users` MODIFY COLUMN `systemRole` enum('developer','apex_owner','super_admin','company_admin','sales_manager','office_manager','manager','account_manager','coordinator','sales_rep','user') NOT NULL DEFAULT 'sales_rep';

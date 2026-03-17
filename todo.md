@@ -1165,3 +1165,21 @@
 - [ ] Backend: generate reset token and send email
 - [ ] Frontend: forgot password view in login modal
 - [ ] Frontend: reset password page at /reset-password
+
+## Company Branding & White-Label
+- [x] Backend: tRPC procedure to get company branding (name + logoUrl)
+- [x] Backend: tRPC procedure to upload company logo to S3
+- [x] Backend: tRPC procedure to AI-generate logo from company name
+- [x] Backend: tRPC procedure to update company logoUrl
+- [x] Frontend: Company Settings page with logo upload + AI generate button
+- [x] Frontend: Sidebar header shows company logo + name
+- [x] Frontend: Top nav shows company name next to user info
+- [x] Frontend: Dashboard welcome banner shows company name
+
+## Stripe Integration
+- [x] Add Stripe via webdev_add_feature
+- [x] Subscription plans page (Trial, Starter, Professional, Enterprise)
+- [x] Checkout flow for plan upgrades
+- [x] Billing portal for managing subscription
+- [x] Webhook handler for subscription events (activate, cancel, expire)
+- [x] Subscription status shown in Company Settings

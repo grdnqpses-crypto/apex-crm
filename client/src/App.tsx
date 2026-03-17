@@ -81,6 +81,7 @@ const ApexDashboard = lazy(() => import("./pages/ApexDashboard"));
 const Signup = lazy(() => import("./pages/Signup"));
 const MarketingHome = lazy(() => import("./pages/MarketingHome"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Billing = lazy(() => import("./pages/Billing"));
 
 function PageLoader() {
   return (
@@ -137,6 +138,7 @@ function Router() {
           <Route path="/team" component={CompanyAdmin} />
           <Route path="/team-performance" component={TeamPerformance} />
           <Route path="/settings" component={Settings} />
+          <Route path="/billing" component={Billing} />
           <Route path="/import/hubspot" component={HubSpotImport} />
           <Route path="/domain-optimizer" component={DomainOptimizer} />
           <Route path="/ab-engine" component={ABEngine} />

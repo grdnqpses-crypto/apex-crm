@@ -78,6 +78,20 @@
       "when": 1773761809565,
       "tag": "0010_regular_centennial",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1773783412634,
+      "tag": "0011_careless_hellfire_club",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1773784356866,
+      "tag": "0012_smooth_thena",
+      "breakpoints": true
     }
   ]
 }

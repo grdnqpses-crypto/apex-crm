@@ -99,8 +99,8 @@ export function useFeatureAccess() {
   const isDeveloper = role === "developer";
   const isApexOwner = role === "apex_owner";
   const isAdmin = role === "company_admin";
-  const isManager = role === "manager";
-  const isUser = role === "user";
+  const isManager = ["manager", "sales_manager", "office_manager"].includes(role || "");
+  const isUser = ["user", "account_manager", "coordinator"].includes(role || "");
   
   // Developers, apex owners, and company admins get full feature access
   const shouldFetchFeatures = !!user && !isDeveloper && !isApexOwner && !isAdmin;

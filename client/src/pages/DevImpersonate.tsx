@@ -10,15 +10,37 @@ import PageGuide from "@/components/PageGuide";
 
 const roleColors: Record<string, string> = {
   developer: "bg-red-500/10 text-red-400 border-red-500/20",
+  apex_owner: "bg-orange-500/10 text-orange-400 border-orange-500/20",
   company_admin: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  sales_manager: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  office_manager: "bg-teal-500/10 text-teal-400 border-teal-500/20",
   manager: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  account_manager: "bg-green-500/10 text-green-400 border-green-500/20",
+  coordinator: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
   user: "bg-gray-500/10 text-gray-400 border-gray-500/20",
+};
+
+const roleLabels: Record<string, string> = {
+  developer: "Developer",
+  apex_owner: "Apex Owner",
+  company_admin: "Company Admin",
+  sales_manager: "Sales Manager",
+  office_manager: "Office Manager",
+  manager: "Sales Manager",
+  account_manager: "Account Manager",
+  coordinator: "Coordinator",
+  user: "Account Manager",
 };
 
 const roleIcons: Record<string, any> = {
   developer: Shield,
+  apex_owner: Shield,
   company_admin: ShieldCheck,
+  sales_manager: UserCog,
+  office_manager: UserCog,
   manager: UserCog,
+  account_manager: User,
+  coordinator: User,
   user: User,
 };
 
@@ -81,8 +103,8 @@ export default function DevImpersonate() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Badge variant="outline" className={`text-xs ${roleColors[u.systemRole || "user"]}`}>
-                          <RoleIcon className="h-3 w-3 mr-1" />{(u.systemRole || "user").replace("_", " ")}
+                        <Badge variant="outline" className={`text-xs ${roleColors[u.systemRole || "account_manager"]}`}>
+                           <RoleIcon className="h-3 w-3 mr-1" />{roleLabels[u.systemRole] || u.systemRole}
                         </Badge>
                       </TableCell>
                     </TableRow>
@@ -127,8 +149,8 @@ export default function DevImpersonate() {
                       <h3 className="text-lg font-bold">{impersonatedUser.user.name}</h3>
                       <p className="text-sm text-muted-foreground">{impersonatedUser.user.email}</p>
                       <div className="flex gap-2 mt-1">
-                        <Badge variant="outline" className={roleColors[impersonatedUser.user.systemRole || "user"]}>
-                          {(impersonatedUser.user.systemRole || "user").replace("_", " ")}
+                        <Badge variant="outline" className={roleColors[impersonatedUser.user.systemRole || "account_manager"]}>
+                          {roleLabels[impersonatedUser.user.systemRole] || impersonatedUser.user.systemRole}
                         </Badge>
                         <Badge variant="outline" className={impersonatedUser.user.isActive !== false ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"}>
                           {impersonatedUser.user.isActive !== false ? "Active" : "Inactive"}

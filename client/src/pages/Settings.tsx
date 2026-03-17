@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
@@ -279,26 +279,188 @@ function NotificationSettings() {
 
 // ─── Account Defaults Panel ───
 function AccountDefaults() {
-  const [companyName, setCompanyName] = useState("Apex CRM");
+  const { data: myCompany, refetch } = trpc.tenants.myCompany.useQuery();
+  const utils = trpc.useUtils();
+  const [companyName, setCompanyName] = useState("");
   const [defaultCurrency, setDefaultCurrency] = useState("USD");
   const [dateFormat, setDateFormat] = useState("MM/DD/YYYY");
-  const [defaultPipeline, setDefaultPipeline] = useState("Default Pipeline");
+  const [previewLogo, setPreviewLogo] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (myCompany) {
+      setCompanyName(myCompany.name || "");
+      setPreviewLogo(myCompany.logoUrl || null);
+    }
+  }, [myCompany]);
+
+  const updateBranding = trpc.tenants.updateBranding.useMutation({
+    onSuccess: () => {
+      toast.success("Company name updated");
+      utils.tenants.myCompany.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const uploadLogo = trpc.tenants.uploadLogo.useMutation({
+    onSuccess: (data) => {
+      setPreviewLogo(data.logoUrl);
+      utils.tenants.myCompany.invalidate();
+      toast.success("Logo uploaded successfully");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const generateLogo = trpc.tenants.generateLogo.useMutation({
+    onSuccess: (data) => {
+      setPreviewLogo(data.logoUrl);
+      utils.tenants.myCompany.invalidate();
+      toast.success("AI logo generated and saved!");
+      setIsGenerating(false);
+    },
+    onError: (e) => { toast.error(e.message); setIsGenerating(false); },
+  });
+
+  const handleFileChange = (file: File) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("File must be under 5MB"); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      setPreviewLogo(dataUrl);
+      uploadLogo.mutate({ dataUrl, mimeType: file.type });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileChange(file);
+  };
+
+  const handleAIGenerate = () => {
+    if (!companyName.trim()) { toast.error("Enter your company name first"); return; }
+    setIsGenerating(true);
+    generateLogo.mutate({ companyName: companyName.trim(), industry: myCompany?.industry || undefined });
+  };
 
   return (
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold">Account Defaults</h3>
-        <p className="text-sm text-muted-foreground">Configure default settings for your account.</p>
+        <p className="text-sm text-muted-foreground">Configure your company branding and default settings.</p>
       </div>
+
+      {/* ─── Company Branding Card ─── */}
+      <Card className="border-primary/20">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Palette className="h-4 w-4 text-primary" />
+            Company Branding
+          </CardTitle>
+          <CardDescription>Your logo and company name appear in the sidebar and top navigation for every user in your account.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Company Name */}
+          <div className="space-y-2">
+            <Label>Company Name</Label>
+            <div className="flex gap-2">
+              <Input
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="Your Company Name"
+                className="flex-1"
+              />
+              <Button
+                onClick={() => updateBranding.mutate({ name: companyName })}
+                disabled={updateBranding.isPending || !companyName.trim()}
+              >
+                {updateBranding.isPending ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </div>
+
+          {/* Logo Upload */}
+          <div className="space-y-3">
+            <Label>Company Logo</Label>
+            <div className="flex items-start gap-6">
+              {/* Preview */}
+              <div className="shrink-0">
+                {previewLogo ? (
+                  <div className="relative group">
+                    <img
+                      src={previewLogo}
+                      alt="Company logo"
+                      className="h-20 w-20 rounded-xl object-contain border border-border bg-muted/30"
+                    />
+                    <button
+                      onClick={() => { setPreviewLogo(null); updateBranding.mutate({ logoUrl: null }); }}
+                      className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-destructive text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >×</button>
+                  </div>
+                ) : (
+                  <div className="h-20 w-20 rounded-xl border-2 border-dashed border-border bg-muted/20 flex items-center justify-center">
+                    <Building2 className="h-8 w-8 text-muted-foreground/40" />
+                  </div>
+                )}
+              </div>
+
+              {/* Upload Zone */}
+              <div className="flex-1 space-y-3">
+                <div
+                  className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all ${
+                    isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/30"
+                  }`}
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm font-medium">Drop your logo here or click to upload</p>
+                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG, SVG up to 5MB · Recommended: 256×256px or larger</p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileChange(f); }}
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-xs text-muted-foreground">or</span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+
+                <Button
+                  variant="outline"
+                  className="w-full gap-2 border-amber-300/50 text-amber-700 hover:bg-amber-50"
+                  onClick={handleAIGenerate}
+                  disabled={isGenerating || generateLogo.isPending}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {isGenerating || generateLogo.isPending ? "Generating AI logo..." : "Generate Logo with AI"}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  AI will create a professional logo based on your company name and industry.
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">General</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Company Name</Label>
-            <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
-          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Default Currency</Label>
@@ -308,10 +470,6 @@ function AccountDefaults() {
               <Label>Date Format</Label>
               <Input value={dateFormat} onChange={(e) => setDateFormat(e.target.value)} />
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label>Default Deal Pipeline</Label>
-            <Input value={defaultPipeline} onChange={(e) => setDefaultPipeline(e.target.value)} />
           </div>
         </CardContent>
       </Card>

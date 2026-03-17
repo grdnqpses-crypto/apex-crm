@@ -107,7 +107,7 @@ export async function createCredentialUser(data: {
   passwordHash: string;
   name: string;
   email?: string;
-  systemRole: "apex_owner" | "company_admin" | "manager" | "user";
+  systemRole: "apex_owner" | "company_admin" | "sales_manager" | "office_manager" | "manager" | "account_manager" | "coordinator" | "user";
   tenantCompanyId: number;
   managerId?: number;
   jobTitle?: string;
@@ -1740,7 +1740,7 @@ export async function getAllUsersWithCompany() {
     .orderBy(desc(users.lastSignedIn));
 }
 
-export async function updateUserRole(userId: number, systemRole: "developer" | "apex_owner" | "company_admin" | "manager" | "user") {
+export async function updateUserRole(userId: number, systemRole: "developer" | "apex_owner" | "company_admin" | "sales_manager" | "office_manager" | "manager" | "account_manager" | "coordinator" | "user") {
   const db = await getDb();
   if (!db) return null as any;
   await db.update(users).set({ systemRole }).where(eq(users.id, userId));
@@ -1855,7 +1855,7 @@ export async function getFeatureAssignmentsByCompany(companyId: number) {
 export async function createCompanyInvite(data: {
   tenantCompanyId: number;
   email: string;
-  inviteRole: "company_admin" | "manager" | "user";
+  inviteRole: "company_admin" | "sales_manager" | "office_manager" | "manager" | "account_manager" | "coordinator" | "user";
   managerId?: number;
   token: string;
   invitedBy: number;
@@ -3508,14 +3508,14 @@ export async function getVisibleUserIds(user: { id: number; systemRole: string; 
     return tenantUsers.map(u => u.id);
   }
 
-  if (user.systemRole === "manager") {
-    // Manager sees their direct reports + themselves
+  if (["manager", "sales_manager", "office_manager"].includes(user.systemRole)) {
+    // Manager roles see their direct reports + themselves
     const directReports = await db.select({ id: users.id }).from(users)
       .where(eq(users.managerId, user.id));
     return [user.id, ...directReports.map(u => u.id)];
   }
 
-  // Regular user: only themselves
+  // Account manager / coordinator / user: only themselves
   return [user.id];
 }
 
