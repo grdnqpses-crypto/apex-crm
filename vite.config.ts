@@ -167,6 +167,35 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React + routing
+          'vendor-react': ['react', 'react-dom', 'wouter'],
+          // UI component library
+          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select', '@radix-ui/react-tabs', '@radix-ui/react-tooltip', '@radix-ui/react-popover', '@radix-ui/react-accordion', '@radix-ui/react-avatar', '@radix-ui/react-checkbox', '@radix-ui/react-label', '@radix-ui/react-slot', '@radix-ui/react-switch', '@radix-ui/react-separator'],
+          // tRPC + data fetching
+          'vendor-trpc': ['@trpc/client', '@trpc/react-query', '@tanstack/react-query'],
+          // Charts / analytics
+          'vendor-charts': ['recharts'],
+          // Animation libraries
+          'vendor-animation': ['framer-motion'],
+          // Icons
+          'vendor-icons': ['lucide-react'],
+          // Date utilities
+          'vendor-date': ['date-fns'],
+          // Form utilities
+          'vendor-form': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          // 3D / Three.js (only used in particle effects)
+          'vendor-three': ['three', '@react-three/fiber', '@react-three/drei'],
+          // Remaining Radix UI components (not already in vendor-ui)
+          'vendor-radix2': ['@radix-ui/react-alert-dialog', '@radix-ui/react-collapsible', '@radix-ui/react-context-menu', '@radix-ui/react-hover-card', '@radix-ui/react-menubar', '@radix-ui/react-navigation-menu', '@radix-ui/react-progress', '@radix-ui/react-radio-group', '@radix-ui/react-scroll-area', '@radix-ui/react-slider', '@radix-ui/react-toggle', '@radix-ui/react-toggle-group'],
+          // Streamdown markdown renderer
+          'vendor-markdown': ['streamdown'],
+        },
+      },
+    },
   },
   server: {
     host: true,
