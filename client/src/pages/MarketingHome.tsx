@@ -201,6 +201,7 @@ export default function MarketingHome() {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
   const [, navigate] = useLocation();
+  const [videoOpen, setVideoOpen] = useState(false);
 
   const forgotPasswordMutation = trpc.auth.forgotPassword.useMutation();
 
@@ -472,6 +473,42 @@ export default function MarketingHome() {
         </AnimatePresence>
       </nav>
 
+      {/* ── YouTube Video Modal ──────────────────────────────────────────── */}
+      <AnimatePresence>
+        {videoOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setVideoOpen(false)}
+            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={e => e.stopPropagation()}
+              className="relative w-full max-w-4xl aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/10"
+            >
+              <button
+                onClick={() => setVideoOpen(false)}
+                className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-black/80 transition-all"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <iframe
+                src="https://www.youtube.com/embed/Y91YVB-yZhs?autoplay=1&rel=0&modestbranding=1"
+                title="Apex CRM Demo"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section ref={heroRef} className="relative min-h-screen flex flex-col items-center justify-center pt-16 pb-0 overflow-hidden">
         {/* Background mesh */}
@@ -532,11 +569,13 @@ export default function MarketingHome() {
               </button>
             </Link>
             <button
-              onClick={() => setLoginOpen(true)}
-              className="flex items-center gap-2 text-white/60 font-semibold text-base px-6 py-4 rounded-2xl border border-white/10 hover:border-white/20 hover:text-white transition-all"
+              onClick={() => setVideoOpen(true)}
+              className="group flex items-center gap-2 text-white/70 font-semibold text-base px-6 py-4 rounded-2xl border border-white/10 hover:border-orange-500/40 hover:text-white transition-all"
             >
-              Sign In
-              <ChevronRight className="h-4 w-4" />
+              <div className="w-8 h-8 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center justify-center group-hover:bg-orange-500/30 transition-all">
+                <Play className="h-3.5 w-3.5 fill-orange-400 text-orange-400 ml-0.5" />
+              </div>
+              Watch Demo
             </button>
           </motion.div>
 
