@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `bible_shares` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`sharedByUserId` int NOT NULL,\n\t`sharedWithUserId` int NOT NULL,\n\t`sectionId` varchar(64) NOT NULL,\n\t`featureId` varchar(64),\n\t`permission` enum('view','collaborate') NOT NULL DEFAULT 'view',\n\t`tenantCompanyId` int NOT NULL,\n\t`revokedAt` bigint,\n\t`revokedByUserId` int,\n\t`createdAt` bigint NOT NULL,\n\tCONSTRAINT `bible_shares_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute CREATE TABLE `bible_shares` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`sharedByUserId` int NOT NULL,\n\t`sharedWithUserId` int NOT NULL,\n\t`sectionId` varchar(64) NOT NULL,\n\t`featureId` varchar(64),\n\t`permission` enum('view','collaborate') NOT NULL DEFAULT 'view',\n\t`tenantCompanyId` int NOT NULL,\n\t`revokedAt` bigint,\n\t`revokedByUserId` int,\n\t`createdAt` bigint NOT NULL,\n\tCONSTRAINT `bible_shares_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1734
+}

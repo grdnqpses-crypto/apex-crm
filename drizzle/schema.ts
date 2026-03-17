@@ -2226,3 +2226,26 @@ export const passwordResetTokens = mysqlTable("password_reset_tokens", {
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
 });
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+
+// ─── CRM Bible Shares ───
+// Tracks shared access to CRM Bible sections/features beyond the user's default role access
+export const bibleShares = mysqlTable("bible_shares", {
+  id: int("id").autoincrement().primaryKey(),
+  // Who granted the share
+  sharedByUserId: int("sharedByUserId").notNull(),
+  // Who received the share
+  sharedWithUserId: int("sharedWithUserId").notNull(),
+  // What was shared — sectionId (e.g. "marketing") and optional featureId (e.g. "campaigns")
+  sectionId: varchar("sectionId", { length: 64 }).notNull(),
+  featureId: varchar("featureId", { length: 64 }), // null = entire section
+  // Permission level
+  permission: mysqlEnum("permission", ["view", "collaborate"]).default("view").notNull(),
+  // Tenant scoping
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  // Soft-revoke: null = active, set = revoked
+  revokedAt: bigint("revokedAt", { mode: "number" }),
+  revokedByUserId: int("revokedByUserId"),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+export type BibleShare = typeof bibleShares.$inferSelect;
+export type InsertBibleShare = typeof bibleShares.$inferInsert;

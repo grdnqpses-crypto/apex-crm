@@ -1207,3 +1207,16 @@
 - [x] Build in-app CRM Bible page with sticky TOC, search, and The Sales Machine section
 - [x] Add CRM Bible to sidebar nav under Resources
 - [x] Add /crm-bible route to App.tsx
+
+## CRM Bible Role-Gated Access
+- [ ] Add bible_shares table to DB (sharedBy, sharedWith, sectionId, featureId, permission: view|collaborate, revokedAt)
+- [ ] Generate and apply Drizzle migration
+- [ ] Add tRPC procedures: shareSection, shareFeature, revokeShare, listMyShares, listSharedWithMe
+- [ ] Add minRole field to each section/feature in CRM Bible data structure
+- [ ] Filter CRM Bible by role + shared grants on frontend
+- [ ] Share button on each section header and feature card
+- [ ] Invite modal: search users by name, select view/collaborate permission, send share
+- [ ] Shared With Me panel showing all active shares and who granted them
+- [ ] Revoke button for share grantor
+- [ ] Role badge on CRM Bible header showing current access level
+- [ ] Update Bible content to document role access levels and Share system

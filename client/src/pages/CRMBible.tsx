@@ -1,8 +1,47 @@
-import { useState, useRef, useEffect } from "react";
-import { Search, BookOpen, ChevronRight, ChevronDown, ArrowUp, Target, Zap, Brain, Shield, BarChart3, Settings, Layers, Users, Mail, GitBranch, Truck, Sparkles } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Search, BookOpen, ChevronRight, ChevronDown, ArrowUp, Zap, Brain, Shield, BarChart3, Settings, Layers, Users, Mail, GitBranch, Truck, Sparkles, Share2, X, UserPlus, Eye, Pencil, Trash2, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+
+// ─── Role Access Matrix ───────────────────────────────────────────────────────
+// minRoles: array of roles that can see this section by default (and all higher roles)
+// Role hierarchy: developer > apex_owner > company_admin > sales_manager/office_manager > account_manager/coordinator
+
+const ROLE_LEVEL: Record<string, number> = {
+  developer: 100,
+  apex_owner: 90,
+  super_admin: 85,
+  company_admin: 80,
+  sales_manager: 60,
+  office_manager: 60,
+  manager: 60,
+  account_manager: 30,
+  coordinator: 30,
+  sales_rep: 30,
+  user: 30,
+};
+
+// Minimum role level required to see a section by default
+const SECTION_MIN_LEVEL: Record<string, number> = {
+  dashboard: 30,      // Everyone
+  team: 60,           // Sales Manager, Office Manager, and above
+  crm: 30,            // Everyone
+  marketing: 30,      // Everyone (Coordinators involved in marketing)
+  automation: 60,     // Sales Manager, Office Manager, and above
+  paradigm: 60,       // Sales Manager and above
+  compliance: 60,     // Office Manager and above
+  operations: 30,     // Everyone
+  ai: 60,             // Sales Manager, Office Manager, and above
+  analytics: 60,      // Sales Manager, Office Manager, and above (team-scoped)
+  settings: 80,       // Company Admin and above
+};
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -79,7 +118,7 @@ const SECTIONS = [
         title: "Contacts",
         what: "Individual people within companies. Each contact record holds 50+ fields covering identity, communication preferences, social profiles, marketing attribution, logistics-specific data, and a full activity history.",
         why: "The richer your contact record, the more personalized your outreach — and personalization is the single highest-leverage variable in sales conversion.",
-        how: "Navigate to Contacts → New Contact. Fill in: Identity (name, title, company), Communication (email, phone, LinkedIn), Lifecycle Stage, Lead Status, and Marketing Attribution. The Lead Status field has 25+ pre-built statuses: New Lead, Contacted, Quote Sent, Negotiating, Booked, Active Shipper, Inactive, Do Not Contact, and more. Always keep Lead Status current — it drives segmentation and workflow triggers. On the Contact Detail page, log Notes, Calls, Emails, Meetings, or Tasks directly against the contact.",
+        how: "Navigate to Contacts → New Contact. Fill in: Identity (name, title, company), Communication (email, phone, LinkedIn), Lifecycle Stage, Lead Status, and Marketing Attribution. The Lead Status field has 25+ pre-built statuses: New Lead, Contacted, Quote Sent, Negotiating, Booked, Active Shipper, Inactive, Do Not Contact, and more. Always keep Lead Status current — it drives segmentation and workflow triggers.",
         automation: "Contact lifecycle stage changes trigger Workflow automations. When a contact moves from Lead to Qualified, a follow-up email sequence fires automatically. When a contact's email bounces, the Paradigm Engine detects the signal and updates the record.",
         outcome: "Contacts with complete records close at higher rates because reps can personalize every touchpoint. The goal is to know your contact better than they know themselves.",
       },
@@ -88,7 +127,7 @@ const SECTIONS = [
         title: "Deals",
         what: "A visual Kanban pipeline that tracks every sales opportunity from first conversation to closed-won or closed-lost. Each deal card represents a specific revenue opportunity with a value, close date, probability, and assigned rep.",
         why: "Without a pipeline, revenue is unpredictable. The Deals module gives you a real-time view of where every dollar of potential revenue sits in your sales process and what your forecast looks like.",
-        how: "Navigate to Deals → New Deal. Enter: deal name, associated company and contact, deal value, expected close date, and pipeline stage (Prospect → Qualified → Proposal Sent → Negotiation → Closed Won/Lost). Drag deal cards between columns to advance them. The Weighted Forecast view multiplies each deal's value by its probability percentage to give a realistic revenue forecast. A $50,000 deal at 40% probability contributes $20,000 to the forecast.",
+        how: "Navigate to Deals → New Deal. Enter: deal name, associated company and contact, deal value, expected close date, and pipeline stage (Prospect → Qualified → Proposal Sent → Negotiation → Closed Won/Lost). Drag deal cards between columns to advance them. The Weighted Forecast view multiplies each deal's value by its probability percentage to give a realistic revenue forecast.",
         automation: "Stage changes trigger Workflow automations. Moving a deal to Proposal Sent can automatically send a follow-up email 3 days later if no response is detected. Moving to Closed Won triggers a customer onboarding workflow, creates an invoice, and notifies the operations team.",
         outcome: "A healthy pipeline is the foundation of predictable revenue. Managers use the pipeline to identify stalled deals, coach reps on specific opportunities, and forecast the month's close with confidence.",
       },
@@ -97,7 +136,7 @@ const SECTIONS = [
         title: "Tasks",
         what: "The atomic unit of sales execution. Every call to make, email to send, follow-up to schedule, and document to review lives in Tasks. Tasks can be assigned to any team member, associated with a contact, company, or deal, and organized into queues.",
         why: "Sales is a game of follow-through. The rep who follows up consistently wins. Tasks ensure that nothing falls through the cracks — every commitment is tracked, every deadline is visible.",
-        how: "Create a task from the Tasks page or directly from any contact, company, or deal record. Fill in: Title, Type (Call / Email / To-Do / Follow-Up), Due Date, Assigned To, Priority (Low / Medium / High / Urgent), and Queue. Queues group related tasks — Prospecting Calls, Customer Renewals, Follow-Ups — letting reps batch similar work for maximum focus. When completing a task, fill in the Outcome field and mark it complete to create a permanent activity log entry.",
+        how: "Create a task from the Tasks page or directly from any contact, company, or deal record. Fill in: Title, Type (Call / Email / To-Do / Follow-Up), Due Date, Assigned To, Priority (Low / Medium / High / Urgent), and Queue. Queues group related tasks — Prospecting Calls, Customer Renewals, Follow-Ups — letting reps batch similar work for maximum focus.",
         automation: "Workflows create tasks automatically. When a deal moves to Proposal Sent, a task auto-creates: 'Follow up if no response in 3 days.' Smart Notifications alert reps when high-priority tasks are overdue.",
         outcome: "Reps who work from a task queue close more deals than reps who work from memory. Tasks create a structured daily workflow that ensures the highest-value activities get done first, every day.",
       },
@@ -117,8 +156,8 @@ const SECTIONS = [
         title: "Campaigns",
         what: "Your email campaign builder and sender. Create, schedule, and send targeted email campaigns to specific segments of your contact list, then track opens, clicks, bounces, and unsubscribes in real time.",
         why: "Email remains the highest-ROI marketing channel in B2B sales. A well-executed campaign to a warm list can generate more qualified conversations in 48 hours than a month of cold calling.",
-        how: "Navigate to Campaigns → New Campaign. Step 1: Name your campaign and select a goal. Step 2: Choose a template. Step 3: Select your audience — choose a Segment or upload a list. Step 4: Personalize with tokens: {{first_name}}, {{company_name}}, {{rep_name}}. Step 5: Set the send time — immediate, scheduled, or AI-optimized (the system picks the time each recipient is most likely to open). Step 6: Review the pre-send checklist (spam score, compliance check, authentication status) and send.",
-        automation: "Campaigns feed directly into Workflows. A contact who opens but does not click can be automatically enrolled in a follow-up sequence. A contact who clicks a pricing link triggers a Hot Lead alert to their assigned rep. Campaign engagement data updates contact lead scores in real time.",
+        how: "Navigate to Campaigns → New Campaign. Step 1: Name your campaign and select a goal. Step 2: Choose a template. Step 3: Select your audience — choose a Segment or upload a list. Step 4: Personalize with tokens: {{first_name}}, {{company_name}}, {{rep_name}}. Step 5: Set the send time — immediate, scheduled, or AI-optimized. Step 6: Review the pre-send checklist and send.",
+        automation: "Campaigns feed directly into Workflows. A contact who opens but does not click can be automatically enrolled in a follow-up sequence. A contact who clicks a pricing link triggers a Hot Lead alert to their assigned rep.",
         outcome: "Campaigns keep your brand in front of prospects who are not yet ready to buy. The goal is to stay top-of-mind so that when the prospect is ready, you are the first call they make.",
       },
       {
@@ -126,7 +165,7 @@ const SECTIONS = [
         title: "Email Templates",
         what: "A library of reusable email designs and copy blocks. Templates can be built once and used across unlimited campaigns, with personalization tokens that auto-fill recipient-specific data at send time.",
         why: "Without templates, every rep writes emails from scratch — inconsistent quality, inconsistent branding, wasted time. Templates codify your best-performing emails and make them available to the entire team instantly.",
-        how: "Navigate to Templates → New Template. Choose a layout. Use the block editor to add text, images, buttons, dividers, and dynamic content blocks. Dynamic blocks show different content based on recipient attributes. Save with a descriptive name and category tag. Select templates in the Campaign builder — all tokens replace with live data at send time.",
+        how: "Navigate to Templates → New Template. Choose a layout. Use the block editor to add text, images, buttons, dividers, and dynamic content blocks. Save with a descriptive name and category tag. Select templates in the Campaign builder — all tokens replace with live data at send time.",
         automation: "Templates are the content layer for both Campaigns and Ghost Sequences. When the Paradigm Engine sends an automated email, it uses a template personalized with the prospect's Digital Twin psychographic profile.",
         outcome: "A library of proven templates means your team's best ideas scale to every rep. The top-performing email your best rep ever wrote becomes the default for everyone.",
       },
@@ -135,18 +174,18 @@ const SECTIONS = [
         title: "Deliverability",
         what: "Your email health command center. Monitors sending reputation, checks authentication records (SPF, DKIM, DMARC), tracks bounce and complaint rates, and provides AI-powered pre-send spam scoring.",
         why: "An email that lands in spam is worth zero. Deliverability is the invisible foundation of every email campaign. A 98.7% inbox placement rate is a competitive weapon.",
-        how: "The Deliverability dashboard shows four health indicators: Authentication Status (green = SPF + DKIM + DMARC all passing), Bounce Rate (target: under 2%), Complaint Rate (target: under 0.1%), and Blacklist Status (monitored across 50+ lists). The Pre-Send Spam Score tool lets you paste any email and receive an AI score from 0–100 with specific fix suggestions. The Authentication Checker walks you through adding DNS records for each sending domain.",
-        automation: "When a domain's health score drops below the warning threshold, the system automatically pauses sending from that domain and routes traffic to healthy domains. When a bounce is detected, the contact's email is automatically added to the Suppression List.",
-        outcome: "Every percentage point of inbox placement improvement translates directly to more opens, more replies, and more pipeline. Clean, authenticated infrastructure consistently outperforms shared or poorly configured servers.",
+        how: "The Deliverability dashboard shows four health indicators: Authentication Status, Bounce Rate (target: under 2%), Complaint Rate (target: under 0.1%), and Blacklist Status. The Pre-Send Spam Score tool lets you paste any email and receive an AI score from 0–100 with specific fix suggestions.",
+        automation: "When a domain's health score drops below the warning threshold, the system automatically pauses sending from that domain and routes traffic to healthy domains.",
+        outcome: "Every percentage point of inbox placement improvement translates directly to more opens, more replies, and more pipeline.",
       },
       {
         id: "ab-tests",
         title: "A/B Tests",
         what: "Test two or more variations of an email element — subject line, sender name, send time, or body content — against a split of your audience to determine which version performs better, then automatically send the winner to the remainder.",
-        why: "Gut instinct is not a strategy. A/B testing replaces opinion with data. Over time, a team that systematically tests and iterates will develop a library of proven, high-performing copy that compounds in effectiveness.",
-        how: "Navigate to A/B Tests → New Test. Select the test type. Enter Variant A and Variant B. Set the test split (e.g., 20% gets A, 20% gets B, 60% gets the winner). Set the winning metric (Open Rate, Click Rate, or Reply Rate) and the decision time. After the decision time, the system automatically sends the winning variant to the remaining 60%.",
+        why: "Gut instinct is not a strategy. A/B testing replaces opinion with data. Over time, a team that systematically tests and iterates will develop a library of proven, high-performing copy.",
+        how: "Navigate to A/B Tests → New Test. Select the test type. Enter Variant A and Variant B. Set the test split (e.g., 20% gets A, 20% gets B, 60% gets the winner). Set the winning metric (Open Rate, Click Rate, or Reply Rate) and the decision time.",
         automation: "A/B test results feed back into the AI Send Time Optimizer and the AI Email Composer. When a subject line pattern consistently wins, the AI learns to apply that pattern in future Ghost Sequence emails.",
-        outcome: "A single winning subject line improvement of 5 percentage points on a 10,000-contact list means 500 more opens per campaign. Over a year of systematic testing, the compounding effect on pipeline is substantial.",
+        outcome: "A single winning subject line improvement of 5 percentage points on a 10,000-contact list means 500 more opens per campaign.",
       },
     ],
   },
@@ -164,8 +203,8 @@ const SECTIONS = [
         title: "Workflows",
         what: "The automation engine of Apex CRM. A Workflow is a set of rules: When [trigger event] happens, and [conditions] are met, then [actions] execute. Workflows run 24/7 without human intervention.",
         why: "The best sales teams are not the ones who work the hardest — they are the ones who have automated everything that can be automated, freeing human attention for the conversations that actually require it.",
-        how: "Navigate to Workflows → New Workflow. Step 1: Choose a trigger (Contact Created, Deal Stage Changed, Email Opened, Date-Based, etc.). Step 2: Add conditions to filter which records the workflow applies to. Step 3: Add actions (Send Email, Create Task, Update Field, Add to Segment, Wait X Days, Branch with If/Then logic). Example: Trigger on new lead → Wait 1 hour → Send intro email → Wait 3 days → If opened: send case study / If not: create call task.",
-        automation: "Workflows ARE the automation layer. They connect every other module: a campaign open triggers a task, a deal stage change triggers an email, a date triggers a renewal reminder. The more workflows you build, the more the system runs itself.",
+        how: "Navigate to Workflows → New Workflow. Step 1: Choose a trigger (Contact Created, Deal Stage Changed, Email Opened, Date-Based, etc.). Step 2: Add conditions. Step 3: Add actions (Send Email, Create Task, Update Field, Add to Segment, Wait X Days, Branch with If/Then logic).",
+        automation: "Workflows ARE the automation layer. They connect every other module: a campaign open triggers a task, a deal stage change triggers an email, a date triggers a renewal reminder.",
         outcome: "A single well-built workflow can replace hours of manual follow-up per week. A team with 10 active workflows running simultaneously is effectively operating with a team twice its size.",
       },
       {
@@ -173,9 +212,9 @@ const SECTIONS = [
         title: "Segments",
         what: "Dynamic, rule-based lists of contacts or companies that automatically update as records change. A Segment is not a static export — it is a living filter that always shows the current members matching your criteria.",
         why: "Sending the same email to everyone on your list is the fastest way to destroy your deliverability and annoy your prospects. Segments let you send the right message to the right people at the right time.",
-        how: "Navigate to Segments → New Segment. Build your filter using any combination of fields: Industry, Lifecycle Stage, Lead Status, Last Activity Date, Email Engagement Score, Location, Deal Stage, Tags, and more. Combine filters with AND/OR logic. Example: 'Hot Prospects — Midwest Freight' = Industry is Freight AND State is IL/OH/IN/MI AND Lead Score > 70 AND Last Contacted > 14 days ago.",
-        automation: "Segments are available as audience targets in Campaigns and as triggers/conditions in Workflows. When a contact's data changes and they now match a segment's criteria, they are automatically added. When they no longer match, they are automatically removed.",
-        outcome: "Segmented campaigns consistently outperform broadcast campaigns by 3–5x on open and click rates. The more precisely you define your audience, the more relevant your message — and relevance is what converts.",
+        how: "Navigate to Segments → New Segment. Build your filter using any combination of fields: Industry, Lifecycle Stage, Lead Status, Last Activity Date, Email Engagement Score, Location, Deal Stage, Tags, and more. Combine filters with AND/OR logic.",
+        automation: "Segments are available as audience targets in Campaigns and as triggers/conditions in Workflows. When a contact's data changes and they now match a segment's criteria, they are automatically added.",
+        outcome: "Segmented campaigns consistently outperform broadcast campaigns by 3–5x on open and click rates.",
       },
     ],
   },
@@ -193,54 +232,27 @@ const SECTIONS = [
         title: "Pulse Dashboard",
         what: "The command center for the Paradigm Engine. Shows everything the AI is doing in real time: prospects discovered, sequences running, intent signals detected, hot leads surfaced, and battle cards generated.",
         why: "The Paradigm Engine operates autonomously, but humans need to know what it is doing so they can act on the highest-value outputs. The Pulse Dashboard is the manage-by-exception interface.",
-        how: "The top row shows four live counters: Prospects in Pipeline, Sequences Active, Hot Leads Today, and Verified Emails. The AI Activity Feed streams every action in the last 24 hours. The Hot Leads Panel shows prospects who have shown buying intent — these are the people your reps should call today.",
+        how: "The top row shows four live counters: Prospects in Pipeline, Sequences Active, Hot Leads Today, and Verified Emails. The AI Activity Feed streams every action in the last 24 hours. The Hot Leads Panel shows prospects who have shown buying intent.",
         automation: "The Pulse Dashboard is the output layer of the entire Paradigm Engine automation stack. Every autonomous action the AI takes appears here in real time.",
         outcome: "A rep who starts their day on the Pulse Dashboard knows exactly who to call, what to say, and why that person is likely to buy — before they pick up the phone.",
       },
       {
-        id: "prospects",
-        title: "Prospects",
-        what: "The database of AI-discovered leads that have not yet been converted to CRM contacts. Prospects are sourced from trigger signals and enriched with psychographic profiles before any human touches them.",
-        why: "Traditional prospecting is manual, slow, and inconsistent. The Paradigm Engine discovers and qualifies prospects automatically, so your reps only spend time on leads that have already been verified and profiled.",
-        how: "Navigate to Paradigm → Prospects. Each row shows: Name, Company, Title, Verification Status, Quantum Lead Score, Engagement Stage, and the trigger signal that surfaced them. Click a prospect to open their full profile including their Digital Twin psychographic analysis. To convert to a CRM contact, click Convert to Contact — all enriched data pre-fills automatically.",
-        automation: "Prospects flow automatically from the Sentinel Layer (signal detection) → Nutrition Gate (email verification) → Digital Twin (psychographic profiling) → Quantum Score (lead scoring) → Ghost Sequences (automated engagement).",
-        outcome: "Every prospect in this list has been machine-verified and AI-scored. Your reps are not cold calling — they are calling people who have been identified as likely buyers, at the moment they are most likely to be receptive.",
-      },
-      {
-        id: "signals",
-        title: "Signals (Sentinel Layer)",
-        what: "Trigger events that indicate a prospect may be entering a buying window. The Sentinel Layer monitors job changes, company news, patent filings, social media complaints about competitors, and funding announcements — 24/7, across thousands of companies simultaneously.",
-        why: "Timing is everything in sales. A prospect who just got promoted to VP of Logistics is in a buying window — they want to make their mark, they have budget authority, and they are evaluating new vendors.",
-        how: "Navigate to Paradigm → Signals to see the live signal feed. Each signal shows: the company, the event type, the date, the confidence score, and the recommended action. Use filters to focus on specific signal types (Job Changes, Funding, Social Complaints, News).",
-        automation: "When a high-confidence signal is detected for a prospect already in a Ghost Sequence, the sequence automatically adapts — inserting a signal-specific email: 'Congratulations on your new role — here is how Apex CRM can help you hit your Q1 targets.'",
-        outcome: "Signal-triggered outreach converts at 3–5x the rate of cold outreach because you are reaching the right person at the right time with the right message.",
+        id: "prospect-discovery",
+        title: "Prospect Discovery",
+        what: "The Sentinel Layer monitors thousands of companies for trigger signals: job changes, funding announcements, competitor complaints, technology stack changes, and hiring patterns. When a signal fires, a prospect record is created automatically.",
+        why: "The best time to reach a prospect is when they have a problem you can solve. Trigger-based prospecting means you reach out at the moment of maximum relevance — not randomly.",
+        how: "Navigate to Paradigm → Prospects. Set your Ideal Customer Profile (ICP): industry, company size, geography, technology stack, and trigger types. The system continuously monitors for matching companies. New prospects appear in the Prospects queue daily.",
+        automation: "Fully automated. The Sentinel Layer runs 24/7. You define the ICP once; the system delivers matching prospects continuously.",
+        outcome: "A consistent daily flow of pre-qualified, trigger-validated prospects entering your pipeline without manual research.",
       },
       {
         id: "ghost-sequences",
         title: "Ghost Sequences",
-        what: "Multi-stage automated follow-up sequences that the AI deploys to prospects. Each sequence consists of 4–8 touchpoints across email and task reminders, spaced over days or weeks, with AI-personalized content at each stage.",
-        why: "Most sales require 7–12 touchpoints before a prospect responds. Most reps give up after 2. Ghost Sequences ensure that every prospect receives the full follow-up cadence, every time, without the rep having to remember to do it.",
-        how: "Navigate to Paradigm → Ghost Sequences → New Sequence. Define the sequence name and goal. Add steps: each step is either an Email (with a template and personalization instructions) or a Task. Set the delay between steps. Set exit conditions: 'Stop sequence if prospect replies' or 'Stop if prospect books a meeting.' The AI personalizes each email using the prospect's Digital Twin profile.",
-        automation: "Sequences are triggered automatically when a prospect reaches a Quantum Score threshold, when a Signal is detected, or when a rep manually enrolls a prospect. Positive Intent Detection monitors all replies — when a reply shows buying intent, the sequence stops and a hot lead alert fires to the assigned rep.",
-        outcome: "A rep running 50 active Ghost Sequences is effectively having 50 simultaneous sales conversations — without spending 50x the time. The sequences do the follow-up; the rep does the closing.",
-      },
-      {
-        id: "battle-cards",
-        title: "Battle Cards",
-        what: "One-page AI-generated tactical summaries for hot leads. When a prospect shows buying intent, the AI synthesizes everything known about them into a concise briefing: who they are, what they care about, what objections to expect, and the recommended close strategy.",
-        why: "The moment a hot lead responds, the rep has minutes to prepare for a call. A Battle Card gives them everything they need to know in 60 seconds.",
-        how: "Navigate to Paradigm → Battle Cards to see all generated cards. Each card shows: Prospect Name, Company, Role, Quantum Score, Recommended Approach, Key Pain Points, Likely Objections, and Suggested Opening. Click Generate New Card to create one for any prospect manually.",
-        automation: "Battle Cards are generated automatically when a prospect's Positive Intent score crosses the threshold. They are also regenerated when new signals are detected for an existing hot lead.",
-        outcome: "Reps who use Battle Cards before calls close at significantly higher rates because they walk into every conversation with a personalized strategy — not a generic pitch.",
-      },
-      {
-        id: "quantum-score",
-        title: "Quantum Score",
-        what: "A 0–100 AI-generated score that predicts the likelihood of a prospect converting to a customer. Calculated across 12 dimensions: firmographic fit, behavioral signals, engagement velocity, timing indicators, social proof, content consumption, recency, frequency, monetary signals, channel preference, intent signals, and relationship depth.",
-        why: "Not all leads are equal. A rep who spends equal time on a score-20 lead and a score-85 lead is misallocating their most valuable resource: time.",
-        how: "Navigate to Paradigm → Quantum Score to see the scoring model configuration. Adjust the weight of each dimension to match your specific sales model. The score updates in real time as new data comes in — an email open adds points, a reply adds more, a meeting booked adds the most. Use the score as the primary sorting criterion on the Prospects list. Work the 80+ scores first, every day.",
-        automation: "The Quantum Score is the trigger for Ghost Sequence enrollment (score crosses 60 → sequence starts), hot lead alerts (score crosses 80 → rep notified), and Battle Card generation (score crosses 85 → card created).",
-        outcome: "Teams that prioritize by Quantum Score consistently outperform teams that work leads in chronological order. The score is the algorithm that replaces gut instinct with data-driven prioritization.",
+        what: "AI-written, fully personalized multi-touch email sequences that deploy automatically to prospects. Each email is customized using the prospect's Digital Twin psychographic profile — communication style, motivators, and likely objections.",
+        why: "Personalization at scale is impossible for humans. A rep can write 10 personalized emails per day. The Ghost Sequence system writes and sends thousands — each one indistinguishable from a hand-crafted message.",
+        how: "Navigate to Paradigm → Ghost Sequences. Create a new sequence or use a pre-built template. Set the cadence (Day 1, Day 3, Day 7, Day 14). Enable AI Personalization. Assign to a prospect segment. The system handles everything from that point forward.",
+        automation: "Fully automated. The sequence adapts in real time: if a prospect opens but does not reply, the next email references the previous one. If they click a link, the next email focuses on that topic. If they reply, the sequence stops and a hot lead alert fires.",
+        outcome: "Ghost Sequences generate qualified replies from prospects who would never have responded to a generic template. The personalization creates the impression of a one-to-one relationship at one-to-many scale.",
       },
     ],
   },
@@ -251,25 +263,16 @@ const SECTIONS = [
     bg: "bg-red-500/10",
     border: "border-red-500/20",
     title: "Compliance & Safety",
-    subtitle: "CAN-SPAM, GDPR, CCPA, Suppression",
+    subtitle: "GDPR, CAN-SPAM, suppression, audit trail",
     features: [
       {
-        id: "compliance-center",
-        title: "Compliance Center",
-        what: "Your legal protection layer. Enforces CAN-SPAM, GDPR, and CCPA requirements on every email sent, blocking non-compliant sends before they happen and maintaining a full audit log of every action.",
-        why: "A single CAN-SPAM violation can result in a fine of up to $51,744 per email. GDPR violations can reach €20 million or 4% of global annual revenue. Compliance is not optional — it is existential.",
-        how: "The Pre-Send Validator runs automatically on every campaign, checking: physical address present, unsubscribe link present, subject line not deceptive, sender identity not misleading, and list consent status. If any check fails, the send is blocked with a specific explanation. The GDPR Consent Tracker shows every contact's consent status. The Right to Erasure tool permanently deletes a contact's data from all systems with one click, generating a deletion certificate.",
-        automation: "When a contact unsubscribes, they are immediately and automatically added to the Suppression List. The system honors opt-outs within seconds, not the 10-business-day maximum allowed by law.",
-        outcome: "A compliant sending operation is a sustainable one. Teams that ignore compliance eventually face deliverability crises, legal exposure, or both.",
-      },
-      {
-        id: "suppression",
-        title: "Suppression List",
-        what: "The master do-not-contact registry. Any email address on this list will never receive an email from your system, regardless of what campaigns or sequences are running.",
-        why: "Sending to people who have opted out is illegal, damages your reputation, and destroys trust. The Suppression List is the safety net that prevents this from ever happening.",
-        how: "Navigate to Suppression List to view, search, and manage the list. Addresses are added automatically when a contact unsubscribes, when an email hard-bounces, or when a complaint is received. You can also manually add addresses or upload a CSV.",
-        automation: "Every send — campaign, sequence, or individual — is checked against the Suppression List before delivery. Suppressed addresses are silently skipped. No manual intervention required.",
-        outcome: "A clean suppression list protects your sender reputation, keeps you legally compliant, and ensures your emails only reach people who want to receive them.",
+        id: "compliance-overview",
+        title: "Compliance Overview",
+        what: "A dedicated compliance module covering GDPR consent management, CAN-SPAM compliance, suppression list management, unsubscribe processing, and a full audit trail of all data access and modifications.",
+        why: "Non-compliance with email regulations can result in fines of up to $50,000 per violation (CAN-SPAM) or €20 million (GDPR). Compliance is not optional — it is a legal requirement and a trust signal to your customers.",
+        how: "Navigate to Compliance. The GDPR panel shows consent status for every contact. The Suppression List shows all unsubscribed, bounced, and Do Not Contact addresses. The Audit Trail shows every data access, export, and modification with timestamp and user attribution.",
+        automation: "Unsubscribes are processed automatically within 10 business days (CAN-SPAM requirement). Bounced addresses are automatically added to the suppression list. GDPR consent expiry triggers automatic re-consent request emails.",
+        outcome: "A compliant sending operation that protects your company from regulatory risk and builds trust with prospects who know their data is handled responsibly.",
       },
     ],
   },
@@ -280,126 +283,63 @@ const SECTIONS = [
     bg: "bg-amber-500/10",
     border: "border-amber-500/20",
     title: "Operations",
-    subtitle: "Load Management, Carrier Vetting, Invoicing, Portal",
+    subtitle: "Loads, Carriers, Invoicing, Customer Portal",
     features: [
       {
-        id: "load-management",
+        id: "loads",
         title: "Load Management",
-        what: "The freight-specific operations module for managing active shipments, tracking load status, and coordinating between shippers and carriers. Provides a real-time view of every load from booking to delivery.",
-        why: "Freight brokers live and die by their ability to cover loads quickly and keep shippers informed. Load Management centralizes all load data so nothing falls through the cracks.",
-        how: "Navigate to Loads to see the load board. Each load card shows: Load ID, Origin, Destination, Pickup Date, Delivery Date, Carrier, Status, and Rate. Use status filters to view loads by stage: Available, Covered, In Transit, Delivered, Invoiced. Click any load to open the full detail view with all associated documents, communications, and status history.",
-        automation: "When a load is marked Delivered, a Workflow can automatically trigger invoice creation, send a delivery confirmation to the shipper, and create a follow-up task for the rep to check in on the next load opportunity.",
-        outcome: "Centralized load management reduces errors, speeds up coverage time, and gives shippers the visibility they expect — which drives repeat business.",
+        what: "Track freight loads from booking to delivery. Each load record contains: shipper, consignee, origin, destination, commodity, weight, equipment type, pickup date, delivery date, carrier, rate, and status.",
+        why: "For freight brokers and logistics companies, loads are the unit of revenue. Load Management bridges the gap between CRM (relationship) and TMS (operations) — keeping sales and operations aligned.",
+        how: "Navigate to Operations → Loads → New Load. Fill in the load details. Assign a carrier from your Carrier database. Set the rate. Track status through the pipeline: Available → Covered → In Transit → Delivered → Invoiced → Paid.",
+        automation: "When a load moves to Delivered, an invoice is automatically generated. When a load is Covered, a confirmation email sends to the shipper automatically. Overdue loads trigger task alerts to the assigned rep.",
+        outcome: "Complete operational visibility from the CRM. Sales reps can see the status of every load for every customer without switching to a separate TMS system.",
       },
       {
-        id: "carrier-vetting",
-        title: "Carrier Vetting",
-        what: "Automates the process of verifying carrier safety records, insurance certificates, and operating authority before booking a load. Connects to FMCSA data and insurance verification services to flag high-risk carriers automatically.",
-        why: "Using an unvetted carrier exposes your brokerage to significant liability. Carrier Vetting makes due diligence fast, consistent, and documented.",
-        how: "Navigate to Carrier Vetting and enter a carrier's MC number or DOT number. The system returns a full vetting report: safety rating, insurance status, authority status, out-of-service percentage, and any recent violations. Carriers that pass all checks are marked Approved. Carriers with issues are flagged with specific concerns.",
-        automation: "Approved carriers are automatically added to your preferred carrier pool. When a load is posted, the system can automatically notify approved carriers in the relevant lane.",
-        outcome: "Consistent, documented carrier vetting protects your brokerage from liability, builds shipper trust, and creates a defensible compliance record.",
+        id: "carriers",
+        title: "Carrier Management",
+        what: "A database of vetted carriers with safety ratings, insurance certificates, contact information, preferred lanes, and performance history.",
+        why: "Carrier relationships are the supply side of a freight brokerage. A well-maintained carrier database means faster coverage, better rates, and fewer service failures.",
+        how: "Navigate to Operations → Carriers → New Carrier. Enter MC/DOT numbers — the system auto-populates safety data from FMCSA. Add contact information, preferred lanes, and rate history. The Carrier Scorecard tracks on-time delivery percentage, claims history, and communication responsiveness.",
+        automation: "Carrier insurance expiry triggers automatic renewal reminder emails. When a carrier's safety score drops below threshold, they are automatically flagged and removed from the active carrier pool.",
+        outcome: "A curated, performance-tracked carrier network that reduces coverage time and improves service reliability.",
       },
       {
         id: "invoicing",
         title: "Invoicing",
-        what: "Generates, sends, and tracks freight invoices. Pulls load data automatically to pre-fill invoice line items, sends invoices directly to shipper contacts, and tracks payment status.",
-        why: "Manual invoicing is slow, error-prone, and creates cash flow delays. Automated invoicing gets invoices out faster and makes it easier for shippers to pay.",
-        how: "Navigate to Invoicing → New Invoice. Select the associated load — all rate and party information pre-fills automatically. Add any accessorial charges. Review and send. The invoice is emailed to the shipper's billing contact with a payment link. Track payment status on the Invoicing dashboard.",
-        automation: "When a load is marked Delivered, a Workflow can automatically trigger invoice creation. Overdue invoices trigger automatic reminder emails to the shipper's billing contact.",
-        outcome: "Faster invoicing means faster payment. Automated reminders reduce days-sales-outstanding without requiring manual follow-up from your team.",
-      },
-      {
-        id: "customer-portal",
-        title: "Customer Portal",
-        what: "A white-labeled self-service portal where your shipper customers can log in, view their active loads, download invoices, submit new load requests, and communicate with their rep — without calling or emailing.",
-        why: "Shippers want visibility without friction. A portal reduces inbound 'where's my load?' calls by 60–80%, freeing your team to focus on selling rather than status updates.",
-        how: "Navigate to Customer Portal to configure the portal settings: custom domain, branding, and access permissions. Share the portal URL with your shipper contacts. They create their own login and immediately have access to their load history, active shipments, and invoices.",
-        automation: "Load status updates in the portal are automatic — as you update load status in Load Management, the portal reflects the change in real time. No manual portal updates required.",
-        outcome: "A self-service portal is a retention tool. Shippers who have visibility into their shipments are more satisfied, more loyal, and less likely to shop your competitors.",
+        what: "Generate, send, and track invoices for completed loads. Invoices pull data directly from the load record — no manual re-entry. Track payment status, send reminders, and reconcile accounts receivable.",
+        why: "Getting paid is the final step of every sale. Invoicing closes the loop from prospect to paid customer and feeds revenue data back into the CRM for accurate reporting.",
+        how: "Navigate to Operations → Invoicing. Invoices are auto-generated when loads reach Delivered status. Review the invoice, add any accessorial charges, and click Send. The customer receives a branded invoice via email with a payment link. Track status: Sent → Viewed → Paid → Overdue.",
+        automation: "Overdue invoices trigger automatic reminder sequences at 7, 14, and 30 days. Payment receipt triggers a thank-you email and updates the customer's payment history in their company record.",
+        outcome: "Faster collections, fewer manual touchpoints, and a complete revenue record that feeds directly into your analytics.",
       },
     ],
   },
   {
-    id: "ai-premium",
+    id: "ai",
     icon: Sparkles,
     color: "text-pink-500",
     bg: "bg-pink-500/10",
     border: "border-pink-500/20",
     title: "AI Premium Tools",
-    subtitle: "Voice, DocScan, Win Probability, Ghostwriter, and more",
+    subtitle: "Email composer, call coach, meeting prep, battle cards",
     features: [
       {
-        id: "voice-agent",
-        title: "Voice Agent",
-        what: "An AI-powered call assistant that listens to sales calls in real time, provides live coaching prompts, transcribes the conversation, and generates a post-call summary with action items.",
-        why: "Most sales coaching happens after the fact — reviewing recordings, giving feedback on what should have been said. Voice Agent provides coaching in the moment, when it can actually change the outcome of the call.",
-        how: "Navigate to Voice Agent and connect your phone system. When a call begins, the Voice Agent activates automatically. During the call, it displays real-time prompts: 'Prospect mentioned budget — ask about timeline,' 'Competitor mentioned — use Battle Card objection handler.' After the call, the full transcript and AI summary are saved to the contact record automatically.",
-        automation: "Post-call summaries automatically create follow-up tasks based on the commitments made during the call. 'I'll send you a proposal by Friday' becomes a task: 'Send proposal — due Friday.'",
-        outcome: "Reps who use Voice Agent close more deals because they get real-time guidance on the most critical moments of the sales process — the live conversation.",
+        id: "ai-email",
+        title: "AI Email Composer",
+        what: "Write high-converting sales emails in seconds. Input the prospect's name, company, your goal (intro, follow-up, re-engagement), and tone — the AI generates a complete, personalized email ready to send or edit.",
+        why: "Writing effective sales emails is a skill that takes years to develop. The AI Composer gives every rep access to the writing quality of your best performer, on demand.",
+        how: "Navigate to AI Tools → Email Composer. Select the email type. Enter the prospect's name and company. Add any specific context (recent trigger event, previous conversation). Select tone (Professional, Conversational, Direct, Empathetic). Click Generate. Edit as needed and copy to your email client or campaign.",
+        automation: "The AI Composer learns from your highest-performing sent emails. Over time, it incorporates the patterns from your best emails into every generation.",
+        outcome: "Higher-quality outreach at higher volume. Reps spend time on conversations, not on staring at blank screens.",
       },
       {
-        id: "docscan",
-        title: "DocScan",
-        what: "Uses AI to extract structured data from uploaded documents — rate confirmations, bills of lading, carrier packets, insurance certificates — and automatically populate the relevant fields in Apex CRM.",
-        why: "Manual data entry from documents is slow, error-prone, and a waste of skilled rep time. DocScan eliminates this entirely.",
-        how: "Navigate to DocScan → Upload Document. Select the document type and upload the file. The AI extracts all relevant data fields and presents them for review. Confirm the extraction and the data is written to the appropriate records automatically.",
-        automation: "DocScan can be triggered automatically when a document is received via email attachment. The system detects the document type, extracts the data, and creates or updates the relevant records without human intervention.",
-        outcome: "Faster data entry, fewer errors, and more time for reps to focus on selling rather than administrative tasks.",
-      },
-      {
-        id: "win-probability",
-        title: "Win Probability",
-        what: "Uses machine learning to predict the likelihood of closing each deal in your pipeline, based on historical win/loss patterns, deal characteristics, engagement signals, and time-in-stage data.",
-        why: "Not all deals in your pipeline are equally likely to close. Win Probability tells you which deals deserve your attention and which are at risk of being lost.",
-        how: "Navigate to Win Probability to see every open deal ranked by predicted close probability. Deals with high probability and high value are your priority. Deals with dropping probability are at risk — the system flags these with specific reasons: 'No activity in 14 days,' 'Proposal not opened,' 'Competitor mentioned in last call.'",
-        automation: "When a deal's Win Probability drops below a threshold, a Smart Notification fires to the assigned rep and their manager. A Workflow can automatically trigger a re-engagement email or create a task: 'Reach out — deal at risk.'",
-        outcome: "Managers who review Win Probability weekly catch at-risk deals before they are lost. Reps who prioritize by probability close more revenue in less time.",
-      },
-      {
-        id: "revenue-autopilot",
-        title: "Revenue Autopilot",
-        what: "An AI-driven revenue forecasting and optimization engine. Analyzes your pipeline, historical conversion rates, seasonal patterns, and rep performance to generate a rolling 90-day revenue forecast and identify specific actions that will increase it.",
-        why: "Revenue forecasting without AI is guesswork. Revenue Autopilot gives you a data-driven forecast with specific, actionable recommendations to improve it.",
-        how: "Navigate to Revenue Autopilot to see the forecast dashboard. The top section shows the 90-day forecast with confidence intervals. The Optimization Recommendations panel lists specific actions: 'Advance these 5 deals — they are 80% likely to close this month with one more touchpoint,' 'These 3 reps are underperforming vs. forecast — review their pipelines.'",
-        automation: "Revenue Autopilot continuously updates its forecast as deals advance, stall, or close. Recommendations update daily based on the latest pipeline data.",
-        outcome: "Predictable revenue. Sales leaders who use Revenue Autopilot can commit to revenue targets with confidence and identify the specific actions needed to hit them.",
-      },
-      {
-        id: "ai-ghostwriter",
-        title: "AI Ghostwriter",
-        what: "Generates personalized email copy, LinkedIn messages, call scripts, and follow-up sequences on demand. Input the prospect's name, company, role, and the context of your outreach, and the Ghostwriter produces polished, personalized copy in seconds.",
-        why: "Writing personalized outreach at scale is impossible for humans. The Ghostwriter makes it possible — every prospect gets a message that feels like it was written specifically for them.",
-        how: "Navigate to AI Ghostwriter. Select the content type (Email, LinkedIn, Call Script, Follow-Up). Fill in the context fields. Click Generate. Review the output, edit as needed, and copy it to your campaign, template, or sequence. The Ghostwriter learns from your edits over time, improving its output to match your voice.",
-        automation: "The Ghostwriter feeds directly into Ghost Sequences — when a new sequence is created, the AI can generate all email copy automatically based on the target persona and sequence goal.",
-        outcome: "Reps who use the Ghostwriter send more personalized outreach in less time, resulting in higher reply rates and more pipeline.",
-      },
-      {
-        id: "meeting-prep",
-        title: "Meeting Prep",
-        what: "Generates a comprehensive briefing document for any upcoming sales call or meeting. Pulls data from the contact record, company record, deal history, recent news, and the prospect's Digital Twin profile to produce a one-page prep sheet.",
-        why: "Preparation is the most underrated sales skill. A rep who walks into a call knowing the prospect's company news, their role history, and their likely objections will always outperform a rep who wings it.",
-        how: "Navigate to Meeting Prep → New Briefing. Select the contact and the meeting date. The AI generates a briefing that includes: Company overview, recent news, the contact's role and background, previous interaction history, open deal status, recommended talking points, likely objections, and suggested close strategy.",
-        automation: "Meeting Prep briefings can be automatically generated when a meeting is booked — triggered by a calendar integration or a task completion event.",
-        outcome: "Reps who use Meeting Prep close at higher rates because they walk into every conversation with a personalized strategy and full context.",
-      },
-      {
-        id: "b2b-database",
-        title: "B2B Database",
-        what: "Access to a searchable database of business contacts and companies for prospecting. Search by industry, title, company size, location, and technology stack to build targeted prospect lists that feed directly into the Paradigm Engine.",
-        why: "The best outreach starts with the best list. The B2B Database gives you access to verified, enriched contact data without requiring a separate prospecting tool.",
-        how: "Navigate to B2B Database. Use the search filters to define your target profile. Review the results, select the contacts you want, and click Import to Paradigm Engine. The selected contacts are added to the Prospects list and can be enrolled in Ghost Sequences immediately.",
-        automation: "Imported contacts automatically receive a Quantum Score and are evaluated for Ghost Sequence enrollment based on their profile fit.",
-        outcome: "A targeted prospect list built from the B2B Database will always outperform a generic list because every contact matches your ideal customer profile.",
-      },
-      {
-        id: "email-warmup",
-        title: "Email Warmup",
-        what: "The automated process of gradually increasing sending volume from a new email address or domain to build sender reputation before launching full campaigns. The system sends and receives real emails between your addresses and a network of partner addresses, simulating organic engagement.",
-        why: "A new email address has no reputation. ISPs treat unknown senders with suspicion. Warmup builds the reputation that gets your emails into inboxes instead of spam folders.",
-        how: "Navigate to Email Warmup → Add Address. Enter the new email address and SMTP credentials. Set the warmup schedule (typically 4–8 weeks). The system automatically sends increasing volumes of emails daily, marks them as important, and moves them out of spam if they land there. Do not send campaigns from a new address until warmup is complete.",
-        automation: "The warmup schedule runs automatically on a daily cadence. When warmup is complete, the system sends a notification and the address is automatically added to the active sending pool.",
-        outcome: "A warmed-up address achieves inbox placement rates of 95%+ from day one of active sending. Skipping warmup typically results in 40–60% spam placement rates.",
+        id: "ai-assistant",
+        title: "AI CRM Assistant",
+        what: "A conversational AI assistant fully versed in every aspect of Apex CRM. Ask it anything — 'How do I set up a workflow?', 'Add a contact named John Smith at Acme Corp', 'Show me my hot leads', 'Create a campaign for my top 50 prospects'. It answers questions and executes CRM tasks directly.",
+        why: "The best CRM is one that gets out of your way. The AI Assistant removes friction from every task — instead of navigating menus, you describe what you want and it happens.",
+        how: "Click the AI button (bottom-right of any screen). Type your request in natural language. The assistant responds with information or executes the action directly. Examples: 'What is my pipeline value this month?', 'Mark the Johnson deal as closed won', 'Schedule a follow-up call with Sarah at Freight Co for next Tuesday'.",
+        automation: "The AI Assistant is connected to every module. It can create contacts, update deals, send campaigns, generate reports, and trigger workflows — all from a single conversation.",
+        outcome: "A CRM that works at the speed of thought. The AI Assistant is the fastest path from intention to action in the entire system.",
       },
     ],
   },
@@ -416,10 +356,10 @@ const SECTIONS = [
         id: "reports",
         title: "Reports",
         what: "Comprehensive reporting across every dimension of your sales and marketing operation: pipeline performance, campaign metrics, deliverability trends, team performance, revenue forecasting, and ROI analysis.",
-        why: "You cannot improve what you do not measure. Analytics gives you the data to answer the most important questions in sales management: Where is revenue coming from? Which reps are performing? Which campaigns are working? Where is the pipeline stalling?",
-        how: "Navigate to Analytics and select a report category from the left panel. The Pipeline Report shows deals by stage, average deal size, win rate, and average sales cycle length. The Campaign Report shows open rates, click rates, bounce rates, and revenue attributed to each campaign. The Team Report shows individual rep performance against quota. Use the date range picker to compare periods. Use the export button to download any report as a CSV. Use Scheduled Reports to have key reports emailed to you every Monday morning automatically.",
+        why: "You cannot improve what you do not measure. Analytics gives you the data to answer the most important questions in sales management: Where is revenue coming from? Which reps are performing? Which campaigns are working?",
+        how: "Navigate to Analytics and select a report category from the left panel. The Pipeline Report shows deals by stage, average deal size, win rate, and average sales cycle length. The Campaign Report shows open rates, click rates, bounce rates, and revenue attributed to each campaign. The Team Report shows individual rep performance against quota — Sales Managers see their Account Managers; Office Managers see their Coordinators.",
         automation: "All report data updates in real time as activities are logged, deals advance, and campaigns send. No manual data entry or report generation required.",
-        outcome: "Data-driven sales leadership. The teams that review analytics weekly make better decisions, allocate resources more effectively, and hit their numbers more consistently than teams that operate on gut instinct.",
+        outcome: "Data-driven sales leadership. The teams that review analytics weekly make better decisions, allocate resources more effectively, and hit their numbers more consistently.",
       },
     ],
   },
@@ -430,24 +370,42 @@ const SECTIONS = [
     bg: "bg-slate-500/10",
     border: "border-slate-500/20",
     title: "Settings & Admin",
-    subtitle: "Branding, integrations, billing, API",
+    subtitle: "Branding, integrations, billing, API, role access",
     features: [
       {
         id: "company-settings",
         title: "Company Settings & Branding",
         what: "Configure all account-level preferences: Company Profile (name, logo, address), User Profile, Notification Preferences, Email Signature, and API access. The Company Branding section lets you upload your logo or generate one with AI — this logo appears in the sidebar, top nav, and all outbound emails.",
         why: "A CRM that carries your company's identity feels like your tool, not a generic software product. Branding builds team pride and reinforces your company's identity in every customer interaction.",
-        how: "Navigate to Settings → Company. Upload your logo (PNG or SVG, recommended 200×200px) or click AI Generate to create one from your company name. The logo appears immediately in the sidebar header and top navigation. Fill in your company address — this is required for CAN-SPAM compliance on all outbound emails.",
+        how: "Navigate to Settings → Company. Upload your logo (PNG or SVG, recommended 200×200px) or click AI Generate to create one from your company name. The logo appears immediately in the sidebar header and top navigation.",
         automation: "Your company logo is automatically included in all outbound email footers and in the Customer Portal header.",
         outcome: "A fully branded CRM experience that reinforces your company's identity to every team member and every customer who interacts with your portal.",
+      },
+      {
+        id: "role-access",
+        title: "Role-Based Access Control",
+        what: "Every user in Apex CRM is assigned a role that determines which sections of the CRM they can access by default. The hierarchy is: Developer → Apex Owner → Company Admin → Sales Manager / Office Manager → Account Manager / Coordinator.",
+        why: "Not every team member needs access to every feature. Role-based access protects sensitive data, reduces cognitive overload for front-line users, and ensures that advanced features are only used by people trained to use them correctly.",
+        how: "Default access is assigned automatically based on role. Company Admins can extend access to specific users via the Share system (see CRM Bible Sharing below). To change a user's role, navigate to Team → click the user → Edit Role.",
+        automation: "Role changes take effect immediately. When a user is promoted from Account Manager to Sales Manager, their access expands automatically — no manual permission updates required.",
+        outcome: "A clean, uncluttered interface for front-line users and full visibility for managers and admins — each person sees exactly what they need to do their job effectively.",
+      },
+      {
+        id: "bible-sharing",
+        title: "CRM Bible Sharing",
+        what: "Any user with access to a CRM Bible section can share that section — or individual features within it — with any other user in the same company. Shares can be View Only or Collaborate (the recipient can also share further). Shares are revocable at any time.",
+        why: "Cross-functional projects require cross-functional knowledge. A Coordinator working on a marketing campaign needs to understand the Marketing section. A Sales Manager collaborating with the Office Manager on compliance needs to share relevant documentation. The Share system enables this without permanently changing anyone's role.",
+        how: "On any section header or feature card in the CRM Bible, click the Share button. Search for the team member by name. Select View Only or Collaborate. Click Share. The recipient immediately gains access to that section or feature. To revoke, open the Shared With Me panel (top of the Bible page) and click Revoke next to any active share.",
+        automation: "Share grants take effect immediately. No admin approval required. The grantor retains the ability to revoke at any time. Admins can revoke any share in the system.",
+        outcome: "Flexible, project-based knowledge sharing that respects the default role hierarchy while enabling collaboration across teams without permanent permission changes.",
       },
       {
         id: "integrations-settings",
         title: "Integrations",
         what: "Connect external services to Apex CRM: Apollo.io (lead sourcing), NeverBounce (email verification), SendGrid (additional sending capacity), PhantomBuster (LinkedIn automation), and Google AI Studio (enhanced AI features).",
         why: "No single tool does everything. Integrations let Apex CRM serve as the hub that connects your entire sales technology stack.",
-        how: "Navigate to Paradigm → Integrations. Each integration card shows the connection status and required credentials. Click Connect, enter your API key, and click Test Connection to verify. Connected integrations appear with a green status indicator.",
-        automation: "Connected integrations feed data automatically into Apex CRM. Apollo.io sends new prospects to the Paradigm Engine. NeverBounce verifies emails before they are added to the system. SendGrid handles overflow sending when your primary SMTP pool is at capacity.",
+        how: "Navigate to Paradigm → Integrations. Each integration card shows the connection status and required credentials. Click Connect, enter your API key, and click Test Connection to verify.",
+        automation: "Connected integrations feed data automatically into Apex CRM. Apollo.io sends new prospects to the Paradigm Engine. NeverBounce verifies emails before they are added to the system.",
         outcome: "A connected tech stack where data flows automatically between tools, eliminating manual imports, exports, and copy-paste workflows.",
       },
       {
@@ -455,7 +413,7 @@ const SECTIONS = [
         title: "Billing & Plans",
         what: "Manage your subscription, view invoices, upgrade or downgrade your plan, and access the Stripe billing portal for payment method management.",
         why: "Transparent billing and easy plan management reduce friction and build trust with your customers.",
-        how: "Navigate to Billing to see your current plan, next billing date, and usage metrics. Click Upgrade to see available plans and pricing. Click Manage Billing to open the Stripe portal where you can update your payment method, download invoices, or cancel your subscription.",
+        how: "Navigate to Billing to see your current plan, next billing date, and usage metrics. Click Upgrade to see available plans and pricing. Click Manage Billing to open the Stripe portal.",
         automation: "Subscription status is checked automatically on every login. If a payment fails, the system sends automated reminder emails and provides a direct link to update the payment method.",
         outcome: "Frictionless billing management that keeps your team focused on selling, not on administrative subscription tasks.",
       },
@@ -463,63 +421,323 @@ const SECTIONS = [
   },
 ];
 
+// ─── Share Modal ──────────────────────────────────────────────────────────────
+
+function ShareModal({
+  open, onClose, sectionId, featureId, sectionTitle, featureTitle,
+}: {
+  open: boolean;
+  onClose: () => void;
+  sectionId: string;
+  featureId?: string;
+  sectionTitle: string;
+  featureTitle?: string;
+}) {
+  const [query, setQuery] = useState("");
+  const [selectedUser, setSelectedUser] = useState<{ id: number; name: string | null; email: string | null; systemRole: string } | null>(null);
+  const [permission, setPermission] = useState<"view" | "collaborate">("view");
+
+  const searchQuery = trpc.bibleShares.searchUsers.useQuery(
+    { query },
+    { enabled: query.length >= 2 }
+  );
+  const shareMutation = trpc.bibleShares.share.useMutation({
+    onSuccess: () => {
+      toast.success("Shared successfully", { description: `${featureTitle ?? sectionTitle} shared with ${selectedUser?.name ?? "user"}.` });
+      onClose();
+      setQuery("");
+      setSelectedUser(null);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const handleShare = () => {
+    if (!selectedUser) return;
+    shareMutation.mutate({ sharedWithUserId: selectedUser.id, sectionId, featureId, permission });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={v => !v && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Share2 className="h-4 w-4 text-primary" />
+            Share {featureTitle ? `"${featureTitle}"` : `"${sectionTitle}" section`}
+          </DialogTitle>
+          <DialogDescription>
+            Search for a team member to share this {featureTitle ? "feature" : "section"} with.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 pt-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              className="pl-9"
+              placeholder="Search by name or email..."
+              value={query}
+              onChange={e => { setQuery(e.target.value); setSelectedUser(null); }}
+            />
+          </div>
+
+          {query.length >= 2 && searchQuery.data && searchQuery.data.length > 0 && !selectedUser && (
+            <div className="border rounded-lg divide-y max-h-48 overflow-y-auto">
+              {searchQuery.data.map((u: { id: number; name: string | null; email: string | null; systemRole: string }) => (
+                <button
+                  key={u.id}
+                  onClick={() => setSelectedUser(u)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted text-left transition-colors"
+                >
+                  <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0">
+                    {(u.name ?? "?")[0].toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{u.name ?? "Unknown"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{u.email} · {u.systemRole.replace(/_/g, " ")}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {query.length >= 2 && searchQuery.data?.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-2">No team members found.</p>
+          )}
+
+          {selectedUser && (
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
+                {(selectedUser.name ?? "?")[0].toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate">{selectedUser.name}</p>
+                <p className="text-xs text-muted-foreground">{selectedUser.email}</p>
+              </div>
+              <button onClick={() => setSelectedUser(null)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Permission</label>
+            <Select value={permission} onValueChange={v => setPermission(v as "view" | "collaborate")}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="view">
+                  <div className="flex items-center gap-2">
+                    <Eye className="h-3.5 w-3.5" />
+                    <span>View Only — can read but cannot share further</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="collaborate">
+                  <div className="flex items-center gap-2">
+                    <Pencil className="h-3.5 w-3.5" />
+                    <span>Collaborate — can also share with others</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex gap-2 pt-1">
+            <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
+            <Button
+              className="flex-1"
+              disabled={!selectedUser || shareMutation.isPending}
+              onClick={handleShare}
+            >
+              {shareMutation.isPending ? "Sharing..." : "Share"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Feature Card ─────────────────────────────────────────────────────────────
 
-function FeatureCard({ feature, sectionColor, sectionBg, sectionBorder }: {
+function FeatureCard({ feature, sectionId, sectionTitle, sectionColor, sectionBg, sectionBorder, canShare }: {
   feature: typeof SECTIONS[0]["features"][0];
+  sectionId: string;
+  sectionTitle: string;
   sectionColor: string;
   sectionBg: string;
   sectionBorder: string;
+  canShare: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const pillClass = `inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${sectionBg} ${sectionColor} border ${sectionBorder}`;
 
   return (
-    <div className={`rounded-xl border bg-card transition-all duration-200 ${open ? "shadow-md" : "hover:shadow-sm"}`}>
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-5 py-4 text-left"
-      >
-        <span className="font-semibold text-foreground text-sm">{feature.title}</span>
-        {open ? <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
-      </button>
-
-      {open && (
-        <div className="px-5 pb-5 space-y-4 border-t pt-4">
-          <div>
-            <span className={pillClass}>What it is</span>
-            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{feature.what}</p>
-          </div>
-          <div>
-            <span className={pillClass}>Why it exists</span>
-            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{feature.why}</p>
-          </div>
-          <div>
-            <span className={pillClass}>How to use it</span>
-            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{feature.how}</p>
-          </div>
-          <div>
-            <span className={pillClass}>Automation connection</span>
-            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{feature.automation}</p>
-          </div>
-          <div>
-            <span className={pillClass}>Sales outcome</span>
-            <p className="mt-2 text-sm font-medium text-foreground leading-relaxed">{feature.outcome}</p>
-          </div>
+    <>
+      <div className={`rounded-xl border bg-card transition-all duration-200 ${open ? "shadow-md" : "hover:shadow-sm"}`}>
+        <div className="flex items-center">
+          <button
+            onClick={() => setOpen(v => !v)}
+            className="flex-1 flex items-center justify-between px-5 py-4 text-left"
+          >
+            <span className="font-semibold text-foreground text-sm">{feature.title}</span>
+            {open ? <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
+          </button>
+          {canShare && (
+            <button
+              onClick={() => setShareOpen(true)}
+              className="px-3 py-4 text-muted-foreground hover:text-primary transition-colors"
+              title="Share this feature"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
+
+        {open && (
+          <div className="px-5 pb-5 space-y-4 border-t pt-4">
+            <div>
+              <span className={pillClass}>What it is</span>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{feature.what}</p>
+            </div>
+            <div>
+              <span className={pillClass}>Why it exists</span>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{feature.why}</p>
+            </div>
+            <div>
+              <span className={pillClass}>How to use it</span>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{feature.how}</p>
+            </div>
+            <div>
+              <span className={pillClass}>Automation connection</span>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{feature.automation}</p>
+            </div>
+            <div>
+              <span className={pillClass}>Sales outcome</span>
+              <p className="mt-2 text-sm font-medium text-foreground leading-relaxed">{feature.outcome}</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {shareOpen && (
+        <ShareModal
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
+          sectionId={sectionId}
+          featureId={feature.id}
+          sectionTitle={sectionTitle}
+          featureTitle={feature.title}
+        />
       )}
+    </>
+  );
+}
+
+// ─── Shared With Me Panel ─────────────────────────────────────────────────────
+
+function SharedWithMePanel() {
+  const utils = trpc.useUtils();
+  const { data: sharedWithMe = [] } = trpc.bibleShares.listSharedWithMe.useQuery();
+  const { data: myShares = [] } = trpc.bibleShares.listMyShares.useQuery();
+  const revokeMutation = trpc.bibleShares.revoke.useMutation({
+    onSuccess: () => {
+      utils.bibleShares.listMyShares.invalidate();
+      utils.bibleShares.listSharedWithMe.invalidate();
+      toast.success("Share revoked");
+    },
+  });
+
+  if (sharedWithMe.length === 0 && myShares.length === 0) return null;
+
+  return (
+    <div className="mb-8 rounded-xl border bg-card p-5">
+      <h3 className="font-bold text-sm mb-4 flex items-center gap-2">
+        <Share2 className="h-4 w-4 text-primary" />
+        Shared Access
+      </h3>
+      <Tabs defaultValue="received">
+        <TabsList className="mb-4">
+          <TabsTrigger value="received">Shared With Me {sharedWithMe.length > 0 && `(${sharedWithMe.length})`}</TabsTrigger>
+          <TabsTrigger value="granted">I've Shared {myShares.length > 0 && `(${myShares.length})`}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="received">
+          {sharedWithMe.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No sections have been shared with you yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {sharedWithMe.map((s: any) => (
+                <div key={s.id} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
+                  <div>
+                    <span className="font-medium">{s.featureId ? `Feature: ${s.featureId}` : `Section: ${s.sectionId}`}</span>
+                    <span className="text-muted-foreground ml-2">from {s.grantorName}</span>
+                  </div>
+                  <Badge variant="outline" className="text-xs capitalize">{s.permission}</Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+        <TabsContent value="granted">
+          {myShares.length === 0 ? (
+            <p className="text-sm text-muted-foreground">You haven't shared anything yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {myShares.map((s: any) => (
+                <div key={s.id} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
+                  <div>
+                    <span className="font-medium">{s.featureId ? `Feature: ${s.featureId}` : `Section: ${s.sectionId}`}</span>
+                    <span className="text-muted-foreground ml-2">→ {s.recipientName}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs capitalize">{s.permission}</Badge>
+                    <button
+                      onClick={() => revokeMutation.mutate({ shareId: s.id as number })}
+                      className="text-destructive hover:text-destructive/80 transition-colors"
+                      title="Revoke share"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
 
+// ─── Role Badge ───────────────────────────────────────────────────────────────
+
+const ROLE_DISPLAY: Record<string, { label: string; color: string }> = {
+  developer: { label: "Developer", color: "bg-red-500/10 text-red-500 border-red-500/20" },
+  apex_owner: { label: "Apex Owner", color: "bg-orange-500/10 text-orange-500 border-orange-500/20" },
+  super_admin: { label: "Super Admin", color: "bg-orange-500/10 text-orange-500 border-orange-500/20" },
+  company_admin: { label: "Company Admin", color: "bg-violet-500/10 text-violet-500 border-violet-500/20" },
+  sales_manager: { label: "Sales Manager", color: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
+  office_manager: { label: "Office Manager", color: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20" },
+  manager: { label: "Manager", color: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
+  account_manager: { label: "Account Manager", color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
+  coordinator: { label: "Coordinator", color: "bg-teal-500/10 text-teal-500 border-teal-500/20" },
+  sales_rep: { label: "Sales Rep", color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
+  user: { label: "User", color: "bg-slate-500/10 text-slate-500 border-slate-500/20" },
+};
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function CRMBible() {
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [shareSectionOpen, setShareSectionOpen] = useState<string | null>(null);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const { data: sharedWithMe = [] } = trpc.bibleShares.listSharedWithMe.useQuery();
 
   useEffect(() => {
     const handleScroll = () => setShowScrollTop(window.scrollY > 400);
@@ -532,7 +750,40 @@ export default function CRMBible() {
     setActiveSection(id);
   };
 
-  const filteredSections = SECTIONS.map(section => ({
+  const userRole = (user as any)?.systemRole ?? "user";
+  const userLevel = ROLE_LEVEL[userRole] ?? 30;
+
+  // Build set of section IDs shared with this user
+  const sharedSectionIds = new Set(
+    (sharedWithMe as any[]).filter(s => !s.featureId).map((s: any) => s.sectionId)
+  );
+  const sharedFeatureIds = new Set(
+    (sharedWithMe as any[]).filter(s => s.featureId).map((s: any) => `${s.sectionId}::${s.featureId}`)
+  );
+
+  // Determine if user can see a section
+  const canSeeSection = (sectionId: string) => {
+    const minLevel = SECTION_MIN_LEVEL[sectionId] ?? 30;
+    return userLevel >= minLevel || sharedSectionIds.has(sectionId);
+  };
+
+  // Determine if user can see a feature (section visible OR feature specifically shared)
+  const canSeeFeature = (sectionId: string, featureId: string) => {
+    return canSeeSection(sectionId) || sharedFeatureIds.has(`${sectionId}::${featureId}`);
+  };
+
+  // Can user share? They must be able to see the section
+  const canShare = (sectionId: string) => canSeeSection(sectionId);
+
+  const visibleSections = SECTIONS
+    .filter(s => canSeeSection(s.id))
+    .map(s => ({
+      ...s,
+      features: s.features.filter(f => canSeeFeature(s.id, f.id)),
+    }))
+    .filter(s => s.features.length > 0);
+
+  const filteredSections = visibleSections.map(section => ({
     ...section,
     features: section.features.filter(f => {
       if (!search) return true;
@@ -549,7 +800,8 @@ export default function CRMBible() {
     }),
   })).filter(s => s.features.length > 0);
 
-  const totalFeatures = SECTIONS.reduce((acc, s) => acc + s.features.length, 0);
+  const totalFeatures = visibleSections.reduce((acc, s) => acc + s.features.length, 0);
+  const roleDisplay = ROLE_DISPLAY[userRole] ?? { label: userRole, color: "bg-slate-500/10 text-slate-500 border-slate-500/20" };
 
   return (
     <div className="min-h-screen bg-background">
@@ -567,9 +819,13 @@ export default function CRMBible() {
           </div>
 
           <div className="flex flex-wrap gap-3 mb-6">
-            <Badge variant="secondary">{SECTIONS.length} sections</Badge>
+            <Badge variant="secondary">{visibleSections.length} sections</Badge>
             <Badge variant="secondary">{totalFeatures} features documented</Badge>
             <Badge variant="secondary">What · Why · How · Automation · Outcome</Badge>
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${roleDisplay.color}`}>
+              <Lock className="h-3 w-3" />
+              Viewing as: {roleDisplay.label}
+            </span>
           </div>
 
           <div className="relative max-w-xl">
@@ -589,7 +845,7 @@ export default function CRMBible() {
         <aside className="hidden lg:block w-56 shrink-0">
           <div className="sticky top-6 space-y-1">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-2">Sections</p>
-            {SECTIONS.map(section => {
+            {visibleSections.map(section => {
               const Icon = section.icon;
               return (
                 <button
@@ -611,6 +867,9 @@ export default function CRMBible() {
 
         {/* ── Content ── */}
         <main className="flex-1 min-w-0 space-y-10">
+          {/* Shared Access Panel */}
+          <SharedWithMePanel />
+
           {search && filteredSections.length === 0 && (
             <div className="text-center py-16 text-muted-foreground">
               <Search className="h-8 w-8 mx-auto mb-3 opacity-40" />
@@ -632,13 +891,26 @@ export default function CRMBible() {
                   <div className={`h-9 w-9 rounded-lg ${section.bg} border ${section.border} flex items-center justify-center shrink-0`}>
                     <Icon className={`h-4.5 w-4.5 ${section.color}`} />
                   </div>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <h2 className={`text-lg font-black ${section.color}`}>{section.title}</h2>
                     <p className="text-xs text-muted-foreground">{section.subtitle}</p>
                   </div>
-                  <Badge variant="outline" className="ml-auto text-xs">
-                    {section.features.length} {section.features.length === 1 ? "feature" : "features"}
-                  </Badge>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant="outline" className="text-xs">
+                      {section.features.length} {section.features.length === 1 ? "feature" : "features"}
+                    </Badge>
+                    {canShare(section.id) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 gap-1.5 text-xs"
+                        onClick={() => setShareSectionOpen(section.id)}
+                      >
+                        <Share2 className="h-3 w-3" />
+                        Share
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Feature cards */}
@@ -647,12 +919,25 @@ export default function CRMBible() {
                     <FeatureCard
                       key={feature.id}
                       feature={feature}
+                      sectionId={section.id}
+                      sectionTitle={section.title}
                       sectionColor={section.color}
                       sectionBg={section.bg}
                       sectionBorder={section.border}
+                      canShare={canShare(section.id)}
                     />
                   ))}
                 </div>
+
+                {/* Section share modal */}
+                {shareSectionOpen === section.id && (
+                  <ShareModal
+                    open
+                    onClose={() => setShareSectionOpen(null)}
+                    sectionId={section.id}
+                    sectionTitle={section.title}
+                  />
+                )}
               </section>
             );
           })}

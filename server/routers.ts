@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
+import { bibleShares } from "../drizzle/schema";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, managerProcedure, companyAdminProcedure, apexOwnerProcedure, developerProcedure, router, getRoleLevel } from "./_core/trpc";
@@ -3657,6 +3658,95 @@ export const appRouter = router({
       const msgs = input.messages.map(m => ({ role: m.role as any, content: m.content }));
       const response = await handleChat(msgs, ctx.user.id, ctx.user.name || "User");
       return { response };
+    }),
+  }),
+
+  bibleShares: router({
+    share: protectedProcedure.input(z.object({
+      sharedWithUserId: z.number(),
+      sectionId: z.string(),
+      featureId: z.string().optional(),
+      permission: z.enum(["view", "collaborate"]).default("view"),
+    })).mutation(async ({ ctx, input }) => {
+      if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST" });
+      const { eq, isNull, and } = await import("drizzle-orm");
+      const dbConn = await db.getDb();
+      if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const existing = await dbConn.select().from(bibleShares).where(
+        and(
+          eq(bibleShares.sharedByUserId, ctx.user.id),
+          eq(bibleShares.sharedWithUserId, input.sharedWithUserId),
+          eq(bibleShares.sectionId, input.sectionId),
+          input.featureId ? eq(bibleShares.featureId, input.featureId) : isNull(bibleShares.featureId),
+          isNull(bibleShares.revokedAt),
+        )
+      ).limit(1);
+      if (existing.length > 0) return { id: existing[0].id };
+      const [result] = await dbConn.insert(bibleShares).values({
+        sharedByUserId: ctx.user.id,
+        sharedWithUserId: input.sharedWithUserId,
+        sectionId: input.sectionId,
+        featureId: input.featureId ?? null,
+        permission: input.permission,
+        tenantCompanyId: ctx.user.tenantCompanyId,
+        createdAt: Date.now(),
+      });
+      return { id: (result as any).insertId };
+    }),
+
+    revoke: protectedProcedure.input(z.object({
+      shareId: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      const { eq } = await import("drizzle-orm");
+      const dbConn = await db.getDb();
+      if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const share = await dbConn.select().from(bibleShares).where(eq(bibleShares.id, input.shareId)).limit(1);
+      if (!share.length) throw new TRPCError({ code: "NOT_FOUND" });
+      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      if (share[0].sharedByUserId !== ctx.user.id && !isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
+      await dbConn.update(bibleShares).set({ revokedAt: Date.now(), revokedByUserId: ctx.user.id }).where(eq(bibleShares.id, input.shareId));
+      return { success: true };
+    }),
+
+    listMyShares: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user.tenantCompanyId) return [];
+      const { eq, isNull, and } = await import("drizzle-orm");
+      const dbConn = await db.getDb();
+      if (!dbConn) return [];
+      const shares = await dbConn.select().from(bibleShares).where(
+        and(eq(bibleShares.sharedByUserId, ctx.user.id), isNull(bibleShares.revokedAt))
+      );
+      return Promise.all(shares.map(async (s: typeof bibleShares.$inferSelect) => {
+        const recipient = await db.getUserById(s.sharedWithUserId);
+        return { ...s, recipientName: recipient?.name ?? "Unknown" };
+      }));
+    }),
+
+    listSharedWithMe: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user.tenantCompanyId) return [];
+      const { eq, isNull, and } = await import("drizzle-orm");
+      const dbConn = await db.getDb();
+      if (!dbConn) return [];
+      const shares = await dbConn.select().from(bibleShares).where(
+        and(eq(bibleShares.sharedWithUserId, ctx.user.id), isNull(bibleShares.revokedAt))
+      );
+      return Promise.all(shares.map(async (s: typeof bibleShares.$inferSelect) => {
+        const grantor = await db.getUserById(s.sharedByUserId);
+        return { ...s, grantorName: grantor?.name ?? "Unknown" };
+      }));
+    }),
+
+    searchUsers: protectedProcedure.input(z.object({
+      query: z.string().min(1),
+    })).query(async ({ ctx, input }) => {
+      if (!ctx.user.tenantCompanyId) return [];
+      const allUsers = await db.getUsersByCompany(ctx.user.tenantCompanyId);
+      const q = input.query.toLowerCase();
+      return allUsers
+        .filter((u: { id: number; name: string | null; email: string | null; systemRole: string }) => u.id !== ctx.user.id)
+        .filter((u: { id: number; name: string | null; email: string | null; systemRole: string }) => (u.name ?? "").toLowerCase().includes(q) || (u.email ?? "").toLowerCase().includes(q))
+        .slice(0, 10)
+        .map((u: { id: number; name: string | null; email: string | null; systemRole: string }) => ({ id: u.id, name: u.name, email: u.email, systemRole: u.systemRole }));
     }),
   }),
 
