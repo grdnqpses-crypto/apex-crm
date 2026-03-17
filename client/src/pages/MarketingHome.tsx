@@ -266,22 +266,22 @@ export default function MarketingHome() {
             ))}
           </div>
 
-          {/* Always-visible nav buttons — desktop */}
-          <div className="flex items-center gap-3">
+          {/* Always-visible buttons on ALL screen sizes */}
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setLoginOpen(true)}
-              className="text-sm font-semibold text-white/70 hover:text-white transition-colors px-4 py-2 rounded-xl border border-white/10 hover:border-white/20 hidden sm:block"
+              className="text-xs sm:text-sm font-semibold text-white/70 hover:text-white transition-colors px-3 sm:px-4 py-2 rounded-xl border border-white/10 hover:border-white/20"
             >
               Sign In
             </button>
             <Link href="/signup">
-              <button className="text-sm font-bold bg-gradient-to-r from-orange-500 to-amber-400 text-black px-5 py-2.5 rounded-xl hover:opacity-90 transition-all hover:shadow-lg hover:shadow-orange-500/20 hidden sm:block">
-                Start Free Trial
+              <button className="text-xs sm:text-sm font-bold bg-gradient-to-r from-orange-500 to-amber-400 text-black px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl hover:opacity-90 transition-all hover:shadow-lg hover:shadow-orange-500/20 whitespace-nowrap">
+                Free Trial
               </button>
             </Link>
-            {/* Mobile hamburger — only for nav links */}
-            <button className="sm:hidden p-2 text-white/60" onClick={() => setMobileOpen(!mobileOpen)}>
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {/* Hamburger only for nav links on mobile */}
+            <button className="md:hidden p-1.5 text-white/60" onClick={() => setMobileOpen(!mobileOpen)}>
+              {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
           </div>
         </div>
