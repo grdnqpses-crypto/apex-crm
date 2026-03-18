@@ -1332,3 +1332,23 @@
 - [x] Update MarketingHome annual toggle to show -10% (not -25%)
 - [x] Update Subscription page annual pricing display
 - [x] Update FAQ to mention non-refundable annual policy
+
+## Billing & Payment Management System
+- [ ] Tenant self-service: prominent "Billing" page with credit card management (add/update card via Stripe portal)
+- [ ] Tenant self-service: subscription status, next billing date, current plan
+- [ ] Tenant self-service: buy AI credits button (Stripe checkout)
+- [ ] Tenant self-service: full payment history (all invoices, amounts, dates, status)
+- [ ] Tenant self-service: download invoice PDFs
+- [ ] Apex Owner/Developer: /apex/payments dashboard — all tenant payment records
+- [ ] Apex Owner/Developer: overdue accounts list with days overdue
+- [ ] Apex Owner/Developer: manual charge trigger per tenant
+- [ ] Apex Owner/Developer: account suspension/reactivation for overdue
+- [ ] Apex Owner/Developer: revenue reports (MRR, ARR, overdue total, collected this month)
+- [ ] Apex Owner/Developer: Stripe customer portal link per tenant
+- [ ] Stripe webhook: payment_intent.succeeded → mark invoice paid
+- [ ] Stripe webhook: invoice.payment_failed → mark overdue, trigger notification
+- [ ] Stripe webhook: customer.subscription.deleted → suspend account
+- [ ] DB: invoices table (tenant, amount, status, due_date, paid_date, stripe_invoice_id)
+- [ ] DB: payment_methods table (tenant, stripe_customer_id, card last4, brand, exp)
+- [ ] Sidebar: "Billing" nav item clearly visible to Company Admin+
+- [ ] Sidebar: "Payments" nav item in Apex Platform section for Owner/Developer
