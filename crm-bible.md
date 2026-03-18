@@ -793,11 +793,23 @@ Navigate to **Settings → Company** to upload your company logo and manage your
 ### Billing & Plans
 Navigate to **Billing** to manage your subscription, upgrade or downgrade your plan, and access the Stripe billing portal for payment method management. This section is visible to **Company Admins, Apex Owners, and Developers** only.
 
-**What it is:** The Billing page displays your current subscription tier (Starter $197/mo, Professional $697/mo, Enterprise $1,497/mo), your next billing date, and a direct link to the Stripe portal for payment method management.
+**What it is:** The Billing page displays your current subscription tier, your next billing date, and a direct link to the Stripe portal for payment method management. Apex CRM offers five subscription tiers:
+
+| Tier | Monthly Price | Users Included | Add-On Users | Max Users |
+|------|--------------|----------------|--------------|----------|
+| Success Starter | $99/mo | 1 user | +$30/user/mo | Up to 5 |
+| Growth Foundation | $197/mo | 5 users | +$30/user/mo | Up to 15 |
+| Fortune Foundation | $497/mo | 15 users | +$30/user/mo | Up to 25 |
+| Fortune | $697/mo | 25 users | +$30/user/mo | Up to 40 |
+| Fortune Plus | $1,497/mo | 50 users | None (top tier) | 50 max |
+
+All tiers allow additional user seats at **$30/user/month** up to the next tier's base user count. Fortune Plus is capped at 50 users.
 
 **Why it exists:** Subscription management must be accessible to the people responsible for the business relationship — not to front-line reps. Keeping billing visible only to admins and above prevents confusion and protects financial information.
 
-**How to use it:** Navigate to **Billing** in the sidebar. Click **Upgrade Plan** to move to a higher tier. Click **Manage Billing** to open the Stripe portal where you can update your credit card, download invoices, or cancel. Annual billing saves 25% over monthly.
+**How to use it:** Navigate to **Billing** in the sidebar. Click **Upgrade Plan** to move to a higher tier. Click **Manage Billing** to open the Stripe portal where you can update your credit card, download invoices, or cancel.
+
+**Annual billing:** Annual plans are available at a **10% discount** over monthly pricing. **Important:** Annual plans are billed upfront and are **NON-REFUNDABLE for any reason**, including partial-year cancellations. You will be required to acknowledge this policy by checking a confirmation box before completing an annual purchase. Monthly plans can be cancelled at any time with no penalty.
 
 **Automation connection:** When a subscription is activated via Stripe, the system automatically provisions the correct feature set for your tier. When a payment fails, the Payment Failed Banner appears automatically on the dashboard.
 

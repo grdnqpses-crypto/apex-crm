@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE tenant_companies MODIFY COLUMN subscriptionTier ENUM('trial', 'success_starter', 'growth_foundation', 'fortune_foundation', 'fortune', 'fortune_plus') NOT NULL DEFAULT 'trial';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute ALTER TABLE tenant_companies MODIFY COLUMN subscriptionTier ENUM('trial', 'success_starter', 'growth_foundation', 'fortune_foundation', 'fortune', 'fortune_plus') NOT NULL DEFAULT 'trial';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1265 (01000) at line 1: Data truncated for column 'subscriptionTier', value is 'enterprise'"
+  ]
+}

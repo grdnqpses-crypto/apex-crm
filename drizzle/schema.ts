@@ -12,7 +12,7 @@ export const tenantCompanies = mysqlTable("tenant_companies", {
   phone: varchar("phone", { length: 64 }),
   contactEmail: varchar("contactEmail", { length: 320 }),
   maxUsers: int("maxUsers").default(25),
-  subscriptionTier: mysqlEnum("subscriptionTier", ["trial", "starter", "professional", "enterprise"]).default("trial").notNull(),
+  subscriptionTier: mysqlEnum("subscriptionTier", ["trial", "success_starter", "growth_foundation", "fortune_foundation", "fortune", "fortune_plus"]).default("trial").notNull(),
   subscriptionStatus: mysqlEnum("subscriptionStatus", ["active", "suspended", "cancelled", "expired"]).default("active").notNull(),
   trialEndsAt: bigint("trialEndsAt", { mode: "number" }),
   stripeCustomerId: varchar("stripeCustomerId", { length: 128 }),

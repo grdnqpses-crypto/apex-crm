@@ -22,9 +22,11 @@ function formatPrice(cents: number) {
 function SubscriptionBadge({ status, tier }: { status: string; tier: string }) {
   const tierColors: Record<string, string> = {
     trial: "bg-amber-100 text-amber-700 border-amber-200",
-    starter: "bg-blue-100 text-blue-700 border-blue-200",
-    professional: "bg-purple-100 text-purple-700 border-purple-200",
-    enterprise: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    success_starter: "bg-sky-100 text-sky-700 border-sky-200",
+    growth_foundation: "bg-blue-100 text-blue-700 border-blue-200",
+    fortune_foundation: "bg-violet-100 text-violet-700 border-violet-200",
+    fortune: "bg-purple-100 text-purple-700 border-purple-200",
+    fortune_plus: "bg-emerald-100 text-emerald-700 border-emerald-200",
   };
   const statusIcons: Record<string, React.ReactNode> = {
     active: <CheckCircle2 className="h-3.5 w-3.5" />,
@@ -45,6 +47,7 @@ export default function Billing() {
   const [, setLocation] = useLocation();
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [annualAcknowledged, setAnnualAcknowledged] = useState(false);
 
   const { data: plans, isLoading: plansLoading } = trpc.billing.plans.useQuery();
   const { data: subscription, isLoading: subLoading } = trpc.billing.subscription.useQuery(undefined, {
@@ -84,11 +87,17 @@ export default function Billing() {
       toast.error("Only company admins can manage billing");
       return;
     }
+    if (billingCycle === "annual" && !annualAcknowledged) {
+      toast.error("Please acknowledge the non-refundable annual billing policy before proceeding.");
+      document.getElementById("annual-policy-checkbox")?.focus();
+      return;
+    }
     setLoadingPlan(planId);
     createCheckout.mutate({
       planId: planId as any,
       billing: billingCycle,
       origin: window.location.origin,
+      annualAcknowledged: billingCycle === "annual" ? annualAcknowledged : undefined,
     });
   };
 
@@ -161,22 +170,49 @@ export default function Billing() {
       )}
 
       {/* ─── Billing Cycle Toggle ─── */}
-      <div id="pricing-section" className="flex items-center justify-center gap-4 py-2">
-        <Label className={billingCycle === "monthly" ? "font-semibold" : "text-muted-foreground"}>Monthly</Label>
-        <Switch
-          checked={billingCycle === "annual"}
-          onCheckedChange={(v) => setBillingCycle(v ? "annual" : "monthly")}
-        />
-        <Label className={billingCycle === "annual" ? "font-semibold" : "text-muted-foreground"}>
-          Annual
-          <Badge variant="secondary" className="ml-2 text-xs bg-emerald-100 text-emerald-700">Save 20%</Badge>
-        </Label>
+      <div id="pricing-section" className="space-y-4">
+        <div className="flex items-center justify-center gap-4 py-2">
+          <Label className={billingCycle === "monthly" ? "font-semibold" : "text-muted-foreground"}>Monthly</Label>
+          <Switch
+            checked={billingCycle === "annual"}
+            onCheckedChange={(v) => {
+              setBillingCycle(v ? "annual" : "monthly");
+              if (!v) setAnnualAcknowledged(false);
+            }}
+          />
+          <Label className={billingCycle === "annual" ? "font-semibold" : "text-muted-foreground"}>
+            Annual
+            <Badge variant="secondary" className="ml-2 text-xs bg-emerald-100 text-emerald-700">Save 10%</Badge>
+          </Label>
+        </div>
+
+        {/* Non-refundable acknowledgment — only shown when annual is selected */}
+        {billingCycle === "annual" && (
+          <Card className="border-amber-200 bg-amber-50/40 max-w-2xl mx-auto">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-start gap-3">
+                <input
+                  id="annual-policy-checkbox"
+                  type="checkbox"
+                  checked={annualAcknowledged}
+                  onChange={(e) => setAnnualAcknowledged(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-amber-400 accent-amber-600 cursor-pointer shrink-0"
+                />
+                <label htmlFor="annual-policy-checkbox" className="text-sm text-amber-900 cursor-pointer leading-relaxed">
+                  <span className="font-semibold">I understand and agree</span> that annual plans are billed upfront and are{" "}
+                  <span className="font-bold uppercase">non-refundable for any reason</span>, including partial-year cancellations.
+                  By checking this box, I acknowledge this policy before proceeding to checkout.
+                </label>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* ─── Pricing Cards ─── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {(plans || []).map((plan) => {
-          const price = billingCycle === "annual" ? plan.annualPrice : plan.monthlyPrice;
+          const price = billingCycle === "annual" ? plan.annualPricePerMonth : plan.monthlyPrice;
           const isCurrentPlan = currentTier === plan.tier;
           const isPopular = plan.popular;
 
@@ -207,9 +243,11 @@ export default function Billing() {
 
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-2 mb-2">
-                  {plan.tier === "starter" && <Zap className="h-5 w-5 text-blue-500" />}
-                  {plan.tier === "professional" && <Crown className="h-5 w-5 text-purple-500" />}
-                  {plan.tier === "enterprise" && <Shield className="h-5 w-5 text-emerald-500" />}
+                  {plan.tier === "success_starter" && <Zap className="h-5 w-5 text-sky-500" />}
+                  {plan.tier === "growth_foundation" && <BarChart3 className="h-5 w-5 text-blue-500" />}
+                  {plan.tier === "fortune_foundation" && <Brain className="h-5 w-5 text-violet-500" />}
+                  {plan.tier === "fortune" && <Crown className="h-5 w-5 text-purple-500" />}
+                  {plan.tier === "fortune_plus" && <Shield className="h-5 w-5 text-emerald-500" />}
                   <CardTitle className="text-lg">{plan.name}</CardTitle>
                 </div>
                 <CardDescription className="text-sm">{plan.description}</CardDescription>
@@ -218,7 +256,7 @@ export default function Billing() {
                   <span className="text-muted-foreground text-sm">/mo</span>
                   {billingCycle === "annual" && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      Billed annually ({formatPrice(price * 12)}/yr)
+                      Billed annually — {formatPrice(plan.annualPriceTotal)}/yr
                     </p>
                   )}
                 </div>
@@ -313,7 +351,7 @@ export default function Billing() {
           },
           {
             q: "Do you offer refunds?",
-            a: "We offer a 14-day money-back guarantee on all plans. Contact support within 14 days of your first payment.",
+            a: "Monthly plans can be cancelled at any time with no penalty. Annual plans are billed upfront and are NON-REFUNDABLE for any reason, including partial-year cancellations. You will be asked to acknowledge this policy before completing an annual purchase.",
           },
           {
             q: "How do I cancel?",

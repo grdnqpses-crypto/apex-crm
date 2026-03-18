@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -9,43 +9,66 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Users, DollarSign, TrendingUp, Plus, Settings, Shield, Crown, ChevronRight, Search, BarChart3, Activity } from "lucide-react";
+import { Building2, Users, DollarSign, TrendingUp, Plus, Shield, Crown, Search, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 
+// ─── New 5-Tier Structure ───────────────────────────────────────────────────
 const TIER_COLORS: Record<string, string> = {
-  trial: "bg-gray-500/10 text-gray-400 border-gray-500/20",
-  starter: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  professional: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-  enterprise: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  trial:              "bg-gray-500/10 text-gray-400 border-gray-500/20",
+  success_starter:    "bg-sky-500/10 text-sky-400 border-sky-500/20",
+  growth_foundation:  "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  fortune_foundation: "bg-violet-500/10 text-violet-400 border-violet-500/20",
+  fortune:            "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  fortune_plus:       "bg-amber-500/10 text-amber-400 border-amber-500/20",
+};
+
+const TIER_LABELS: Record<string, string> = {
+  trial:              "Trial",
+  success_starter:    "Success Starter",
+  growth_foundation:  "Growth Foundation",
+  fortune_foundation: "Fortune Foundation",
+  fortune:            "Fortune",
+  fortune_plus:       "Fortune Plus",
 };
 
 const TIER_PRICES: Record<string, number> = {
-  trial: 0,
-  starter: 197,
-  professional: 697,
-  enterprise: 1497,
+  trial:              0,
+  success_starter:    99,
+  growth_foundation:  197,
+  fortune_foundation: 497,
+  fortune:            697,
+  fortune_plus:       1497,
+};
+
+const TIER_MAX_USERS: Record<string, number> = {
+  trial:              5,
+  success_starter:    5,
+  growth_foundation:  15,
+  fortune_foundation: 25,
+  fortune:            40,
+  fortune_plus:       50,
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  active: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  active:    "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   suspended: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
   cancelled: "bg-red-500/10 text-red-400 border-red-500/20",
-  expired: "bg-gray-500/10 text-gray-400 border-gray-500/20",
+  expired:   "bg-gray-500/10 text-gray-400 border-gray-500/20",
 };
+
+const ALL_TIERS = ["trial", "success_starter", "growth_foundation", "fortune_foundation", "fortune", "fortune_plus"] as const;
 
 export default function ApexDashboard() {
   const { user } = useAuth();
-  // toast imported from sonner
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingCompany, setEditingCompany] = useState<any>(null);
   const [selectedTab, setSelectedTab] = useState("overview");
 
-  // Form state for creating new company
   const [newCompany, setNewCompany] = useState({
     name: "", slug: "", industry: "", website: "", contactEmail: "", phone: "", address: "",
-    maxUsers: 25, subscriptionTier: "starter" as const,
+    maxUsers: 5, subscriptionTier: "success_starter" as const,
   });
 
   const companiesQuery = trpc.tenants.list.useQuery();
@@ -53,7 +76,7 @@ export default function ApexDashboard() {
     onSuccess: () => {
       toast.success("Company Created", { description: "New company account has been provisioned." });
       setShowCreateDialog(false);
-      setNewCompany({ name: "", slug: "", industry: "", website: "", contactEmail: "", phone: "", address: "", maxUsers: 25, subscriptionTier: "starter" });
+      setNewCompany({ name: "", slug: "", industry: "", website: "", contactEmail: "", phone: "", address: "", maxUsers: 5, subscriptionTier: "success_starter" });
       companiesQuery.refetch();
     },
     onError: (err) => toast.error("Error", { description: err.message }),
@@ -74,7 +97,6 @@ export default function ApexDashboard() {
     c.slug.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Calculate metrics
   const totalCompanies = companies.length;
   const activeCompanies = companies.filter((c: any) => c.subscriptionStatus === "active").length;
   const totalUsers = companies.reduce((sum: number, c: any) => sum + (c.userCount || 0), 0);
@@ -82,12 +104,11 @@ export default function ApexDashboard() {
     if (c.subscriptionStatus !== "active") return sum;
     return sum + (TIER_PRICES[c.subscriptionTier] || 0);
   }, 0);
-  const tierBreakdown = {
-    trial: companies.filter((c: any) => c.subscriptionTier === "trial").length,
-    starter: companies.filter((c: any) => c.subscriptionTier === "starter").length,
-    professional: companies.filter((c: any) => c.subscriptionTier === "professional").length,
-    enterprise: companies.filter((c: any) => c.subscriptionTier === "enterprise").length,
-  };
+
+  const tierBreakdown = ALL_TIERS.reduce((acc, tier) => {
+    acc[tier] = companies.filter((c: any) => c.subscriptionTier === tier).length;
+    return acc;
+  }, {} as Record<string, number>);
 
   const handleCreate = () => {
     if (!newCompany.name || !newCompany.slug) {
@@ -139,15 +160,10 @@ export default function ApexDashboard() {
         </div>
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="w-4 h-4" />
-              Onboard Company
-            </Button>
+            <Button className="gap-2"><Plus className="w-4 h-4" />Onboard Company</Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Onboard New Company</DialogTitle>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>Onboard New Company</DialogTitle></DialogHeader>
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -182,19 +198,24 @@ export default function ApexDashboard() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Subscription Tier</Label>
-                  <Select value={newCompany.subscriptionTier} onValueChange={v => setNewCompany(p => ({ ...p, subscriptionTier: v as any }))}>
+                  <Select value={newCompany.subscriptionTier} onValueChange={v => {
+                    const tier = v as typeof newCompany.subscriptionTier;
+                    setNewCompany(p => ({ ...p, subscriptionTier: tier, maxUsers: TIER_MAX_USERS[tier] || 5 }));
+                  }}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="trial">Trial ($0/mo)</SelectItem>
-                      <SelectItem value="starter">Starter ($197/mo)</SelectItem>
-                      <SelectItem value="professional">Professional ($697/mo)</SelectItem>
-                      <SelectItem value="enterprise">Enterprise ($1,497/mo)</SelectItem>
+                      <SelectItem value="success_starter">Success Starter ($99/mo)</SelectItem>
+                      <SelectItem value="growth_foundation">Growth Foundation ($197/mo)</SelectItem>
+                      <SelectItem value="fortune_foundation">Fortune Foundation ($497/mo)</SelectItem>
+                      <SelectItem value="fortune">Fortune ($697/mo)</SelectItem>
+                      <SelectItem value="fortune_plus">Fortune Plus ($1,497/mo)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Max Users</Label>
-                  <Input type="number" value={newCompany.maxUsers} onChange={e => setNewCompany(p => ({ ...p, maxUsers: parseInt(e.target.value) || 25 }))} />
+                  <Input type="number" value={newCompany.maxUsers} onChange={e => setNewCompany(p => ({ ...p, maxUsers: parseInt(e.target.value) || 5 }))} />
                 </div>
               </div>
             </div>
@@ -266,14 +287,14 @@ export default function ApexDashboard() {
           <CardTitle className="flex items-center gap-2"><BarChart3 className="w-5 h-5" /> Subscription Tier Breakdown</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-4 gap-4">
-            {(["trial", "starter", "professional", "enterprise"] as const).map(tier => (
-              <div key={tier} className="text-center p-4 rounded-lg bg-muted/30 border border-border/50">
-                <Badge className={`${TIER_COLORS[tier]} mb-2`}>{tier.charAt(0).toUpperCase() + tier.slice(1)}</Badge>
-                <p className="text-2xl font-bold">{tierBreakdown[tier]}</p>
-                <p className="text-xs text-muted-foreground">${TIER_PRICES[tier]}/mo each</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  ${(tierBreakdown[tier] * TIER_PRICES[tier]).toLocaleString()}/mo total
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+            {ALL_TIERS.map(tier => (
+              <div key={tier} className="text-center p-3 rounded-lg bg-muted/30 border border-border/50">
+                <Badge className={`${TIER_COLORS[tier]} mb-2 text-xs`}>{TIER_LABELS[tier]}</Badge>
+                <p className="text-2xl font-bold">{tierBreakdown[tier] || 0}</p>
+                <p className="text-xs text-muted-foreground">${TIER_PRICES[tier]}/mo</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  ${((tierBreakdown[tier] || 0) * TIER_PRICES[tier]).toLocaleString()} total
                 </p>
               </div>
             ))}
@@ -292,35 +313,27 @@ export default function ApexDashboard() {
           </TabsList>
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search companies..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+            <Input placeholder="Search companies..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9" />
           </div>
         </div>
-
         <TabsContent value="overview">
-          <CompanyTable companies={filtered} onEdit={(c: any) => { setEditingCompany({ ...c }); setShowEditDialog(true); }} />
+          <CompanyTable companies={filtered} onEdit={(c: any) => { setEditingCompany({ ...c }); setShowEditDialog(true); }} tierColors={TIER_COLORS} tierLabels={TIER_LABELS} tierPrices={TIER_PRICES} statusColors={STATUS_COLORS} />
         </TabsContent>
         <TabsContent value="active">
-          <CompanyTable companies={filtered.filter((c: any) => c.subscriptionStatus === "active")} onEdit={(c: any) => { setEditingCompany({ ...c }); setShowEditDialog(true); }} />
+          <CompanyTable companies={filtered.filter((c: any) => c.subscriptionStatus === "active")} onEdit={(c: any) => { setEditingCompany({ ...c }); setShowEditDialog(true); }} tierColors={TIER_COLORS} tierLabels={TIER_LABELS} tierPrices={TIER_PRICES} statusColors={STATUS_COLORS} />
         </TabsContent>
         <TabsContent value="trial">
-          <CompanyTable companies={filtered.filter((c: any) => c.subscriptionTier === "trial")} onEdit={(c: any) => { setEditingCompany({ ...c }); setShowEditDialog(true); }} />
+          <CompanyTable companies={filtered.filter((c: any) => c.subscriptionTier === "trial")} onEdit={(c: any) => { setEditingCompany({ ...c }); setShowEditDialog(true); }} tierColors={TIER_COLORS} tierLabels={TIER_LABELS} tierPrices={TIER_PRICES} statusColors={STATUS_COLORS} />
         </TabsContent>
         <TabsContent value="issues">
-          <CompanyTable companies={filtered.filter((c: any) => c.subscriptionStatus !== "active")} onEdit={(c: any) => { setEditingCompany({ ...c }); setShowEditDialog(true); }} />
+          <CompanyTable companies={filtered.filter((c: any) => c.subscriptionStatus !== "active")} onEdit={(c: any) => { setEditingCompany({ ...c }); setShowEditDialog(true); }} tierColors={TIER_COLORS} tierLabels={TIER_LABELS} tierPrices={TIER_PRICES} statusColors={STATUS_COLORS} />
         </TabsContent>
       </Tabs>
 
       {/* Edit Company Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Manage Company — {editingCompany?.name}</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Manage Company — {editingCompany?.name}</DialogTitle></DialogHeader>
           {editingCompany && (
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
@@ -334,9 +347,11 @@ export default function ApexDashboard() {
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="trial">Trial ($0/mo)</SelectItem>
-                      <SelectItem value="starter">Starter ($197/mo)</SelectItem>
-                      <SelectItem value="professional">Professional ($697/mo)</SelectItem>
-                      <SelectItem value="enterprise">Enterprise ($1,497/mo)</SelectItem>
+                      <SelectItem value="success_starter">Success Starter ($99/mo)</SelectItem>
+                      <SelectItem value="growth_foundation">Growth Foundation ($197/mo)</SelectItem>
+                      <SelectItem value="fortune_foundation">Fortune Foundation ($497/mo)</SelectItem>
+                      <SelectItem value="fortune">Fortune ($697/mo)</SelectItem>
+                      <SelectItem value="fortune_plus">Fortune Plus ($1,497/mo)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -356,7 +371,7 @@ export default function ApexDashboard() {
                 </div>
                 <div className="space-y-2">
                   <Label>Max Users</Label>
-                  <Input type="number" value={editingCompany.maxUsers} onChange={e => setEditingCompany((p: any) => ({ ...p, maxUsers: parseInt(e.target.value) || 25 }))} />
+                  <Input type="number" value={editingCompany.maxUsers} onChange={e => setEditingCompany((p: any) => ({ ...p, maxUsers: parseInt(e.target.value) || 5 }))} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -393,7 +408,14 @@ export default function ApexDashboard() {
   );
 }
 
-function CompanyTable({ companies, onEdit }: { companies: any[]; onEdit: (c: any) => void }) {
+function CompanyTable({ companies, onEdit, tierColors, tierLabels, tierPrices, statusColors }: {
+  companies: any[];
+  onEdit: (c: any) => void;
+  tierColors: Record<string, string>;
+  tierLabels: Record<string, string>;
+  tierPrices: Record<string, number>;
+  statusColors: Record<string, string>;
+}) {
   if (companies.length === 0) {
     return (
       <Card className="border-border/50">
@@ -430,12 +452,12 @@ function CompanyTable({ companies, onEdit }: { companies: any[]; onEdit: (c: any
                     </div>
                   </td>
                   <td className="p-4">
-                    <Badge className={TIER_COLORS[company.subscriptionTier] || ""}>
-                      {company.subscriptionTier}
+                    <Badge className={tierColors[company.subscriptionTier] || ""}>
+                      {tierLabels[company.subscriptionTier] || company.subscriptionTier}
                     </Badge>
                   </td>
                   <td className="p-4">
-                    <Badge className={STATUS_COLORS[company.subscriptionStatus] || ""}>
+                    <Badge className={statusColors[company.subscriptionStatus] || ""}>
                       {company.subscriptionStatus}
                     </Badge>
                   </td>
@@ -445,13 +467,13 @@ function CompanyTable({ companies, onEdit }: { companies: any[]; onEdit: (c: any
                   </td>
                   <td className="p-4 text-right">
                     <span className="font-medium text-emerald-400">
-                      ${(company.subscriptionStatus === "active" ? TIER_PRICES[company.subscriptionTier] || 0 : 0).toLocaleString()}
+                      ${(company.subscriptionStatus === "active" ? tierPrices[company.subscriptionTier] || 0 : 0).toLocaleString()}
                     </span>
                     <span className="text-xs text-muted-foreground">/mo</span>
                   </td>
                   <td className="p-4 text-right">
-                    <Button variant="ghost" size="sm" onClick={() => onEdit(company)} className="gap-1">
-                      <Settings className="w-3.5 h-3.5" /> Manage
+                    <Button variant="ghost" size="sm" onClick={() => onEdit(company)}>
+                      Manage
                     </Button>
                   </td>
                 </tr>

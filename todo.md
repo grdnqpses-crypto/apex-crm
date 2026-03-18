@@ -1303,3 +1303,32 @@
 - [x] Company Admin UI: /settings/ai-credits — view balance, buy more credits, usage history
 - [ ] Credit balance widget in sidebar for Company Admin+
 - [ ] AI Assistant: CRM queries are free, general queries consume credits
+
+## Subscription Tier Redesign (with Stripe)
+- [x] Add Tier 0: "Success Starter" — $99/mo, 1 user (single user)
+- [x] Rename Tier 1 → "Growth Foundation" ($197/mo, 5 users)
+- [x] Rename Tier 2 → "Fortune Foundation" ($497/mo, 15 users)
+- [x] Rename Tier 3 → "Fortune" ($697/mo, 25 users)
+- [x] Rename Tier 4 → "Fortune Plus" ($1,497/mo, 50 users)
+- [x] Cap Fortune Plus user limit at 50
+- [x] Add $30/user/mo add-on for each tier, up to the next tier's user limit
+- [x] Update stripe-products.ts with new tier structure
+- [x] Update DB enum for subscriptionTier (migrate existing data)
+- [x] Update routers.ts tier enum validation
+- [x] Update stripe.ts webhook tier type
+- [x] Update ApexDashboard with new tier names, colors, prices
+- [x] Update Subscription page UI with 5 new tiers
+- [x] Update MarketingHome pricing section with 5 new tiers
+- [x] Update Billing page tier icons/colors
+- [x] Create 5 Stripe products + monthly/annual prices via API script
+- [x] Store Stripe price IDs in environment secrets
+- [x] Update checkout flow to use new price IDs
+- [x] Update CRM Bible with new tier structure and add-on pricing
+
+## Annual Billing Policy Update
+- [x] Change annual discount from 25% to 10%
+- [x] Recreate Stripe annual prices at 10% discount
+- [x] Add non-refundable acknowledgment checkbox before annual checkout
+- [x] Update MarketingHome annual toggle to show -10% (not -25%)
+- [x] Update Subscription page annual pricing display
+- [x] Update FAQ to mention non-refundable annual policy

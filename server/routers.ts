@@ -1823,7 +1823,7 @@ export const appRouter = router({
       phone: z.string().optional(),
       address: z.string().optional(),
       maxUsers: z.number().min(1).default(25),
-      subscriptionTier: z.enum(["trial", "starter", "professional", "enterprise"]).default("trial"),
+      subscriptionTier: z.enum(["trial", "success_starter", "growth_foundation", "fortune_foundation", "fortune", "fortune_plus"]).default("trial"),
       enabledFeatures: z.array(z.string()).optional(),
     })).mutation(async ({ input }) => {
       const existing = await db.getTenantCompanyBySlug(input.slug);
@@ -1849,7 +1849,7 @@ export const appRouter = router({
       phone: z.string().optional(),
       address: z.string().optional(),
       maxUsers: z.number().optional(),
-      subscriptionTier: z.enum(["trial", "starter", "professional", "enterprise"]).optional(),
+      subscriptionTier: z.enum(["trial", "success_starter", "growth_foundation", "fortune_foundation", "fortune", "fortune_plus"]).optional(),
       subscriptionStatus: z.enum(["active", "suspended", "cancelled", "expired"]).optional(),
       enabledFeatures: z.array(z.string()).optional(),
     })).mutation(async ({ input }) => {
@@ -3773,13 +3773,23 @@ export const appRouter = router({
 
     // Create Stripe checkout session for a plan upgrade
     createCheckout: protectedProcedure.input(z.object({
-      planId: z.enum(["starter", "professional", "enterprise"]),
+      planId: z.enum(["success_starter", "growth_foundation", "fortune_foundation", "fortune", "fortune_plus"]),
       billing: z.enum(["monthly", "annual"]).default("monthly"),
       origin: z.string().url(),
+      // Required when billing=annual: user must acknowledge non-refundable policy
+      annualAcknowledged: z.boolean().optional(),
     })).mutation(async ({ ctx, input }) => {
       const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN", message: "Only company admins can manage billing" });
       if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST", message: "No company associated" });
+
+      // Enforce non-refundable acknowledgment for annual plans
+      if (input.billing === "annual" && !input.annualAcknowledged) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "You must acknowledge that annual plans are non-refundable before proceeding.",
+        });
+      }
 
       const { stripe } = await import("./stripe.js");
       if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe is not configured. Please add your Stripe keys in Settings → Payment." });
@@ -3789,6 +3799,7 @@ export const appRouter = router({
       if (!plan) throw new TRPCError({ code: "NOT_FOUND", message: "Plan not found" });
 
       const priceId = input.billing === "annual" ? plan.annualPriceId : plan.monthlyPriceId;
+      if (!priceId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Price ID not configured for this plan. Please contact support." });
 
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
@@ -3801,9 +3812,19 @@ export const appRouter = router({
           user_id: ctx.user.id.toString(),
           tenant_company_id: ctx.user.tenantCompanyId.toString(),
           plan_tier: plan.tier,
+          billing_cycle: input.billing,
+          annual_acknowledged: input.billing === "annual" ? "true" : "false",
           customer_email: ctx.user.email || "",
           customer_name: ctx.user.name || "",
         },
+        // For annual plans, add a custom description reinforcing the non-refundable policy
+        ...(input.billing === "annual" ? {
+          custom_text: {
+            submit: {
+              message: "Annual plans are billed upfront and are NON-REFUNDABLE for any reason. By completing this purchase, you agree to this policy.",
+            },
+          },
+        } : {}),
         success_url: `${input.origin}/billing?success=true&plan=${plan.id}`,
         cancel_url: `${input.origin}/billing?cancelled=true`,
       });

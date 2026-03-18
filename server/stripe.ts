@@ -47,7 +47,7 @@ export function registerStripeWebhook(app: Express) {
             const tenantCompanyId = session.metadata?.tenant_company_id
               ? parseInt(session.metadata.tenant_company_id)
               : null;
-            const tier = session.metadata?.plan_tier as "starter" | "professional" | "enterprise" | null;
+            const tier = session.metadata?.plan_tier as "success_starter" | "growth_foundation" | "fortune_foundation" | "fortune" | "fortune_plus" | null;
             const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
             const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
 

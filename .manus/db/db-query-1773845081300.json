@@ -1,0 +1,9 @@
+{
+  "query": "-- Step 1: Temporarily widen the column to VARCHAR to allow the transition\nALTER TABLE tenant_companies MODIFY COLUMN subscriptionTier VARCHAR(64) NOT NULL DEFAULT 'trial';\n\n-- Step 2: Remap old values to new tier names\nUPDATE tenant_companies SET subscriptionTier = 'success_starter' WHERE subscriptionTier = 'starter';\nUPDATE tenant_companies SET subscriptionTier = 'growth_foundation' WHERE subscriptionTier = 'professional';\nUPDATE tenant_companies SET subscriptionTier = 'fortune_plus' WHERE subscriptionTier = 'enterprise';\n\n-- Step 3: Re-apply the enum with the new values\nALTER TABLE tenant_companies MODIFY COLUMN subscriptionTier ENUM('trial', 'success_starter', 'growth_foundation', 'fortune_foundation', 'fortune', 'fortune_plus') NOT NULL DEFAULT 'trial';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute -- Step 1: Temporarily widen the column to VARCHAR to allow the transition\nALTER TABLE tenant_companies MODIFY COLUMN subscriptionTier VARCHAR(64) NOT NULL DEFAULT 'trial';\n\n-- Step 2: Remap old values to new tier names\nUPDATE tenant_companies SET subscriptionTier = 'success_starter' WHERE subscriptionTier = 'starter';\nUPDATE tenant_companies SET subscriptionTier = 'growth_foundation' WHERE subscriptionTier = 'professional';\nUPDATE tenant_companies SET subscriptionTier = 'fortune_plus' WHERE subscriptionTier = 'enterprise';\n\n-- Step 3: Re-apply the enum with the new values\nALTER TABLE tenant_companies MODIFY COLUMN subscriptionTier ENUM('trial', 'success_starter', 'growth_foundation', 'fortune_foundation', 'fortune', 'fortune_plus') NOT NULL DEFAULT 'trial';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 832
+}

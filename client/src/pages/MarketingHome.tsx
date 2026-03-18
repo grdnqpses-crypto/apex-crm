@@ -163,22 +163,34 @@ const TESTIMONIALS = [
 
 const PLANS = [
   {
-    id: "starter",
-    name: "Starter", price: 197, desc: "For small teams getting started.",
-    features: ["Up to 5 users", "10,000 contacts", "Paradigm Engine™ (Basic)", "Ghost Mode sequences", "Deliverability suite", "Standard support"],
-    cta: "Start Free Trial", highlight: false,
+    id: "success_starter",
+    name: "Success Starter", price: 99, desc: "The perfect launchpad for solo brokers.",
+    features: ["1 user included", "Add up to 4 users (+$30/user/mo)", "2,500 contacts", "Core CRM suite", "Email campaigns", "Load management", "AI Assistant"],
+    cta: "Start Free Trial", highlight: false, addOnNote: "Up to 5 users total",
   },
   {
-    id: "professional",
-    name: "Professional", price: 697, desc: "The complete platform for growing teams.",
-    features: ["Up to 25 users", "100,000 contacts", "Paradigm Engine™ (Full)", "Ghost Mode + Battle Cards", "260 SMTP rotation", "Compliance Fortress™", "Priority support", "Custom branding"],
-    cta: "Start Free Trial", highlight: true, badge: "Most Popular",
+    id: "growth_foundation",
+    name: "Growth Foundation", price: 197, desc: "Built for small brokerages ready to scale.",
+    features: ["5 users included", "Add up to 10 users (+$30/user/mo)", "10,000 contacts", "Paradigm Engine™ (Basic)", "Ghost Mode sequences", "Deliverability suite", "Standard support"],
+    cta: "Start Free Trial", highlight: false, addOnNote: "Up to 15 users total",
   },
   {
-    id: "enterprise",
-    name: "Enterprise", price: 1497, desc: "Unlimited scale for large operations.",
-    features: ["Unlimited users", "Unlimited contacts", "All Professional features", "Dedicated SMTP infra", "Custom AI training", "SLA guarantee", "Dedicated account manager", "White-label option"],
-    cta: "Start Free Trial", highlight: false,
+    id: "fortune_foundation",
+    name: "Fortune Foundation", price: 497, desc: "Advanced automation for mid-size freight ops.",
+    features: ["15 users included", "Add up to 10 users (+$30/user/mo)", "50,000 contacts", "Paradigm Engine™ (Full)", "Ghost Mode + Battle Cards", "260 SMTP rotation", "Compliance Fortress™", "Custom branding"],
+    cta: "Start Free Trial", highlight: true, badge: "Most Popular", addOnNote: "Up to 25 users total",
+  },
+  {
+    id: "fortune",
+    name: "Fortune", price: 697, desc: "The complete platform for high-performance teams.",
+    features: ["25 users included", "Add up to 15 users (+$30/user/mo)", "100,000 contacts", "All Fortune Foundation features", "Voice Agent (unlimited)", "Revenue Autopilot", "Dedicated account manager"],
+    cta: "Start Free Trial", highlight: false, addOnNote: "Up to 40 users total",
+  },
+  {
+    id: "fortune_plus",
+    name: "Fortune Plus", price: 1497, desc: "Enterprise-grade scale with white-glove support.",
+    features: ["50 users included", "Unlimited contacts", "All Fortune features", "Dedicated SMTP infra", "Custom AI training", "99.9% SLA", "White-label option", "24/7 priority support"],
+    cta: "Start Free Trial", highlight: false, addOnNote: "50 users max",
   },
 ];
 
@@ -1031,18 +1043,18 @@ export default function MarketingHome() {
                 <button onClick={() => setAnnual(false)} className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${!annual ? "bg-white text-black shadow-sm" : "text-white/40"}`}>Monthly</button>
                 <button onClick={() => setAnnual(true)} className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${annual ? "bg-white text-black shadow-sm" : "text-white/40"}`}>
                   Annual
-                  <span className="text-xs font-black text-green-400">-25%</span>
+                  <span className="text-xs font-black text-green-400">-10%</span>
                 </button>
               </div>
             </div>
           </FadeIn>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
             {PLANS.map((plan, i) => {
-              const price = annual ? Math.round(plan.price * 0.75) : plan.price;
+              const price = annual ? Math.round(plan.price * 0.90) : plan.price;
               return (
                 <FadeIn key={i} delay={i * 0.1}>
-                  <div className={`relative rounded-2xl p-7 h-full flex flex-col transition-all ${plan.highlight
+                  <div className={`relative rounded-2xl p-5 h-full flex flex-col transition-all ${plan.highlight
                     ? "bg-gradient-to-b from-orange-500/10 to-transparent border-2 border-orange-500/30 shadow-2xl shadow-orange-500/10"
                     : "bg-white/5 border border-white/8 hover:border-white/15"
                   }`}>
@@ -1051,37 +1063,40 @@ export default function MarketingHome() {
                         <span className="bg-orange-500 text-white text-xs font-black px-3 py-1 rounded-full shadow-lg shadow-orange-500/30">{plan.badge}</span>
                       </div>
                     )}
-                    <div className="mb-6">
-                      <h3 className="text-lg font-black text-white mb-1">{plan.name}</h3>
-                      <p className="text-sm text-white/40 mb-4">{plan.desc}</p>
+                    <div className="mb-4">
+                      <h3 className="text-base font-black text-white mb-1">{plan.name}</h3>
+                      <p className="text-xs text-white/40 mb-3 leading-snug">{plan.desc}</p>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-5xl font-black text-white">${price}</span>
+                        <span className="text-4xl font-black text-white">${price}</span>
                         <span className="text-sm text-white/30">/mo</span>
                       </div>
+                      {plan.addOnNote && (
+                        <p className="text-xs text-orange-300/70 mt-1">{plan.addOnNote}</p>
+                      )}
                     </div>
-                    <ul className="space-y-3 flex-1 mb-7">
+                    <ul className="space-y-2 flex-1 mb-5">
                       {plan.features.map((f, fi) => (
-                        <li key={fi} className="flex items-start gap-2.5">
-                          <Check className={`h-4 w-4 mt-0.5 flex-shrink-0 ${plan.highlight ? "text-orange-400" : "text-green-400"}`} />
-                          <span className="text-sm text-white/60">{f}</span>
+                        <li key={fi} className="flex items-start gap-2">
+                          <Check className={`h-3.5 w-3.5 mt-0.5 flex-shrink-0 ${plan.highlight ? "text-orange-400" : "text-green-400"}`} />
+                          <span className="text-xs text-white/60">{f}</span>
                         </li>
                       ))}
                     </ul>
                     <button
                       onClick={() => handlePlanCTA(plan.id, annual ? "annual" : "monthly")}
                       disabled={checkoutLoadingPlan === plan.id}
-                      className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed ${plan.highlight
+                      className={`w-full py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed ${plan.highlight
                         ? "bg-orange-500 text-white hover:bg-orange-400 shadow-lg shadow-orange-500/20"
                         : "bg-white/10 text-white hover:bg-white/15 border border-white/10"
                       }`}
                     >
                       {checkoutLoadingPlan === plan.id ? (
-                        <><div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> Redirecting...</>
+                        <><div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" /> Redirecting...</>
                       ) : (
-                        <>{plan.cta} <ArrowRight className="h-4 w-4" /></>
+                        <>{plan.cta} <ArrowRight className="h-3.5 w-3.5" /></>
                       )}
                     </button>
-                    <p className="text-xs text-center mt-3 text-white/20 flex items-center justify-center gap-1">
+                    <p className="text-xs text-center mt-2 text-white/20 flex items-center justify-center gap-1">
                       <CreditCard className="h-3 w-3" />
                       Credit card required
                     </p>
