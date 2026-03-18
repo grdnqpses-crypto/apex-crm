@@ -3825,12 +3825,147 @@ export const appRouter = router({
       const company = await db.getTenantCompanyById(ctx.user.tenantCompanyId);
       if (!company?.stripeCustomerId) throw new TRPCError({ code: "BAD_REQUEST", message: "No Stripe customer found. Please subscribe to a plan first." });
 
-      const session = await stripe.billingPortal.sessions.create({
+       const session = await stripe.billingPortal.sessions.create({
         customer: company.stripeCustomerId,
         return_url: `${input.origin}/billing`,
       });
-
       return { portalUrl: session.url };
+    }),
+
+    invoices: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: 'BAD_REQUEST' });
+      const allowedRoles = ['company_admin', 'apex_owner', 'developer'];
+      if (!allowedRoles.includes(ctx.user.systemRole)) throw new TRPCError({ code: 'FORBIDDEN' });
+      const { default: Stripe } = await import('stripe');
+      const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' as any }) : null;
+      if (!stripe) return { invoices: [], subscriptionStatus: null };
+      const company = await db.getTenantCompanyById(ctx.user.tenantCompanyId);
+      if (!company?.stripeCustomerId) return { invoices: [], subscriptionStatus: null };
+      const [invoiceList, subscriptions] = await Promise.all([
+        stripe.invoices.list({ customer: company.stripeCustomerId, limit: 24 }),
+        stripe.subscriptions.list({ customer: company.stripeCustomerId, limit: 1 }),
+      ]);
+      const invoices = invoiceList.data.map(inv => ({
+        id: inv.id,
+        number: inv.number,
+        date: inv.created * 1000,
+        dueDate: inv.due_date ? inv.due_date * 1000 : null,
+        amount: inv.amount_paid / 100,
+        currency: inv.currency.toUpperCase(),
+        status: inv.status,
+        pdfUrl: inv.invoice_pdf,
+        hostedUrl: inv.hosted_invoice_url,
+        description: inv.lines.data[0]?.description ?? 'Subscription',
+      }));
+      const sub = subscriptions.data[0];
+      const subscriptionStatus = sub ? {
+        status: sub.status,
+        planName: (sub.items.data[0]?.price?.nickname) ?? 'Subscription',
+        currentPeriodEnd: (sub as any).current_period_end ? (sub as any).current_period_end * 1000 : null,
+        cancelAtPeriodEnd: (sub as any).cancel_at_period_end ?? false,
+      } : null;
+      return { invoices, subscriptionStatus };
+    }),
+
+    paymentStatus: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user.tenantCompanyId) return { isPastDue: false, status: null };
+      const allowedRoles = ['company_admin', 'apex_owner', 'developer'];
+      if (!allowedRoles.includes(ctx.user.systemRole)) return { isPastDue: false, status: null };
+      const { default: Stripe } = await import('stripe');
+      const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' as any }) : null;
+      if (!stripe) return { isPastDue: false, status: null };
+      const company = await db.getTenantCompanyById(ctx.user.tenantCompanyId);
+      if (!company?.stripeCustomerId) return { isPastDue: false, status: null };
+      const subscriptions = await stripe.subscriptions.list({ customer: company.stripeCustomerId, limit: 1 });
+      const sub = subscriptions.data[0];
+      if (!sub) return { isPastDue: false, status: null };
+      return { isPastDue: sub.status === 'past_due' || sub.status === 'unpaid', status: sub.status };
+    }),
+  }),
+
+  emailSetup: router({
+    verifyDomain: protectedProcedure.input(z.object({
+      domain: z.string(),
+    })).mutation(async ({ ctx, input }) => {
+      const dns = await import('dns').then(m => m.promises);
+      const domain = input.domain.toLowerCase().trim();
+      const results: Record<string, { found: boolean; value?: string; recommendation?: string }> = {};
+      // Check MX
+      try {
+        const mx = await dns.resolveMx(domain);
+        results.mx = { found: mx.length > 0, value: mx[0]?.exchange };
+      } catch { results.mx = { found: false, recommendation: `Add MX record: @ → mail.${domain} (priority 10)` }; }
+      // Check SPF
+      try {
+        const txt = await dns.resolveTxt(domain);
+        const spf = txt.flat().find(r => r.startsWith('v=spf1'));
+        results.spf = { found: !!spf, value: spf, recommendation: spf ? undefined : 'Add TXT record: @ → "v=spf1 include:_spf.google.com ~all"' };
+      } catch { results.spf = { found: false, recommendation: 'Add TXT record: @ → "v=spf1 include:_spf.google.com ~all"' }; }
+      // Check DMARC
+      try {
+        const dmarc = await dns.resolveTxt(`_dmarc.${domain}`);
+        const rec = dmarc.flat().find(r => r.startsWith('v=DMARC1'));
+        results.dmarc = { found: !!rec, value: rec, recommendation: rec ? undefined : `Add TXT record: _dmarc.${domain} → "v=DMARC1; p=quarantine; rua=mailto:dmarc@${domain}"` };
+      } catch { results.dmarc = { found: false, recommendation: `Add TXT record: _dmarc.${domain} → "v=DMARC1; p=quarantine; rua=mailto:dmarc@${domain}"` }; }
+      // Check DKIM (common selector)
+      const selectors = ['google', 'default', 'mail', 'k1', 'dkim'];
+      let dkimFound = false;
+      for (const sel of selectors) {
+        try {
+          const dkim = await dns.resolveTxt(`${sel}._domainkey.${domain}`);
+          if (dkim.flat().some(r => r.includes('v=DKIM1'))) { dkimFound = true; break; }
+        } catch {}
+      }
+      results.dkim = { found: dkimFound, recommendation: dkimFound ? undefined : `Add TXT record: google._domainkey.${domain} → (your DKIM public key from your email provider)` };
+      const allPassed = Object.values(results).every(r => r.found);
+      return { domain, results, allPassed, verifiedAt: allPassed ? Date.now() : null };
+    }),
+
+    generateDnsRecords: protectedProcedure.input(z.object({
+      domain: z.string(),
+      provider: z.enum(['google', 'microsoft', 'custom']),
+    })).mutation(async ({ input }) => {
+      const d = input.domain.toLowerCase().trim();
+      const records: Array<{ type: string; host: string; value: string; ttl: number; priority?: number }> = [];
+      if (input.provider === 'google') {
+        records.push(
+          { type: 'MX', host: '@', value: 'aspmx.l.google.com', ttl: 3600, priority: 1 },
+          { type: 'MX', host: '@', value: 'alt1.aspmx.l.google.com', ttl: 3600, priority: 5 },
+          { type: 'MX', host: '@', value: 'alt2.aspmx.l.google.com', ttl: 3600, priority: 5 },
+          { type: 'TXT', host: '@', value: 'v=spf1 include:_spf.google.com ~all', ttl: 3600 },
+          { type: 'TXT', host: `_dmarc.${d}`, value: `v=DMARC1; p=quarantine; rua=mailto:dmarc@${d}`, ttl: 3600 },
+          { type: 'CNAME', host: `google._domainkey.${d}`, value: 'google._domainkey.googlemail.com', ttl: 3600 },
+        );
+      } else if (input.provider === 'microsoft') {
+        records.push(
+          { type: 'MX', host: '@', value: `${d.replace('.', '-')}.mail.protection.outlook.com`, ttl: 3600, priority: 0 },
+          { type: 'TXT', host: '@', value: 'v=spf1 include:spf.protection.outlook.com ~all', ttl: 3600 },
+          { type: 'TXT', host: `_dmarc.${d}`, value: `v=DMARC1; p=quarantine; rua=mailto:dmarc@${d}`, ttl: 3600 },
+          { type: 'CNAME', host: `selector1._domainkey.${d}`, value: `selector1-${d.replace('.', '-')}._domainkey.onmicrosoft.com`, ttl: 3600 },
+          { type: 'CNAME', host: `selector2._domainkey.${d}`, value: `selector2-${d.replace('.', '-')}._domainkey.onmicrosoft.com`, ttl: 3600 },
+        );
+      } else {
+        records.push(
+          { type: 'TXT', host: '@', value: 'v=spf1 include:YOUR_SMTP_PROVIDER ~all', ttl: 3600 },
+          { type: 'TXT', host: `_dmarc.${d}`, value: `v=DMARC1; p=quarantine; rua=mailto:dmarc@${d}`, ttl: 3600 },
+          { type: 'TXT', host: `mail._domainkey.${d}`, value: 'v=DKIM1; k=rsa; p=YOUR_DKIM_PUBLIC_KEY', ttl: 3600 },
+        );
+      }
+      return { domain: d, provider: input.provider, records };
+    }),
+
+    checkDomainAvailability: protectedProcedure.input(z.object({
+      domain: z.string(),
+    })).mutation(async ({ input }) => {
+      const dns = await import('dns').then(m => m.promises);
+      const domain = input.domain.toLowerCase().trim();
+      try {
+        await dns.resolve(domain);
+        return { available: false, domain };
+      } catch (e: any) {
+        if (e.code === 'ENOTFOUND' || e.code === 'ENODATA') return { available: true, domain };
+        return { available: false, domain };
+      }
     }),
   }),
 });

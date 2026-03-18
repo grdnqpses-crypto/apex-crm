@@ -83,6 +83,8 @@ const MarketingHome = lazy(() => import("./pages/MarketingHome"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Billing = lazy(() => import("./pages/Billing"));
 const CRMBible = lazy(() => import("./pages/CRMBible"));
+const BillingHistory = lazy(() => import("./pages/BillingHistory"));
+const EmailSetup = lazy(() => import("./pages/EmailSetup"));
 
 function PageLoader() {
   return (
@@ -172,6 +174,8 @@ function Router() {
           <Route path="/apex" component={ApexDashboard} />
           <Route path="/help" component={HelpCenter} />
           <Route path="/crm-bible" component={CRMBible} />
+          <Route path="/billing-history" component={BillingHistory} />
+          <Route path="/email-setup" component={EmailSetup} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>

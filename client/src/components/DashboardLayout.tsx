@@ -42,6 +42,7 @@ import { toast } from "sonner";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import AIAssistantPanel from "./AIAssistantPanel";
 import OnboardingTutorial from "./OnboardingTutorial";
+import PaymentFailedBanner from "./PaymentFailedBanner";
 import { trpc } from "@/lib/trpc";
 
 // ─── Menu Sections (Developer is separate, hidden by default) ───
@@ -158,6 +159,8 @@ const standardSections = [
       { icon: ArrowRightLeft, label: "Migration", path: "/migration" },
       { icon: Crown, label: "Subscription", path: "/subscription" },
       { icon: CreditCard, label: "Billing & Plans", path: "/billing" },
+      { icon: Receipt, label: "Billing History", path: "/billing-history" },
+      { icon: Mail, label: "Email Infrastructure", path: "/email-setup" },
     ],
   },
 ];
@@ -540,6 +543,7 @@ function DashboardLayoutContent({
             </Button>
           </div>
         </div>
+        <PaymentFailedBanner />
         <main className="flex-1 p-5 lg:p-7">{children}</main>
       </SidebarInset>
 

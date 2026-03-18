@@ -1228,3 +1228,27 @@
 ## AI Button & Assistant Fix
 - [x] Move AI chat button from bottom-right to bottom-left to avoid Manus badge overlap
 - [x] Update AI assistant system prompt to enable logo help and all CRM task execution
+
+## Billing History Page
+- [x] Backend: tRPC procedure to fetch Stripe invoices for the tenant's customer ID
+- [x] Frontend: /billing-history page showing invoice date, amount, status, PDF download link
+- [x] Add Billing History nav item under Resources for Company Admin+
+- [x] Role-gate: Company Admin, Apex Owner, Developer only
+
+## Payment Failed Banner
+- [x] Backend: tRPC procedure to check Stripe subscription payment status
+- [x] Frontend: Banner component on Dashboard for overdue/past_due subscriptions
+- [x] Show banner only to Company Admin+ roles
+- [x] Banner links to Billing page with "Resolve Payment" CTA
+
+## Email Infrastructure Onboarding Wizard
+- [x] DB: email_infrastructure table (handled server-side, no persistent state needed) (domain, provider, spf/dkim/dmarc status, mx status, verified, warmup_started)
+- [x] Backend: DNS verification procedure (check SPF/DKIM/DMARC/MX records live)
+- [x] Backend: DNS record generator (produce copy-paste values for any registrar)
+- [x] Backend: Domain availability checker
+- [x] Frontend: Wizard page /email-setup with 3 paths: Connect Existing, Connect Google/Microsoft, Start Fresh
+- [x] Path 1 (Connect Existing): Enter domain → live DNS check → show results with copy-paste fixes
+- [x] Path 2 (Connect Google/Microsoft): Generate exact DNS records for Google Workspace or M365
+- [x] Path 3 (Start Fresh): Domain availability check → registrar links → DNS record generation → verify
+- [x] Warm-up schedule auto-enrollment after domain verification (links to Email Warmup page)
+- [x] Add Email Infrastructure to Resources sidebar nav
