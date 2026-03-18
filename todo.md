@@ -1252,3 +1252,20 @@
 - [x] Path 3 (Start Fresh): Domain availability check → registrar links → DNS record generation → verify
 - [x] Warm-up schedule auto-enrollment after domain verification (links to Email Warmup page)
 - [x] Add Email Infrastructure to Resources sidebar nav
+
+## CRM Bible Update (Round 2)
+- [ ] Add Billing History section to CRM Bible (What/Why/How/Automation/Outcome)
+- [ ] Add Payment Failed Banner section to CRM Bible
+- [ ] Add Email Infrastructure Wizard section to CRM Bible (all 3 paths documented)
+
+## Domain Purchase API Integration
+- [ ] Research Namecheap/GoDaddy API for domain purchase
+- [ ] Add domain search + purchase tRPC procedures to backend
+- [ ] Wire domain purchase flow into Email Setup wizard Start Fresh path
+
+## First-Login Onboarding Wizard
+- [ ] DB: onboarding_progress table (userId, completedSteps, skippedAt)
+- [ ] Backend: tRPC procedures for get/update onboarding progress
+- [ ] Frontend: 5-step wizard modal (upload logo, invite team, email setup, first contact, first campaign)
+- [ ] Show wizard on first login, skip if already completed
+- [ ] Add "Resume Onboarding" button in Settings for users who skipped

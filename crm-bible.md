@@ -732,8 +732,134 @@ Navigate to **API Keys** (Developer section) to generate API keys for connecting
 ### White Label
 Navigate to **White Label** to configure custom branding for the customer-facing portal: custom domain, custom colors, custom logo, and custom email footer. This makes the portal appear as your own product, not Apex CRM.
 
+### Company Branding
+Navigate to **Settings → Company** to upload your company logo and manage your company name as it appears throughout the CRM.
+
+**What it is:** A branding panel where Company Admins can upload a logo (drag-and-drop or file select), AI-generate a logo from the company name, and update the company name. The logo and name appear in the sidebar header and top navigation bar on every page.
+
+**Why it exists:** A CRM should feel like *your* CRM, not a generic tool. Displaying your company logo throughout the interface reinforces brand identity for your team and makes the platform feel custom-built for your organization.
+
+**How to use it:** Navigate to **Settings → Company**. Click **Upload Logo** to select an image file, or click **AI Generate** to have the system create a professional logo based on your company name. Click **Save** to apply. The logo appears immediately in the sidebar header and top navigation bar.
+
+**Automation connection:** The company logo is stored in secure cloud storage (S3) and served globally via CDN. It loads instantly on every page without additional configuration.
+
+**Sales outcome:** Brand consistency builds team pride and professionalism. When your team sees your logo every day, they feel like they are using a tool built for them — increasing adoption and daily usage.
+
+### Role-Based CRM Bible Access
+**What it is:** The CRM Bible is role-gated — each user sees only the sections and features relevant to their access level. Higher-level sections are hidden from lower-level roles.
+
+**Why it exists:** A Coordinator does not need to read about Developer API keys. A Sales Manager does not need to see Billing management. Role-gating the Bible keeps it focused and prevents information overload for front-line team members.
+
+**Access matrix:**
+
+| Section | Acct Mgr | Coordinator | Sales Mgr | Office Mgr | Company Admin | Apex Owner | Developer |
+|---------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Dashboard | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| CRM Core | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Operations | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Marketing | — | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Automation | — | — | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Analytics | — | — | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Paradigm Engine™ | — | — | ✓ | — | ✓ | ✓ | ✓ |
+| AI Premium Tools | — | — | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Compliance | — | — | — | ✓ | ✓ | ✓ | ✓ |
+| Deliverability | — | — | — | ✓ | ✓ | ✓ | ✓ |
+| Settings & Admin | — | — | — | — | ✓ | ✓ | ✓ |
+| Billing History | — | — | — | — | ✓ | ✓ | ✓ |
+| Billing Mgmt | — | — | — | — | — | ✓ | ✓ |
+| Developer / API | — | — | — | — | — | — | ✓ |
+
+**How to use it:** Log in and navigate to **Resources → CRM Bible**. You will see only the sections your role has access to. A role badge at the top of the page shows your current access level.
+
+**Automation connection:** Access is enforced automatically based on your system role. No manual configuration is required.
+
+**Sales outcome:** Role-appropriate information means faster onboarding. A new Account Manager can read their relevant sections without being overwhelmed by admin and developer content.
+
+### CRM Bible Sharing
+**What it is:** A Share system that allows any user with access to a Bible section or feature to invite a colleague to view it — regardless of their role — for collaboration on group projects.
+
+**Why it exists:** Sometimes a Coordinator needs to understand a Marketing feature for a specific campaign. Sometimes an Account Manager needs to see Analytics for a group project. The Share system enables cross-role knowledge sharing without permanently changing anyone's role.
+
+**How to use it:** Click the **Share** button on any section header or feature card in the CRM Bible. In the modal, search for a team member by name, select their permission level (**View Only** or **Collaborate**), and click **Share**. The recipient will see the shared content in their **Shared With Me** panel at the top of the Bible page. To revoke a share, click **Manage Shares** and click **Revoke** next to the person's name.
+
+**Permission levels:**
+- **View Only** — recipient can read the section but cannot share it further
+- **Collaborate** — recipient can read the section and share it with others
+
+**Automation connection:** Shares are stored in the database and enforced in real time. Revoking a share takes effect immediately — the recipient loses access on their next page load.
+
+**Sales outcome:** Knowledge sharing accelerates team performance. When a Sales Manager can share a specific workflow guide with an Account Manager preparing for a complex deal, that rep closes faster.
+
 ### Billing & Plans
-Navigate to **Billing** to manage your subscription, view invoices, upgrade or downgrade your plan, and access the Stripe billing portal for payment method management.
+Navigate to **Billing** to manage your subscription, upgrade or downgrade your plan, and access the Stripe billing portal for payment method management. This section is visible to **Company Admins, Apex Owners, and Developers** only.
+
+**What it is:** The Billing page displays your current subscription tier (Starter $197/mo, Professional $697/mo, Enterprise $1,497/mo), your next billing date, and a direct link to the Stripe portal for payment method management.
+
+**Why it exists:** Subscription management must be accessible to the people responsible for the business relationship — not to front-line reps. Keeping billing visible only to admins and above prevents confusion and protects financial information.
+
+**How to use it:** Navigate to **Billing** in the sidebar. Click **Upgrade Plan** to move to a higher tier. Click **Manage Billing** to open the Stripe portal where you can update your credit card, download invoices, or cancel. Annual billing saves 25% over monthly.
+
+**Automation connection:** When a subscription is activated via Stripe, the system automatically provisions the correct feature set for your tier. When a payment fails, the Payment Failed Banner appears automatically on the dashboard.
+
+**Sales outcome:** Uninterrupted service means uninterrupted selling. Keeping billing current ensures your team never loses access to the tools they depend on to close deals.
+
+### Billing History
+Navigate to **Billing History** (visible to Company Admin, Apex Owner, Developer) to view a complete record of all invoices issued to your account.
+
+**What it is:** A read-only page showing every invoice: date, amount, status (Paid / Open / Void), and a direct PDF download link for each invoice.
+
+**Why it exists:** Company Admins need visibility into payment history for accounting, auditing, and expense reporting — without needing full billing management access.
+
+**How to use it:** Navigate to **Resources → Billing History**. Each row shows the invoice date, amount, and status. Click **Download PDF** on any row to save the invoice for your records.
+
+**Automation connection:** Billing History is populated automatically by Stripe webhooks. Every time a payment is processed, a new invoice record appears here within seconds.
+
+**Sales outcome:** Clean financial records reduce administrative friction, allowing your team to stay focused on revenue-generating activities rather than chasing invoices.
+
+### Payment Failed Banner
+**What it is:** A prominent amber warning banner that appears at the top of the dashboard whenever a subscription payment is overdue or past-due.
+
+**Why it exists:** A failed payment can result in service interruption, which would halt all selling activity. The banner ensures the right people see the problem immediately and can resolve it before it impacts the team.
+
+**How to use it:** The banner appears automatically when Stripe reports a `past_due` or `unpaid` subscription status. It is visible only to Company Admins and above. Click **Resolve Payment** in the banner to go directly to the Billing page where you can update your payment method.
+
+**Automation connection:** The banner is driven by a real-time Stripe subscription status check. It disappears automatically once the payment is resolved and Stripe confirms the subscription is active.
+
+**Sales outcome:** Zero downtime. The faster a payment issue is surfaced and resolved, the less disruption to your team's selling workflow.
+
+---
+
+### Email Infrastructure Setup Wizard
+Navigate to **Resources → Email Infrastructure** to configure your company's email sending infrastructure for CRM campaigns.
+
+**What it is:** A three-path guided wizard that walks your team through setting up professional email infrastructure: connecting an existing domain, configuring Google Workspace or Microsoft 365, or setting up a brand-new domain from scratch.
+
+**Why it exists:** Email deliverability is the single most important technical factor in campaign success. Without proper SPF, DKIM, and DMARC records, your emails land in spam — no matter how good the copy is. The wizard eliminates the need for IT knowledge by generating all required DNS records automatically.
+
+**The three paths:**
+
+**Path 1 — Connect Existing Domain:** Enter your domain and click **Check DNS**. The system performs a live DNS lookup and shows the current status of your SPF, DKIM, DMARC, and MX records. Any missing or misconfigured records are highlighted with exact copy-paste values to add to your DNS registrar.
+
+**Path 2 — Google Workspace / Microsoft 365:** Select your email provider and the system generates the exact DNS records required for your provider. Copy-paste the records into your domain registrar's DNS panel. Click **Verify** to confirm they are live.
+
+**Path 3 — Start Fresh (New Domain):** Enter the domain name you want. The system checks availability and shows results. If available, links to Namecheap, GoDaddy, and Cloudflare open pre-filled with your domain so you can purchase in one click. After purchase, return to the wizard and the system generates all required DNS records automatically.
+
+**How to use it:** Navigate to **Resources → Email Infrastructure**. Select your path. Follow the step-by-step instructions. Click **Verify** at each step to confirm records are live. Once all records pass verification, your domain is ready for sending.
+
+**Automation connection:** Once your domain is verified, the Email Warmup module automatically enrolls it in a graduated warm-up schedule — starting at 20 emails/day and scaling to your full sending volume over 30 days. This protects your sender reputation from day one.
+
+**Sales outcome:** Proper email infrastructure means your campaigns reach inboxes, not spam folders. A domain with a 98%+ deliverability rate generates 3–5x more replies than a misconfigured domain. This single setup step can double your campaign ROI.
+
+### First-Login Onboarding Wizard
+**What it is:** A guided 3-step setup wizard that appears automatically the first time a new Company Admin logs in. It walks through: uploading a company logo, confirming company details, and inviting the first team member.
+
+**Why it exists:** The first 10 minutes in a new CRM determine whether a user adopts it or abandons it. The wizard ensures every new company starts with the minimum viable setup — a branded, populated CRM — rather than staring at an empty screen.
+
+**How to use it:** The wizard appears automatically on first login. Step 1 (Logo): upload an image or click **AI Generate** to create a logo from your company name. Step 2 (Company): confirm your company name and industry. Step 3 (Invite): enter a team member's email and role to send them an invitation. Each step has a **Skip for now** option. The wizard can be restarted at any time from **Settings → Company**.
+
+**Automation connection:** Logo uploads are stored in S3 and served via CDN. Invitations trigger an automated email to the invitee with a one-click setup link. Once the wizard is completed, the completion flag is stored so the wizard does not appear again.
+
+**Sales outcome:** A fully set up CRM on day one means the team starts selling on day one. Companies that complete onboarding within the first session have a 3x higher 90-day retention rate than those who skip it.
 
 ---
 
