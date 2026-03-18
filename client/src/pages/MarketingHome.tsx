@@ -594,7 +594,7 @@ export default function MarketingHome() {
                 <X className="h-4 w-4" />
               </button>
               <video
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/apex-crm-promo-final_88df7c94.mp4"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/apex-crm-promo-v2_e5dd1bca.mp4"
                 autoPlay
                 controls
                 playsInline
@@ -863,11 +863,10 @@ export default function MarketingHome() {
               {/* Gradient border glow */}
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-orange-500/10 via-transparent to-orange-500/10 pointer-events-none z-10" />
               <video
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/apex-crm-promo-final_88df7c94.mp4"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/apex-crm-promo-v2_e5dd1bca.mp4"
                 className="w-full aspect-video object-contain bg-black"
                 controls
                 playsInline
-                poster="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/apex-promo-s15-YAjuSwAjiUgvwufYmSGmaL.png"
               />
             </div>
             {/* Scene breakdown */}
