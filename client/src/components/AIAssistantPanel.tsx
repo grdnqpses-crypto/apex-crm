@@ -70,7 +70,7 @@ export default function AIAssistantPanel({ open, onClose }: { open: boolean; onC
   if (!open) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-[420px] max-h-[600px] flex flex-col bg-white rounded-2xl shadow-2xl border border-amber-100 overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+    <div className="fixed bottom-4 left-4 z-50 w-[420px] max-h-[600px] flex flex-col bg-white rounded-2xl shadow-2xl border border-amber-100 overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-4 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm">

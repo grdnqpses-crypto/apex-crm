@@ -132,7 +132,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     id: "complete",
     title: "You're All Set!",
     description: "Congratulations! You've completed the Apex CRM onboarding. You're ready to start closing deals and growing your business.",
-    tip: "Need help anytime? Click the Help Center in the sidebar or use the AI Assistant (bottom-right sparkle button).",
+    tip: "Need help anytime? Click the Help Center in the sidebar or use the AI Assistant (bottom-left sparkle button).",
     icon: Trophy,
     route: "/",
     category: "getting-started",

@@ -1224,3 +1224,7 @@
 ## Billing Access Split
 - [x] Company Admin sees payment history/schedule (read-only); Apex Owner/Developer see full billing management
 - [x] Update CRM Bible billing section to document the two-tier access
+
+## AI Button & Assistant Fix
+- [x] Move AI chat button from bottom-right to bottom-left to avoid Manus badge overlap
+- [x] Update AI assistant system prompt to enable logo help and all CRM task execution
