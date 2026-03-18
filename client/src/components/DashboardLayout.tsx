@@ -32,6 +32,7 @@ import {
   Phone, FileText, TrendingUp, Rocket, Bell, PenTool, Briefcase, ScanLine, Truck,
   Receipt, Globe2, UserPlus, Headphones, Database as DatabaseIcon, Flame as FlameIcon,
   EyeIcon, MailOpen, Paintbrush, ArrowRightLeft, Crown, Command, Package, CreditCard,
+  TrendingDown, DollarSign, Tag,
 } from "lucide-react";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -160,8 +161,18 @@ const standardSections = [
       { icon: Crown, label: "Subscription", path: "/subscription" },
       { icon: CreditCard, label: "Billing & Plans", path: "/billing" },
       { icon: Receipt, label: "Billing History", path: "/billing-history" },
+      { icon: CreditCard, label: "Billing & Invoices", path: "/settings/billing" },
       { icon: Zap, label: "AI Credits", path: "/settings/ai-credits" },
       { icon: Mail, label: "Email Infrastructure", path: "/email-setup" },
+      { icon: Tag, label: "Business Type", path: "/settings/business-type" },
+    ],
+  },
+  {
+    label: "Finance",
+    items: [
+      { icon: TrendingUp, label: "Accounts Receivable", path: "/accounts-receivable" },
+      { icon: TrendingDown, label: "Accounts Payable", path: "/accounts-payable" },
+      { icon: Package, label: "Shipping & Receiving", path: "/shipping-receiving" },
     ],
   },
 ];
@@ -171,6 +182,7 @@ const apexPlatformSection = {
   items: [
     { icon: Crown, label: "Platform Dashboard", path: "/apex" },
     { icon: Zap, label: "AI Credits", path: "/apex/ai-credits" },
+    { icon: DollarSign, label: "Payment Management", path: "/apex/payments" },
   ],
 };
 

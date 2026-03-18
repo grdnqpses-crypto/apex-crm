@@ -3832,6 +3832,41 @@ export const appRouter = router({
       return { checkoutUrl: session.url };
     }),
 
+    // Add user seats via Stripe checkout (add-on seats at $25/user/mo)
+    addUserSeats: protectedProcedure.input(z.object({
+      quantity: z.number().int().min(1).max(50),
+      origin: z.string().url(),
+    })).mutation(async ({ ctx, input }) => {
+      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN", message: "Only company admins can add user seats" });
+      if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST", message: "No company associated" });
+      const { stripe } = await import("./stripe.js");
+      if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe is not configured. Please add your Stripe keys in Settings \u2192 Payment." });
+      const { USER_ADDON_PRICE_ID } = await import("./stripe-products.js");
+      if (!USER_ADDON_PRICE_ID) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "User add-on price not configured. Please contact support." });
+      const company = await db.getTenantCompanyById(ctx.user.tenantCompanyId);
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        payment_method_types: ["card"],
+        line_items: [{ price: USER_ADDON_PRICE_ID, quantity: input.quantity }],
+        customer: company?.stripeCustomerId || undefined,
+        customer_email: company?.stripeCustomerId ? undefined : (ctx.user.email || undefined),
+        allow_promotion_codes: true,
+        client_reference_id: ctx.user.id.toString(),
+        metadata: {
+          user_id: ctx.user.id.toString(),
+          tenant_company_id: ctx.user.tenantCompanyId.toString(),
+          addon_type: "user_seats",
+          quantity: input.quantity.toString(),
+          customer_email: ctx.user.email || "",
+          customer_name: ctx.user.name || "",
+        },
+        success_url: `${input.origin}/billing?success=true&addon=user_seats&qty=${input.quantity}`,
+        cancel_url: `${input.origin}/billing?cancelled=true`,
+      });
+      return { checkoutUrl: session.url };
+    }),
+
     // Create Stripe billing portal session
     createPortal: protectedProcedure.input(z.object({
       origin: z.string().url(),
@@ -4150,6 +4185,554 @@ export const appRouter = router({
       tenantCompanyId: z.number(),
     })).query(async ({ input }) => {
       return db.getAiCreditTransactions(input.tenantCompanyId, 200);
+    }),
+  }),
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // BUSINESS CATEGORY / VERTICAL INTELLIGENCE
+  // ═══════════════════════════════════════════════════════════════════════
+  businessCategory: router({
+    list: publicProcedure.query(async () => {
+      const { BUSINESS_CATEGORIES } = await import('../shared/businessCategories');
+      return BUSINESS_CATEGORIES.map(c => ({
+        key: c.key,
+        label: c.label,
+        icon: c.icon,
+        description: c.description,
+        subTypes: c.subTypes,
+        highlightedFeatures: c.highlightedFeatures,
+      }));
+    }),
+    myCategory: protectedProcedure.query(async ({ ctx }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn || !ctx.user.tenantCompanyId) return null;
+      const { tenantCompanies } = await import('../drizzle/schema');
+      const { eq } = await import('drizzle-orm');
+      const [company] = await dbConn.select().from(tenantCompanies).where(eq(tenantCompanies.id, ctx.user.tenantCompanyId));
+      if (!company) return null;
+      const settings = (company.settings as Record<string, unknown>) ?? {};
+      const { getCategory, getTerminology } = await import('../shared/businessCategories');
+      const categoryKey = settings.businessCategory as string | null;
+      const category = getCategory(categoryKey);
+      return {
+        categoryKey: category.key,
+        categoryLabel: category.label,
+        subType: settings.businessSubType as string | null,
+        terminology: getTerminology(categoryKey),
+        enabledModules: category.enabledModules,
+        aiContext: category.aiContext,
+      };
+    }),
+    update: protectedProcedure.input(z.object({
+      categoryKey: z.string(),
+      subType: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn || !ctx.user.tenantCompanyId) throw new TRPCError({ code: 'FORBIDDEN' });
+      if (!['company_admin', 'super_admin', 'apex_owner', 'developer'].includes(ctx.user.systemRole)) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Only Company Admin or above can update business category' });
+      }
+      const { tenantCompanies } = await import('../drizzle/schema');
+      const { eq } = await import('drizzle-orm');
+      const [company] = await dbConn.select().from(tenantCompanies).where(eq(tenantCompanies.id, ctx.user.tenantCompanyId));
+      const currentSettings = (company?.settings as Record<string, unknown>) ?? {};
+      await dbConn.update(tenantCompanies).set({
+        settings: { ...currentSettings, businessCategory: input.categoryKey, businessSubType: input.subType ?? null },
+        updatedAt: Date.now(),
+      }).where(eq(tenantCompanies.id, ctx.user.tenantCompanyId));
+      return { success: true };
+    }),
+  }),
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // SHIPPING & RECEIVING
+  // ═══════════════════════════════════════════════════════════════════════
+  shipping: router({
+    list: protectedProcedure.input(z.object({
+      type: z.enum(['inbound', 'outbound', 'all']).default('all'),
+      page: z.number().default(1),
+      limit: z.number().default(25),
+    })).query(async ({ ctx, input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn || !ctx.user.tenantCompanyId) return { items: [], total: 0 };
+      const { shipments } = await import('../drizzle/schema');
+      const { eq, and, desc } = await import('drizzle-orm');
+      const conditions: ReturnType<typeof eq>[] = [eq(shipments.tenantCompanyId, ctx.user.tenantCompanyId)];
+      if (input.type !== 'all') conditions.push(eq(shipments.shipmentType, input.type));
+      const items = await dbConn.select().from(shipments)
+        .where(and(...conditions))
+        .orderBy(desc(shipments.createdAt))
+        .limit(input.limit).offset((input.page - 1) * input.limit);
+      return { items, total: items.length };
+    }),
+    create: protectedProcedure.input(z.object({
+      shipmentType: z.enum(['inbound', 'outbound']),
+      referenceNumber: z.string().optional(),
+      shipStatus: z.enum(['pending','ordered','in_transit','out_for_delivery','delivered','received','exception','cancelled']).default('pending'),
+      carrierName: z.string().optional(),
+      trackingNumber: z.string().optional(),
+      carrierService: z.string().optional(),
+      shipDate: z.number().optional(),
+      expectedDelivery: z.number().optional(),
+      shipDescription: z.string().optional(),
+      weight: z.string().optional(),
+      dimensions: z.string().optional(),
+      quantity: z.number().optional(),
+      originAddress: z.string().optional(),
+      destinationAddress: z.string().optional(),
+      shipNotes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn || !ctx.user.tenantCompanyId) throw new TRPCError({ code: 'FORBIDDEN' });
+      const { shipments } = await import('../drizzle/schema');
+      const now = Date.now();
+      const [result] = await dbConn.insert(shipments).values({ ...input, tenantCompanyId: ctx.user.tenantCompanyId, createdAt: now, updatedAt: now });
+      return { id: (result as { insertId: number }).insertId };
+    }),
+    update: protectedProcedure.input(z.object({
+      id: z.number(),
+      shipStatus: z.enum(['pending','ordered','in_transit','out_for_delivery','delivered','received','exception','cancelled']).optional(),
+      trackingNumber: z.string().optional(),
+      actualDelivery: z.number().optional(),
+      shipNotes: z.string().optional(),
+      carrierName: z.string().optional(),
+      expectedDelivery: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn || !ctx.user.tenantCompanyId) throw new TRPCError({ code: 'FORBIDDEN' });
+      const { shipments } = await import('../drizzle/schema');
+      const { eq, and } = await import('drizzle-orm');
+      const { id, ...updates } = input;
+      await dbConn.update(shipments).set({ ...updates, updatedAt: Date.now() })
+        .where(and(eq(shipments.id, id), eq(shipments.tenantCompanyId, ctx.user.tenantCompanyId)));
+      return { success: true };
+    }),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn || !ctx.user.tenantCompanyId) throw new TRPCError({ code: 'FORBIDDEN' });
+      const { shipments } = await import('../drizzle/schema');
+      const { eq, and } = await import('drizzle-orm');
+      await dbConn.delete(shipments).where(and(eq(shipments.id, input.id), eq(shipments.tenantCompanyId, ctx.user.tenantCompanyId)));
+      return { success: true };
+    }),
+  }),
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // ACCOUNTS RECEIVABLE
+  // ═══════════════════════════════════════════════════════════════════════
+  ar: router({
+    list: protectedProcedure.input(z.object({
+      page: z.number().default(1),
+      limit: z.number().default(25),
+    })).query(async ({ ctx, input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn || !ctx.user.tenantCompanyId) return { items: [], total: 0 };
+      const { arInvoices } = await import('../drizzle/schema');
+      const { eq, desc } = await import('drizzle-orm');
+      const items = await dbConn.select().from(arInvoices)
+        .where(eq(arInvoices.tenantCompanyId, ctx.user.tenantCompanyId))
+        .orderBy(desc(arInvoices.createdAt))
+        .limit(input.limit).offset((input.page - 1) * input.limit);
+      return { items, total: items.length };
+    }),
+    create: protectedProcedure.input(z.object({
+      arInvoiceNumber: z.string(),
+      arCustomerId: z.number().optional(),
+      arContactId: z.number().optional(),
+      arDealId: z.number().optional(),
+      arIssueDate: z.number(),
+      arDueDate: z.number().optional(),
+      arLineItems: z.array(z.object({ description: z.string(), quantity: z.number(), unitPrice: z.number(), total: z.number() })).default([]),
+      arSubtotalCents: z.number().default(0),
+      arTaxRatePct: z.string().optional(),
+      arTaxAmountCents: z.number().default(0),
+      arTotalCents: z.number(),
+      arPaymentTerms: z.string().default('Net 30'),
+      arNotes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn || !ctx.user.tenantCompanyId) throw new TRPCError({ code: 'FORBIDDEN' });
+      const { arInvoices } = await import('../drizzle/schema');
+      const now = Date.now();
+      const [result] = await dbConn.insert(arInvoices).values({
+        invoiceNumber: input.arInvoiceNumber ?? `INV-${now}`,
+        customerId: input.arCustomerId,
+        contactId: input.arContactId,
+        dealId: input.arDealId,
+        issueDate: input.arIssueDate,
+        dueDate: input.arDueDate,
+        lineItems: input.arLineItems,
+        subtotalCents: input.arSubtotalCents,
+        taxRatePct: input.arTaxRatePct,
+        taxAmountCents: input.arTaxAmountCents,
+        totalCents: input.arTotalCents,
+        paymentTerms: input.arPaymentTerms,
+        notes: input.arNotes,
+        tenantCompanyId: ctx.user.tenantCompanyId,
+        status: 'draft',
+        amountPaidCents: 0,
+        balanceDueCents: input.arTotalCents,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return { id: (result as { insertId: number }).insertId };
+    }),
+    updateStatus: protectedProcedure.input(z.object({
+      id: z.number(),
+      status: z.enum(['draft','sent','viewed','partial','paid','overdue','void']),
+      amountPaidCents: z.number().optional(),
+      paidDate: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn || !ctx.user.tenantCompanyId) throw new TRPCError({ code: 'FORBIDDEN' });
+      const { arInvoices } = await import('../drizzle/schema');
+      const { eq, and } = await import('drizzle-orm');
+      const { id, ...updates } = input;
+      await dbConn.update(arInvoices).set({ ...updates, updatedAt: Date.now() })
+        .where(and(eq(arInvoices.id, id), eq(arInvoices.tenantCompanyId, ctx.user.tenantCompanyId)));
+      return { success: true };
+    }),
+    agingReport: protectedProcedure.query(async ({ ctx }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn || !ctx.user.tenantCompanyId) return { current: 0, days30: 0, days60: 0, days90plus: 0, total: 0 };
+      const { arInvoices } = await import('../drizzle/schema');
+      const { eq, and, inArray } = await import('drizzle-orm');
+      const now = Date.now();
+      const items = await dbConn.select().from(arInvoices)
+        .where(and(eq(arInvoices.tenantCompanyId, ctx.user.tenantCompanyId), inArray(arInvoices.status, ['sent','viewed','partial','overdue'])));
+      let current = 0, days30 = 0, days60 = 0, days90plus = 0;
+      for (const inv of items) {
+        const daysOverdue = inv.dueDate ? Math.floor((now - inv.dueDate) / 86400000) : 0;
+        const balance = inv.balanceDueCents;
+        if (daysOverdue <= 0) current += balance;
+        else if (daysOverdue <= 30) days30 += balance;
+        else if (daysOverdue <= 60) days60 += balance;
+        else days90plus += balance;
+      }
+      return { current, days30, days60, days90plus, total: current + days30 + days60 + days90plus };
+    }),
+  }),
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // ACCOUNTS PAYABLE
+  // ═══════════════════════════════════════════════════════════════════════
+  ap: router({
+    list: protectedProcedure.input(z.object({
+      page: z.number().default(1),
+      limit: z.number().default(25),
+    })).query(async ({ ctx, input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn || !ctx.user.tenantCompanyId) return { items: [], total: 0 };
+      const { apBills } = await import('../drizzle/schema');
+      const { eq, desc } = await import('drizzle-orm');
+      const items = await dbConn.select().from(apBills)
+        .where(eq(apBills.tenantCompanyId, ctx.user.tenantCompanyId))
+        .orderBy(desc(apBills.createdAt))
+        .limit(input.limit).offset((input.page - 1) * input.limit);
+      return { items, total: items.length };
+    }),
+    create: protectedProcedure.input(z.object({
+      apBillNumber: z.string().optional(),
+      apVendorId: z.number().optional(),
+      apContactId: z.number().optional(),
+      apIssueDate: z.number(),
+      apDueDate: z.number().optional(),
+      apLineItems: z.array(z.object({ description: z.string(), quantity: z.number(), unitPrice: z.number(), total: z.number() })).default([]),
+      apSubtotalCents: z.number().default(0),
+      apTaxAmountCents: z.number().default(0),
+      apTotalCents: z.number(),
+      apCategory: z.string().optional(),
+      apNotes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn || !ctx.user.tenantCompanyId) throw new TRPCError({ code: 'FORBIDDEN' });
+      const { apBills } = await import('../drizzle/schema');
+      const now = Date.now();
+      const [result] = await dbConn.insert(apBills).values({
+        billNumber: input.apBillNumber,
+        vendorId: input.apVendorId,
+        contactId: input.apContactId,
+        issueDate: input.apIssueDate,
+        dueDate: input.apDueDate,
+        lineItems: input.apLineItems,
+        subtotalCents: input.apSubtotalCents,
+        taxAmountCents: input.apTaxAmountCents,
+        totalCents: input.apTotalCents,
+        category: input.apCategory,
+        notes: input.apNotes,
+        tenantCompanyId: ctx.user.tenantCompanyId,
+        status: 'pending',
+        amountPaidCents: 0,
+        balanceDueCents: input.apTotalCents,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return { id: (result as { insertId: number }).insertId };
+    }),
+    updateStatus: protectedProcedure.input(z.object({
+      id: z.number(),
+      status: z.enum(['draft','pending','approved','partial','paid','overdue','void']),
+      amountPaidCents: z.number().optional(),
+      paidDate: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn || !ctx.user.tenantCompanyId) throw new TRPCError({ code: 'FORBIDDEN' });
+      const { apBills } = await import('../drizzle/schema');
+      const { eq, and } = await import('drizzle-orm');
+      const { id, ...updates } = input;
+      await dbConn.update(apBills).set({ ...updates, updatedAt: Date.now() })
+        .where(and(eq(apBills.id, id), eq(apBills.tenantCompanyId, ctx.user.tenantCompanyId)));
+      return { success: true };
+    }),
+  }),
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // SUBSCRIPTION BILLING (Tenant self-service + Apex Owner management)
+  // ═══════════════════════════════════════════════════════════════════════
+  billingMgmt: router({
+    mySubscription: protectedProcedure.query(async ({ ctx }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn || !ctx.user.tenantCompanyId) return null;
+      const { tenantCompanies, paymentMethods, subscriptionInvoices } = await import('../drizzle/schema');
+      const { eq, desc } = await import('drizzle-orm');
+      const [company] = await dbConn.select().from(tenantCompanies).where(eq(tenantCompanies.id, ctx.user.tenantCompanyId));
+      if (!company) return null;
+      const [card] = await dbConn.select().from(paymentMethods)
+        .where(eq(paymentMethods.tenantCompanyId, ctx.user.tenantCompanyId))
+        .orderBy(desc(paymentMethods.createdAt)).limit(1);
+      const recentInvoices = await dbConn.select().from(subscriptionInvoices)
+        .where(eq(subscriptionInvoices.tenantCompanyId, ctx.user.tenantCompanyId))
+        .orderBy(desc(subscriptionInvoices.createdAt)).limit(10);
+      return { company, card: card ?? null, recentInvoices };
+    }),
+    createPortalSession: protectedProcedure.mutation(async ({ ctx }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn || !ctx.user.tenantCompanyId) throw new TRPCError({ code: 'FORBIDDEN' });
+      if (!['company_admin', 'super_admin', 'apex_owner', 'developer'].includes(ctx.user.systemRole)) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Only Company Admin can manage billing' });
+      }
+      const { tenantCompanies } = await import('../drizzle/schema');
+      const { eq } = await import('drizzle-orm');
+      const [company] = await dbConn.select().from(tenantCompanies).where(eq(tenantCompanies.id, ctx.user.tenantCompanyId));
+      if (!company?.stripeCustomerId) throw new TRPCError({ code: 'BAD_REQUEST', message: 'No payment method on file. Please contact Apex support to set up billing.' });
+      const { stripe } = await import('./stripe.js');
+      if (!stripe) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Payment system unavailable' });
+      const session = await stripe.billingPortal.sessions.create({
+        customer: company.stripeCustomerId,
+        return_url: `${ctx.req.headers.origin}/settings/billing`,
+      });
+      return { url: session.url };
+    }),
+    allTenantPayments: apexOwnerProcedure.input(z.object({
+      page: z.number().default(1),
+      limit: z.number().default(50),
+    })).query(async () => {
+      const dbConn = await db.getDb();
+      if (!dbConn) return { items: [], stats: { mrr: 0, arr: 0, overdueTotal: 0, collectedThisMonth: 0 } };
+      const { tenantCompanies, subscriptionInvoices } = await import('../drizzle/schema');
+      const { desc, eq } = await import('drizzle-orm');
+      const companies = await dbConn.select().from(tenantCompanies).orderBy(desc(tenantCompanies.createdAt));
+      const allInvoices = await dbConn.select().from(subscriptionInvoices).orderBy(desc(subscriptionInvoices.createdAt));
+      const { PLANS } = await import('./stripe-products');
+      let mrr = 0, overdueTotal = 0, collectedThisMonth = 0;
+      const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+      for (const c of companies) {
+        const plan = PLANS.find((p: { tier: string }) => p.tier === c.subscriptionTier);
+        if (plan && c.subscriptionStatus === 'active') mrr += plan.monthlyPrice;
+      }
+      for (const inv of allInvoices) {
+        if (inv.siStatus === 'overdue') overdueTotal += inv.amountDueCents - inv.amountPaidCents;
+        if (inv.siStatus === 'paid' && inv.paidAt && inv.paidAt >= monthStart.getTime()) collectedThisMonth += inv.amountPaidCents;
+      }
+      const items = companies.map(c => ({
+        ...c,
+        recentInvoices: allInvoices.filter(i => i.tenantCompanyId === c.id).slice(0, 5),
+      }));
+      return { items, stats: { mrr, arr: mrr * 12, overdueTotal, collectedThisMonth } };
+    }),
+    createManualInvoice: apexOwnerProcedure.input(z.object({
+      tenantCompanyId: z.number(),
+      amountDueCents: z.number(),
+      description: z.string(),
+      invoiceType: z.enum(['subscription','ai_credits','user_addon','manual']).default('manual'),
+      dueDate: z.number().optional(),
+    })).mutation(async ({ input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { subscriptionInvoices } = await import('../drizzle/schema');
+      const now = Date.now();
+      const [result] = await dbConn.insert(subscriptionInvoices).values({
+        tenantCompanyId: input.tenantCompanyId,
+        amountDueCents: input.amountDueCents,
+        amountPaidCents: 0,
+        description: input.description,
+        invoiceType: input.invoiceType,
+        siStatus: 'open',
+        dueDate: input.dueDate ?? (now + 30 * 86400000),
+        createdAt: now,
+        updatedAt: now,
+      });
+      return { id: (result as { insertId: number }).insertId };
+    }),
+    markInvoicePaid: apexOwnerProcedure.input(z.object({
+      invoiceId: z.number(),
+      amountPaidCents: z.number().optional(),
+    })).mutation(async ({ input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { subscriptionInvoices } = await import('../drizzle/schema');
+      const { eq } = await import('drizzle-orm');
+      const [inv] = await dbConn.select().from(subscriptionInvoices).where(eq(subscriptionInvoices.id, input.invoiceId));
+      if (!inv) throw new TRPCError({ code: 'NOT_FOUND' });
+      await dbConn.update(subscriptionInvoices).set({
+        siStatus: 'paid',
+        amountPaidCents: input.amountPaidCents ?? inv.amountDueCents,
+        paidAt: Date.now(),
+        updatedAt: Date.now(),
+      }).where(eq(subscriptionInvoices.id, input.invoiceId));
+      return { success: true };
+    }),
+    setTenantStatus: apexOwnerProcedure.input(z.object({
+      tenantCompanyId: z.number(),
+      status: z.enum(['active','suspended','cancelled']),
+    })).mutation(async ({ input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { tenantCompanies } = await import('../drizzle/schema');
+      const { eq } = await import('drizzle-orm');
+      await dbConn.update(tenantCompanies).set({
+        subscriptionStatus: input.status,
+        updatedAt: Date.now(),
+      }).where(eq(tenantCompanies.id, input.tenantCompanyId));
+      return { success: true };
+    }),
+  }),
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // TRIAL HEALTH MONITORING & CUSTOMER SUCCESS
+  // ═══════════════════════════════════════════════════════════════════════
+  trialHealth: router({
+    trackUsage: protectedProcedure.input(z.object({
+      featureKey: z.string(),
+    })).mutation(async ({ ctx, input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn || !ctx.user.tenantCompanyId) return;
+      const { featureUsageTracking } = await import('../drizzle/schema');
+      const { eq, and } = await import('drizzle-orm');
+      const now = Date.now();
+      const [existing] = await dbConn.select().from(featureUsageTracking)
+        .where(and(eq(featureUsageTracking.tenantCompanyId, ctx.user.tenantCompanyId), eq(featureUsageTracking.featureKey, input.featureKey)));
+      if (existing) {
+        await dbConn.update(featureUsageTracking).set({ usageCount: existing.usageCount + 1, lastUsedAt: now, updatedAt: now })
+          .where(and(eq(featureUsageTracking.tenantCompanyId, ctx.user.tenantCompanyId), eq(featureUsageTracking.featureKey, input.featureKey)));
+      } else {
+        await dbConn.insert(featureUsageTracking).values({ tenantCompanyId: ctx.user.tenantCompanyId, featureKey: input.featureKey, usageCount: 1, lastUsedAt: now, firstUsedAt: now, updatedAt: now });
+      }
+    }),
+    myUsage: protectedProcedure.query(async ({ ctx }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn || !ctx.user.tenantCompanyId) return [];
+      const { featureUsageTracking } = await import('../drizzle/schema');
+      const { eq } = await import('drizzle-orm');
+      return dbConn.select().from(featureUsageTracking).where(eq(featureUsageTracking.tenantCompanyId, ctx.user.tenantCompanyId));
+    }),
+    allHealthScores: apexOwnerProcedure.query(async () => {
+      const dbConn = await db.getDb();
+      if (!dbConn) return [];
+      const { tenantCompanies, featureUsageTracking } = await import('../drizzle/schema');
+      const { eq, desc } = await import('drizzle-orm');
+      const companies = await dbConn.select().from(tenantCompanies).orderBy(desc(tenantCompanies.createdAt));
+      const now = Date.now();
+      const results = await Promise.all(companies.map(async (company) => {
+        const usage = await dbConn.select().from(featureUsageTracking).where(eq(featureUsageTracking.tenantCompanyId, company.id));
+        const featuresUsed = usage.filter(u => u.usageCount > 0).length;
+        const totalFeatures = 20;
+        const healthScore = Math.min(100, Math.round((featuresUsed / totalFeatures) * 100));
+        const trialDaysRemaining = company.trialEndsAt ? Math.max(0, Math.floor((company.trialEndsAt - now) / 86400000)) : null;
+        let engagementLevel: 'hot' | 'warm' | 'cold' | 'at_risk' | 'churned' = 'cold';
+        if (healthScore >= 70) engagementLevel = 'hot';
+        else if (healthScore >= 40) engagementLevel = 'warm';
+        else if (trialDaysRemaining !== null && trialDaysRemaining < 7) engagementLevel = 'at_risk';
+        return { company, healthScore, engagementLevel, featuresUsed, totalFeatures, trialDaysRemaining, featureUsage: usage };
+      }));
+      return results.sort((a, b) => {
+        if (a.engagementLevel === 'at_risk' && b.engagementLevel !== 'at_risk') return -1;
+        if (b.engagementLevel === 'at_risk' && a.engagementLevel !== 'at_risk') return 1;
+        return a.healthScore - b.healthScore;
+      });
+    }),
+    battleCard: apexOwnerProcedure.input(z.object({
+      tenantCompanyId: z.number(),
+    })).query(async ({ input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn) return null;
+      const { tenantCompanies, featureUsageTracking } = await import('../drizzle/schema');
+      const { eq } = await import('drizzle-orm');
+      const [company] = await dbConn.select().from(tenantCompanies).where(eq(tenantCompanies.id, input.tenantCompanyId));
+      if (!company) return null;
+      const usage = await dbConn.select().from(featureUsageTracking).where(eq(featureUsageTracking.tenantCompanyId, input.tenantCompanyId));
+      const usedFeatureKeys = new Set(usage.filter(u => u.usageCount > 0).map(u => u.featureKey));
+      const ALL_FEATURES = [
+        { key: 'contacts', label: 'Contact Management', tip: 'Ask how they manage their contact database today' },
+        { key: 'companies', label: 'Company Management', tip: 'Discuss organizing accounts and company hierarchies' },
+        { key: 'deals', label: 'Deal Pipeline', tip: 'Show how the pipeline can replace their spreadsheets' },
+        { key: 'tasks', label: 'Task Management', tip: 'Demonstrate task assignment and team collaboration' },
+        { key: 'campaigns', label: 'Email Campaigns', tip: 'Ask about their current email marketing strategy' },
+        { key: 'automation', label: 'Workflow Automation', tip: 'Show how automation saves 5+ hours per week' },
+        { key: 'analytics', label: 'Analytics Dashboard', tip: 'Walk through the ROI and engagement metrics' },
+        { key: 'segmentation', label: 'Smart Segmentation', tip: 'Demonstrate dynamic list building' },
+        { key: 'paradigm_engine', label: 'Paradigm Engine (AI Prospecting)', tip: 'This is a major differentiator — demo the Ghost Mode' },
+        { key: 'compliance', label: 'Compliance Fortress', tip: 'Highlight CAN-SPAM/GDPR protection value' },
+        { key: 'ab_testing', label: 'A/B Testing', tip: 'Show how to optimize email performance' },
+        { key: 'api_webhooks', label: 'API & Webhooks', tip: 'Ask about their tech stack integrations' },
+        { key: 'email_deliverability', label: 'Deliverability Engine', tip: 'Demonstrate the 98.7% inbox rate claim' },
+        { key: 'load_management', label: 'Load Management', tip: 'If freight company, show the load board' },
+        { key: 'shipping_receiving', label: 'Shipping & Receiving', tip: 'Show inbound/outbound shipment tracking' },
+        { key: 'accounts_receivable', label: 'Accounts Receivable', tip: 'Demo invoice creation and aging reports' },
+        { key: 'accounts_payable', label: 'Accounts Payable', tip: 'Show vendor bill management' },
+      ];
+      const featuresUsed = ALL_FEATURES.filter(f => usedFeatureKeys.has(f.key));
+      const featuresUnused = ALL_FEATURES.filter(f => !usedFeatureKeys.has(f.key));
+      const settings = (company.settings as Record<string, unknown>) ?? {};
+      const { getCategory } = await import('../shared/businessCategories');
+      const category = getCategory(settings.businessCategory as string);
+      let callScript: string | null = null;
+      try {
+        const response = await invokeLLM({
+          messages: [
+            { role: 'system', content: 'You are an expert sales coach for Apex CRM. Generate a concise, personalized call script for an account manager.' },
+            { role: 'user', content: `Company: ${company.name}\nIndustry: ${category.label}\nTrial days remaining: ${company.trialEndsAt ? Math.max(0, Math.floor((company.trialEndsAt - Date.now()) / 86400000)) : 'N/A'}\nFeatures used (${featuresUsed.length}): ${featuresUsed.map(f => f.label).join(', ')}\nFeatures NOT used (${featuresUnused.length}): ${featuresUnused.slice(0, 5).map(f => f.label).join(', ')}\n\nGenerate a 3-paragraph call script: (1) Opening/rapport, (2) Value discussion around unused features, (3) Close/next steps. Keep it conversational and under 200 words.` },
+          ],
+        });
+        const content = response.choices?.[0]?.message?.content;
+        callScript = typeof content === 'string' ? content : null;
+      } catch { callScript = null; }
+      return {
+        company, category, featuresUsed, featuresUnused,
+        healthScore: Math.min(100, Math.round((featuresUsed.length / ALL_FEATURES.length) * 100)),
+        trialDaysRemaining: company.trialEndsAt ? Math.max(0, Math.floor((company.trialEndsAt - Date.now()) / 86400000)) : null,
+        callScript,
+        featureUsageDetails: usage,
+      };
+    }),
+    logCallOutcome: apexOwnerProcedure.input(z.object({
+      tenantCompanyId: z.number(),
+      outcome: z.string(),
+      notes: z.string().optional(),
+    })).mutation(async ({ input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { trialHealthScores } = await import('../drizzle/schema');
+      const { eq } = await import('drizzle-orm');
+      const now = Date.now();
+      const [existing] = await dbConn.select().from(trialHealthScores).where(eq(trialHealthScores.tenantCompanyId, input.tenantCompanyId));
+      if (existing) {
+        await dbConn.update(trialHealthScores).set({ callOutcome: input.outcome, notes: input.notes, lastContactedAt: now, updatedAt: now })
+          .where(eq(trialHealthScores.tenantCompanyId, input.tenantCompanyId));
+      } else {
+        await dbConn.insert(trialHealthScores).values({ tenantCompanyId: input.tenantCompanyId, healthScore: 0, callOutcome: input.outcome, notes: input.notes, lastContactedAt: now, updatedAt: now });
+      }
+      return { success: true };
     }),
   }),
 });

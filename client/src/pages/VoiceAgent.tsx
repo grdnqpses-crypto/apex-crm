@@ -16,6 +16,7 @@ import {
   BarChart3, Clock, Users, Target, CheckCircle2, AlertTriangle,
   MessageSquare, Calendar, TrendingUp, Mic, Bot, Settings
 } from "lucide-react";
+import { FeatureGate } from "@/components/FeatureGate";
 
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -71,6 +72,13 @@ export default function VoiceAgent() {
   const activeCampaign = campaigns.data?.find((c: any) => c.id === selectedCampaign);
 
   return (
+      <FeatureGate
+        featureKey="voice_agent_limited"
+        featureName="AI Voice Agent"
+        description="AI-powered outbound voice calls with transcription and CRM sync. Fortune Foundation (200/mo) · Fortune (unlimited)."
+        freemium={true}
+      >
+
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -396,5 +404,6 @@ export default function VoiceAgent() {
         </TabsContent>
       </Tabs>
     </div>
-  );
+  
+      </FeatureGate>);
 }

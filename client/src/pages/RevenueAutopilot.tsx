@@ -8,6 +8,7 @@ import {
   Rocket, DollarSign, TrendingUp, AlertTriangle, Sparkles,
   RefreshCw, ArrowUpRight, Clock, CheckCircle2, Zap, BarChart3
 } from "lucide-react";
+import { FeatureGate } from "@/components/FeatureGate";
 
 const priorityColors: Record<string, string> = {
   critical: "bg-red-500/20 text-red-400 border-red-500/30",
@@ -37,6 +38,13 @@ export default function RevenueAutopilot() {
   const actions = latestBriefing?.actions as any[] || [];
 
   return (
+      <FeatureGate
+        featureKey="revenue_autopilot"
+        featureName="Revenue Autopilot™"
+        description="Fully autonomous deal nurturing, follow-up, and revenue optimization engine. Fortune plan and above."
+        freemium={false}
+      >
+
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -178,5 +186,6 @@ export default function RevenueAutopilot() {
         </Card>
       )}
     </div>
-  );
+  
+      </FeatureGate>);
 }

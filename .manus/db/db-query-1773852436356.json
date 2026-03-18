@@ -1,0 +1,9 @@
+{
+  "query": "\nALTER TABLE tenant_ai_credits\n  ADD COLUMN monthly_queries_used INT NOT NULL DEFAULT 0,\n  ADD COLUMN monthly_queries_reset_at BIGINT NOT NULL DEFAULT 0;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute \nALTER TABLE tenant_ai_credits\n  ADD COLUMN monthly_queries_used INT NOT NULL DEFAULT 0,\n  ADD COLUMN monthly_queries_reset_at BIGINT NOT NULL DEFAULT 0;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1872
+}

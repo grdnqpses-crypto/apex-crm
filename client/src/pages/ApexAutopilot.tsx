@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Brain, TrendingUp, Layers, Zap, ArrowRight, DollarSign, Truck, BarChart3, Target } from "lucide-react";
+import { FeatureGate } from "@/components/FeatureGate";
 
 export default function ApexAutopilot() {
   const { data: lanes, isLoading: lanesLoading } = trpc.autopilot.lanes.useQuery();
@@ -23,6 +24,13 @@ export default function ApexAutopilot() {
   const totalSavings = consolidations?.reduce((sum, c) => sum + Number(c.savings || 0), 0) || 0;
 
   return (
+      <FeatureGate
+        featureKey="apex_autopilot"
+        featureName="Apex Autopilot™"
+        description="Full autonomous CRM operation — AI handles prospecting, outreach, follow-up, and deal progression end-to-end. Fortune plan and above."
+        freemium={false}
+      >
+
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -203,5 +211,6 @@ export default function ApexAutopilot() {
         </CardContent>
       </Card>
     </div>
-  );
+  
+      </FeatureGate>);
 }

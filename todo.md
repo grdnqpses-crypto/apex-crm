@@ -1352,3 +1352,189 @@
 - [ ] DB: payment_methods table (tenant, stripe_customer_id, card last4, brand, exp)
 - [ ] Sidebar: "Billing" nav item clearly visible to Company Admin+
 - [ ] Sidebar: "Payments" nav item in Apex Platform section for Owner/Developer
+
+## Business Category / Vertical Intelligence System
+- [ ] Define 10 business categories with sub-types and feature mappings in shared/businessCategories.ts
+- [ ] Add businessCategory and businessSubType fields to tenantCompanies schema
+- [ ] Company type selector in onboarding wizard (step 1: pick your business type)
+- [ ] Company type selector in Company Settings page
+- [ ] Adaptive sidebar: show/hide nav sections based on company category
+- [ ] Adaptive terminology: "Deals" → "Jobs/Loads/Listings/Projects" by category
+- [ ] Feature gating: unlock vertical-specific modules based on category
+- [ ] Category-specific onboarding tips in the tour
+- [ ] AI assistant knows the company's vertical for contextual answers
+
+## Vertical-Specific Modules
+- [ ] Shipping & Receiving module (for Manufacturing, Distribution, Retail, E-Commerce)
+  - [ ] Inbound shipments (PO-linked, supplier, expected date, status)
+  - [ ] Outbound shipments (order-linked, carrier, tracking, status)
+  - [ ] Shipment status tracking (ordered, in transit, received, exception)
+  - [ ] Link shipments to contacts/companies/deals
+  - [ ] Packing list and BOL generation
+- [ ] Accounts Payable & Receivable module (all business types)
+  - [ ] AR: create and send invoices to customers
+  - [ ] AR: track payment status, aging (30/60/90 days)
+  - [ ] AP: record bills owed to vendors
+  - [ ] AP: track payment due dates and status
+  - [ ] Cash flow dashboard (AR vs AP summary)
+  - [ ] Aging reports with overdue highlighting
+
+## Trial Health Monitoring & Customer Success Automation
+- [ ] Feature usage tracking table (which features each tenant has used, count, last used)
+- [ ] Trial health score calculation (0-100 based on feature adoption)
+- [ ] Trial health dashboard for Apex Owner/Account Managers
+- [ ] Automated email campaign triggers by trial day (Day 1, 3, 7, 14, 30, 55)
+- [ ] Re-engagement trigger: no login in 7 days
+- [ ] Account Manager battle cards per tenant (features used/unused, call script, talking points)
+- [ ] Daily call queue for Apex Account Managers sorted by priority
+- [ ] Call outcome logging from battle card
+- [ ] Weekly and monthly check-in email templates
+
+## Competitor Comparison & One-Click Migration (Mar 18 2026)
+- [ ] Fix "freigght" spelling error in video/marketing copy → "freight"
+- [ ] Build comprehensive competitor comparison page (/compare or tab in MarketingHome)
+  - All Apex features vs HubSpot, Salesforce, Pipedrive, Zoho, Monday, Freshsales, Keap, ActiveCampaign
+  - Pricing comparison table by feature category
+  - Visual "Apex wins" differentiators for every advantage
+  - Easy toggle to compare Apex vs any single competitor
+- [ ] Build one-click CRM migration system (/migration page)
+  - Per-competitor migration buttons: HubSpot, Salesforce, Pipedrive, Zoho, Monday, Freshsales, Keap, ActiveCampaign, Copper, Insightly
+  - Import: contacts, companies, deals, tasks, notes, emails, pipelines, custom fields, tags
+  - Migration progress tracker with status per data type
+  - Post-migration summary report
+  - CSV/export file upload fallback for any CRM
+
+## Hero Video Redo (Mar 18 2026)
+- [ ] Remove "built for freight brokers" language from hero video
+- [ ] Fix "freigght" → "freight" spelling error
+- [ ] Reposition as "built for ALL companies" with customizable verticals
+- [ ] Highlight one-button migration from any CRM
+- [ ] Showcase ease of use and breadth of features
+- [ ] Dynamic visuals: animated UI walkthroughs, not static screenshots
+- [ ] Update hero section text to match new video messaging
+
+## Dashboard Logo Button Fix (Mar 18 2026)
+- [ ] Replace "Add Logo" redirect-to-settings with an inline modal
+- [ ] Modal: Tab 1 — Upload logo (drag & drop or file picker, uploads to S3)
+- [ ] Modal: Tab 2 — Generate logo with AI (enter company name + style prompt → AI generates logo → preview → save)
+- [ ] Save generated/uploaded logo to tenant company record and refresh sidebar/dashboard immediately
+- [ ] Show logo preview in modal before confirming
+
+## Logo Generation Workflow (Mar 18 2026)
+- [ ] Replace simple "Generate Logo" button with full creative workflow modal
+- [ ] Step 1: Company description text area (name, industry, style, colors, vibe)
+- [ ] Step 2: Suggestions area for specific requests and refinements
+- [ ] Step 3: Generate 3 logo variations via AI image generation
+- [ ] Step 4: Preview all 3 variations side by side
+- [ ] Editing loop: type refinement suggestions and regenerate
+- [ ] "Start Over" button to discard all and reset description
+- [ ] Accept and save selected logo to S3 and update company record
+- [ ] Show logo immediately in sidebar and dashboard after saving
+
+## Logo Generation - Free vs Paid Tiers (Mar 18 2026)
+- [ ] Free tier: simple logo from company name + basic style/color picker (1 generation, no editing loop)
+- [ ] Paid tier: full custom workflow — detailed description, suggestions, 3 variations, editing loop, discard/start over
+- [ ] Show credit cost before generating paid logo
+- [ ] Credit deduction on paid logo generation attempt
+- [ ] Clear "Free" vs "Custom (Credits)" toggle at top of modal
+- [ ] Low-credit warning if balance insufficient for paid generation
+
+## Logo Download Feature (Mar 18 2026)
+- [ ] Paid logo generations are stored in S3 permanently (not just used as profile logo)
+- [ ] Download button available after paid logo is generated/saved
+- [ ] Download formats: PNG (high-res 1024x1024), PNG (standard 512x512)
+- [ ] Download history: user can re-download any previously generated paid logo
+- [ ] Free logos: no download option (use as profile logo only)
+
+## AI Assistant Free Tier & Credit Overage (Mar 18 2026)
+- [ ] Track AI assistant query count per tenant company per month in DB
+- [ ] Add monthly_ai_queries_used and monthly_ai_queries_reset_at fields to tenant_ai_credits table
+- [ ] Free tier: first 50 queries/month included in all subscription plans
+- [ ] At 45 queries: show warning banner "5 free AI queries remaining this month"
+- [ ] At 50 queries: block query, show upgrade prompt to purchase credits
+- [ ] Credit cost: 25% markup on Manus pricing per query (same as general AI credit system)
+- [ ] Monthly reset: auto-reset counter on 1st of each month
+- [ ] Backend: checkAiQueryLimit procedure — returns { allowed, remaining, usedCredits }
+- [ ] Backend: consumeAiQuery procedure — increments counter or deducts credits
+- [ ] Frontend: AI Assistant shows remaining free queries in header
+- [ ] Frontend: low-balance/limit warning banner in AI Assistant panel
+- [ ] Frontend: upgrade prompt modal when limit reached
+
+## Phase 30: Repricing + Feature Gating Overhaul
+
+### Pricing Strategy
+- [x] Reprice Success Starter: $74/mo (was $99), annual $66.60/mo
+- [x] Reprice Growth Foundation: $149/mo (was $197), annual $134.10/mo
+- [x] Reprice Fortune Foundation: $374/mo (was $497), annual $336.60/mo
+- [x] Reprice Fortune: $524/mo (was $697), annual $471.60/mo
+- [x] Reprice Fortune Plus: $1,124/mo (was $1,497), annual $1,011.60/mo
+- [x] Reduce add-on user price: $25/user/mo (was $30)
+- [x] Update all Stripe price IDs for new pricing
+- [x] Update stripe-products.ts with new prices, features, and contact limits
+
+### Feature Gating
+- [x] Add featureTier field to all gated features
+- [x] Gate BNB Engine: 50/mo Starter, 500/mo Growth, unlimited Fortune Foundation+
+- [x] Gate Ghost Mode: 3 active Growth, unlimited Fortune Foundation+
+- [x] Gate 260 SMTP rotation: Fortune Foundation+
+- [x] Gate Compliance Fortress Full (GDPR/CCPA): Fortune Foundation+
+- [x] Gate Voice Agent: Fortune Foundation+ (200/mo), Fortune+ unlimited
+- [ ] Gate DocScan: Fortune Foundation+ (50/mo), Fortune+ unlimited
+- [ ] Gate Win Probability: Fortune Foundation+
+- [ ] Gate AR/AP automation: Growth Foundation+
+- [ ] Gate Shipping/Receiving full: Growth Foundation+
+- [ ] Gate Visitor Tracking: Fortune Foundation+ (1K/mo), Fortune+ unlimited
+- [x] Gate Revenue Autopilot: Fortune+
+- [x] Gate Apex Autopilot: Fortune+
+- [x] Gate White-labeling: Fortune+
+- [ ] Gate Dedicated SMTP infrastructure: Fortune Plus only
+- [ ] Gate Custom AI training: Fortune (basic), Fortune Plus (full)
+- [ ] Keep FREE across all tiers: data entry, one-click migration, business category intel, AI assistant (50/mo), basic AR/AP, basic shipping/receiving
+
+### Frontend Updates
+- [x] Update stripe-products.ts with new pricing and feature lists
+- [x] Update Subscription.tsx page with new tiers, prices, and feature gates
+- [x] Update Billing.tsx checkout page with new prices
+- [x] Update MarketingHome.tsx pricing grid with new prices and feature comparison
+- [ ] Add upgrade prompts/modals when users hit feature gates
+- [ ] Add freemium usage counters (BNB prospects, AI queries, voice calls, DocScans)
+- [ ] Add competitor pricing comparison section showing 25%-83% savings
+- [ ] Update CRM Bible with new pricing and feature gate documentation
+
+## Phase 31: Video/Demo Section — Full Competitive Messaging
+
+- [x] Update hero video modal with full feature vs competitor script
+- [ ] Update "Why Apex" feature showcase section with all modules vs competitors
+- [ ] Expand comparison table to include all Apex differentiators (AR/AP, Shipping, BNB, Voice Agent, DocScan, etc.)
+- [ ] Add dedicated "Switch in 60 Seconds" migration section with step-by-step visual
+- [ ] Add animated demo section showing one-click migration flow
+- [ ] Update hero headline and subheadline to reflect universal applicability (not just freight)
+- [ ] Add "Works for every B2B team" messaging
+- [ ] Add migration source logos (HubSpot, Salesforce, Close, ActiveCampaign, Zoho, Pipedrive, etc.)
+
+## Phase 32: 15-Scene Promo Video
+
+- [x] Generate 15 keyframe images for all scenes
+- [x] Generate Scene 1: The Problem with legacy CRMs
+- [x] Generate Scene 2: Apex CRM introduction
+- [x] Generate Scene 3: Full competitive comparison
+- [x] Generate Scene 4: One-touch migration
+- [x] Generate Scene 5: BNB AI Prospecting Engine
+- [x] Generate Scene 6: 260 SMTP Rotation Engine
+- [x] Generate Scene 7: AI Voice Agent
+- [x] Generate Scene 8: Compliance Fortress
+- [x] Generate Scene 9: AR/AP + Shipping/Receiving
+- [x] Generate Scene 10: DocScan + Revenue Autopilot
+- [x] Generate Scene 11: White-Label branding
+- [x] Generate Scene 12: Pricing comparison — 25% less
+- [x] Generate Scene 13: Apex Autopilot
+- [x] Generate Scene 14: Works for every industry
+- [x] Generate Scene 15: Epic CTA finale
+- [x] Concatenate all 15 scenes into apex-crm-promo-final.mp4 (96 seconds, 41MB)
+- [x] Upload to CDN
+- [x] Embed in MarketingHome.tsx demo section with scene breakdown
+- [x] Update modal video to use new promo video
+- [x] Add add-user-seats Stripe checkout procedure (backend + Billing UI)
+- [x] Create useFeatureGate hook
+- [x] Create FeatureGate component with locked overlay + upgrade CTA
+- [x] Apply FeatureGate to: Prospects, GhostSequences, SmtpAccounts, ComplianceDashboard, VoiceAgent, RevenueAutopilot, WhiteLabel, ApexAutopilot

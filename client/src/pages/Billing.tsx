@@ -78,6 +78,23 @@ export default function Billing() {
     onError: (e) => toast.error(e.message),
   });
 
+  const [seatQty, setSeatQty] = useState(1);
+
+  const addUserSeats = trpc.billing.addUserSeats.useMutation({
+    onSuccess: (data) => {
+      if (data.checkoutUrl) {
+        window.open(data.checkoutUrl, "_blank");
+        toast.success(`Redirecting to checkout for ${seatQty} additional seat${seatQty > 1 ? 's' : ''}...`);
+      }
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const handleAddSeats = () => {
+    if (!isAdmin) { toast.error("Only company admins can add user seats"); return; }
+    addUserSeats.mutate({ quantity: seatQty, origin: window.location.origin });
+  };
+
   const isAdmin = user && ["developer", "apex_owner", "company_admin"].includes(user.systemRole);
   const currentTier = subscription?.tier || "trial";
   const isOnTrial = currentTier === "trial";
@@ -119,7 +136,7 @@ export default function Billing() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold">Billing & Plans</h1>
-          <p className="text-muted-foreground mt-1">Manage your subscription and billing information.</p>
+          <p className="text-muted-foreground mt-1">Manage your subscription. Priced 25–83% below HubSpot and Salesforce — with more features included.</p>
         </div>
         {subscription && (
           <div className="flex items-center gap-3">
@@ -169,6 +186,24 @@ export default function Billing() {
         </Card>
       )}
 
+      {/* ─── Competitor Savings Banner ─── */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+        {[
+          { tier: "1 user", apex: "$74/mo", vs: "HubSpot: $100", save: "26% less" },
+          { tier: "5 users", apex: "$149/mo", vs: "HubSpot: $500", save: "70% less" },
+          { tier: "15 users", apex: "$374/mo", vs: "HubSpot: $1,500", save: "75% less" },
+          { tier: "25 users", apex: "$524/mo", vs: "HubSpot: $3,000", save: "83% less" },
+          { tier: "50 users", apex: "$1,124/mo", vs: "HubSpot: $6,000", save: "81% less" },
+        ].map((item) => (
+          <div key={item.tier} className="rounded-lg bg-green-50 border border-green-200 p-3 text-center">
+            <p className="text-xs text-muted-foreground">{item.tier}</p>
+            <p className="text-lg font-bold text-green-700">{item.apex}</p>
+            <p className="text-xs text-muted-foreground line-through">{item.vs}</p>
+            <p className="text-xs font-semibold text-green-600">{item.save}</p>
+          </div>
+        ))}
+      </div>
+
       {/* ─── Billing Cycle Toggle ─── */}
       <div id="pricing-section" className="space-y-4">
         <div className="flex items-center justify-center gap-4 py-2">
@@ -212,7 +247,18 @@ export default function Billing() {
       {/* ─── Pricing Cards ─── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {(plans || []).map((plan) => {
-          const price = billingCycle === "annual" ? plan.annualPricePerMonth : plan.monthlyPrice;
+          // New pricing: SS=$74, GF=$149, FF=$374, F=$524, FP=$1124
+          const newPrices: Record<string, { monthly: number; annual: number }> = {
+            success_starter:    { monthly: 7400,   annual: 6660 },
+            growth_foundation:  { monthly: 14900,  annual: 13410 },
+            fortune_foundation: { monthly: 37400,  annual: 33660 },
+            fortune:            { monthly: 52400,  annual: 47160 },
+            fortune_plus:       { monthly: 112400, annual: 101160 },
+          };
+          const pricingOverride = newPrices[plan.tier];
+          const price = billingCycle === "annual"
+            ? (pricingOverride?.annual ?? plan.annualPricePerMonth)
+            : (pricingOverride?.monthly ?? plan.monthlyPrice);
           const isCurrentPlan = currentTier === plan.tier;
           const isPopular = plan.popular;
 
@@ -336,8 +382,69 @@ export default function Billing() {
         </CardContent>
       </Card>
 
-      <Separator />
+      {/* ─── Add User Seats ─── */}
+      <Card className="border-primary/30 bg-primary/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Users className="h-5 w-5 text-primary" />
+            Add User Seats
+          </CardTitle>
+          <CardDescription>
+            Need more team members? Add seats to your current plan at <span className="font-semibold text-foreground">$25/user/month</span> — 25% below the market standard of $33–$50/seat.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 w-9 p-0"
+                onClick={() => setSeatQty(q => Math.max(1, q - 1))}
+                disabled={seatQty <= 1}
+              >
+                −
+              </Button>
+              <span className="w-12 text-center font-semibold text-lg">{seatQty}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 w-9 p-0"
+                onClick={() => setSeatQty(q => Math.min(50, q + 1))}
+                disabled={seatQty >= 50}
+              >
+                +
+              </Button>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground">
+                {seatQty} seat{seatQty > 1 ? 's' : ''} × $25/mo = <span className="font-semibold text-foreground">${seatQty * 25}/month</span> added to your subscription
+              </p>
+            </div>
+            <Button
+              onClick={handleAddSeats}
+              disabled={addUserSeats.isPending || !isAdmin}
+              className="gap-2"
+            >
+              <Users className="h-4 w-4" />
+              {addUserSeats.isPending ? "Opening checkout..." : `Add ${seatQty} Seat${seatQty > 1 ? 's' : ''}`}
+            </Button>
+          </div>
+          {!isAdmin && (
+            <p className="text-xs text-amber-600 mt-3 flex items-center gap-1.5">
+              <AlertCircle className="h-3.5 w-3.5" />
+              Only company admins can purchase additional seats.
+            </p>
+          )}
+          <div className="mt-4 pt-4 border-t border-border/50 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-green-500" /> Seats added instantly after payment</div>
+            <div className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-green-500" /> Cancel extra seats anytime via billing portal</div>
+            <div className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-green-500" /> Prorated automatically by Stripe</div>
+          </div>
+        </CardContent>
+      </Card>
 
+      <Separator />
       {/* ─── FAQ ─── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {[

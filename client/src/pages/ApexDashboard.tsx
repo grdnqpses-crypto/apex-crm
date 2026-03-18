@@ -33,11 +33,11 @@ const TIER_LABELS: Record<string, string> = {
 
 const TIER_PRICES: Record<string, number> = {
   trial:              0,
-  success_starter:    99,
-  growth_foundation:  197,
-  fortune_foundation: 497,
-  fortune:            697,
-  fortune_plus:       1497,
+  success_starter:    74,
+  growth_foundation:  149,
+  fortune_foundation: 374,
+  fortune:            524,
+  fortune_plus:       1124,
 };
 
 const TIER_MAX_USERS: Record<string, number> = {
@@ -205,11 +205,11 @@ export default function ApexDashboard() {
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="trial">Trial ($0/mo)</SelectItem>
-                      <SelectItem value="success_starter">Success Starter ($99/mo)</SelectItem>
-                      <SelectItem value="growth_foundation">Growth Foundation ($197/mo)</SelectItem>
-                      <SelectItem value="fortune_foundation">Fortune Foundation ($497/mo)</SelectItem>
-                      <SelectItem value="fortune">Fortune ($697/mo)</SelectItem>
-                      <SelectItem value="fortune_plus">Fortune Plus ($1,497/mo)</SelectItem>
+                      <SelectItem value="success_starter">Success Starter ($74/mo)</SelectItem>
+                      <SelectItem value="growth_foundation">Growth Foundation ($149/mo)</SelectItem>
+                      <SelectItem value="fortune_foundation">Fortune Foundation ($374/mo)</SelectItem>
+                      <SelectItem value="fortune">Fortune ($524/mo)</SelectItem>
+                      <SelectItem value="fortune_plus">Fortune Plus ($1,124/mo)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -347,11 +347,11 @@ export default function ApexDashboard() {
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="trial">Trial ($0/mo)</SelectItem>
-                      <SelectItem value="success_starter">Success Starter ($99/mo)</SelectItem>
-                      <SelectItem value="growth_foundation">Growth Foundation ($197/mo)</SelectItem>
-                      <SelectItem value="fortune_foundation">Fortune Foundation ($497/mo)</SelectItem>
-                      <SelectItem value="fortune">Fortune ($697/mo)</SelectItem>
-                      <SelectItem value="fortune_plus">Fortune Plus ($1,497/mo)</SelectItem>
+                      <SelectItem value="success_starter">Success Starter ($74/mo)</SelectItem>
+                      <SelectItem value="growth_foundation">Growth Foundation ($149/mo)</SelectItem>
+                      <SelectItem value="fortune_foundation">Fortune Foundation ($374/mo)</SelectItem>
+                      <SelectItem value="fortune">Fortune ($524/mo)</SelectItem>
+                      <SelectItem value="fortune_plus">Fortune Plus ($1,124/mo)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

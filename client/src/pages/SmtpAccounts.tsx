@@ -15,6 +15,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { FeatureGate } from "@/components/FeatureGate";
 
 
 const emptyForm = {
@@ -49,6 +50,13 @@ export default function SmtpAccounts() {
   const uniqueDomains = new Set(accounts?.map((a: any) => a.domain) ?? []).size;
 
   return (
+      <FeatureGate
+        featureKey="smtp_260_rotation"
+        featureName="260 SMTP Rotation Engine"
+        description="52-domain, 260-address sending infrastructure with per-provider optimization and domain health autopilot. Fortune Foundation and above."
+        freemium={false}
+      >
+
     <div className="space-y-5">
       <PageGuide {...pageGuides.smtpAccounts} />
       <div className="flex items-center justify-between">
@@ -278,5 +286,6 @@ export default function SmtpAccounts() {
         </DialogContent>
       </Dialog>
     </div>
-  );
+  
+      </FeatureGate>);
 }

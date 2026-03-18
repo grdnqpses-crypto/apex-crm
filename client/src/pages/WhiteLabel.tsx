@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Paintbrush, Globe, Image, Type, Palette, Save } from "lucide-react";
+import { FeatureGate } from "@/components/FeatureGate";
 
 export default function WhiteLabel() {
   const config = trpc.whiteLabel.get.useQuery({ companyId: 1 });
@@ -14,6 +15,13 @@ export default function WhiteLabel() {
   useEffect(() => { if (config.data) setForm(config.data); }, [config.data]);
 
   return (
+      <FeatureGate
+        featureKey="white_labeling"
+        featureName="White-Label & Custom Branding"
+        description="Full white-labeling with your logo, domain, and brand colors. Fortune plan and above. One-time $299 setup fee applies."
+        freemium={false}
+      >
+
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold">White-Label Branding</h1><p className="text-muted-foreground">Customize the platform with your brand — logo, colors, domain, company name</p></div>
@@ -55,5 +63,6 @@ export default function WhiteLabel() {
         </Card>
       </div>
     </div>
-  );
+  
+      </FeatureGate>);
 }

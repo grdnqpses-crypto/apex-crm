@@ -135,15 +135,19 @@ const FEATURES = [
 ];
 
 const COMPARISON = [
-  { feature: "AI Prospect Research", apex: true, hubspot: false, salesforce: false, pipedrive: false },
-  { feature: "Autonomous Email Sequences", apex: true, hubspot: "Add-on", salesforce: false, pipedrive: false },
-  { feature: "98%+ Inbox Placement", apex: true, hubspot: false, salesforce: false, pipedrive: false },
-  { feature: "260 SMTP Rotation", apex: true, hubspot: false, salesforce: false, pipedrive: false },
-  { feature: "Auto Compliance Validation", apex: true, hubspot: "Partial", salesforce: "Partial", pipedrive: false },
-  { feature: "60-Day Free Trial", apex: true, hubspot: false, salesforce: false, pipedrive: false },
-  { feature: "One-Touch Migration", apex: true, hubspot: false, salesforce: false, pipedrive: false },
-  { feature: "AI Battle Cards", apex: true, hubspot: false, salesforce: false, pipedrive: false },
-  { feature: "Price / User / Month", apex: "$197", hubspot: "$800+", salesforce: "$1,200+", pipedrive: "$400+" },
+  { feature: "AI Prospect Research", apex: true, hubspot: false, salesforce: false, close: false },
+  { feature: "Autonomous Email Sequences", apex: true, hubspot: "Add-on ($500+/mo)", salesforce: "Add-on ($125+/user)", close: "Partial" },
+  { feature: "98%+ Inbox Placement", apex: true, hubspot: false, salesforce: false, close: false },
+  { feature: "260 SMTP Rotation Engine", apex: true, hubspot: false, salesforce: false, close: false },
+  { feature: "Compliance Fortress™ (GDPR/CCPA)", apex: true, hubspot: "Partial", salesforce: "Partial", close: false },
+  { feature: "60-Day Free Trial", apex: true, hubspot: false, salesforce: false, close: false },
+  { feature: "One-Click Migration — FREE", apex: true, hubspot: false, salesforce: false, close: false },
+  { feature: "AI Battle Cards", apex: true, hubspot: false, salesforce: false, close: false },
+  { feature: "AR/AP Module", apex: true, hubspot: false, salesforce: false, close: false },
+  { feature: "Shipping & Receiving Module", apex: true, hubspot: false, salesforce: false, close: false },
+  { feature: "Business Category Intelligence", apex: true, hubspot: false, salesforce: false, close: false },
+  { feature: "White-Labeling", apex: true, hubspot: false, salesforce: "Enterprise only", close: false },
+  { feature: "Price for 15 users/month", apex: "$374", hubspot: "$1,500", salesforce: "$2,625", close: "$1,635" },
 ];
 
 const TESTIMONIALS = [
@@ -164,32 +168,42 @@ const TESTIMONIALS = [
 const PLANS = [
   {
     id: "success_starter",
-    name: "Success Starter", price: 99, desc: "The perfect launchpad for solo brokers.",
-    features: ["1 user included", "Add up to 4 users (+$30/user/mo)", "2,500 contacts", "Core CRM suite", "Email campaigns", "Load management", "AI Assistant"],
+    name: "Success Starter", price: 74, annualPrice: 67,
+    desc: "Everything a solo operator needs — with AI built in from day one.",
+    savings: "26% less than HubSpot",
+    features: ["1 user included", "Add up to 4 users (+$25/user/mo)", "5,000 contacts", "Core CRM suite", "500 email sends/month", "AI Assistant (50 queries/mo FREE)", "One-click migration — FREE", "Basic AR/AP & Shipping — FREE"],
     cta: "Start Free Trial", highlight: false, addOnNote: "Up to 5 users total",
   },
   {
     id: "growth_foundation",
-    name: "Growth Foundation", price: 197, desc: "Built for small brokerages ready to scale.",
-    features: ["5 users included", "Add up to 10 users (+$30/user/mo)", "10,000 contacts", "Paradigm Engine™ (Basic)", "Ghost Mode sequences", "Deliverability suite", "Standard support"],
+    name: "Growth Foundation", price: 149, annualPrice: 134,
+    desc: "Full automation and BNB Engine for teams ready to scale.",
+    savings: "70% less than HubSpot Pro",
+    features: ["5 users included", "Add up to 10 users (+$25/user/mo)", "25,000 contacts", "Marketing automation + lead scoring", "BNB Paradigm Engine™ (500 prospects/mo)", "Ghost Mode sequences (3 active)", "Deliverability suite", "AR/AP automation + full Shipping module"],
     cta: "Start Free Trial", highlight: false, addOnNote: "Up to 15 users total",
   },
   {
     id: "fortune_foundation",
-    name: "Fortune Foundation", price: 497, desc: "Advanced automation for mid-size freight ops.",
-    features: ["15 users included", "Add up to 10 users (+$30/user/mo)", "50,000 contacts", "Paradigm Engine™ (Full)", "Ghost Mode + Battle Cards", "260 SMTP rotation", "Compliance Fortress™", "Custom branding"],
+    name: "Fortune Foundation", price: 374, annualPrice: 337,
+    desc: "Enterprise deliverability and full AI at mid-market price.",
+    savings: "75% less than HubSpot Pro",
+    features: ["15 users included", "Add up to 10 users (+$25/user/mo)", "100,000 contacts", "260 SMTP rotation engine", "Compliance Fortress™ (GDPR/CCPA)", "BNB Paradigm Engine™ Full — unlimited", "Voice Agent (200 calls/mo)", "Win Probability Engine", "Custom branding"],
     cta: "Start Free Trial", highlight: true, badge: "Most Popular", addOnNote: "Up to 25 users total",
   },
   {
     id: "fortune",
-    name: "Fortune", price: 697, desc: "The complete platform for high-performance teams.",
-    features: ["25 users included", "Add up to 15 users (+$30/user/mo)", "100,000 contacts", "All Fortune Foundation features", "Voice Agent (unlimited)", "Revenue Autopilot", "Dedicated account manager"],
+    name: "Fortune", price: 524, annualPrice: 472,
+    desc: "White-labeling, Revenue Autopilot, and unlimited AI.",
+    savings: "83% less than HubSpot Enterprise",
+    features: ["25 users included", "Add up to 15 users (+$25/user/mo)", "250,000 contacts", "All Fortune Foundation features", "Voice Agent — unlimited", "Revenue Autopilot + Apex Autopilot", "White-labeling — full platform branding", "Dedicated account manager", "99.5% SLA"],
     cta: "Start Free Trial", highlight: false, addOnNote: "Up to 40 users total",
   },
   {
     id: "fortune_plus",
-    name: "Fortune Plus", price: 1497, desc: "Enterprise-grade scale with white-glove support.",
-    features: ["50 users included", "Unlimited contacts", "All Fortune features", "Dedicated SMTP infra", "Custom AI training", "99.9% SLA", "White-label option", "24/7 priority support"],
+    name: "Fortune Plus", price: 1124, annualPrice: 1012,
+    desc: "Dedicated infrastructure and white-glove service.",
+    savings: "81% less than HubSpot Enterprise",
+    features: ["50 users included", "Unlimited contacts", "All Fortune features", "Dedicated SMTP infrastructure (your own IPs)", "Custom AI training — full, unlimited", "99.9% SLA guarantee", "Priority 24/7 white-glove support", "Custom integrations"],
     cta: "Start Free Trial", highlight: false, addOnNote: "50 users max",
   },
 ];
@@ -580,7 +594,7 @@ export default function MarketingHome() {
                 <X className="h-4 w-4" />
               </button>
               <video
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/apex-demo-video_ca6bcb62.mp4"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/apex-crm-promo-final_88df7c94.mp4"
                 autoPlay
                 controls
                 playsInline
@@ -829,42 +843,52 @@ export default function MarketingHome() {
         </div>
       </section>
 
-      {/* ── Inline video ─────────────────────────────────────────────────── */}
+      {/* ── Full Promo Video ──────────────────────────────────────────────── */}
       <section id="demo" className="py-20 px-6">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <FadeIn>
             <div className="text-center mb-12">
-              <p className="text-xs font-bold text-orange-400 uppercase tracking-widest mb-3">See It In Action</p>
+              <p className="text-xs font-bold text-orange-400 uppercase tracking-widest mb-3">Full Promo Video</p>
               <h2 className="text-4xl md:text-5xl font-black mb-4">
-                Watch Apex CRM <GradText>work.</GradText>
+                The Full Story. <GradText>96 Seconds.</GradText>
               </h2>
-              <p className="text-white/40 text-lg max-w-xl mx-auto">No demo request. No sales call. Just the product, doing what it does.</p>
+              <p className="text-white/40 text-lg max-w-2xl mx-auto">
+                15 features. 5 competitors. 1 winner. Every module, every advantage, every reason to switch — in under 2 minutes.
+              </p>
             </div>
           </FadeIn>
 
           <FadeIn delay={0.15}>
-            <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/60">
-              {/* Autoplay muted video — full width, no button needed */}
+            <div className="relative rounded-2xl overflow-hidden border border-orange-500/20 shadow-2xl shadow-orange-500/10">
+              {/* Gradient border glow */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-orange-500/10 via-transparent to-orange-500/10 pointer-events-none z-10" />
               <video
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/apex-highlight-reel-final_5b1650cb.mp4"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/apex-crm-promo-final_88df7c94.mp4"
                 className="w-full aspect-video object-contain bg-black"
-                autoPlay
-                muted
-                loop
+                controls
                 playsInline
+                poster="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/apex-promo-s15-YAjuSwAjiUgvwufYmSGmaL.png"
               />
-              {/* YouTube overlay — click to open full video with sound */}
-              <div className="absolute inset-0 flex items-end justify-end p-4 bg-gradient-to-t from-black/60 via-transparent to-transparent">
-                <a
-                  href="https://youtube.com/shorts/Y91YVB-yZhs"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-white/20 transition-all"
-                >
-                  <Play className="h-3.5 w-3.5 fill-white" />
-                  Watch with sound
-                </a>
-              </div>
+            </div>
+            {/* Scene breakdown */}
+            <div className="mt-6 grid grid-cols-3 md:grid-cols-5 gap-3">
+              {[
+                { label: "The Problem", time: "0:00" },
+                { label: "Apex Intro", time: "0:06" },
+                { label: "vs Competitors", time: "0:12" },
+                { label: "One-Touch Migration", time: "0:20" },
+                { label: "BNB AI Engine", time: "0:26" },
+                { label: "260 SMTP", time: "0:32" },
+                { label: "AI Voice Agent", time: "0:38" },
+                { label: "Compliance", time: "0:44" },
+                { label: "AR/AP + Logistics", time: "0:50" },
+                { label: "Pricing — 25% Less", time: "1:14" },
+              ].map((scene, i) => (
+                <div key={i} className="bg-white/5 border border-white/8 rounded-xl px-3 py-2 text-center">
+                  <p className="text-orange-400 text-xs font-bold">{scene.time}</p>
+                  <p className="text-white/60 text-xs mt-0.5">{scene.label}</p>
+                </div>
+              ))}
             </div>
           </FadeIn>
         </div>
@@ -971,14 +995,14 @@ export default function MarketingHome() {
                     <th className="p-4 font-black text-orange-400 bg-orange-500/5">Apex CRM</th>
                     <th className="p-4 font-semibold text-white/30">HubSpot</th>
                     <th className="p-4 font-semibold text-white/30">Salesforce</th>
-                    <th className="p-4 font-semibold text-white/30">Pipedrive</th>
+                    <th className="p-4 font-semibold text-white/30">Close CRM</th>
                   </tr>
                 </thead>
                 <tbody>
                   {COMPARISON.map((row, i) => (
                     <tr key={i} className={`border-b border-white/[0.04] ${i % 2 === 0 ? "" : "bg-white/[0.02]"}`}>
                       <td className="p-4 text-white/60 font-medium">{row.feature}</td>
-                      {[row.apex, row.hubspot, row.salesforce, row.pipedrive].map((val, j) => (
+                      {[row.apex, row.hubspot, row.salesforce, row.close].map((val, j) => (
                         <td key={j} className={`p-4 text-center ${j === 0 ? "bg-orange-500/5" : ""}`}>
                           {val === true ? (
                             <CheckCircle className="h-4 w-4 text-green-400 mx-auto" />
@@ -1051,7 +1075,7 @@ export default function MarketingHome() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
             {PLANS.map((plan, i) => {
-              const price = annual ? Math.round(plan.price * 0.90) : plan.price;
+              const price = annual ? (plan.annualPrice ?? Math.round(plan.price * 0.90)) : plan.price;
               return (
                 <FadeIn key={i} delay={i * 0.1}>
                   <div className={`relative rounded-2xl p-5 h-full flex flex-col transition-all ${plan.highlight
@@ -1070,6 +1094,10 @@ export default function MarketingHome() {
                         <span className="text-4xl font-black text-white">${price}</span>
                         <span className="text-sm text-white/30">/mo</span>
                       </div>
+                      {annual && <p className="text-xs text-green-400/80 mt-0.5">Billed annually (10% off)</p>}
+                      {plan.savings && (
+                        <p className="text-xs text-green-400 font-semibold mt-1">↓ {plan.savings}</p>
+                      )}
                       {plan.addOnNote && (
                         <p className="text-xs text-orange-300/70 mt-1">{plan.addOnNote}</p>
                       )}

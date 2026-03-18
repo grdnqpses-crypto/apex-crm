@@ -87,6 +87,12 @@ const BillingHistory = lazy(() => import("./pages/BillingHistory"));
 const EmailSetup = lazy(() => import("./pages/EmailSetup"));
 const ApexAiCredits = lazy(() => import("./pages/ApexAiCredits"));
 const AiCreditsWallet = lazy(() => import("./pages/AiCreditsWallet"));
+const BusinessCategorySelector = lazy(() => import("./pages/BusinessCategorySelector"));
+const ShippingReceiving = lazy(() => import("./pages/ShippingReceiving"));
+const AccountsReceivable = lazy(() => import("./pages/AccountsReceivable"));
+const AccountsPayable = lazy(() => import("./pages/AccountsPayable"));
+const TenantBilling = lazy(() => import("./pages/TenantBilling"));
+const ApexPaymentManagement = lazy(() => import("./pages/ApexPaymentManagement"));
 
 function PageLoader() {
   return (
@@ -180,6 +186,12 @@ function Router() {
           <Route path="/email-setup" component={EmailSetup} />
           <Route path="/apex/ai-credits" component={ApexAiCredits} />
           <Route path="/settings/ai-credits" component={AiCreditsWallet} />
+          <Route path="/settings/business-type" component={BusinessCategorySelector} />
+          <Route path="/shipping-receiving" component={ShippingReceiving} />
+          <Route path="/accounts-receivable" component={AccountsReceivable} />
+          <Route path="/accounts-payable" component={AccountsPayable} />
+          <Route path="/settings/billing" component={TenantBilling} />
+          <Route path="/apex/payments" component={ApexPaymentManagement} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>

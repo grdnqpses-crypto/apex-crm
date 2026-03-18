@@ -18,6 +18,7 @@ import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { FeatureGate } from "@/components/FeatureGate";
 
 
 const stages = [
@@ -111,6 +112,13 @@ export default function Prospects() {
   const prospects = data?.items ?? [];
 
   return (
+      <FeatureGate
+        featureKey="bnb_engine_full"
+        featureName="BNB Paradigm Engine™"
+        description="AI-powered prospect discovery, psychographic profiling, and autonomous engagement. Unlimited on Fortune Foundation and above."
+        freemium={true}
+      >
+
     <div className="space-y-6">
       <PageGuide {...pageGuides.prospects} />
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -278,5 +286,6 @@ export default function Prospects() {
         </div>
       )}
     </div>
-  );
+  
+      </FeatureGate>);
 }

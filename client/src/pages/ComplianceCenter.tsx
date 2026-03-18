@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Shield, ShieldCheck, ShieldAlert, AlertTriangle, CheckCircle2, XCircle, Mail, FileText, Search, BarChart3, Loader2 } from "lucide-react";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { FeatureGate } from "@/components/FeatureGate";
 
 
 export default function ComplianceCenter() {
@@ -27,6 +28,13 @@ export default function ComplianceCenter() {
   const analyzeEmail = trpc.compliance.analyzeEmail.useMutation({ onSuccess: () => toast.success("Analysis complete") });
 
   return (
+      <FeatureGate
+        featureKey="compliance_full"
+        featureName="Compliance Fortress™ — Full GDPR/CCPA"
+        description="Full GDPR consent tracking, CCPA data access/deletion handling, and audit logs. Fortune Foundation and above."
+        freemium={false}
+      >
+
     <div className="space-y-6">
       <PageGuide {...pageGuides.complianceCenter} />
       <div>
@@ -336,5 +344,6 @@ export default function ComplianceCenter() {
         </TabsContent>
       </Tabs>
     </div>
-  );
+  
+      </FeatureGate>);
 }

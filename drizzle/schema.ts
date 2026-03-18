@@ -2330,3 +2330,189 @@ export const userAiAllocations = mysqlTable("user_ai_allocations", {
 });
 
 export type UserAiAllocation = typeof userAiAllocations.$inferSelect;
+
+// ─── Subscription Invoices (Stripe-synced billing records for SaaS subscriptions) ─
+export const subscriptionInvoices = mysqlTable("subscription_invoices", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  stripeInvoiceId: varchar("stripeInvoiceId", { length: 128 }).unique(),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 128 }),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 128 }),
+  // Invoice details
+  amountDueCents: int("amountDueCents").notNull(),
+  amountPaidCents: int("amountPaidCents").default(0).notNull(),
+  currency: varchar("currency", { length: 8 }).default("usd").notNull(),
+  description: text("siDescription"),
+  invoiceType: mysqlEnum("siInvoiceType", ["subscription", "ai_credits", "user_addon", "manual"]).default("subscription").notNull(),
+  // Status tracking
+  siStatus: mysqlEnum("siStatus", ["draft", "open", "paid", "void", "uncollectible", "overdue"]).default("open").notNull(),
+  // Dates (UTC ms)
+  periodStart: bigint("siPeriodStart", { mode: "number" }),
+  periodEnd: bigint("siPeriodEnd", { mode: "number" }),
+  dueDate: bigint("siDueDate", { mode: "number" }),
+  paidAt: bigint("siPaidAt", { mode: "number" }),
+  voidedAt: bigint("siVoidedAt", { mode: "number" }),
+  // PDF
+  invoicePdfUrl: varchar("invoicePdfUrl", { length: 512 }),
+  hostedInvoiceUrl: varchar("hostedInvoiceUrl", { length: 512 }),
+  // Notes
+  notes: text("siNotes"),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type SubscriptionInvoice = typeof subscriptionInvoices.$inferSelect;
+export type InsertSubscriptionInvoice = typeof subscriptionInvoices.$inferInsert;
+
+// ─── Payment Methods (cached Stripe card info per tenant) ────────────────────
+export const paymentMethods = mysqlTable("payment_methods", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  stripePaymentMethodId: varchar("stripePaymentMethodId", { length: 128 }).notNull(),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 128 }).notNull(),
+  brand: varchar("brand", { length: 32 }), // visa, mastercard, amex, etc.
+  last4: varchar("last4", { length: 4 }),
+  expMonth: int("expMonth"),
+  expYear: int("expYear"),
+  isDefault: boolean("isDefault").default(false).notNull(),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+export type PaymentMethod = typeof paymentMethods.$inferSelect;
+
+// ─── Business Category & Vertical Intelligence ───────────────────────────────
+// businessCategory stored on tenantCompanies.settings JSON for now (no migration needed)
+// Feature usage tracking for trial health scoring
+export const featureUsageTracking = mysqlTable("feature_usage_tracking", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  featureKey: varchar("featureKey", { length: 128 }).notNull(), // e.g. "contacts", "deals", "campaigns"
+  usageCount: int("usageCount").default(0).notNull(),
+  lastUsedAt: bigint("lastUsedAt", { mode: "number" }),
+  firstUsedAt: bigint("firstUsedAt", { mode: "number" }),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type FeatureUsageTracking = typeof featureUsageTracking.$inferSelect;
+
+// ─── Trial Health Scores ─────────────────────────────────────────────────────
+export const trialHealthScores = mysqlTable("trial_health_scores", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull().unique(),
+  healthScore: int("healthScore").default(0).notNull(), // 0-100
+  engagementLevel: mysqlEnum("engagementLevel", ["hot", "warm", "cold", "at_risk", "churned"]).default("cold").notNull(),
+  featuresUsedCount: int("featuresUsedCount").default(0).notNull(),
+  totalFeatures: int("totalFeatures").default(20).notNull(),
+  lastLoginAt: bigint("lastLoginAt", { mode: "number" }),
+  daysSinceLastLogin: int("daysSinceLastLogin").default(0),
+  trialDaysRemaining: int("trialDaysRemaining"),
+  assignedAccountManagerId: int("assignedAccountManagerId"), // userId of Apex account manager
+  lastContactedAt: bigint("lastContactedAt", { mode: "number" }),
+  callOutcome: varchar("callOutcome", { length: 256 }),
+  notes: text("thsNotes"),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type TrialHealthScore = typeof trialHealthScores.$inferSelect;
+
+// ─── Trial Email Campaign Log ─────────────────────────────────────────────────
+export const trialEmailLog = mysqlTable("trial_email_log", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  campaignType: varchar("campaignType", { length: 64 }).notNull(), // "day1_welcome", "day3_tips", "day7_weekly", etc.
+  sentAt: bigint("sentAt", { mode: "number" }).notNull(),
+  recipientEmail: varchar("recipientEmail", { length: 320 }).notNull(),
+  subject: varchar("subject", { length: 512 }),
+  opened: boolean("opened").default(false),
+  clicked: boolean("clicked").default(false),
+});
+export type TrialEmailLog = typeof trialEmailLog.$inferSelect;
+
+// ─── Shipments (Shipping & Receiving module) ─────────────────────────────────
+export const shipments = mysqlTable("shipments", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  shipmentType: mysqlEnum("shipmentType", ["inbound", "outbound"]).notNull(),
+  referenceNumber: varchar("referenceNumber", { length: 128 }),
+  status: mysqlEnum("shipStatus", ["pending", "ordered", "in_transit", "out_for_delivery", "delivered", "received", "exception", "cancelled"]).default("pending").notNull(),
+  // Parties
+  supplierId: int("supplierId"), // companyId
+  customerId: int("customerId"), // companyId
+  contactId: int("contactId"),
+  dealId: int("dealId"),
+  // Carrier
+  carrierName: varchar("carrierName", { length: 256 }),
+  trackingNumber: varchar("trackingNumber", { length: 256 }),
+  carrierService: varchar("carrierService", { length: 128 }),
+  // Dates
+  shipDate: bigint("shipDate", { mode: "number" }),
+  expectedDelivery: bigint("expectedDelivery", { mode: "number" }),
+  actualDelivery: bigint("actualDelivery", { mode: "number" }),
+  // Items
+  description: text("shipDescription"),
+  weight: varchar("weight", { length: 64 }),
+  dimensions: varchar("dimensions", { length: 128 }),
+  quantity: int("quantity"),
+  // Addresses
+  originAddress: text("originAddress"),
+  destinationAddress: text("destinationAddress"),
+  // Documents
+  bolUrl: varchar("bolUrl", { length: 512 }),
+  packingListUrl: varchar("packingListUrl", { length: 512 }),
+  notes: text("shipNotes"),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type Shipment = typeof shipments.$inferSelect;
+export type InsertShipment = typeof shipments.$inferInsert;
+
+// ─── Accounts Receivable — Customer Invoices ───────────────────────────────
+export const arInvoices = mysqlTable("ar_invoices", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  invoiceNumber: varchar("arInvoiceNumber", { length: 64 }).notNull(),
+  customerId: int("arCustomerId"), // companyId
+  contactId: int("arContactId"),
+  dealId: int("arDealId"),
+  status: mysqlEnum("arStatus", ["draft", "sent", "viewed", "partial", "paid", "overdue", "void"]).default("draft").notNull(),
+  issueDate: bigint("arIssueDate", { mode: "number" }).notNull(),
+  dueDate: bigint("arDueDate", { mode: "number" }),
+  paidDate: bigint("arPaidDate", { mode: "number" }),
+  lineItems: json("arLineItems").$type<{ description: string; quantity: number; unitPrice: number; total: number }[]>(),
+  subtotalCents: int("arSubtotalCents").default(0).notNull(),
+  taxRatePct: varchar("arTaxRatePct", { length: 16 }),
+  taxAmountCents: int("arTaxAmountCents").default(0),
+  totalCents: int("arTotalCents").notNull(),
+  amountPaidCents: int("arAmountPaidCents").default(0).notNull(),
+  balanceDueCents: int("arBalanceDueCents").notNull(),
+  paymentTerms: varchar("arPaymentTerms", { length: 64 }).default("Net 30"),
+  notes: text("arNotes"),
+  pdfUrl: varchar("arPdfUrl", { length: 512 }),
+  sentAt: bigint("arSentAt", { mode: "number" }),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type ArInvoice = typeof arInvoices.$inferSelect;
+export type InsertArInvoice = typeof arInvoices.$inferInsert;
+
+// ─── Accounts Payable — Vendor Bills ────────────────────────────────────
+export const apBills = mysqlTable("ap_bills", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  billNumber: varchar("apBillNumber", { length: 64 }),
+  vendorId: int("apVendorId"), // companyId
+  contactId: int("apContactId"),
+  status: mysqlEnum("apStatus", ["draft", "pending", "approved", "partial", "paid", "overdue", "void"]).default("pending").notNull(),
+  issueDate: bigint("apIssueDate", { mode: "number" }).notNull(),
+  dueDate: bigint("apDueDate", { mode: "number" }),
+  paidDate: bigint("apPaidDate", { mode: "number" }),
+  lineItems: json("apLineItems").$type<{ description: string; quantity: number; unitPrice: number; total: number }[]>(),
+  subtotalCents: int("apSubtotalCents").default(0).notNull(),
+  taxAmountCents: int("apTaxAmountCents").default(0),
+  totalCents: int("apTotalCents").notNull(),
+  amountPaidCents: int("apAmountPaidCents").default(0).notNull(),
+  balanceDueCents: int("apBalanceDueCents").notNull(),
+  category: varchar("apCategory", { length: 128 }), // e.g. "Supplies", "Rent", "Utilities"
+  notes: text("apNotes"),
+  attachmentUrl: varchar("apAttachmentUrl", { length: 512 }),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type ApBill = typeof apBills.$inferSelect;
+export type InsertApBill = typeof apBills.$inferInsert;

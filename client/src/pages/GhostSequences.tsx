@@ -16,6 +16,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { FeatureGate } from "@/components/FeatureGate";
 
 
 const statusBadge: Record<string, string> = {
@@ -44,6 +45,13 @@ export default function GhostSequences() {
   });
 
   return (
+      <FeatureGate
+        featureKey="ghost_mode_unlimited"
+        featureName="Ghost Mode™ — Autonomous Sequences"
+        description="Multi-stage AI-driven follow-up sequences with positive intent detection. Available on Fortune Foundation and above."
+        freemium={false}
+      >
+
     <div className="space-y-6">
       <PageGuide {...pageGuides.ghostSequences} />
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -108,7 +116,8 @@ export default function GhostSequences() {
         </div>
       )}
     </div>
-  );
+  
+      </FeatureGate>);
 }
 
 function SequenceCard({ sequence, expanded, onToggle, onUpdate, onDelete }: {
