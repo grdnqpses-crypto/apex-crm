@@ -160,6 +160,7 @@ const standardSections = [
       { icon: Crown, label: "Subscription", path: "/subscription" },
       { icon: CreditCard, label: "Billing & Plans", path: "/billing" },
       { icon: Receipt, label: "Billing History", path: "/billing-history" },
+      { icon: Zap, label: "AI Credits", path: "/settings/ai-credits" },
       { icon: Mail, label: "Email Infrastructure", path: "/email-setup" },
     ],
   },
@@ -169,6 +170,7 @@ const apexPlatformSection = {
   label: "Apex Platform",
   items: [
     { icon: Crown, label: "Platform Dashboard", path: "/apex" },
+    { icon: Zap, label: "AI Credits", path: "/apex/ai-credits" },
   ],
 };
 
@@ -315,9 +317,11 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const { devMode, handleLogoTap, disableDevMode } = useDevMode();
-  const { canAccessSidebarItem } = useFeatureAccess();
+  const { canAccessSidebarItem, isAdmin, isApexOwner, isDeveloper } = useFeatureAccess();
   const [aiOpen, setAiOpen] = useState(false);
   const { data: myCompany } = trpc.tenants.myCompany.useQuery(undefined, { enabled: !!user });
+  // White-label: only Company Admin and above see "powered by Apex"
+  const showApexBranding = isDeveloper || isApexOwner || isAdmin;
 
   const menuSections = getMenuSections(devMode, user?.systemRole);
   const filteredSections = menuSections.map(section => ({
@@ -388,7 +392,7 @@ function DashboardLayoutContent({
                     <span className="font-bold tracking-tight text-foreground text-[15px] block truncate">
                       {myCompany?.name || "Apex CRM"}
                     </span>
-                    {myCompany?.name && <span className="text-[10px] text-muted-foreground/60 block -mt-0.5">powered by Apex</span>}
+                    {myCompany?.name && showApexBranding && <span className="text-[10px] text-muted-foreground/60 block -mt-0.5">powered by Apex</span>}
                   </div>
                   {devMode && (
                     <span className="text-[9px] font-bold uppercase tracking-widest text-amber-500/80 ml-0.5 bg-amber-50 px-1.5 py-0.5 rounded">DEV</span>
@@ -547,11 +551,11 @@ function DashboardLayoutContent({
         <main className="flex-1 p-5 lg:p-7">{children}</main>
       </SidebarInset>
 
-      {/* AI Assistant floating button */}
+      {/* AI Assistant floating button — bottom-right, just above Made with Manus tag */}
       {!aiOpen && (
         <button
           onClick={() => setAiOpen(true)}
-          className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-amber-200/50 flex items-center justify-center hover:scale-105 hover:shadow-xl transition-all duration-200 group"
+          className="fixed bottom-16 right-5 z-50 w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-amber-200/50 flex items-center justify-center hover:scale-105 hover:shadow-xl transition-all duration-200 group"
           title="Open AI Assistant"
         >
           <Sparkles className="w-6 h-6 text-white group-hover:rotate-12 transition-transform" />

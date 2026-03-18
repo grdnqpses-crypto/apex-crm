@@ -1,4 +1,3 @@
-import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,9 +8,10 @@ import {
   TrendingUp, Trophy, Target, Radar, Ghost, Shield,
   FileText, Workflow, LayoutGrid, AlertCircle, Truck,
   Package, Brain, Phone, ArrowRight, Sparkles,
-  StickyNote, PhoneCall, MailOpen, Calendar, Clock, User,
+  StickyNote, PhoneCall, MailOpen, Calendar, Clock, User, ImagePlus,
 } from "lucide-react";
 import { Link } from "wouter";
+import { trpc } from "@/lib/trpc";
 
 /*
  * Enterprise CRM Color System:
@@ -187,6 +187,7 @@ function RecentActivityFeed() {
 export default function Dashboard() {
   const { user } = useAuth();
   const { data: stats, isLoading } = trpc.dashboard.stats.useQuery();
+  const { data: company } = trpc.tenants.myCompany.useQuery();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const utils = trpc.useUtils();
 
@@ -207,22 +208,54 @@ export default function Dashboard() {
     <div className="space-y-8">
       {/* ─── Welcome Header ─── */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/8 via-primary/4 to-transparent border border-primary/10 p-7">
-        <div className="relative z-10">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">
-                {greeting()}, {user?.name?.split(" ")[0] || "there"}
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1.5 max-w-lg">
-                Your dashboard is your daily command center. Every metric below is live — track your pipeline, monitor team performance, and spot opportunities at a glance. Click any card to dive deeper.
-              </p>
+          <div className="relative z-10">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-4">
+              {/* Company logo or upload prompt */}
+              {company?.logoUrl ? (
+                <img
+                  src={company.logoUrl}
+                  alt={company.name || "Company logo"}
+                  className="h-14 w-14 rounded-2xl object-contain bg-white/80 border border-border/30 shadow-sm shrink-0"
+                />
+              ) : (
+                <Link
+                  href="/settings"
+                  className="h-14 w-14 rounded-2xl bg-white/60 border-2 border-dashed border-primary/30 flex flex-col items-center justify-center shrink-0 hover:border-primary/60 hover:bg-white/80 transition-all group"
+                  title="Upload or generate your company logo"
+                >
+                  <ImagePlus className="h-5 w-5 text-primary/50 group-hover:text-primary transition-colors" />
+                  <span className="text-[9px] text-primary/50 group-hover:text-primary font-semibold mt-0.5 transition-colors">Logo</span>
+                </Link>
+              )}
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">
+                  {greeting()}, {user?.name?.split(" ")[0] || "there"}
+                </h1>
+                {company?.name && (
+                  <p className="text-xs font-semibold text-primary/70 mt-0.5">{company.name}</p>
+                )}
+                <p className="text-sm text-muted-foreground mt-1 max-w-lg">
+                  Your dashboard is your daily command center. Every metric below is live — track your pipeline, monitor team performance, and spot opportunities at a glance.
+                </p>
+              </div>
             </div>
-            <button
-              onClick={() => { if ((window as any).__startOnboarding) (window as any).__startOnboarding(); else setShowOnboarding(true); }}
-              className="shrink-0 ml-4 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-bold shadow-lg shadow-amber-500/20 transition-all flex items-center gap-1.5"
-            >
-              <Sparkles className="h-3.5 w-3.5" /> Getting Started
-            </button>
+            <div className="flex flex-col gap-2 shrink-0">
+              <button
+                onClick={() => { if ((window as any).__startOnboarding) (window as any).__startOnboarding(); else setShowOnboarding(true); }}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-bold shadow-lg shadow-amber-500/20 transition-all flex items-center gap-1.5"
+              >
+                <Sparkles className="h-3.5 w-3.5" /> Getting Started
+              </button>
+              {!company?.logoUrl && (
+                <Link
+                  href="/settings"
+                  className="px-4 py-2 rounded-xl bg-white/60 border border-border/40 hover:bg-white/80 text-foreground text-xs font-semibold transition-all flex items-center gap-1.5"
+                >
+                  <ImagePlus className="h-3.5 w-3.5 text-primary" /> Add Logo
+                </Link>
+              )}
+            </div>
           </div>
         </div>
         {/* Decorative circles */}

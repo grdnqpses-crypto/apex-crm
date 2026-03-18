@@ -25,6 +25,11 @@ export default function AIAssistantPanel({ open, onClose }: { open: boolean; onC
   const inputRef = useRef<HTMLInputElement>(null);
 
   const chatMutation = trpc.ai.chat.useMutation();
+  const { data: myCompany } = trpc.tenants.myCompany.useQuery();
+
+  // White-label: use company name/logo if available, fall back to generic "AI Assistant"
+  const assistantName = myCompany?.name ? `${myCompany.name} AI` : "AI Assistant";
+  const assistantGreeting = myCompany?.name ? `Hi! I'm ${myCompany.name} AI` : "Hi! I'm your AI Assistant";
 
   useEffect(() => {
     if (open && inputRef.current) {
@@ -70,14 +75,22 @@ export default function AIAssistantPanel({ open, onClose }: { open: boolean; onC
   if (!open) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 z-50 w-[420px] max-h-[600px] flex flex-col bg-white rounded-2xl shadow-2xl border border-amber-100 overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+    <div className="fixed bottom-16 right-4 z-50 w-[420px] max-h-[600px] flex flex-col bg-white rounded-2xl shadow-2xl border border-amber-100 overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-4 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm">
-          <Sparkles className="w-5 h-5 text-white" />
-        </div>
+        {myCompany?.logoUrl ? (
+          <img
+            src={myCompany.logoUrl}
+            alt={myCompany.name}
+            className="w-9 h-9 rounded-xl object-contain bg-white border border-amber-100 shadow-sm shrink-0"
+          />
+        ) : (
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm shrink-0">
+            <Sparkles className="w-5 h-5 text-white" />
+          </div>
+        )}
         <div className="flex-1">
-          <h3 className="font-semibold text-stone-800 text-sm">Apex AI Assistant</h3>
+          <h3 className="font-semibold text-stone-800 text-sm">{assistantName}</h3>
           <p className="text-xs text-stone-500">Ask anything or give me a command</p>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-lg hover:bg-amber-100">
@@ -89,10 +102,18 @@ export default function AIAssistantPanel({ open, onClose }: { open: boolean; onC
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[300px] max-h-[400px] bg-gradient-to-b from-amber-50/30 to-white">
         {messages.length === 0 && !isLoading && (
           <div className="text-center py-6">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mx-auto mb-4">
-              <Bot className="w-7 h-7 text-amber-600" />
-            </div>
-            <h4 className="font-semibold text-stone-700 mb-1">Hi! I'm Apex AI</h4>
+            {myCompany?.logoUrl ? (
+              <img
+                src={myCompany.logoUrl}
+                alt={myCompany.name}
+                className="w-14 h-14 rounded-2xl object-contain bg-amber-50 border border-amber-100 mx-auto mb-4 shadow-sm"
+              />
+            ) : (
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mx-auto mb-4">
+                <Bot className="w-7 h-7 text-amber-600" />
+              </div>
+            )}
+            <h4 className="font-semibold text-stone-700 mb-1">{assistantGreeting}</h4>
             <p className="text-sm text-stone-500 mb-5">I can answer questions and take actions in your CRM. Try one of these:</p>
             <div className="grid grid-cols-2 gap-2">
               {SUGGESTED_PROMPTS.map((s, i) => (
@@ -111,9 +132,17 @@ export default function AIAssistantPanel({ open, onClose }: { open: boolean; onC
         {messages.map((msg, i) => (
           <div key={i} className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             {msg.role === "assistant" && (
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Sparkles className="w-3.5 h-3.5 text-white" />
-              </div>
+              myCompany?.logoUrl ? (
+                <img
+                  src={myCompany.logoUrl}
+                  alt={myCompany.name}
+                  className="w-7 h-7 rounded-lg object-contain bg-white border border-amber-100 flex-shrink-0 mt-0.5"
+                />
+              ) : (
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Sparkles className="w-3.5 h-3.5 text-white" />
+                </div>
+              )
             )}
             <div
               className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
@@ -138,9 +167,17 @@ export default function AIAssistantPanel({ open, onClose }: { open: boolean; onC
 
         {isLoading && (
           <div className="flex gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-3.5 h-3.5 text-white" />
-            </div>
+            {myCompany?.logoUrl ? (
+              <img
+                src={myCompany.logoUrl}
+                alt={myCompany.name}
+                className="w-7 h-7 rounded-lg object-contain bg-white border border-amber-100 flex-shrink-0"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-3.5 h-3.5 text-white" />
+              </div>
+            )}
             <div className="bg-white border border-stone-100 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-stone-500">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />

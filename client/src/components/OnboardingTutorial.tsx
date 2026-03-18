@@ -11,6 +11,7 @@ import {
   GraduationCap, Trophy, Star, Rocket
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 
 // ─── Tutorial Step Definitions ───
 interface TutorialStep {
@@ -33,7 +34,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     description: "Your all-in-one CRM platform is ready. Let's take a quick tour to help you get the most out of every feature.",
     tip: "This onboarding takes about 5 minutes and will save you hours of exploration.",
     icon: Rocket,
-    route: "/",
+    route: "/dashboard",
     category: "getting-started",
   },
   {
@@ -42,7 +43,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     description: "The Dashboard shows your real-time metrics — pipeline value, deal counts, task progress, and team performance at a glance.",
     tip: "Click any metric card to jump directly to that section. The greeting updates based on time of day.",
     icon: LayoutDashboard,
-    route: "/",
+    route: "/dashboard",
     category: "getting-started",
   },
   {
@@ -134,7 +135,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     description: "Congratulations! You've completed the Apex CRM onboarding. You're ready to start closing deals and growing your business.",
     tip: "Need help anytime? Click the Help Center in the sidebar or use the AI Assistant (bottom-left sparkle button).",
     icon: Trophy,
-    route: "/",
+    route: "/dashboard",
     category: "getting-started",
   },
 ];
@@ -177,6 +178,9 @@ export default function OnboardingTutorial() {
   const [state, setState] = useState<OnboardingState>(getOnboardingState);
   const [showPopup, setShowPopup] = useState(false);
   const [animateIn, setAnimateIn] = useState(false);
+
+  const { data: myCompany } = trpc.tenants.myCompany.useQuery(undefined, { enabled: !!user });
+  const isAdminOrAbove = ["company_admin", "apex_owner", "developer"].includes(user?.systemRole || "");
 
   // Filter steps based on user role
   const availableSteps = useMemo(() => {
@@ -266,7 +270,7 @@ export default function OnboardingTutorial() {
         completedSteps: availableSteps.map(s => s.id),
       }));
       setShowPopup(false);
-      navigate("/");
+      navigate("/dashboard");
     }, 200);
   }, [availableSteps, navigate]);
 
@@ -326,9 +330,17 @@ export default function OnboardingTutorial() {
             {/* Header */}
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
-                  <Icon className="w-5 h-5 text-amber-600" />
-                </div>
+                {myCompany?.logoUrl ? (
+                  <img
+                    src={myCompany.logoUrl}
+                    alt={myCompany.name}
+                    className="w-10 h-10 rounded-xl object-contain bg-amber-50 border border-amber-100"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-amber-600" />
+                  </div>
+                )}
                 <div>
                   <Badge className={`text-[10px] px-1.5 py-0 ${categoryColors[currentStepData.category]}`}>
                     {categoryLabels[currentStepData.category]}
@@ -344,7 +356,12 @@ export default function OnboardingTutorial() {
             </div>
 
             {/* Content */}
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">{currentStepData.title}</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">
+              {/* White-label: replace "Apex CRM" with company name for non-admin roles */}
+              {currentStepData.id === "welcome" && !isAdminOrAbove && myCompany?.name
+                ? currentStepData.title.replace("Apex CRM", myCompany.name)
+                : currentStepData.title}
+            </h3>
             <p className="text-sm text-slate-600 mb-3 leading-relaxed">{currentStepData.description}</p>
 
             {/* AI Tip */}

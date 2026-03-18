@@ -1,0 +1,9 @@
+{
+  "query": "DROP TABLE IF EXISTS `user_ai_allocations`;\nDROP TABLE IF EXISTS `ai_credit_transactions`;\nDROP TABLE IF EXISTS `tenant_ai_credits`;\nDROP TABLE IF EXISTS `ai_credit_packages`;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute DROP TABLE IF EXISTS `user_ai_allocations`;\nDROP TABLE IF EXISTS `ai_credit_transactions`;\nDROP TABLE IF EXISTS `tenant_ai_credits`;\nDROP TABLE IF EXISTS `ai_credit_packages`;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2534
+}

@@ -3968,5 +3968,168 @@ export const appRouter = router({
       }
     }),
   }),
+
+  // ─── AI Credits System ───
+  // Model:
+  //   - CRM AI features are FREE (included in subscription)
+  //   - Non-CRM AI usage requires purchased credits at 25% markup on Manus pricing
+  //   - Billed directly to tenant company's Stripe card on file
+  //   - Only Apex Owner manages packages and sells credits
+  //   - Company Admins view their balance and history (read-only)
+  aiCredits: router({
+
+    // ── Company Admin (read-only): view own tenant's credit balance ──
+    myBalance: companyAdminProcedure.query(async ({ ctx }) => {
+      const tenantId = ctx.user.tenantCompanyId;
+      if (!tenantId) return { availableCredits: 0, lifetimePurchasedCredits: 0, lifetimeUsedCredits: 0 };
+      await db.initTenantAiCredits(tenantId);
+      const balance = await db.getTenantAiCredits(tenantId);
+      return {
+        availableCredits: balance?.availableCredits || 0,
+        lifetimePurchasedCredits: balance?.lifetimePurchasedCredits || 0,
+        lifetimeUsedCredits: balance?.lifetimeUsedCredits || 0,
+      };
+    }),
+
+    // ── Company Admin (read-only): view own credit transaction history ──
+    myTransactions: companyAdminProcedure.query(async ({ ctx }) => {
+      const tenantId = ctx.user.tenantCompanyId;
+      if (!tenantId) return [];
+      return db.getAiCreditTransactions(tenantId, 100);
+    }),
+
+    // ── Apex Owner: list all credit packages ──
+    listPackages: apexOwnerProcedure.query(async () => {
+      return db.getAiCreditPackages();
+    }),
+
+    // ── Apex Owner: create a new credit package ──
+    createPackage: apexOwnerProcedure.input(z.object({
+      name: z.string().min(1),
+      description: z.string().optional(),
+      credits: z.number().min(1),
+      manusBasePriceCents: z.number().min(0), // Manus list price in cents
+    })).mutation(async ({ input }) => {
+      const { aiCreditPackages: pkgTable } = await import('../drizzle/schema');
+      const dbConn = await db.getDb();
+      if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const now = Date.now();
+      const finalPriceCents = Math.round(input.manusBasePriceCents * 1.25); // 25% markup
+      await dbConn.insert(pkgTable).values({
+        name: input.name,
+        description: input.description,
+        credits: input.credits,
+        manusBasePriceCents: input.manusBasePriceCents,
+        markupPercent: 25,
+        finalPriceCents,
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return { success: true };
+    }),
+
+    // ── Apex Owner: update a credit package ──
+    updatePackage: apexOwnerProcedure.input(z.object({
+      id: z.number(),
+      name: z.string().optional(),
+      description: z.string().optional(),
+      credits: z.number().optional(),
+      manusBasePriceCents: z.number().optional(),
+      isActive: z.boolean().optional(),
+    })).mutation(async ({ input }) => {
+      const { aiCreditPackages: pkgTable } = await import('../drizzle/schema');
+      const { eq: eqOp } = await import('drizzle-orm');
+      const dbConn = await db.getDb();
+      if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { id, manusBasePriceCents, ...rest } = input;
+      const updates: Record<string, unknown> = { ...rest, updatedAt: Date.now() };
+      if (manusBasePriceCents !== undefined) {
+        updates.manusBasePriceCents = manusBasePriceCents;
+        updates.finalPriceCents = Math.round(manusBasePriceCents * 1.25);
+      }
+      await dbConn.update(pkgTable).set(updates as any).where(eqOp(pkgTable.id, id));
+      return { success: true };
+    }),
+
+    // ── Apex Owner: create a Stripe checkout session for a tenant to purchase credits ──
+    createCheckout: apexOwnerProcedure.input(z.object({
+      tenantCompanyId: z.number(),
+      packageId: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      const tenant = await db.getTenantCompanyById(input.tenantCompanyId);
+      if (!tenant) throw new TRPCError({ code: 'NOT_FOUND', message: 'Tenant company not found' });
+      const packages = await db.getAiCreditPackages();
+      const pkg = packages.find(p => p.id === input.packageId);
+      if (!pkg) throw new TRPCError({ code: 'NOT_FOUND', message: 'Package not found' });
+      const stripe = (await import('stripe')).default;
+      const stripeClient = new stripe(process.env.STRIPE_SECRET_KEY || '');
+      const origin = ctx.req.headers.origin || 'https://apex-crm.manus.space';
+      const session = await stripeClient.checkout.sessions.create({
+        mode: 'payment',
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `${pkg.name} — ${pkg.credits.toLocaleString()} AI Credits`,
+              description: pkg.description || `${pkg.credits} AI credits for non-CRM AI features`,
+            },
+            unit_amount: pkg.finalPriceCents,
+          },
+          quantity: 1,
+        }],
+        customer_email: tenant.contactEmail || undefined,
+        client_reference_id: input.tenantCompanyId.toString(),
+        metadata: {
+          tenant_company_id: input.tenantCompanyId.toString(),
+          package_id: input.packageId.toString(),
+          credits: pkg.credits.toString(),
+          company_name: tenant.name,
+        },
+        allow_promotion_codes: true,
+        success_url: `${origin}/settings/ai-credits?purchase=success`,
+        cancel_url: `${origin}/settings/ai-credits?purchase=cancelled`,
+      });
+      return { checkoutUrl: session.url };
+    }),
+
+    // ── Apex Owner: manually grant credits to a tenant (no Stripe) ──
+    grantCredits: apexOwnerProcedure.input(z.object({
+      tenantCompanyId: z.number(),
+      credits: z.number().min(1),
+      description: z.string().default('Credits granted by Apex Owner'),
+    })).mutation(async ({ ctx, input }) => {
+      const tenant = await db.getTenantCompanyById(input.tenantCompanyId);
+      if (!tenant) throw new TRPCError({ code: 'NOT_FOUND', message: 'Tenant company not found' });
+      await db.addTenantAiCredits(input.tenantCompanyId, input.credits, input.description, undefined, 0, ctx.user.id);
+      return { success: true };
+    }),
+
+    // ── Apex Owner: view all tenant credit balances ──
+    allTenantBalances: apexOwnerProcedure.query(async () => {
+      const dbConn = await db.getDb();
+      if (!dbConn) return [];
+      const { tenantAiCredits: tac, tenantCompanies: tc } = await import('../drizzle/schema');
+      const { eq: eqOp } = await import('drizzle-orm');
+      return dbConn
+        .select({
+          tenantCompanyId: tac.tenantCompanyId,
+          companyName: tc.name,
+          availableCredits: tac.availableCredits,
+          lifetimePurchasedCredits: tac.lifetimePurchasedCredits,
+          lifetimeUsedCredits: tac.lifetimeUsedCredits,
+          updatedAt: tac.updatedAt,
+        })
+        .from(tac)
+        .leftJoin(tc, eqOp(tac.tenantCompanyId, tc.id));
+    }),
+
+    // ── Apex Owner: view transaction history for any tenant ──
+    tenantTransactions: apexOwnerProcedure.input(z.object({
+      tenantCompanyId: z.number(),
+    })).query(async ({ input }) => {
+      return db.getAiCreditTransactions(input.tenantCompanyId, 200);
+    }),
+  }),
 });
 export type AppRouter = typeof appRouter;

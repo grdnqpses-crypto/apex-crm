@@ -85,6 +85,8 @@ const Billing = lazy(() => import("./pages/Billing"));
 const CRMBible = lazy(() => import("./pages/CRMBible"));
 const BillingHistory = lazy(() => import("./pages/BillingHistory"));
 const EmailSetup = lazy(() => import("./pages/EmailSetup"));
+const ApexAiCredits = lazy(() => import("./pages/ApexAiCredits"));
+const AiCreditsWallet = lazy(() => import("./pages/AiCreditsWallet"));
 
 function PageLoader() {
   return (
@@ -176,6 +178,8 @@ function Router() {
           <Route path="/crm-bible" component={CRMBible} />
           <Route path="/billing-history" component={BillingHistory} />
           <Route path="/email-setup" component={EmailSetup} />
+          <Route path="/apex/ai-credits" component={ApexAiCredits} />
+          <Route path="/settings/ai-credits" component={AiCreditsWallet} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>

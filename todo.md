@@ -1269,3 +1269,37 @@
 - [ ] Frontend: 5-step wizard modal (upload logo, invite team, email setup, first contact, first campaign)
 - [ ] Show wizard on first login, skip if already completed
 - [ ] Add "Resume Onboarding" button in Settings for users who skipped
+
+## Live Testing Session Fixes
+- [x] Move AI button/panel to bottom-right, above the Manus badge
+- [x] Fix tour "Next" button navigating away from CRM to public homepage
+- [x] Add logo upload/generate button prominently on the dashboard
+- [x] Brand AI assistant with user's company name and logo (not "Apex")
+- [x] White-label CRM so non-admin roles only see company branding (hide "Apex" identity)
+- [x] Build AI credit reselling system (purchase, track, consume credits)
+
+## AI Credit Reselling System (Apex Owner → Tenant Companies)
+- [x] Apex Owner dashboard: define credit packages with wholesale cost + retail price
+- [x] Apex Owner: sell credits to specific tenant companies at marked-up price
+- [x] Apex Owner: view all tenant credit balances
+- [x] Tenant Company Admin: view their credit balance (read-only)
+- [x] Tenant Company Admin: view credit usage history
+- [ ] AI credit balance shown in sidebar for Company Admin+
+- [x] DB tables: ai_credit_packages, tenant_ai_credits, ai_credit_transactions (done)
+- [x] tRPC routers: aiCredits.* (done)
+- [x] Frontend: /apex/ai-credits page for Apex Owner
+- [x] Frontend: credit balance widget in Company Admin settings
+
+## AI Credit System (Revised Model)
+- [x] CRM-related AI usage is FREE (included in subscription) — no credits consumed
+- [x] Non-CRM AI usage requires purchased credits at 25% markup on Manus pricing
+- [x] Credits billed directly to tenant company's Stripe card on file (separate from subscription)
+- [x] Add `aiUsageType` enum to credit transactions: 'crm_free' | 'paid_credit'
+- [x] Add `isCrmFree` flag to AI feature definitions
+- [ ] Stripe: create credit top-up checkout session for tenant companies (Stripe webhook integration pending)
+- [ ] Stripe webhook: handle credit purchase completion, add credits to tenant balance
+- [x] Backend: consumeAiCredits checks if feature is CRM-free before deducting
+- [x] Apex Owner UI: /apex/ai-credits — view all tenant balances, credit packages
+- [x] Company Admin UI: /settings/ai-credits — view balance, buy more credits, usage history
+- [ ] Credit balance widget in sidebar for Company Admin+
+- [ ] AI Assistant: CRM queries are free, general queries consume credits

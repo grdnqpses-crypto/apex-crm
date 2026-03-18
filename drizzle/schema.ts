@@ -2249,3 +2249,84 @@ export const bibleShares = mysqlTable("bible_shares", {
 });
 export type BibleShare = typeof bibleShares.$inferSelect;
 export type InsertBibleShare = typeof bibleShares.$inferInsert;
+
+
+// ═══════════════════════════════════════════════════════════════
+// AI CREDIT SYSTEM
+// Model:
+//   - CRM-related AI features are FREE (included in subscription)
+//   - Non-CRM AI usage requires purchased credits
+//   - Credits sold by Apex Owner at 25% markup on Manus pricing
+//   - Billed directly to tenant company's Stripe card on file
+// ═══════════════════════════════════════════════════════════════
+
+// ─── AI Credit Packages (defined by Apex Owner, priced at Manus cost + 25%) ───
+export const aiCreditPackages = mysqlTable("ai_credit_packages", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(), // e.g. "Starter", "Growth", "Enterprise"
+  description: text("description"),
+  credits: int("credits").notNull(), // number of AI credits
+  manusBasePriceCents: int("manusBasePriceCents").notNull(), // Manus list price in cents
+  markupPercent: int("markupPercent").default(25).notNull(), // always 25% markup
+  finalPriceCents: int("finalPriceCents").notNull(), // manusBasePriceCents * 1.25 (what tenant pays)
+  isActive: boolean("isActive").default(true).notNull(),
+  stripePriceId: varchar("stripePriceId", { length: 128 }), // Stripe price ID for checkout
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+
+export type AiCreditPackage = typeof aiCreditPackages.$inferSelect;
+
+// ─── Tenant AI Credit Balances ───
+export const tenantAiCredits = mysqlTable("tenant_ai_credits", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull().unique(),
+  availableCredits: int("availableCredits").default(0).notNull(), // credits available to spend
+  lifetimePurchasedCredits: int("lifetimePurchasedCredits").default(0).notNull(), // total ever bought
+  lifetimeUsedCredits: int("lifetimeUsedCredits").default(0).notNull(), // total ever consumed
+  stripeCustomerId: varchar("stripeCustomerId", { length: 128 }), // tenant's Stripe customer ID for billing
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+
+export type TenantAiCredits = typeof tenantAiCredits.$inferSelect;
+
+// ─── AI Credit Transactions (full audit log) ───
+export const aiCreditTransactions = mysqlTable("ai_credit_transactions", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  userId: int("userId"), // which user triggered the action
+  type: mysqlEnum("type", [
+    "purchase",    // Tenant bought credits via Stripe
+    "crm_free",    // CRM AI feature used — no credits deducted (logged for analytics)
+    "paid_usage",  // Non-CRM AI feature — credits deducted
+    "refund",      // Credits returned
+    "adjustment",  // Manual correction by Apex Owner
+  ]).notNull(),
+  credits: int("credits").notNull(), // positive = added, negative = deducted (0 for crm_free)
+  balanceBefore: int("balanceBefore").notNull(),
+  balanceAfter: int("balanceAfter").notNull(),
+  description: varchar("description", { length: 512 }),
+  featureKey: varchar("featureKey", { length: 128 }), // e.g. "ai_ghostwriter", "ai_general_chat"
+  isCrmFree: boolean("isCrmFree").default(false).notNull(), // true = CRM feature, no charge
+  packageId: int("packageId"), // FK to ai_credit_packages if purchase
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 128 }),
+  pricePaidCents: int("pricePaidCents"), // what tenant paid (with 25% markup)
+  performedBy: int("performedBy"), // userId or null for system
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+
+export type AiCreditTransaction = typeof aiCreditTransactions.$inferSelect;
+
+// ─── User AI Credit Allocations (per-user monthly limits set by Company Admin) ───
+export const userAiAllocations = mysqlTable("user_ai_allocations", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  userId: int("userId").notNull(),
+  monthlyLimit: int("monthlyLimit").notNull(), // paid credits per month (0 = no paid AI access)
+  currentMonthUsed: int("currentMonthUsed").default(0).notNull(),
+  resetDate: bigint("resetDate", { mode: "number" }).notNull(),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+
+export type UserAiAllocation = typeof userAiAllocations.$inferSelect;

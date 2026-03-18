@@ -49,6 +49,8 @@ import {
   type LaneAnalytic, type ConsolidationOpportunity,
   emailMaskSettings, type EmailMaskSetting,
   passwordResetTokens, type PasswordResetToken,
+  aiCreditPackages, aiCreditTransactions, tenantAiCredits, userAiAllocations,
+  type AiCreditPackage, type AiCreditTransaction, type TenantAiCredits, type UserAiAllocation,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -3724,4 +3726,188 @@ export async function reassignTask(taskId: number, fromUserId: number, toUserId:
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   await db.update(tasks).set({ userId: toUserId, updatedAt: Date.now() }).where(and(eq(tasks.id, taskId), eq(tasks.userId, fromUserId)));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AI CREDIT SYSTEM
+// CRM AI = FREE. Non-CRM AI = paid credits at 25% markup on Manus pricing.
+// ═══════════════════════════════════════════════════════════════
+
+/** Get tenant AI credit balance */
+export async function getTenantAiCredits(tenantCompanyId: number): Promise<TenantAiCredits | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(tenantAiCredits).where(eq(tenantAiCredits.tenantCompanyId, tenantCompanyId)).limit(1);
+  return rows[0] || null;
+}
+
+/** Initialize tenant AI credits row (idempotent) */
+export async function initTenantAiCredits(tenantCompanyId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  const existing = await getTenantAiCredits(tenantCompanyId);
+  if (existing) return;
+  await db.insert(tenantAiCredits).values({
+    tenantCompanyId,
+    availableCredits: 0,
+    lifetimePurchasedCredits: 0,
+    lifetimeUsedCredits: 0,
+    updatedAt: Date.now(),
+  });
+}
+
+/** Add purchased credits to tenant balance */
+export async function addTenantAiCredits(
+  tenantCompanyId: number,
+  credits: number,
+  description: string,
+  packageId?: number,
+  pricePaidCents?: number,
+  performedBy?: number,
+): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await initTenantAiCredits(tenantCompanyId);
+  const current = await getTenantAiCredits(tenantCompanyId);
+  const balanceBefore = current?.availableCredits || 0;
+  const balanceAfter = balanceBefore + credits;
+  await db.update(tenantAiCredits)
+    .set({
+      availableCredits: balanceAfter,
+      lifetimePurchasedCredits: (current?.lifetimePurchasedCredits || 0) + credits,
+      updatedAt: Date.now(),
+    })
+    .where(eq(tenantAiCredits.tenantCompanyId, tenantCompanyId));
+  await db.insert(aiCreditTransactions).values({
+    tenantCompanyId,
+    type: "purchase",
+    credits,
+    balanceBefore,
+    balanceAfter,
+    description,
+    isCrmFree: false,
+    packageId: packageId || null,
+    pricePaidCents: pricePaidCents || null,
+    performedBy: performedBy || null,
+    createdAt: Date.now(),
+  });
+}
+
+/**
+ * Consume credits for a paid (non-CRM) AI feature.
+ * Returns false if insufficient balance.
+ */
+export async function consumeAiCredits(
+  tenantCompanyId: number,
+  userId: number,
+  credits: number,
+  featureKey: string,
+): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const current = await getTenantAiCredits(tenantCompanyId);
+  if (!current || current.availableCredits < credits) return false;
+  const balanceBefore = current.availableCredits;
+  const balanceAfter = balanceBefore - credits;
+  await db.update(tenantAiCredits)
+    .set({
+      availableCredits: balanceAfter,
+      lifetimeUsedCredits: (current.lifetimeUsedCredits || 0) + credits,
+      updatedAt: Date.now(),
+    })
+    .where(eq(tenantAiCredits.tenantCompanyId, tenantCompanyId));
+  await db.insert(aiCreditTransactions).values({
+    tenantCompanyId,
+    userId,
+    type: "paid_usage",
+    credits: -credits,
+    balanceBefore,
+    balanceAfter,
+    featureKey,
+    isCrmFree: false,
+    description: `Used ${credits} credit(s) for ${featureKey}`,
+    createdAt: Date.now(),
+  });
+  return true;
+}
+
+/**
+ * Log a CRM-free AI usage (no credits deducted, analytics only).
+ */
+export async function logCrmFreeAiUsage(
+  tenantCompanyId: number,
+  userId: number,
+  featureKey: string,
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await initTenantAiCredits(tenantCompanyId);
+  const current = await getTenantAiCredits(tenantCompanyId);
+  const balance = current?.availableCredits || 0;
+  await db.insert(aiCreditTransactions).values({
+    tenantCompanyId,
+    userId,
+    type: "crm_free",
+    credits: 0,
+    balanceBefore: balance,
+    balanceAfter: balance,
+    featureKey,
+    isCrmFree: true,
+    description: `CRM AI feature used (free): ${featureKey}`,
+    createdAt: Date.now(),
+  });
+}
+
+/** Get AI credit transaction history for a tenant */
+export async function getAiCreditTransactions(tenantCompanyId: number, limit = 50): Promise<AiCreditTransaction[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(aiCreditTransactions)
+    .where(eq(aiCreditTransactions.tenantCompanyId, tenantCompanyId))
+    .orderBy(desc(aiCreditTransactions.createdAt))
+    .limit(limit);
+}
+
+/** Get all active AI credit packages */
+export async function getAiCreditPackages(): Promise<AiCreditPackage[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(aiCreditPackages).where(eq(aiCreditPackages.isActive, true));
+}
+
+/** Get user AI allocation */
+export async function getUserAiAllocation(tenantCompanyId: number, userId: number): Promise<UserAiAllocation | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(userAiAllocations)
+    .where(and(eq(userAiAllocations.tenantCompanyId, tenantCompanyId), eq(userAiAllocations.userId, userId)))
+    .limit(1);
+  return rows[0] || null;
+}
+
+/** Set user AI allocation */
+export async function setUserAiAllocation(tenantCompanyId: number, userId: number, monthlyLimit: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const existing = await getUserAiAllocation(tenantCompanyId, userId);
+  const now = Date.now();
+  const nextMonth = new Date();
+  nextMonth.setMonth(nextMonth.getMonth() + 1);
+  nextMonth.setDate(1);
+  nextMonth.setHours(0, 0, 0, 0);
+  if (existing) {
+    await db.update(userAiAllocations)
+      .set({ monthlyLimit, updatedAt: now })
+      .where(and(eq(userAiAllocations.tenantCompanyId, tenantCompanyId), eq(userAiAllocations.userId, userId)));
+  } else {
+    await db.insert(userAiAllocations).values({
+      tenantCompanyId,
+      userId,
+      monthlyLimit,
+      currentMonthUsed: 0,
+      resetDate: nextMonth.getTime(),
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
 }
