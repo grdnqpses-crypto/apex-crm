@@ -3931,3 +3931,58 @@ export async function removeTrackedWebsite(id: number, userId: number) {
   if (!db) return;
   await db.execute(sql`DELETE FROM tracked_websites WHERE id = ${id} AND twUserId = ${userId}`);
 }
+
+// ─── Website Platform Credentials ────────────────────────────────────────────
+export async function savePlatformCredentials(
+  userId: number,
+  websiteId: number,
+  platform: string,
+  credentials: Record<string, string>,
+) {
+  const db = await getDb();
+  if (!db) return;
+  const now = Date.now();
+  const json = JSON.stringify(credentials);
+  await db.execute(sql`
+    INSERT INTO website_platform_credentials
+      (wpcUserId, wpcWebsiteId, wpcPlatform, wpcCredentialsJson, wpcCreatedAt, wpcUpdatedAt)
+    VALUES (${userId}, ${websiteId}, ${platform}, ${json}, ${now}, ${now})
+    ON DUPLICATE KEY UPDATE wpcCredentialsJson = ${json}, wpcUpdatedAt = ${now}
+  `);
+}
+
+export async function getPlatformCredentials(
+  userId: number,
+  websiteId: number,
+  platform: string,
+): Promise<Record<string, string> | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.execute(sql`
+    SELECT wpcCredentialsJson FROM website_platform_credentials
+    WHERE wpcUserId = ${userId} AND wpcWebsiteId = ${websiteId} AND wpcPlatform = ${platform}
+    LIMIT 1
+  `);
+  const row = ((rows as any)[0] as any[])[0];
+  if (!row) return null;
+  try { return JSON.parse(row.wpcCredentialsJson); } catch { return null; }
+}
+
+export async function listPlatformCredentials(userId: number, websiteId: number): Promise<{ platform: string }[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.execute(sql`
+    SELECT wpcPlatform as platform FROM website_platform_credentials
+    WHERE wpcUserId = ${userId} AND wpcWebsiteId = ${websiteId}
+  `);
+  return (rows as any)[0] as { platform: string }[];
+}
+
+export async function deletePlatformCredentials(userId: number, websiteId: number, platform: string) {
+  const db = await getDb();
+  if (!db) return;
+  await db.execute(sql`
+    DELETE FROM website_platform_credentials
+    WHERE wpcUserId = ${userId} AND wpcWebsiteId = ${websiteId} AND wpcPlatform = ${platform}
+  `);
+}

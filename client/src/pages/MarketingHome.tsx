@@ -132,9 +132,19 @@ const FEATURES = [
     body: "One-touch import from HubSpot, Salesforce, Pipedrive, or any CSV. Contacts, deals, email history, custom fields — all transferred with zero data loss. Most customers are live in under 30 minutes.",
     stats: [{ label: "Migration time", value: "< 30min" }, { label: "Data loss", value: "0%" }],
   },
+  {
+    icon: Zap,
+    accent: "from-cyan-500 to-teal-500",
+    glow: "shadow-cyan-500/20",
+    title: "AI Visitor Tracking",
+    headline: "Installs itself in 30 seconds. No developer needed.",
+    body: "Paste your URL and Apex detects your platform (WordPress, Shopify, Webflow, Wix, Squarespace, and more) and installs the tracking script automatically via API. Every competitor requires manual copy-paste. Apex does it for you.",
+    stats: [{ label: "Install time", value: "< 30s" }, { label: "Platforms supported", value: "8+" }],
+  },
 ];
 
 const COMPARISON = [
+  { feature: "AI Visitor Tracking (Auto-Install)", apex: true, hubspot: false, salesforce: false, close: false },
   { feature: "AI Prospect Research", apex: true, hubspot: false, salesforce: false, close: false },
   { feature: "Autonomous Email Sequences", apex: true, hubspot: "Add-on ($500+/mo)", salesforce: "Add-on ($125+/user)", close: "Partial" },
   { feature: "98%+ Inbox Placement", apex: true, hubspot: false, salesforce: false, close: false },

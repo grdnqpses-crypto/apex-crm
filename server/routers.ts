@@ -6,6 +6,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, managerProcedure, companyAdminProcedure, apexOwnerProcedure, developerProcedure, router, getRoleLevel } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { invokeLLM } from "./_core/llm";
+import { notifyOwner } from "./_core/notification";
 import * as db from "./db";
 import { nanoid } from "nanoid";
 import { NEW_BROKER_TEMPLATE_HTML, RENEWING_BROKER_TEMPLATE_HTML } from "./fmcsa-templates";
@@ -3571,6 +3572,124 @@ export const appRouter = router({
       if (!session || !session.identifiedCompany) throw new TRPCError({ code: 'BAD_REQUEST', message: 'No identified company' });
       const prospectId = await db.createProspect({ companyName: session.identifiedCompany, domain: session.identifiedDomain || '', industry: session.identifiedIndustry || '', userId: ctx.user.id } as any);
       return { success: true, prospectId };
+    }),
+
+    // ── Platform Credentials (for auto-install) ────────────────────
+    saveCredentials: protectedProcedure.input(z.object({
+      websiteId: z.number(),
+      platform: z.enum(['wordpress', 'shopify', 'webflow']),
+      credentials: z.record(z.string(), z.string()),
+    })).mutation(async ({ ctx, input }) => {
+      await db.savePlatformCredentials(ctx.user.id, input.websiteId, input.platform, input.credentials as Record<string, string>);
+      return { success: true };
+    }),
+
+    getCredentialPlatforms: protectedProcedure.input(z.object({ websiteId: z.number() })).query(async ({ ctx, input }) => {
+      return db.listPlatformCredentials(ctx.user.id, input.websiteId);
+    }),
+
+    deleteCredentials: protectedProcedure.input(z.object({
+      websiteId: z.number(),
+      platform: z.enum(['wordpress', 'shopify', 'webflow']),
+    })).mutation(async ({ ctx, input }) => {
+      await db.deletePlatformCredentials(ctx.user.id, input.websiteId, input.platform);
+      return { success: true };
+    }),
+
+    // Re-run auto-install using stored credentials
+    reinstallTracking: protectedProcedure.input(z.object({ websiteId: z.number() })).mutation(async ({ ctx, input }) => {
+      const websites = await db.listTrackedWebsites(ctx.user.id);
+      const site = websites.find((w: any) => w.id === input.websiteId);
+      if (!site) throw new TRPCError({ code: 'NOT_FOUND' });
+
+      const platforms = ['wordpress', 'shopify', 'webflow'] as const;
+      for (const platform of platforms) {
+        const creds = await db.getPlatformCredentials(ctx.user.id, input.websiteId, platform);
+        if (!creds) continue;
+
+        const siteUrl = `https://${site.twDomain}`;
+        const trackingScript = `<!-- Apex CRM Visitor Tracking -->\n<script>\n(function(a,p,e,x,c,r){a[x]=a[x]||function(){(a[x].q=a[x].q||[]).push(arguments)};c=p.createElement(e);c.async=1;c.src='https://track.apexcrm.io/v1/t.js?id='+r;var m=p.getElementsByTagName(e)[0];m.parentNode.insertBefore(c,m)})(window,document,'script','apexTrack','${site.twTrackingId}');apexTrack('init','${site.twTrackingId}');apexTrack('pageview');\n</script>`;
+
+        if (platform === 'wordpress' && creds.wpUser && creds.wpAppPassword) {
+          try {
+            const b64 = Buffer.from(`${creds.wpUser}:${creds.wpAppPassword}`).toString('base64');
+            const widgetsRes = await fetch(`${siteUrl}/wp-json/wp/v2/widgets?sidebar=wp_inactive_widgets`, { headers: { Authorization: `Basic ${b64}` } });
+            if (widgetsRes.ok) {
+              const createRes = await fetch(`${siteUrl}/wp-json/wp/v2/widgets`, { method: 'POST', headers: { Authorization: `Basic ${b64}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ id_base: 'custom_html', sidebar: 'wp_inactive_widgets', instance: { raw: { title: 'Apex Tracking', content: trackingScript } } }) });
+              if (createRes.ok) return { success: true, platform, method: 'auto' };
+            }
+          } catch { /* continue */ }
+        }
+
+        if (platform === 'shopify' && creds.shopifyToken) {
+          try {
+            const themesRes = await fetch(`https://${site.twDomain}/admin/api/2024-01/themes.json`, { headers: { 'X-Shopify-Access-Token': creds.shopifyToken } });
+            if (themesRes.ok) {
+              const td: any = await themesRes.json();
+              const active = td.themes?.find((t: any) => t.role === 'main');
+              if (active) {
+                const assetRes = await fetch(`https://${site.twDomain}/admin/api/2024-01/themes/${active.id}/assets.json?asset[key]=layout/theme.liquid`, { headers: { 'X-Shopify-Access-Token': creds.shopifyToken } });
+                if (assetRes.ok) {
+                  const ad: any = await assetRes.json();
+                  const content: string = ad.asset?.value || '';
+                  if (!content.includes(site.twTrackingId)) {
+                    const updated = content.replace('</head>', `${trackingScript}\n</head>`);
+                    const upRes = await fetch(`https://${site.twDomain}/admin/api/2024-01/themes/${active.id}/assets.json`, { method: 'PUT', headers: { 'X-Shopify-Access-Token': creds.shopifyToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ asset: { key: 'layout/theme.liquid', value: updated } }) });
+                    if (upRes.ok) return { success: true, platform, method: 'auto' };
+                  }
+                }
+              }
+            }
+          } catch { /* continue */ }
+        }
+
+        if (platform === 'webflow' && creds.webflowToken) {
+          try {
+            const sitesRes = await fetch('https://api.webflow.com/v2/sites', { headers: { Authorization: `Bearer ${creds.webflowToken}`, accept: 'application/json' } });
+            if (sitesRes.ok) {
+              const sd: any = await sitesRes.json();
+              const match = sd.sites?.find((s: any) => s.customDomains?.some((d: any) => d.url?.includes(site.twDomain)) || s.defaultDomain?.includes(site.twDomain));
+              if (match) {
+                const upRes = await fetch(`https://api.webflow.com/v2/sites/${match.id}/custom-code`, { method: 'PUT', headers: { Authorization: `Bearer ${creds.webflowToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ headCode: trackingScript }) });
+                if (upRes.ok) return { success: true, platform, method: 'auto' };
+              }
+            }
+          } catch { /* continue */ }
+        }
+      }
+
+      return { success: false, platform: null, method: 'no_credentials' };
+    }),
+
+    // ── Real-time visitor notification check ─────────────────────
+    // Returns newly identified companies since `since` timestamp
+    // Frontend polls this every 30s and shows toasts for new arrivals
+    newIdentifiedVisitors: protectedProcedure.input(z.object({
+      since: z.number(), // Unix ms timestamp
+    })).query(async ({ ctx, input }) => {
+      const sessions = await db.listVisitorSessions(ctx.user.id, { limit: 200 });
+      const fresh = sessions.filter((s: any) =>
+        s.identifiedCompany &&
+        s.createdAt > input.since
+      );
+      // Fire owner push notification for each new identified company (fire-and-forget)
+      if (fresh.length > 0) {
+        const companies = fresh.map((s: any) => s.identifiedCompany).join(', ');
+        notifyOwner({
+          title: `🏢 ${fresh.length === 1 ? fresh[0].identifiedCompany : `${fresh.length} new companies`} on your website`,
+          content: fresh.length === 1
+            ? `${fresh[0].identifiedCompany}${fresh[0].identifiedIndustry ? ` (${fresh[0].identifiedIndustry})` : ''} just visited your website — ${fresh[0].totalPageViews || 1} page${(fresh[0].totalPageViews || 1) > 1 ? 's' : ''} viewed. Open Apex CRM → Visitor Tracking to convert them to a prospect.`
+            : `New identified visitors: ${companies}. Open Apex CRM → Visitor Tracking to follow up.`,
+        }).catch(() => { /* non-critical */ });
+      }
+      return fresh.map((s: any) => ({
+        id: s.id,
+        company: s.identifiedCompany,
+        domain: s.identifiedDomain,
+        industry: s.identifiedIndustry,
+        pageViews: s.totalPageViews || 1,
+        createdAt: s.createdAt,
+      }));
     }),
   }),
 

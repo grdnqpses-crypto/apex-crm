@@ -1767,6 +1767,19 @@ export const trackedWebsites = mysqlTable("tracked_websites", {
 });
 export type TrackedWebsite = typeof trackedWebsites.$inferSelect;
 
+// ─── Website Platform Credentials (for AI auto-install) ─────────────
+export const websitePlatformCredentials = mysqlTable("website_platform_credentials", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("wpcUserId").notNull(),
+  websiteId: int("wpcWebsiteId").notNull(),
+  platform: varchar("wpcPlatform", { length: 64 }).notNull(), // 'wordpress' | 'shopify' | 'webflow'
+  // Credentials stored as JSON — never expose raw values to frontend
+  credentialsJson: text("wpcCredentialsJson").notNull(), // JSON string: { wpUser, wpAppPassword } | { shopifyToken } | { webflowToken }
+  createdAt: bigint("wpcCreatedAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("wpcUpdatedAt", { mode: "number" }).notNull(),
+});
+export type WebsitePlatformCredential = typeof websitePlatformCredentials.$inferSelect;
+
 // ─── AI Order Entry (Email-to-Load) ─────────────────────────────────
 export const inboundEmails = mysqlTable("inbound_emails", {
   id: int("id").autoincrement().primaryKey(),

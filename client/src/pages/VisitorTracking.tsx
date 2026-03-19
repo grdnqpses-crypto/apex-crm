@@ -1,24 +1,25 @@
 import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   Eye, Building2, Globe, UserPlus, Clock, Code, Copy, Trash2,
   CheckCircle, AlertCircle, MonitorSmartphone, Sparkles, Loader2,
-  Mail, ChevronDown, ChevronUp, Zap,
+  Mail, ChevronDown, ChevronUp, Zap, Key, X, RefreshCw,
 } from "lucide-react";
 
-// ─── AI progress steps shown during setup ───────────────────────────────────
+// ─── AI progress steps ───────────────────────────────────────────────────────
 const PROGRESS_STEPS = [
-  { id: "fetch",   label: "Fetching your website…" },
-  { id: "detect",  label: "Detecting platform…" },
-  { id: "attempt", label: "Attempting automatic installation…" },
-  { id: "finalize","label": "Finalising…" },
+  { id: "fetch",    label: "Fetching your website…" },
+  { id: "detect",   label: "Detecting platform…" },
+  { id: "attempt",  label: "Attempting automatic installation…" },
+  { id: "finalize", label: "Finalising…" },
 ];
 
 function ProgressStep({ label, state }: { label: string; state: "pending" | "active" | "done" }) {
@@ -32,7 +33,6 @@ function ProgressStep({ label, state }: { label: string; state: "pending" | "act
   );
 }
 
-// ─── Platform badge colours ──────────────────────────────────────────────────
 const PLATFORM_COLORS: Record<string, string> = {
   wordpress:   "bg-blue-500/10 text-blue-400 border-blue-500/30",
   shopify:     "bg-green-500/10 text-green-400 border-green-500/30",
@@ -46,8 +46,146 @@ const PLATFORM_COLORS: Record<string, string> = {
   unknown:     "bg-muted text-muted-foreground border-border",
 };
 
+// ─── Credentials Dialog ──────────────────────────────────────────────────────
+type Platform = "wordpress" | "shopify" | "webflow";
+
+function CredentialsDialog({
+  open, onClose, websiteId, websiteName, existingPlatforms, onSaved,
+}: {
+  open: boolean;
+  onClose: () => void;
+  websiteId: number;
+  websiteName: string;
+  existingPlatforms: string[];
+  onSaved: () => void;
+}) {
+  const [platform, setPlatform] = useState<Platform>("wordpress");
+  const [wpUser, setWpUser] = useState("");
+  const [wpPass, setWpPass] = useState("");
+  const [shopifyToken, setShopifyToken] = useState("");
+  const [webflowToken, setWebflowToken] = useState("");
+
+  const saveCredentials = trpc.visitorTracking.saveCredentials.useMutation({
+    onSuccess: () => { toast.success("Credentials saved — auto-install is now active!"); onSaved(); onClose(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteCredentials = trpc.visitorTracking.deleteCredentials.useMutation({
+    onSuccess: () => { toast.success("Credentials removed"); onSaved(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const handleSave = () => {
+    const creds: Record<string, string> = {};
+    if (platform === "wordpress") { creds.wpUser = wpUser; creds.wpAppPassword = wpPass; }
+    if (platform === "shopify")   { creds.shopifyToken = shopifyToken; }
+    if (platform === "webflow")   { creds.webflowToken = webflowToken; }
+    saveCredentials.mutate({ websiteId, platform, credentials: creds });
+  };
+
+  const isValid =
+    (platform === "wordpress" && wpUser && wpPass) ||
+    (platform === "shopify" && shopifyToken) ||
+    (platform === "webflow" && webflowToken);
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Key className="w-5 h-5 text-primary" />Connect Account — {websiteName}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <p className="text-sm text-muted-foreground">
+            Store your platform credentials so Apex can auto-install the tracking script without any manual steps — now and for future updates.
+          </p>
+
+          {/* Platform selector */}
+          <div className="flex gap-2">
+            {(["wordpress", "shopify", "webflow"] as Platform[]).map(p => (
+              <button
+                key={p}
+                onClick={() => setPlatform(p)}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold border transition-all capitalize ${
+                  platform === p
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-muted/30 text-muted-foreground hover:border-muted-foreground"
+                }`}
+              >
+                {p}
+                {existingPlatforms.includes(p) && (
+                  <span className="ml-1 text-green-400">✓</span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Platform-specific fields */}
+          {platform === "wordpress" && (
+            <div className="space-y-3">
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-xs text-blue-300">
+                Use a WordPress Application Password (not your login password). Go to Users → Profile → Application Passwords in your WP admin.
+              </div>
+              <div className="space-y-1">
+                <Label>WordPress Username</Label>
+                <Input placeholder="admin" value={wpUser} onChange={e => setWpUser(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label>Application Password</Label>
+                <Input type="password" placeholder="xxxx xxxx xxxx xxxx xxxx xxxx" value={wpPass} onChange={e => setWpPass(e.target.value)} />
+              </div>
+            </div>
+          )}
+          {platform === "shopify" && (
+            <div className="space-y-3">
+              <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-xs text-green-300">
+                Create a Private App in your Shopify Admin → Apps → Develop Apps. Grant "Themes" read/write access.
+              </div>
+              <div className="space-y-1">
+                <Label>Admin API Access Token</Label>
+                <Input type="password" placeholder="shpat_..." value={shopifyToken} onChange={e => setShopifyToken(e.target.value)} />
+              </div>
+            </div>
+          )}
+          {platform === "webflow" && (
+            <div className="space-y-3">
+              <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-3 text-xs text-purple-300">
+                Generate an API token in Webflow → Account Settings → Integrations → API Access.
+              </div>
+              <div className="space-y-1">
+                <Label>Webflow API Token</Label>
+                <Input type="password" placeholder="..." value={webflowToken} onChange={e => setWebflowToken(e.target.value)} />
+              </div>
+            </div>
+          )}
+
+          {/* Remove existing */}
+          {existingPlatforms.includes(platform) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive w-full"
+              onClick={() => deleteCredentials.mutate({ websiteId, platform })}
+              disabled={deleteCredentials.isPending}
+            >
+              <X className="w-3 h-3 mr-1" />Remove saved {platform} credentials
+            </Button>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSave} disabled={!isValid || saveCredentials.isPending}>
+            {saveCredentials.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Key className="w-4 h-4 mr-2" />}
+            Save & Enable Auto-Install
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
 export default function VisitorTracking() {
-  // ── Setup state ─────────────────────────────────────────────────────────────
   const [url, setUrl] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [activeStep, setActiveStep] = useState(-1);
@@ -65,10 +203,61 @@ export default function VisitorTracking() {
   const [showSteps, setShowSteps] = useState(false);
   const [showScript, setShowScript] = useState(false);
 
-  // ── Website list + sessions ──────────────────────────────────────────────────
+  // Credentials dialog state
+  const [credDialog, setCredDialog] = useState<{ websiteId: number; websiteName: string } | null>(null);
+
+  // Real-time visitor polling
+  const [lastChecked, setLastChecked] = useState(() => Date.now());
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const websites = trpc.visitorTracking.listWebsites.useQuery();
   const sessions  = trpc.visitorTracking.list.useQuery();
   const utils     = trpc.useUtils();
+
+  // Credential platforms per website
+  const credPlatforms = trpc.visitorTracking.getCredentialPlatforms.useQuery(
+    { websiteId: credDialog?.websiteId ?? 0 },
+    { enabled: !!credDialog }
+  );
+
+  // Poll for new identified visitors every 30s
+  const newVisitors = trpc.visitorTracking.newIdentifiedVisitors.useQuery(
+    { since: lastChecked },
+    { enabled: false, refetchOnWindowFocus: false }
+  );
+
+  useEffect(() => {
+    pollingRef.current = setInterval(async () => {
+      const prev = lastChecked;
+      setLastChecked(Date.now());
+      const fresh = await utils.visitorTracking.newIdentifiedVisitors.fetch({ since: prev });
+      if (fresh && fresh.length > 0) {
+        fresh.forEach((v: any) => {
+          toast(
+            <div className="flex items-start gap-3">
+              <Building2 className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-sm">{v.company} is on your site</p>
+                <p className="text-xs text-muted-foreground">{v.industry ? `${v.industry} · ` : ""}{v.pageViews} page{v.pageViews !== 1 ? "s" : ""}</p>
+              </div>
+            </div>,
+            {
+              duration: 8000,
+              action: {
+                label: "View",
+                onClick: () => {
+                  const tab = document.querySelector('[data-value="visitors"]') as HTMLElement;
+                  tab?.click();
+                },
+              },
+            }
+          );
+        });
+        sessions.refetch();
+      }
+    }, 30000);
+    return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
+  }, [lastChecked]);
 
   const setupTracking = trpc.visitorTracking.setupTracking.useMutation({
     onSuccess: (data) => {
@@ -98,11 +287,17 @@ export default function VisitorTracking() {
     },
   });
 
+  const reinstall = trpc.visitorTracking.reinstallTracking.useMutation({
+    onSuccess: (d) => {
+      if (d.success) toast.success(`Auto-installed via ${d.platform}!`);
+      else toast.error("No stored credentials found — connect your account first.");
+    },
+  });
+
   const convert = trpc.visitorTracking.convertToProspect.useMutation({
     onSuccess: () => { sessions.refetch(); toast.success("Converted to prospect"); },
   });
 
-  // Animate progress steps while running
   const stepTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!isRunning) return;
@@ -131,7 +326,6 @@ export default function VisitorTracking() {
 
   return (
     <div className="space-y-6">
-      {/* ── Header ────────────────────────────────────────────────────────────── */}
       <div>
         <h1 className="text-2xl font-bold">Visitor Tracking</h1>
         <p className="text-muted-foreground">Identify anonymous website visitors — reveal companies, track behaviour, convert to prospects. Free on all plans.</p>
@@ -142,13 +336,13 @@ export default function VisitorTracking() {
           <TabsTrigger value="setup">
             <MonitorSmartphone className="w-4 h-4 mr-2" />Set Up Tracking
           </TabsTrigger>
-          <TabsTrigger value="websites">
+          <TabsTrigger value="websites" data-value="websites">
             <Globe className="w-4 h-4 mr-2" />My Websites
             {websites.data && websites.data.length > 0 && (
               <Badge className="ml-2 text-xs">{websites.data.length}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="visitors">
+          <TabsTrigger value="visitors" data-value="visitors">
             <Eye className="w-4 h-4 mr-2" />Visitors
             {sessions.data && sessions.data.length > 0 && (
               <Badge className="ml-2 text-xs">{sessions.data.length}</Badge>
@@ -156,11 +350,10 @@ export default function VisitorTracking() {
           </TabsTrigger>
         </TabsList>
 
-        {/* ── Set Up Tracking Tab ───────────────────────────────────────────── */}
+        {/* ── Set Up Tracking Tab ───────────────────────────────────────── */}
         <TabsContent value="setup" className="space-y-4 mt-4">
           <Card className="border-border/60">
             <CardContent className="pt-6 pb-6">
-              {/* Hero */}
               <div className="text-center mb-6">
                 <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
                   <Sparkles className="w-7 h-7 text-primary" />
@@ -171,7 +364,6 @@ export default function VisitorTracking() {
                 </p>
               </div>
 
-              {/* Input + button */}
               <div className="flex gap-2 max-w-xl mx-auto">
                 <Input
                   placeholder="https://yourwebsite.com"
@@ -181,17 +373,12 @@ export default function VisitorTracking() {
                   disabled={isRunning}
                   className="flex-1 h-11 text-base"
                 />
-                <Button
-                  onClick={handleSetup}
-                  disabled={isRunning || !url.trim()}
-                  className="h-11 px-6 font-semibold"
-                >
+                <Button onClick={handleSetup} disabled={isRunning || !url.trim()} className="h-11 px-6 font-semibold">
                   {isRunning ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
                   {isRunning ? "Setting up…" : "Set Up Tracking"}
                 </Button>
               </div>
 
-              {/* Progress animation */}
               {isRunning && (
                 <div className="mt-6 max-w-sm mx-auto bg-muted/40 rounded-xl p-4 border border-border/40">
                   {PROGRESS_STEPS.map((step, i) => (
@@ -204,10 +391,8 @@ export default function VisitorTracking() {
                 </div>
               )}
 
-              {/* Result */}
               {result && !isRunning && (
                 <div className="mt-6 max-w-xl mx-auto space-y-4">
-                  {/* Status banner */}
                   {result.installMethod === "auto" ? (
                     <div className="flex items-start gap-3 bg-green-500/10 border border-green-500/30 rounded-xl p-4">
                       <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" />
@@ -231,16 +416,10 @@ export default function VisitorTracking() {
                     </div>
                   )}
 
-                  {/* Action buttons */}
                   <div className="flex flex-wrap gap-2">
                     {result.mailtoLink && (
-                      <Button
-                        asChild
-                        className="bg-amber-500 hover:bg-amber-600 text-white font-semibold"
-                      >
-                        <a href={result.mailtoLink}>
-                          <Mail className="w-4 h-4 mr-2" />Open in Email — Send to Developer
-                        </a>
+                      <Button asChild className="bg-amber-500 hover:bg-amber-600 text-white font-semibold">
+                        <a href={result.mailtoLink}><Mail className="w-4 h-4 mr-2" />Open in Email — Send to Developer</a>
                       </Button>
                     )}
                     <Button variant="outline" onClick={() => setShowScript(s => !s)}>
@@ -254,24 +433,17 @@ export default function VisitorTracking() {
                     )}
                   </div>
 
-                  {/* Tracking script */}
                   {showScript && (
                     <div className="relative">
                       <pre className="bg-zinc-900 text-zinc-100 rounded-xl p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap border border-border leading-relaxed">
                         {result.trackingScript}
                       </pre>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="absolute top-2 right-2"
-                        onClick={() => copyScript(result.trackingScript)}
-                      >
+                      <Button size="sm" variant="outline" className="absolute top-2 right-2" onClick={() => copyScript(result.trackingScript)}>
                         <Copy className="w-3 h-3 mr-1" />Copy
                       </Button>
                     </div>
                   )}
 
-                  {/* Manual steps */}
                   {showSteps && result.manualSteps.length > 0 && (
                     <div className="bg-muted/40 rounded-xl p-4 border border-border/40">
                       <p className="text-sm font-semibold mb-3">Manual installation steps ({result.platformTitle}):</p>
@@ -286,19 +458,13 @@ export default function VisitorTracking() {
                     </div>
                   )}
 
-                  {/* Verify button */}
                   <div className="flex items-center gap-3 pt-1">
                     <p className="text-xs text-muted-foreground">After installation, verify it's working:</p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        const site = websites.data?.find((w: any) => w.twTrackingId === result.trackingId);
-                        if (site) verify.mutate({ id: site.id });
-                        else toast.info("Website saved — check the My Websites tab to verify.");
-                      }}
-                      disabled={verify.isPending}
-                    >
+                    <Button size="sm" variant="outline" onClick={() => {
+                      const site = websites.data?.find((w: any) => w.twTrackingId === result.trackingId);
+                      if (site) verify.mutate({ id: site.id });
+                      else toast.info("Website saved — check the My Websites tab to verify.");
+                    }} disabled={verify.isPending}>
                       {verify.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <CheckCircle className="w-3 h-3 mr-1" />}
                       Verify Installation
                     </Button>
@@ -306,13 +472,12 @@ export default function VisitorTracking() {
                 </div>
               )}
 
-              {/* How it works — shown when idle */}
               {!isRunning && !result && (
                 <div className="mt-8 grid grid-cols-3 gap-4 max-w-xl mx-auto">
                   {[
-                    { icon: Globe,        title: "Detects Platform",      desc: "WordPress, Shopify, Webflow, Wix, Squarespace, and more" },
-                    { icon: Zap,          title: "Auto-Installs",         desc: "Injects the script via platform API — no code editing needed" },
-                    { icon: Building2,    title: "Identifies Visitors",   desc: "Reveals which companies are browsing your site in real time" },
+                    { icon: Globe,     title: "Detects Platform",    desc: "WordPress, Shopify, Webflow, Wix, Squarespace, and more" },
+                    { icon: Zap,       title: "Auto-Installs",       desc: "Injects the script via platform API — no code editing needed" },
+                    { icon: Building2, title: "Identifies Visitors", desc: "Reveals which companies are browsing your site in real time" },
                   ].map(({ icon: Icon, title, desc }) => (
                     <div key={title} className="text-center p-3 rounded-xl bg-muted/30 border border-border/40">
                       <Icon className="w-5 h-5 text-primary mx-auto mb-2" />
@@ -326,7 +491,7 @@ export default function VisitorTracking() {
           </Card>
         </TabsContent>
 
-        {/* ── My Websites Tab ───────────────────────────────────────────────── */}
+        {/* ── My Websites Tab ───────────────────────────────────────────── */}
         <TabsContent value="websites" className="space-y-3 mt-4">
           {websites.data?.length === 0 ? (
             <Card className="border-dashed border-2 border-border">
@@ -338,56 +503,28 @@ export default function VisitorTracking() {
             </Card>
           ) : (
             websites.data?.map((site: any) => (
-              <Card key={site.id} className="border-border/50">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Globe className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{site.twName}</span>
-                        <Badge variant={site.twIsActive ? "default" : "secondary"} className="text-xs">
-                          {site.twIsActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{site.twDomain}</p>
-                      <p className="text-xs text-muted-foreground font-mono mt-0.5">ID: {site.twTrackingId}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => verify.mutate({ id: site.id })}
-                      disabled={verify.isPending}
-                    >
-                      {verify.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <CheckCircle className="w-3 h-3 mr-1" />}
-                      Verify
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => removeWebsite.mutate({ id: site.id })}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <WebsiteCard
+                key={site.id}
+                site={site}
+                onVerify={() => verify.mutate({ id: site.id })}
+                onReinstall={() => reinstall.mutate({ websiteId: site.id })}
+                onConnectAccount={() => setCredDialog({ websiteId: site.id, websiteName: site.twName })}
+                onRemove={() => removeWebsite.mutate({ id: site.id })}
+                verifyPending={verify.isPending}
+                reinstallPending={reinstall.isPending}
+              />
             ))
           )}
         </TabsContent>
 
-        {/* ── Visitor Sessions Tab ──────────────────────────────────────────── */}
+        {/* ── Visitor Sessions Tab ──────────────────────────────────────── */}
         <TabsContent value="visitors" className="space-y-4 mt-4">
           <div className="grid grid-cols-4 gap-4">
             {[
-              { label: "Total Visitors",  value: sessions.data?.length || 0,                                              icon: Eye,       color: "text-blue-400" },
-              { label: "Identified",      value: identified.length,                                                       icon: Building2, color: "text-green-400" },
-              { label: "Anonymous",       value: anonymous.length,                                                        icon: Globe,     color: "text-gray-400" },
-              { label: "Converted",       value: sessions.data?.filter((s: any) => s.convertedToProspect).length || 0,   icon: UserPlus,  color: "text-purple-400" },
+              { label: "Total Visitors",  value: sessions.data?.length || 0,                                            icon: Eye,       color: "text-blue-400" },
+              { label: "Identified",      value: identified.length,                                                     icon: Building2, color: "text-green-400" },
+              { label: "Anonymous",       value: anonymous.length,                                                      icon: Globe,     color: "text-gray-400" },
+              { label: "Converted",       value: sessions.data?.filter((s: any) => s.convertedToProspect).length || 0, icon: UserPlus,  color: "text-purple-400" },
             ].map(s => (
               <Card key={s.label} className="border-border/50">
                 <CardContent className="p-4 flex items-center justify-between">
@@ -428,14 +565,8 @@ export default function VisitorTracking() {
                               </div>
                             </div>
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => convert.mutate({ id: s.id })}
-                            disabled={s.convertedToProspect || convert.isPending}
-                          >
-                            <UserPlus className="w-4 h-4 mr-1" />
-                            {s.convertedToProspect ? "Converted" : "Convert to Prospect"}
+                          <Button variant="outline" size="sm" onClick={() => convert.mutate({ id: s.id })} disabled={s.convertedToProspect || convert.isPending}>
+                            <UserPlus className="w-4 h-4 mr-1" />{s.convertedToProspect ? "Converted" : "Convert to Prospect"}
                           </Button>
                         </CardContent>
                       </Card>
@@ -443,7 +574,6 @@ export default function VisitorTracking() {
                   </div>
                 </div>
               )}
-
               {anonymous.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold mb-3 flex items-center gap-2"><Eye className="w-5 h-5" />Anonymous Visitors</h3>
@@ -455,9 +585,7 @@ export default function VisitorTracking() {
                             <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"><Eye className="w-4 h-4 text-muted-foreground" /></div>
                             <div>
                               <p className="text-sm font-medium">Anonymous Visitor</p>
-                              <p className="text-xs text-muted-foreground">
-                                {s.totalPageViews || 1} page{(s.totalPageViews || 1) > 1 ? "s" : ""} · {new Date(s.lastVisit).toLocaleDateString()}
-                              </p>
+                              <p className="text-xs text-muted-foreground">{s.totalPageViews || 1} page{(s.totalPageViews || 1) > 1 ? "s" : ""} · {new Date(s.lastVisit).toLocaleDateString()}</p>
                             </div>
                           </div>
                           <Badge variant="secondary">Unidentified</Badge>
@@ -471,6 +599,81 @@ export default function VisitorTracking() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Credentials Dialog */}
+      {credDialog && (
+        <CredentialsDialog
+          open={!!credDialog}
+          onClose={() => setCredDialog(null)}
+          websiteId={credDialog.websiteId}
+          websiteName={credDialog.websiteName}
+          existingPlatforms={credPlatforms.data?.map((p: any) => p.platform) || []}
+          onSaved={() => websites.refetch()}
+        />
+      )}
     </div>
+  );
+}
+
+// ─── Website Card ─────────────────────────────────────────────────────────────
+function WebsiteCard({
+  site, onVerify, onReinstall, onConnectAccount, onRemove, verifyPending, reinstallPending,
+}: {
+  site: any;
+  onVerify: () => void;
+  onReinstall: () => void;
+  onConnectAccount: () => void;
+  onRemove: () => void;
+  verifyPending: boolean;
+  reinstallPending: boolean;
+}) {
+  const credPlatforms = trpc.visitorTracking.getCredentialPlatforms.useQuery({ websiteId: site.id });
+  const hasCredentials = (credPlatforms.data?.length ?? 0) > 0;
+
+  return (
+    <Card className="border-border/50">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Globe className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">{site.twName}</span>
+                <Badge variant={site.twIsActive ? "default" : "secondary"} className="text-xs">
+                  {site.twIsActive ? "Active" : "Inactive"}
+                </Badge>
+                {hasCredentials && (
+                  <Badge className="text-xs bg-green-500/20 text-green-400 border-green-500/30">
+                    <Zap className="w-3 h-3 mr-1" />Auto-install ready
+                  </Badge>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">{site.twDomain}</p>
+              <p className="text-xs text-muted-foreground font-mono mt-0.5">ID: {site.twTrackingId}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            <Button variant="outline" size="sm" onClick={onConnectAccount}>
+              <Key className="w-3 h-3 mr-1" />Connect Account
+            </Button>
+            {hasCredentials && (
+              <Button variant="outline" size="sm" onClick={onReinstall} disabled={reinstallPending}>
+                {reinstallPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <RefreshCw className="w-3 h-3 mr-1" />}
+                Re-install
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={onVerify} disabled={verifyPending}>
+              {verifyPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <CheckCircle className="w-3 h-3 mr-1" />}
+              Verify
+            </Button>
+            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={onRemove}>
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

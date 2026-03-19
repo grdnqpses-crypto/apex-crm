@@ -1852,3 +1852,23 @@
 - [x] Frontend: For fallback platforms, show "Open in Email" button (mailto: with pre-filled body)
 - [x] Frontend: Copy script button always available as manual fallback
 - [x] Visitor tracking free on all plans (no feature gate)
+
+## Phase 49: Three Visitor Tracking Follow-Up Features
+
+### 49a: Platform Credentials Storage
+- [x] DB: add tracked_website_credentials table (website_id, platform, encrypted credentials JSON)
+- [x] Server: savePlatformCredentials procedure (upsert per website+platform)
+- [x] Server: getPlatformCredentials procedure (read back for auto-install re-runs)
+- [x] Server: setupTracking — auto-load stored credentials before attempting API install
+- [x] Frontend: "Connect Account" button per website in My Websites tab
+- [x] Frontend: Credentials dialog for WordPress (user + app password), Shopify (token), Webflow (token)
+- [x] Frontend: Show "Auto-install ready" badge on websites with stored credentials
+
+### 49b: Landing Page Auto-Install Callout
+- [x] Add "Installs itself in 30 seconds" feature section to MarketingHome.tsx
+- [x] Add comparison row vs competitors (all manual vs Apex auto)
+
+### 49c: Real-Time Visitor Notifications
+- [x] Server: notifyOwner call when a new identified company session is recorded
+- [x] Frontend: in-app toast when a new identified visitor appears (poll every 30s)
+- [x] Frontend: toast shows company name, industry, page count with "View" and "Convert" actions
