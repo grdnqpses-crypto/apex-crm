@@ -79,6 +79,16 @@ const FreightMarketplace = lazy(() => import("./pages/FreightMarketplace"));
 const ApexAutopilot = lazy(() => import("./pages/ApexAutopilot"));
 const EmailMasking = lazy(() => import("./pages/EmailMasking"));
 const Commercial = lazy(() => import("./pages/Commercial"));
+const CalendarSync = lazy(() => import("./pages/CalendarSync"));
+const EmailSync = lazy(() => import("./pages/EmailSync"));
+const MeetingScheduler = lazy(() => import("./pages/MeetingScheduler"));
+const CustomObjects = lazy(() => import("./pages/CustomObjects"));
+const ReportBuilder = lazy(() => import("./pages/ReportBuilder"));
+const OnboardingConcierge = lazy(() => import("./pages/OnboardingConcierge"));
+const WorkflowBuilder = lazy(() => import("./pages/WorkflowBuilder"));
+const IntegrationHub = lazy(() => import("./pages/IntegrationHub"));
+const Proposals = lazy(() => import("./pages/Proposals"));
+const Dialer = lazy(() => import("./pages/Dialer"));
 const Login = lazy(() => import("./pages/Login"));
 const ApexDashboard = lazy(() => import("./pages/ApexDashboard"));
 const Signup = lazy(() => import("./pages/Signup"));
@@ -185,6 +195,16 @@ function Router() {
           <Route path="/apex-autopilot" component={ApexAutopilot} />
           <Route path="/email-masking" component={EmailMasking} />
           <Route path="/commercial" component={Commercial} />
+          <Route path="/calendar-sync" component={CalendarSync} />
+          <Route path="/email-sync" component={EmailSync} />
+          <Route path="/meeting-scheduler" component={MeetingScheduler} />
+          <Route path="/custom-objects" component={CustomObjects} />
+          <Route path="/report-builder" component={ReportBuilder} />
+          <Route path="/onboarding-concierge" component={OnboardingConcierge} />
+          <Route path="/workflow-builder" component={WorkflowBuilder} />
+          <Route path="/integration-hub" component={IntegrationHub} />
+          <Route path="/proposals" component={Proposals} />
+          <Route path="/dialer" component={Dialer} />
           <Route path="/apex" component={ApexDashboard} />
           <Route path="/help" component={HelpCenter} />
           <Route path="/crm-bible" component={CRMBible} />

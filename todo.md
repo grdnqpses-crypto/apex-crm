@@ -1773,3 +1773,48 @@
 ## Phase 43: Migration Completion + Adoption Monitoring
 - [x] Show duplicates merged count on migration completion screen
 - [x] Add adoption_monitor AI engine task (30-day user activity check, notifies admin of inactive users) — Task 12, runs daily
+
+## Phase 44: Complete All Competitive Gap Features
+
+### Phase 44A: Historical Activity Importer + Visual Workflow Builder
+- [x] Historical activity importer: pull real email/call/note/stage-change history from source CRM and write to activityHistory table during migration
+- [ ] Visual workflow builder canvas: drag-and-drop trigger → condition → action nodes
+- [ ] Workflow actions: create task, send email, update field, notify user, webhook
+- [ ] Workflow if/then branch conditions
+
+### Phase 44B: Calendar Sync + Email Inbox Sync
+- [ ] Google Calendar two-way sync UI (connect, view meetings on contact record)
+- [ ] Outlook Calendar two-way sync UI
+- [ ] Gmail/Outlook BCC logging: auto-log emails to contact record
+- [ ] Email sync settings page with per-user BCC address
+
+### Phase 44C: Click-to-Call Dialer + Meeting Scheduler
+- [ ] Click-to-call dialer on contact record (tel: link + auto-log modal)
+- [ ] Call log auto-created on contact record with duration and notes
+- [ ] Meeting scheduler: shareable booking link page (/book/:username)
+- [ ] Meeting scheduler: availability settings, buffer time, meeting types
+- [ ] Meeting booked → auto-creates activity on contact record
+
+### Phase 44D: Custom Object Builder + Proposal/E-Signature Builder
+- [ ] Custom object builder UI: define new record types with fields and views
+- [ ] Custom objects appear in sidebar nav with their own list/detail pages
+- [ ] Proposal/quote builder: template, line items, pricing
+- [ ] E-signature: send proposal for signature, track status on deal record
+
+### Phase 44E: PWA + Custom Report Builder
+- [x] PWA manifest + service worker for offline capability
+- [ ] Custom report builder: filters (date range, rep, stage, custom field), grouping
+- [ ] Report builder: CSV export
+- [ ] Report builder: save/share reports
+
+### Phase 44F: Slack/Teams + Zapier/Make Hub
+- [ ] Slack real webhook delivery: deal stage changes, new leads, task reminders
+- [ ] Microsoft Teams webhook delivery
+- [ ] Zapier/Make compatibility: webhook trigger endpoint
+- [ ] Integration marketplace UI: 15+ pre-built connectors (QuickBooks, Shopify, Zoom, DocuSign, Stripe, Typeform, Mailchimp, LinkedIn Ads, Google Ads, Twilio, SendGrid, Calendly, PandaDoc, Intercom, Zendesk)
+
+### Phase 44G: Onboarding Concierge
+- [ ] Step-by-step guided setup checklist per user (first week tasks)
+- [ ] Contextual first-time-use tooltips on major features
+- [ ] In-app AI help chat: "How do I do X in Apex?" with specific instructions
+- [ ] Onboarding progress tracked per user, shown in dashboard

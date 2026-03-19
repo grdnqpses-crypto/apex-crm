@@ -16,9 +16,31 @@ import { randomBytes } from "crypto";
 import { migrationRouter } from "./routers/migration";
 import { aiEngineRouter } from "./routers/ai-engine";
 import { systemHealthRouter } from "./routers/system-health";
+import {
+  calendarRouter,
+  emailSyncRouter,
+  schedulerRouter,
+  customObjectsRouter,
+  proposalsRouter,
+  workflowBuilderRouter,
+  reportsRouter,
+  integrationHubRouter,
+  onboardingRouter,
+  historyImporterRouter,
+} from "./routers/phase44";
 
 export const appRouter = router({
   system: systemRouter,
+  calendar: calendarRouter,
+  emailSync: emailSyncRouter,
+  scheduler: schedulerRouter,
+  customObjects: customObjectsRouter,
+  proposals: proposalsRouter,
+  workflowBuilder: workflowBuilderRouter,
+  reports: reportsRouter,
+  integrationHub: integrationHubRouter,
+  onboarding: onboardingRouter,
+  historyImporter: historyImporterRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -3357,33 +3379,6 @@ export const appRouter = router({
     }),
   }),
 
-  // ─── Digital Onboarding ───────────────────────────────────────
-  onboarding: router({
-    listFlows: protectedProcedure.query(async ({ ctx }) => {
-      return db.listOnboardingFlows(ctx.user.id);
-    }),
-    getFlow: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-      return db.getOnboardingFlow(input.id, ctx.user.id);
-    }),
-    createFlow: protectedProcedure.input(z.object({
-      flowName: z.string(), flowType: z.string().optional(),
-      steps: z.array(z.any()).optional(), requireSignature: z.boolean().optional(),
-      welcomeMessage: z.string().optional(), completionMessage: z.string().optional(),
-    })).mutation(async ({ ctx, input }) => {
-      return db.createOnboardingFlow(ctx.user.id, input as any);
-    }),
-    listSubmissions: protectedProcedure.input(z.object({ flowId: z.number().optional() }).optional()).query(async ({ input }) => {
-      return db.listOnboardingSubmissions(input?.flowId);
-    }),
-    reviewSubmission: protectedProcedure.input(z.object({
-      id: z.number(), status: z.string(), reviewNotes: z.string().optional(),
-    })).mutation(async ({ ctx, input }) => {
-      const { id, ...data } = input;
-      return db.updateOnboardingSubmission(id, { ...data, reviewedBy: ctx.user.id, completedAt: input.status === 'approved' ? Date.now() : undefined } as any);
-    }),
-  }),
-
-  // ─── Subscription & Trial Management ──────────────────────────
   subscriptions: router({
     plans: publicProcedure.query(async () => {
       return db.listSubscriptionPlans();

@@ -1,0 +1,43 @@
+{
+  "name": "Apex CRM",
+  "short_name": "Apex CRM",
+  "description": "The AI-powered CRM that migrates, adapts, and evolves with your team",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f97316",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Contacts",
+      "url": "/contacts",
+      "description": "View all contacts"
+    },
+    {
+      "name": "Deals",
+      "url": "/deals",
+      "description": "View your pipeline"
+    },
+    {
+      "name": "Dashboard",
+      "url": "/dashboard",
+      "description": "Go to dashboard"
+    }
+  ]
+}

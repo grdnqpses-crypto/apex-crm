@@ -83,6 +83,12 @@ const standardSections = [
       { icon: Users, label: "Contacts", path: "/contacts" },
       { icon: Kanban, label: "Deals", path: "/deals" },
       { icon: ListChecks, label: "Tasks", path: "/tasks" },
+      { icon: Calendar, label: "Calendar Sync", path: "/calendar-sync" },
+      { icon: Mail, label: "Email Sync", path: "/email-sync" },
+      { icon: Phone, label: "Dialer", path: "/dialer" },
+      { icon: Briefcase, label: "Meeting Scheduler", path: "/meeting-scheduler" },
+      { icon: FileText, label: "Proposals", path: "/proposals" },
+      { icon: DatabaseIcon, label: "Custom Objects", path: "/custom-objects" },
     ],
   },
   {
@@ -102,6 +108,8 @@ const standardSections = [
     label: "Automation",
     items: [
       { icon: GitBranch, label: "Workflows", path: "/workflows" },
+      { icon: Sparkles, label: "Workflow Builder", path: "/workflow-builder" },
+      { icon: Plug, label: "Integration Hub", path: "/integration-hub" },
       { icon: Filter, label: "Segments", path: "/segments" },
     ],
   },
@@ -166,6 +174,7 @@ const standardSections = [
     label: "Analytics",
     items: [
       { icon: BarChart3, label: "Reports", path: "/analytics" },
+      { icon: BarChart2, label: "Report Builder", path: "/report-builder" },
     ],
   },
   {

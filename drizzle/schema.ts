@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, bigint, decimal, double } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, bigint, decimal, double, tinyint } from "drizzle-orm/mysql-core";
 
 // ─── Tenant Companies ───
 export const tenantCompanies = mysqlTable("tenant_companies", {
@@ -2669,3 +2669,218 @@ export const systemHealthLogs = mysqlTable("system_health_logs", {
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
 });
 export type SystemHealthLog = typeof systemHealthLogs.$inferSelect;
+
+// ─── Phase 44: Calendar Sync ─────────────────────────────────────────────────
+export const calendarConnections = mysqlTable("calendar_connections", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  provider: mysqlEnum("calConnProvider", ["google", "outlook"]).notNull(),
+  accessToken: text("accessToken"),
+  refreshToken: text("refreshToken"),
+  tokenExpiresAt: bigint("tokenExpiresAt", { mode: "number" }),
+  calendarId: varchar("calendarId", { length: 512 }),
+  syncEnabled: boolean("syncEnabled").notNull().default(true),
+  lastSyncAt: bigint("lastSyncAt", { mode: "number" }),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type CalendarConnection = typeof calendarConnections.$inferSelect;
+
+// ─── Phase 44: Email Inbox Sync ──────────────────────────────────────────────
+export const emailConnections = mysqlTable("email_connections", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  provider: mysqlEnum("emailConnProvider", ["gmail", "outlook"]).notNull(),
+  emailAddress: varchar("emailAddress", { length: 320 }).notNull(),
+  bccAddress: varchar("bccAddress", { length: 320 }),
+  accessToken: text("accessToken"),
+  refreshToken: text("refreshToken"),
+  tokenExpiresAt: bigint("tokenExpiresAt", { mode: "number" }),
+  syncEnabled: boolean("syncEnabled").notNull().default(true),
+  lastSyncAt: bigint("lastSyncAt", { mode: "number" }),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type EmailConnection = typeof emailConnections.$inferSelect;
+
+// ─── Phase 44: Meeting Scheduler ─────────────────────────────────────────────
+export const meetingSchedulerProfiles = mysqlTable("meeting_scheduler_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  slug: varchar("slug", { length: 128 }).notNull(),
+  displayName: varchar("displayName", { length: 256 }).notNull(),
+  bio: text("bio"),
+  avatarUrl: varchar("avatarUrl", { length: 512 }),
+  timezone: varchar("timezone", { length: 64 }).notNull().default("America/New_York"),
+  availabilityJson: json("availabilityJson").$type<Record<string, unknown>>(),
+  bufferMinutes: int("bufferMinutes").notNull().default(15),
+  isActive: boolean("isActive").notNull().default(true),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type MeetingSchedulerProfile = typeof meetingSchedulerProfiles.$inferSelect;
+
+export const meetingTypes = mysqlTable("meeting_types", {
+  id: int("id").autoincrement().primaryKey(),
+  schedulerProfileId: int("schedulerProfileId").notNull(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  name: varchar("name", { length: 256 }).notNull(),
+  durationMinutes: int("durationMinutes").notNull().default(30),
+  description: text("description"),
+  location: varchar("location", { length: 512 }),
+  color: varchar("color", { length: 32 }).default("#f97316"),
+  isActive: boolean("isActive").notNull().default(true),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+export type MeetingType = typeof meetingTypes.$inferSelect;
+
+export const meetingBookings = mysqlTable("meeting_bookings", {
+  id: int("id").autoincrement().primaryKey(),
+  meetingTypeId: int("meetingTypeId").notNull(),
+  schedulerProfileId: int("schedulerProfileId").notNull(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  guestName: varchar("guestName", { length: 256 }).notNull(),
+  guestEmail: varchar("guestEmail", { length: 320 }).notNull(),
+  guestPhone: varchar("guestPhone", { length: 64 }),
+  guestNotes: text("guestNotes"),
+  startTime: bigint("startTime", { mode: "number" }).notNull(),
+  endTime: bigint("endTime", { mode: "number" }).notNull(),
+  timezone: varchar("timezone", { length: 64 }).notNull(),
+  status: mysqlEnum("bookingStatus", ["confirmed", "cancelled", "completed", "no_show"]).notNull().default("confirmed"),
+  contactId: int("contactId"),
+  calendarEventId: varchar("calendarEventId", { length: 512 }),
+  cancelToken: varchar("cancelToken", { length: 128 }),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type MeetingBooking = typeof meetingBookings.$inferSelect;
+
+// ─── Phase 44: Custom Object Builder ─────────────────────────────────────────
+export const customObjectTypes = mysqlTable("custom_object_types", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  name: varchar("name", { length: 128 }).notNull(),
+  pluralName: varchar("pluralName", { length: 128 }).notNull(),
+  slug: varchar("slug", { length: 64 }).notNull(),
+  icon: varchar("icon", { length: 64 }).default("box"),
+  color: varchar("color", { length: 32 }).default("#f97316"),
+  description: text("description"),
+  showInNav: tinyint("showInNav").default(1),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type CustomObjectType = typeof customObjectTypes.$inferSelect;
+// ─── Phase 44: Proposal / E-Signature Builder ────────────────────────────────
+export const proposals = mysqlTable("proposals", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  dealId: int("dealId"),
+  contactId: int("contactId"),
+  companyId: int("companyId"),
+  createdByUserId: int("createdByUserId").notNull(),
+  title: varchar("title", { length: 512 }).notNull(),
+  status: mysqlEnum("proposalStatus", ["draft", "sent", "viewed", "signed", "declined", "expired"]).notNull().default("draft"),
+  templateJson: json("templateJson").$type<Record<string, unknown>>(),
+  totalAmount: decimal("totalAmount", { precision: 12, scale: 2 }),
+  currency: varchar("currency", { length: 8 }).default("USD"),
+  validUntil: bigint("validUntil", { mode: "number" }),
+  signatureToken: varchar("signatureToken", { length: 128 }),
+  signedAt: bigint("signedAt", { mode: "number" }),
+  signedByName: varchar("signedByName", { length: 256 }),
+  signedByEmail: varchar("signedByEmail", { length: 320 }),
+  signatureImageUrl: varchar("signatureImageUrl", { length: 512 }),
+  viewedAt: bigint("viewedAt", { mode: "number" }),
+  sentAt: bigint("sentAt", { mode: "number" }),
+  pdfUrl: varchar("pdfUrl", { length: 512 }),
+  notes: text("notes"),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type Proposal = typeof proposals.$inferSelect;
+
+// ─── Phase 44: Workflow Definitions (Visual Builder) ─────────────────────────
+export const workflowDefinitions = mysqlTable("workflow_definitions", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  name: varchar("name", { length: 256 }).notNull(),
+  description: text("description"),
+  status: mysqlEnum("workflowStatus", ["draft", "active", "paused", "archived"]).notNull().default("draft"),
+  triggerType: varchar("triggerType", { length: 64 }).notNull(),
+  triggerConfig: json("triggerConfig").$type<Record<string, unknown>>(),
+  nodesJson: json("nodesJson").$type<unknown[]>(),
+  edgesJson: json("edgesJson").$type<unknown[]>(),
+  runCount: int("runCount").notNull().default(0),
+  lastRunAt: bigint("lastRunAt", { mode: "number" }),
+  createdByUserId: int("createdByUserId"),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type WorkflowDefinition = typeof workflowDefinitions.$inferSelect;
+
+export const workflowRuns = mysqlTable("workflow_runs", {
+  id: int("id").autoincrement().primaryKey(),
+  workflowId: int("workflowId").notNull(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  triggerRecordId: int("triggerRecordId"),
+  triggerRecordType: varchar("triggerRecordType", { length: 64 }),
+  status: mysqlEnum("workflowRunStatus", ["running", "completed", "failed", "skipped"]).notNull().default("running"),
+  stepsCompleted: int("stepsCompleted").notNull().default(0),
+  errorMessage: text("errorMessage"),
+  startedAt: bigint("startedAt", { mode: "number" }).notNull(),
+  completedAt: bigint("completedAt", { mode: "number" }),
+});
+export type WorkflowRun = typeof workflowRuns.$inferSelect;
+
+// ─── Phase 44: Saved Reports ─────────────────────────────────────────────────
+export const savedReports = mysqlTable("saved_reports", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  name: varchar("name", { length: 256 }).notNull(),
+  description: text("description"),
+  reportType: varchar("reportType", { length: 64 }).notNull(),
+  filtersJson: json("filtersJson").$type<Record<string, unknown>>(),
+  columnsJson: json("columnsJson").$type<string[]>(),
+  groupBy: varchar("groupBy", { length: 64 }),
+  sortBy: varchar("sortBy", { length: 64 }),
+  sortDir: mysqlEnum("reportSortDir", ["asc", "desc"]).default("desc"),
+  isShared: boolean("isShared").notNull().default(false),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type SavedReport = typeof savedReports.$inferSelect;
+
+// ─── Phase 44: Integration Marketplace ───────────────────────────────────────
+export const integrationConnectors = mysqlTable("integration_connectors", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  connectorKey: varchar("connectorKey", { length: 64 }).notNull(),
+  displayName: varchar("displayName", { length: 128 }).notNull(),
+  status: mysqlEnum("connectorStatus", ["connected", "disconnected", "error"]).notNull().default("disconnected"),
+  webhookUrl: varchar("webhookUrl", { length: 1024 }),
+  apiKey: text("apiKey"),
+  configJson: json("configJson").$type<Record<string, unknown>>(),
+  lastTestedAt: bigint("lastTestedAt", { mode: "number" }),
+  connectedAt: bigint("connectedAt", { mode: "number" }),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type IntegrationConnector = typeof integrationConnectors.$inferSelect;
+
+// ─── Phase 44: Onboarding Concierge ──────────────────────────────────────────
+export const onboardingProgress = mysqlTable("onboarding_progress", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  completedSteps: json("completedSteps").$type<string[]>().notNull().default([]),
+  currentStep: varchar("currentStep", { length: 64 }),
+  isCompleted: boolean("isCompleted").notNull().default(false),
+  completedAt: bigint("completedAt", { mode: "number" }),
+  dismissedAt: bigint("dismissedAt", { mode: "number" }),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type OnboardingProgress = typeof onboardingProgress.$inferSelect;
