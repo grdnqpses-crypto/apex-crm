@@ -1891,10 +1891,10 @@
 - [x] Check DashboardLayout sidebar logo click — ensure it doesn't link to "/"
 
 ## Phase 52: Multi-Step Logo Generation Flow
-- [ ] Step 1: Generate logo (existing) — show spinner while generating
-- [ ] Step 2: Preview generated logo — show large preview, "Use This Logo" + "Customize It" buttons
-- [ ] Step 3: Customize flow — ask if client wants to pay small fee, show price, confirm payment via Stripe
-- [ ] Step 4: Customization input — text area for client ideas, regenerate with those ideas
-- [ ] Step 5: Confirm and apply — "Use This Logo" saves and closes dialog
-- [ ] Fix: logo navigation bug (setLocation "/" → "/dashboard") already done in Phase 51
-- [ ] Fix: generated logo cache update already done in Phase 51
+- [x] Step 1: Generate logo (existing) — show spinner while generating
+- [x] Step 2: Preview generated logo — show large preview, "Use This Logo" + "Customize It" buttons
+- [x] Step 3: Customize flow — ask if client wants to pay small fee, show price, confirm payment via Stripe
+- [x] Step 4: Customization input — text area for client ideas, regenerate with those ideas
+- [x] Step 5: Confirm and apply — "Use This Logo" saves and closes dialog
+- [x] Fix: logo navigation bug (setLocation "/" → "/dashboard") already done in Phase 51
+- [x] Fix: generated logo cache update already done in Phase 51

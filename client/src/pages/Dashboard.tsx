@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import {
   Users, Building2, Kanban, DollarSign, Mail, ListChecks,
@@ -204,18 +205,36 @@ export default function Dashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const utils = trpc.useUtils();
 
+  // Multi-step logo generation flow
+  // Steps: 'idle' | 'generating' | 'preview' | 'customize-offer' | 'customize-input' | 'applying'
+  type LogoStep = 'idle' | 'generating' | 'preview' | 'customize-offer' | 'customize-input' | 'applying';
+  const [logoStep, setLogoStep] = useState<LogoStep>('idle');
+  const [previewLogoUrl, setPreviewLogoUrl] = useState<string | null>(null);
+  const [customizeIdeas, setCustomizeIdeas] = useState("");
+  const [logoIndustry, setLogoIndustry] = useState("");
+
   const generateLogoMutation = trpc.tenants.generateLogo.useMutation({
     onSuccess: (data) => {
-      // Optimistically update the cache so the logo appears immediately
+      // Show preview step instead of applying immediately
+      setPreviewLogoUrl(data.logoUrl);
+      setLogoStep('preview');
+    },
+    onError: (e) => { toast.error(e.message); setLogoStep('idle'); },
+  });
+
+  const applyLogoMutation = trpc.tenants.generateLogo.useMutation({
+    onSuccess: (data) => {
       utils.tenants.myCompany.setData(undefined, (old) =>
         old ? { ...old, logoUrl: data.logoUrl } : old
       );
+      setLogoStep('idle');
+      setPreviewLogoUrl(null);
+      setCustomizeIdeas("");
       setShowLogoDialog(false);
-      toast.success("Logo generated!");
-      // Also refetch in background to ensure full sync
+      toast.success("Logo applied!");
       refetchCompany();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => { toast.error(e.message); setLogoStep('preview'); },
   });
   const uploadLogoMutation = trpc.tenants.uploadLogo.useMutation({
     onSuccess: (data) => {
@@ -470,67 +489,223 @@ export default function Dashboard() {
       )}
 
       {/* ─── Logo Dialog ─── */}
-      <Dialog open={showLogoDialog} onOpenChange={setShowLogoDialog}>
+      <Dialog open={showLogoDialog} onOpenChange={(open) => {
+        if (!open) { setLogoStep('idle'); setPreviewLogoUrl(null); setCustomizeIdeas(""); setLogoIndustry(""); }
+        setShowLogoDialog(open);
+      }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ImagePlus className="h-5 w-5 text-primary" />
-              Company Logo
+              {logoStep === 'preview' ? 'Your AI Logo' :
+               logoStep === 'customize-offer' ? 'Customize Your Logo' :
+               logoStep === 'customize-input' ? 'Describe Your Vision' :
+               'Company Logo'}
             </DialogTitle>
           </DialogHeader>
-          <Tabs defaultValue="upload" className="mt-2">
-            <TabsList className="w-full">
-              <TabsTrigger value="upload" className="flex-1 flex items-center gap-1.5">
-                <Upload className="h-3.5 w-3.5" /> Upload
-              </TabsTrigger>
-              <TabsTrigger value="generate" className="flex-1 flex items-center gap-1.5">
-                <Wand2 className="h-3.5 w-3.5" /> AI Generate
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="upload" className="space-y-4 pt-4">
-              <p className="text-sm text-muted-foreground">Upload a PNG, JPG, or SVG file. Recommended size: 256×256px or larger.</p>
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-border/60 rounded-xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary/40 hover:bg-accent/30 transition-all"
-              >
-                {uploadLogoMutation.isPending ? (
-                  <><RefreshCw className="h-8 w-8 text-primary animate-spin" /><p className="text-sm text-muted-foreground">Uploading...</p></>
-                ) : (
-                  <><Upload className="h-8 w-8 text-muted-foreground/40" /><p className="text-sm font-medium text-foreground">Click to choose a file</p><p className="text-xs text-muted-foreground">PNG, JPG, SVG up to 5MB</p></>
-                )}
-              </div>
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
-            </TabsContent>
-            <TabsContent value="generate" className="space-y-4 pt-4">
-              <p className="text-sm text-muted-foreground">Our AI will create a professional logo based on your company name and industry.</p>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Company Name</label>
-                  <Input value={company?.name || ""} disabled className="bg-muted/50" />
+
+          {/* ── Step: Preview ── */}
+          {logoStep === 'preview' && previewLogoUrl && (
+            <div className="space-y-5 pt-2">
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative rounded-2xl overflow-hidden border border-border/40 shadow-lg bg-gradient-to-br from-muted/60 to-muted/20 p-6">
+                  <img src={previewLogoUrl} alt="Generated logo preview" className="h-40 w-40 object-contain" />
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Industry (optional)</label>
-                  <Input
-                    placeholder="e.g. Technology, Healthcare, Logistics..."
-                    value={logoPrompt}
-                    onChange={e => setLogoPrompt(e.target.value)}
-                  />
+                <p className="text-sm text-muted-foreground text-center">Here's your AI-generated logo for <span className="font-semibold text-foreground">{company?.name}</span>. Do you want to use it?</p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Button
+                  className="w-full gap-2"
+                  onClick={() => {
+                    // Apply the previewed logo directly
+                    utils.tenants.myCompany.setData(undefined, (old) =>
+                      old ? { ...old, logoUrl: previewLogoUrl } : old
+                    );
+                    setShowLogoDialog(false);
+                    setLogoStep('idle');
+                    setPreviewLogoUrl(null);
+                    toast.success("Logo applied!");
+                    refetchCompany();
+                  }}
+                >
+                  <Sparkles className="h-4 w-4" /> Yes, Use This Logo
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => setLogoStep('customize-offer')}
+                >
+                  <Wand2 className="h-4 w-4" /> Customize It
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full text-muted-foreground"
+                  onClick={() => {
+                    setLogoStep('idle');
+                    setPreviewLogoUrl(null);
+                  }}
+                >
+                  Regenerate
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Step: Customize Offer ── */}
+          {logoStep === 'customize-offer' && (
+            <div className="space-y-5 pt-2">
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <span className="font-semibold text-foreground text-sm">AI Logo Customization</span>
+                  <Badge className="ml-auto text-xs bg-primary/10 text-primary border-primary/20">$9.99</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">Tell us exactly what you want — colors, style, symbols, mood — and our AI will regenerate your logo to match your vision.</p>
+                <ul className="text-xs text-muted-foreground space-y-1 mt-2">
+                  <li className="flex items-center gap-1.5"><span className="text-emerald-500">✓</span> Unlimited revisions in this session</li>
+                  <li className="flex items-center gap-1.5"><span className="text-emerald-500">✓</span> High-resolution PNG saved automatically</li>
+                  <li className="flex items-center gap-1.5"><span className="text-emerald-500">✓</span> One-time fee, no subscription</li>
+                </ul>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Button
+                  className="w-full gap-2"
+                  onClick={() => setLogoStep('customize-input')}
+                >
+                  <Wand2 className="h-4 w-4" /> Yes, Customize for $9.99
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setLogoStep('preview')}
+                >
+                  No thanks, use current logo
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Step: Customize Input ── */}
+          {logoStep === 'customize-input' && (
+            <div className="space-y-4 pt-2">
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Describe your vision</label>
+                <Textarea
+                  placeholder="e.g. Use deep blue and gold colors. Include a small truck icon. Make it bold and modern. Avoid circles."
+                  value={customizeIdeas}
+                  onChange={e => setCustomizeIdeas(e.target.value)}
+                  className="min-h-[100px] resize-none"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Be as specific as you like — colors, shapes, style, symbols, mood.</p>
+              </div>
+              {previewLogoUrl && (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/40 border border-border/40">
+                  <img src={previewLogoUrl} alt="Current logo" className="h-12 w-12 object-contain rounded-lg" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-foreground">Current logo</p>
+                    <p className="text-xs text-muted-foreground">Will be replaced with your customized version</p>
+                  </div>
+                </div>
+              )}
+              <div className="flex flex-col gap-2">
+                <Button
+                  className="w-full gap-2"
+                  disabled={!customizeIdeas.trim() || applyLogoMutation.isPending}
+                  onClick={() => {
+                    setLogoStep('generating');
+                    applyLogoMutation.mutate({
+                      companyName: company!.name!,
+                      industry: customizeIdeas.trim(),
+                    });
+                  }}
+                >
+                  {applyLogoMutation.isPending ? (
+                    <><RefreshCw className="h-4 w-4 animate-spin" /> Generating your custom logo...</>
+                  ) : (
+                    <><Sparkles className="h-4 w-4" /> Generate My Custom Logo</>
+                  )}
+                </Button>
+                <Button variant="ghost" className="w-full" onClick={() => setLogoStep('customize-offer')}>
+                  Back
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Step: Generating ── */}
+          {logoStep === 'generating' && (
+            <div className="flex flex-col items-center gap-4 py-8">
+              <div className="relative">
+                <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <Wand2 className="h-8 w-8 text-primary animate-pulse" />
                 </div>
               </div>
-              <Button
-                className="w-full"
-                disabled={generateLogoMutation.isPending || !company?.name}
-                onClick={() => generateLogoMutation.mutate({ companyName: company!.name!, industry: logoPrompt || undefined })}
-              >
-                {generateLogoMutation.isPending ? (
-                  <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Generating...</>
-                ) : (
-                  <><Wand2 className="h-4 w-4 mr-2" /> Generate Logo with AI</>
-                )}
-              </Button>
-              <p className="text-xs text-muted-foreground text-center">Generation takes 10–20 seconds. The logo will be saved automatically.</p>
-            </TabsContent>
-          </Tabs>
+              <div className="text-center">
+                <p className="font-semibold text-foreground">Creating your logo...</p>
+                <p className="text-sm text-muted-foreground mt-1">This takes 10–20 seconds. Please wait.</p>
+              </div>
+            </div>
+          )}
+
+          {/* ── Step: Idle (initial) ── */}
+          {logoStep === 'idle' && (
+            <Tabs defaultValue="upload" className="mt-2">
+              <TabsList className="w-full">
+                <TabsTrigger value="upload" className="flex-1 flex items-center gap-1.5">
+                  <Upload className="h-3.5 w-3.5" /> Upload
+                </TabsTrigger>
+                <TabsTrigger value="generate" className="flex-1 flex items-center gap-1.5">
+                  <Wand2 className="h-3.5 w-3.5" /> AI Generate
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="upload" className="space-y-4 pt-4">
+                <p className="text-sm text-muted-foreground">Upload a PNG, JPG, or SVG file. Recommended size: 256×256px or larger.</p>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-border/60 rounded-xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary/40 hover:bg-accent/30 transition-all"
+                >
+                  {uploadLogoMutation.isPending ? (
+                    <><RefreshCw className="h-8 w-8 text-primary animate-spin" /><p className="text-sm text-muted-foreground">Uploading...</p></>
+                  ) : (
+                    <><Upload className="h-8 w-8 text-muted-foreground/40" /><p className="text-sm font-medium text-foreground">Click to choose a file</p><p className="text-xs text-muted-foreground">PNG, JPG, SVG up to 5MB</p></>
+                  )}
+                </div>
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+              </TabsContent>
+              <TabsContent value="generate" className="space-y-4 pt-4">
+                <p className="text-sm text-muted-foreground">Our AI will create a professional logo based on your company name and industry.</p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Company Name</label>
+                    <Input value={company?.name || ""} disabled className="bg-muted/50" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Industry (optional)</label>
+                    <Input
+                      placeholder="e.g. Technology, Healthcare, Logistics..."
+                      value={logoIndustry}
+                      onChange={e => setLogoIndustry(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <Button
+                  className="w-full"
+                  disabled={generateLogoMutation.isPending || !company?.name}
+                  onClick={() => {
+                    setLogoStep('generating');
+                    generateLogoMutation.mutate({ companyName: company!.name!, industry: logoIndustry || undefined });
+                  }}
+                >
+                  {generateLogoMutation.isPending ? (
+                    <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Generating...</>
+                  ) : (
+                    <><Wand2 className="h-4 w-4 mr-2" /> Generate Logo with AI</>
+                  )}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">Generation takes 10–20 seconds. Free with your plan.</p>
+              </TabsContent>
+            </Tabs>
+          )}
         </DialogContent>
       </Dialog>
     </div>
