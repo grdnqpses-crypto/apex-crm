@@ -1872,3 +1872,20 @@
 - [x] Server: notifyOwner call when a new identified company session is recorded
 - [x] Frontend: in-app toast when a new identified visitor appears (poll every 30s)
 - [x] Frontend: toast shows company name, industry, page count with "View" and "Convert" actions
+
+## Phase 50: Bug Fix — Log Generation Not Visible
+- [ ] Trace log generate procedure: find where logs are stored after generation
+- [ ] Trace log list query: find where UI reads logs back
+- [ ] Identify the disconnect (wrong userId, missing invalidate, wrong table, etc.)
+- [ ] Fix the bug so generated logs appear immediately in the UI
+
+## Phase 50: Bug Fix — AI Logo Generation Not Visible
+- [ ] Trace generateLogo server procedure: find where logo URL is stored after generation
+- [ ] Trace frontend: find where logo is read back and displayed
+- [ ] Identify disconnect (URL not saved to DB, query not invalidated, wrong field, etc.)
+- [ ] Fix so generated logo appears immediately after generation
+
+## Phase 51: Bug Fix — Logo Click Navigates Away + Generated Logo Not Visible
+- [x] Fix: clicking company logo in CRM dashboard navigates to public site instead of opening logo dialog
+- [x] Fix: generated logo doesn't appear in UI after generation (use optimistic update from mutation response)
+- [x] Check DashboardLayout sidebar logo click — ensure it doesn't link to "/"

@@ -205,11 +205,27 @@ export default function Dashboard() {
   const utils = trpc.useUtils();
 
   const generateLogoMutation = trpc.tenants.generateLogo.useMutation({
-    onSuccess: () => { refetchCompany(); setShowLogoDialog(false); toast.success("Logo generated!"); },
+    onSuccess: (data) => {
+      // Optimistically update the cache so the logo appears immediately
+      utils.tenants.myCompany.setData(undefined, (old) =>
+        old ? { ...old, logoUrl: data.logoUrl } : old
+      );
+      setShowLogoDialog(false);
+      toast.success("Logo generated!");
+      // Also refetch in background to ensure full sync
+      refetchCompany();
+    },
     onError: (e) => toast.error(e.message),
   });
   const uploadLogoMutation = trpc.tenants.uploadLogo.useMutation({
-    onSuccess: () => { refetchCompany(); setShowLogoDialog(false); toast.success("Logo uploaded!"); },
+    onSuccess: (data) => {
+      utils.tenants.myCompany.setData(undefined, (old) =>
+        old ? { ...old, logoUrl: data.logoUrl } : old
+      );
+      setShowLogoDialog(false);
+      toast.success("Logo uploaded!");
+      refetchCompany();
+    },
     onError: (e) => toast.error(e.message),
   });
 

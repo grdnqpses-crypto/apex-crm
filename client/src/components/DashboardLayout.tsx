@@ -624,7 +624,7 @@ function DashboardLayoutContent({
           <div className="flex items-center gap-3">
             {isMobile && <SidebarTrigger className="h-9 w-9 rounded-xl" />}
             <button
-              onClick={() => setLocation("/")}
+              onClick={() => setLocation("/dashboard")}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
               title="Go to Dashboard"
             >
