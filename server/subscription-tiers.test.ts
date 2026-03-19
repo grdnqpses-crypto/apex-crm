@@ -16,42 +16,39 @@ describe("Subscription Tier Structure", () => {
     expect(PLANS).toHaveLength(5);
   });
 
-  it("should have the correct tier names in order", () => {
+  it("should have the correct display names in order", () => {
     const names = PLANS.map(p => p.name);
     expect(names).toEqual([
-      "Success Starter",
-      "Growth Foundation",
+      "Solo",
+      "Starter",
+      "Growth",
       "Fortune Foundation",
-      "Fortune",
       "Fortune Plus",
     ]);
   });
 
   it("should have the correct monthly prices", () => {
     const prices = PLANS.map(p => p.monthlyPrice);
-    expect(prices).toEqual([9900, 19700, 49700, 69700, 149700]);
+    expect(prices).toEqual([4900, 9700, 29700, 49700, 149700]);
   });
 
   it("should have the correct base user counts", () => {
     const baseUsers = PLANS.map(p => p.baseUsers);
-    expect(baseUsers).toEqual([1, 5, 15, 25, 50]);
+    expect(baseUsers).toEqual([1, 3, 10, 20, 100]);
   });
 
-  it("should have the correct max user caps", () => {
-    const maxUsers = PLANS.map(p => p.maxUsers);
-    expect(maxUsers).toEqual([5, 15, 25, 40, 50]);
-  });
-
-  it("Fortune Plus should have no add-on users (top tier)", () => {
-    const fortunePlus = getPlanById("fortune_plus");
-    expect(fortunePlus?.addOnMaxUsers).toBeNull();
-  });
-
-  it("Success Starter should be the entry-level tier at $99/mo", () => {
+  it("Solo should be the entry-level tier at $49/mo", () => {
     const starter = getPlanById("success_starter");
-    expect(starter?.monthlyPrice).toBe(9900);
+    expect(starter?.monthlyPrice).toBe(4900);
     expect(starter?.baseUsers).toBe(1);
-    expect(starter?.maxUsers).toBe(5);
+    expect(starter?.name).toBe("Solo");
+  });
+
+  it("Fortune Plus should be the top tier at $1,497/mo", () => {
+    const fp = getPlanById("fortune_plus");
+    expect(fp?.monthlyPrice).toBe(149700);
+    expect(fp?.baseUsers).toBe(100);
+    expect(fp?.name).toBe("Fortune Plus");
   });
 });
 
@@ -84,51 +81,54 @@ describe("Annual Billing Policy", () => {
 });
 
 describe("User Add-On Pricing", () => {
-  it("add-on price should be $30/user/mo", () => {
-    expect(ADD_ON_PRICE_PER_USER).toBe(30);
+  it("standard add-on price should be $35/user/mo", () => {
+    expect(ADD_ON_PRICE_PER_USER).toBe(35);
   });
 
-  it("should calculate add-on cost correctly for Success Starter (1 base, max 5)", () => {
+  it("Fortune Plus should have $30/user/mo add-on", () => {
+    const fp = getPlanById("fortune_plus");
+    expect(fp?.addOnPricePerUser).toBe(3000);
+  });
+
+  it("Solo should have no add-on cost (0 add-on price)", () => {
     const plan = getPlanById("success_starter")!;
-    // 2 extra users = $60/mo = 6000 cents
-    expect(calculateAddOnCost(plan, 2)).toBe(6000);
-    // 4 extra users = $120/mo = 12000 cents
-    expect(calculateAddOnCost(plan, 4)).toBe(12000);
-    // 5 extra users — capped at 4 (maxUsers 5 - baseUsers 1)
-    expect(calculateAddOnCost(plan, 5)).toBe(12000);
+    expect(calculateAddOnCost(plan, 5)).toBe(0);
   });
 
-  it("should calculate add-on cost correctly for Growth Foundation (5 base, max 15)", () => {
+  it("Starter should calculate add-on cost at $35/user/mo", () => {
     const plan = getPlanById("growth_foundation")!;
+    // 2 extra users = $70/mo = 7000 cents
+    expect(calculateAddOnCost(plan, 2)).toBe(7000);
+    // 5 extra users = $175/mo = 17500 cents
+    expect(calculateAddOnCost(plan, 5)).toBe(17500);
+  });
+
+  it("Fortune Plus add-on should be $30/user/mo", () => {
+    const plan = getPlanById("fortune_plus")!;
     // 10 extra users = $300/mo = 30000 cents
     expect(calculateAddOnCost(plan, 10)).toBe(30000);
-    // 12 extra — capped at 10
-    expect(calculateAddOnCost(plan, 12)).toBe(30000);
-  });
-
-  it("Fortune Plus should have zero add-on cost (no add-ons)", () => {
-    const plan = getPlanById("fortune_plus")!;
-    expect(calculateAddOnCost(plan, 5)).toBe(0);
   });
 });
 
 describe("Plan Lookup Helpers", () => {
   it("getPlanById should return the correct plan", () => {
-    expect(getPlanById("fortune")?.name).toBe("Fortune");
+    expect(getPlanById("fortune")?.name).toBe("Fortune Foundation");
     expect(getPlanById("fortune_plus")?.name).toBe("Fortune Plus");
+    expect(getPlanById("success_starter")?.name).toBe("Solo");
     expect(getPlanById("nonexistent")).toBeUndefined();
   });
 
   it("getPlanByTier should return the correct plan", () => {
-    expect(getPlanByTier("fortune_foundation")?.name).toBe("Fortune Foundation");
+    expect(getPlanByTier("fortune_foundation")?.name).toBe("Growth");
+    expect(getPlanByTier("growth_foundation")?.name).toBe("Starter");
   });
 
   it("getTierLabel should return human-readable labels", () => {
-    expect(getTierLabel("success_starter")).toBe("Success Starter");
-    expect(getTierLabel("growth_foundation")).toBe("Growth Foundation");
-    expect(getTierLabel("fortune_foundation")).toBe("Fortune Foundation");
-    expect(getTierLabel("fortune")).toBe("Fortune");
+    expect(getTierLabel("success_starter")).toBe("Solo");
+    expect(getTierLabel("growth_foundation")).toBe("Starter");
+    expect(getTierLabel("fortune_foundation")).toBe("Growth");
+    expect(getTierLabel("fortune")).toBe("Fortune Foundation");
     expect(getTierLabel("fortune_plus")).toBe("Fortune Plus");
-    expect(getTierLabel("trial")).toBe("Free Trial");
+    expect(getTierLabel("trial")).toBe("Trial");
   });
 });

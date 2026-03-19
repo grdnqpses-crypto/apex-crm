@@ -1,550 +1,570 @@
-// ─── Apex CRM Stripe Products & Pricing ───────────────────────────────────────
-//
-// PRICING STRATEGY:
-//   All tiers priced 25%+ below true competitors (HubSpot, Salesforce, Close CRM).
-//   High-maintenance Apex-unique services (SMTP engine, Compliance Fortress™,
-//   BNB Paradigm Engine™, White-labeling, Dedicated SMTP infra) are unlocked at
-//   premium tiers where the operational cost is justified.
-//
-//   Freemium anchors (FREE across ALL tiers — never gated):
-//     • Data entry (contacts, companies, deals, tasks, notes)
-//     • One-click migration (competitive differentiator — removes switching friction)
-//     • Business category intelligence (adaptive UI/terminology)
-//     • AI Assistant: first 50 queries/month
-//     • Basic AR/AP (manual entry)
-//     • Basic Shipping/Receiving (manual entry)
-//
-//   Competitor comparison (per-seat, full-featured):
-//     HubSpot Pro:        $100/seat/mo  |  Apex Fortune Foundation: $24.93/seat/mo  (75% savings)
-//     Salesforce Pro:     $100/seat/mo  |  Apex Fortune Foundation: $24.93/seat/mo  (75% savings)
-//     Close Growth:       $109/seat/mo  |  Apex Fortune:            $20.96/seat/mo  (81% savings)
-//
-// Tier Structure:
-//   success_starter    — $74/mo    — 1 user    — add-on up to 5 users  @ $25/user/mo
-//   growth_foundation  — $149/mo   — 5 users   — add-on up to 15 users @ $25/user/mo
-//   fortune_foundation — $374/mo   — 15 users  — add-on up to 25 users @ $25/user/mo  ⭐ Most Popular
-//   fortune            — $524/mo   — 25 users  — add-on up to 40 users @ $25/user/mo
-//   fortune_plus       — $1,124/mo — 50 users  — no add-on (top tier)
-//
-// Annual billing: 10% discount, NON-REFUNDABLE for any reason.
+/**
+ * Apex CRM — Final Approved Pricing Model (March 2026)
+ *
+ * Display Names & Prices (DB internal keys kept stable):
+ *   Solo              $49/mo   (1 user)    — DB key: success_starter
+ *   Starter           $97/mo   (3 users)   — DB key: growth_foundation
+ *   Growth            $297/mo  (10 users)  — DB key: fortune_foundation
+ *   Fortune Foundation $497/mo (20 users)  — DB key: fortune
+ *   Fortune Plus      $1,497/mo (100 users)— DB key: fortune_plus
+ *
+ * Rules:
+ *   - 2 months free trial on ALL plans (60 days, no credit card required)
+ *   - All overages = $10 flat rate per unit block, regardless of tier
+ *   - ALL service fees ELIMINATED: onboarding, setup, integration, data export, migration = FREE
+ *   - Fortune Plus: 100 users, $30/user add-on
+ *   - All other tiers: $35/user add-on
+ *   - Annual billing: 10% off, non-refundable
+ */
 
-export const ADD_ON_PRICE_PER_USER = 25;  // $25/user/mo (was $30 — 25% below market)
-export const ANNUAL_DISCOUNT = 0.10;      // 10% off
-export const ANNUAL_REFUNDABLE = false;   // Annual plans are non-refundable
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────────
+export const TRIAL_DAYS = 60;
+export const ANNUAL_DISCOUNT = 0.10;
+export const ANNUAL_REFUNDABLE = false;
+export const ADD_ON_PRICE_PER_USER = 35;          // $35/user/mo
+export const ADD_ON_PRICE_FORTUNE_PLUS = 30;      // $30/user/mo (Fortune Plus)
 
-// ─── Feature Tier Access Levels ──────────────────────────────────────────────
-// Used throughout the app to gate features by subscription tier.
-// Higher number = higher tier required.
-export const TIER_LEVELS: Record<string, number> = {
+// ─────────────────────────────────────────────────────────────────────────────
+// OVERAGE RATES — FLAT $10, SAME FOR EVERYONE
+// ─────────────────────────────────────────────────────────────────────────────
+export const OVERAGE_RATES = {
+  aiCredits:    { priceCents: 1000, unitSize: 500,   label: '$10 per 500 AI credits' },
+  voiceMinutes: { priceCents: 1000, unitSize: 100,   label: '$10 per 100 voice minutes' },
+  bnbProspects: { priceCents: 1000, unitSize: 500,   label: '$10 per 500 BNB prospects' },
+  emailSends:   { priceCents: 1000, unitSize: 10000, label: '$10 per 10,000 emails' },
+  docScans:     { priceCents: 1000, unitSize: 100,   label: '$10 per 100 DocScans' },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TIER TYPES & LEVELS
+// ─────────────────────────────────────────────────────────────────────────────
+export type TierKey = 'trial' | 'success_starter' | 'growth_foundation' | 'fortune_foundation' | 'fortune' | 'fortune_plus';
+
+export const TIER_LEVELS: Record<TierKey, number> = {
   trial:              0,
-  success_starter:    1,
-  growth_foundation:  2,
-  fortune_foundation: 3,
-  fortune:            4,
-  fortune_plus:       5,
+  success_starter:    1,   // Solo ($49)
+  growth_foundation:  2,   // Starter ($97)
+  fortune_foundation: 3,   // Growth ($297)
+  fortune:            4,   // Fortune Foundation ($497)
+  fortune_plus:       5,   // Fortune Plus ($1,497)
 };
 
-// ─── Feature Gate Definitions ────────────────────────────────────────────────
-// Maps feature keys to the minimum tier level required.
-// Level 0 = free for all (including trial).
+// User-facing display names
+export const TIER_DISPLAY_NAMES: Record<TierKey, string> = {
+  trial:              'Trial',
+  success_starter:    'Solo',
+  growth_foundation:  'Starter',
+  fortune_foundation: 'Growth',
+  fortune:            'Fortune Foundation',
+  fortune_plus:       'Fortune Plus',
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FEATURE GATES — minimum tier level required
+// ─────────────────────────────────────────────────────────────────────────────
 export const FEATURE_GATES: Record<string, number> = {
-  // Always free — never gated
-  data_entry:                 0,  // contacts, companies, deals, tasks, notes
-  one_click_migration:        0,  // competitive differentiator
-  business_category_intel:    0,  // adaptive UI/terminology
-  ai_assistant_base:          0,  // 50 queries/month free
-  ar_ap_basic:                0,  // manual entry only
-  shipping_receiving_basic:   0,  // manual entry only
-  bnb_engine_freemium:        0,  // 50 prospects/month free
+  // Always free (trial+)
+  data_entry:               0,
+  one_click_migration:      0,
+  business_category_intel:  0,
+  basic_ar_ap:              0,
+  basic_shipping:           0,
 
-  // Success Starter (level 1)
-  core_crm:                   1,  // contacts, companies, deals, pipeline
-  email_templates:            1,  // up to 25 templates
-  basic_campaigns:            1,  // 500 sends/month
-  domain_health_single:       1,  // 1 domain monitoring
+  // Solo / success_starter (level 1)
+  core_crm:                 1,
+  email_campaigns:          1,
+  ai_assistant:             1,
+  ai_email_writing:         1,
+  ai_call_summaries:        1,
+  bnb_engine:               1,
+  ghost_mode:               1,
+  doc_scan:                 1,
 
-  // Growth Foundation (level 2)
-  marketing_automation:       2,  // visual workflow builder
-  lead_scoring:               2,  // engagement-based scoring
-  bnb_engine_growth:          2,  // 500 prospects/month
-  ghost_mode_limited:         2,  // 3 active sequences
-  deliverability_basic:       2,  // warm-up, SPF/DKIM guidance
-  domain_health_multi:        2,  // up to 5 domains
-  compliance_can_spam:        2,  // CAN-SPAM enforcement only
-  ar_ap_automation:           2,  // automation rules, bulk invoicing
-  shipping_receiving_full:    2,  // carrier integration, tracking
+  // Starter / growth_foundation (level 2)
+  win_probability:          2,
+  full_ar_ap:               2,
+  full_shipping:            2,
+  email_warmup:             2,
 
-  // Fortune Foundation (level 3) — HIGH-MAINTENANCE services unlocked
-  smtp_260_rotation:          3,  // 260 SMTP addresses, rotation (HIGH MAINTENANCE)
-  compliance_full:            3,  // GDPR + CCPA + CAN-SPAM (MEDIUM MAINTENANCE)
-  bnb_engine_full:            3,  // unlimited prospects, all 8 AI layers (HIGH MAINTENANCE)
-  ghost_mode_unlimited:       3,  // unlimited sequences
-  battle_cards:               3,  // AI tactical summaries
-  behavioral_dna:             3,  // psychographic profiling
-  predictive_send_time:       3,  // per-prospect optimal timing
-  voice_agent_limited:        3,  // 200 calls/month
-  docscan_limited:            3,  // 50 scans/month
-  win_probability:            3,  // deal scoring engine
-  visitor_tracking_limited:   3,  // 1,000 visitors/month
-  custom_branding:            3,  // logo, colors (not full white-label)
+  // Growth / fortune_foundation (level 3)
+  behavioral_dna:           3,
+  predictive_send_time:     3,
+  battle_cards:             3,
+  voice_agent:              3,
+  blacklist_monitoring:     3,
+  smtp_high_priority:       3,
 
-  // Fortune (level 4) — Premium unique features
-  voice_agent_unlimited:      4,  // unlimited calls
-  docscan_unlimited:          4,  // unlimited scans
-  revenue_autopilot:          4,  // "Money Machine" revenue recommendations
-  apex_autopilot:             4,  // freight consolidation + lane prediction
-  custom_ai_training_basic:   4,  // basic model fine-tuning
-  visitor_tracking_unlimited: 4,  // unlimited visitor tracking
-  white_labeling:             4,  // full white-label (MEDIUM MAINTENANCE — premium)
-  dedicated_account_manager:  4,  // human account manager
-  sla_995:                    4,  // 99.5% uptime SLA
+  // Fortune Foundation / fortune (level 4) — HIGH MAINTENANCE unlocked
+  smtp_260_rotation:        4,
+  compliance_fortress:      4,
+  bnb_engine_unlimited:     4,
 
-  // Fortune Plus (level 5) — Enterprise, very high maintenance
-  dedicated_smtp_infra:       5,  // dedicated IPs, custom domain pools (VERY HIGH MAINTENANCE)
-  custom_ai_training_full:    5,  // unlimited model training (VERY HIGH MAINTENANCE)
-  sla_999:                    5,  // 99.9% uptime SLA
-  priority_247_support:       5,  // 24/7 white-glove support
+  // Fortune Plus (level 5)
+  revenue_autopilot:        5,
+  apex_autopilot:           5,
+  white_labeling:           5,
+  dedicated_smtp_infra:     5,
+  custom_ai_training:       5,
+  saas_mode:                5,
+  sla_999:                  5,
+  white_glove_support:      5,
 };
 
-// ─── Contact & Usage Limits by Tier ──────────────────────────────────────────
-export const TIER_LIMITS: Record<string, {
+// ─────────────────────────────────────────────────────────────────────────────
+// USAGE LIMITS BY TIER
+// ─────────────────────────────────────────────────────────────────────────────
+export const TIER_LIMITS: Record<TierKey, {
   contacts: number | null;
+  deals: number | null;
+  pipelines: number | null;
+  aiCredits: number;
   emailSendsPerMonth: number | null;
+  emailAccounts: number | null;
   bnbProspectsPerMonth: number | null;
-  voiceCallsPerMonth: number | null;
+  ghostSequences: number | null;
+  voiceMinutes: number | null;
   docScansPerMonth: number | null;
-  visitorTrackingPerMonth: number | null;
-  domainsMonitored: number | null;
-  ghostModeActive: number | null;
+  emailWarmupAccounts: number | null;
 }> = {
   trial: {
-    contacts: 100,
-    emailSendsPerMonth: 50,
-    bnbProspectsPerMonth: 10,
-    voiceCallsPerMonth: 0,
-    docScansPerMonth: 0,
-    visitorTrackingPerMonth: 0,
-    domainsMonitored: 1,
-    ghostModeActive: 0,
+    contacts: 50, deals: 10, pipelines: 1,
+    aiCredits: 100, emailSendsPerMonth: 100, emailAccounts: 1,
+    bnbProspectsPerMonth: 25, ghostSequences: 0, voiceMinutes: 0,
+    docScansPerMonth: 5, emailWarmupAccounts: 0,
   },
-  success_starter: {
-    contacts: 5000,
-    emailSendsPerMonth: 500,
-    bnbProspectsPerMonth: 50,
-    voiceCallsPerMonth: 0,
-    docScansPerMonth: 0,
-    visitorTrackingPerMonth: 0,
-    domainsMonitored: 1,
-    ghostModeActive: 0,
+  success_starter: {   // Solo — $49/mo
+    contacts: 2500, deals: null, pipelines: 2,
+    aiCredits: 500, emailSendsPerMonth: 1000, emailAccounts: 2,
+    bnbProspectsPerMonth: 100, ghostSequences: 1, voiceMinutes: 0,
+    docScansPerMonth: 20, emailWarmupAccounts: 0,
   },
-  growth_foundation: {
-    contacts: 25000,
-    emailSendsPerMonth: 5000,
-    bnbProspectsPerMonth: 500,
-    voiceCallsPerMonth: 0,
-    docScansPerMonth: 0,
-    visitorTrackingPerMonth: 0,
-    domainsMonitored: 5,
-    ghostModeActive: 3,
+  growth_foundation: {  // Starter — $97/mo
+    contacts: 10000, deals: null, pipelines: 5,
+    aiCredits: 2000, emailSendsPerMonth: 10000, emailAccounts: 5,
+    bnbProspectsPerMonth: 500, ghostSequences: 5, voiceMinutes: 0,
+    docScansPerMonth: 100, emailWarmupAccounts: 2,
   },
-  fortune_foundation: {
-    contacts: 100000,
-    emailSendsPerMonth: 50000,
-    bnbProspectsPerMonth: null,  // unlimited
-    voiceCallsPerMonth: 200,
-    docScansPerMonth: 50,
-    visitorTrackingPerMonth: 1000,
-    domainsMonitored: null,      // unlimited
-    ghostModeActive: null,       // unlimited
+  fortune_foundation: {  // Growth — $297/mo
+    contacts: 100000, deals: null, pipelines: null,
+    aiCredits: 10000, emailSendsPerMonth: 100000, emailAccounts: 25,
+    bnbProspectsPerMonth: 5000, ghostSequences: 25, voiceMinutes: 200,
+    docScansPerMonth: 500, emailWarmupAccounts: 10,
   },
-  fortune: {
-    contacts: 250000,
-    emailSendsPerMonth: 200000,
-    bnbProspectsPerMonth: null,
-    voiceCallsPerMonth: null,    // unlimited
-    docScansPerMonth: null,      // unlimited
-    visitorTrackingPerMonth: null,
-    domainsMonitored: null,
-    ghostModeActive: null,
+  fortune: {  // Fortune Foundation — $497/mo
+    contacts: null, deals: null, pipelines: null,
+    aiCredits: 30000, emailSendsPerMonth: 500000, emailAccounts: 100,
+    bnbProspectsPerMonth: 25000, ghostSequences: null, voiceMinutes: 1000,
+    docScansPerMonth: 2000, emailWarmupAccounts: 50,
   },
-  fortune_plus: {
-    contacts: null,              // unlimited
-    emailSendsPerMonth: null,    // unlimited
-    bnbProspectsPerMonth: null,
-    voiceCallsPerMonth: null,
-    docScansPerMonth: null,
-    visitorTrackingPerMonth: null,
-    domainsMonitored: null,
-    ghostModeActive: null,
+  fortune_plus: {  // Fortune Plus — $1,497/mo
+    contacts: null, deals: null, pipelines: null,
+    aiCredits: 200000, emailSendsPerMonth: null, emailAccounts: null,
+    bnbProspectsPerMonth: null, ghostSequences: null, voiceMinutes: null,
+    docScansPerMonth: null, emailWarmupAccounts: null,
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PLAN DEFINITIONS
+// ─────────────────────────────────────────────────────────────────────────────
 export interface PlanFeature {
   text: string;
   included: boolean;
-  highlight?: boolean;   // show as a standout feature
-  premium?: boolean;     // mark as high-value premium feature
-  freemium?: boolean;    // mark as freemium (limited free, more on upgrade)
+  highlight?: boolean;
+  premium?: boolean;
+  freemium?: boolean;
+  apexOnly?: boolean;
 }
 
 export interface StripePlan {
-  id: string;
+  id: TierKey;
   name: string;
   tagline: string;
   description: string;
   monthlyPriceId: string;
   annualPriceId: string;
-  monthlyPrice: number;        // USD cents per month
-  annualPricePerMonth: number; // USD cents per month when billed annually
-  annualPriceTotal: number;    // USD cents billed upfront annually
-  baseUsers: number;
-  maxUsers: number;
-  addOnMaxUsers: number | null;
-  addOnPricePerUser: number;   // cents per user per month
-  contactLimit: number | null; // null = unlimited
-  emailSendsPerMonth: number | null;
+  monthlyPrice: number;
+  annualPricePerMonth: number;
+  annualPriceTotal: number;
+  trialDays: number;
+  usersIncluded: number;
+  addOnPricePerUser: number;
+  maxUserAddons: number | null;
   features: PlanFeature[];
   popular?: boolean;
-  tier: "trial" | "success_starter" | "growth_foundation" | "fortune_foundation" | "fortune" | "fortune_plus";
-  competitorSavings?: string;  // e.g. "75% less than HubSpot"
-  vsCompetitor?: string;       // e.g. "HubSpot Pro: $500/mo"
+  badge?: string;
+  competitorSavings: string;
+  vsCompetitor: string;
+  tier: TierKey;
+  // Legacy compat
+  baseUsers?: number;
+  maxUsers?: number;
+  contactLimit?: number | null;
+  emailSendsPerMonth?: number | null;
+  addOnMaxUsers?: number | null;
+  addOnPricePerUser_legacy?: number;
+  monthlyPrice_legacy?: number;
+  annualPricePerMonth_legacy?: number;
+  annualPriceTotal_legacy?: number;
 }
 
 export const PLANS: StripePlan[] = [
 
-  // ─── Tier 0: Success Starter ─────────────────────────────────────────────
-  // Priced 25% below HubSpot Starter + Close Essentials equivalent for 1 user.
-  // HubSpot Starter: $20/mo + Close Essentials: $49/mo → avg ~$35-99 for comparable.
-  // Apex: $74/mo includes AI assistant, business category intel, migration — far more value.
+  // ─── Solo — $49/mo ────────────────────────────────────────────────────────
   {
-    id: "success_starter",
-    name: "Success Starter",
-    tagline: "Launch your CRM in minutes.",
-    description: "Everything a solo operator needs to manage contacts, deals, and outreach — with AI built in from day one.",
-    monthlyPriceId: process.env.STRIPE_PRICE_SUCCESS_STARTER_MONTHLY || "",
-    annualPriceId:  process.env.STRIPE_PRICE_SUCCESS_STARTER_ANNUAL  || "",
-    monthlyPrice:        7400,   // $74.00/mo
-    annualPricePerMonth: 6660,   // $66.60/mo (10% off)
-    annualPriceTotal:    79920,  // $799.20/yr billed upfront
+    id: 'success_starter',
+    name: 'Solo',
+    tagline: "For the serious solo seller. Everything you need, nothing you don't.",
+    description: 'Everything a solo operator needs to manage contacts, deals, and outreach — with AI built in from day one.',
+    monthlyPriceId: process.env.STRIPE_PRICE_SUCCESS_STARTER_MONTHLY || '',
+    annualPriceId:  process.env.STRIPE_PRICE_SUCCESS_STARTER_ANNUAL  || '',
+    monthlyPrice:        4900,
+    annualPricePerMonth: 4410,
+    annualPriceTotal:    52920,
+    trialDays: 60,
+    usersIncluded: 1,
     baseUsers: 1,
-    maxUsers: 5,
-    addOnMaxUsers: 5,
-    addOnPricePerUser: 2500,     // $25/user/mo
-    contactLimit: 5000,
-    emailSendsPerMonth: 500,
-    tier: "success_starter",
-    competitorSavings: "26% less than HubSpot Starter",
-    vsCompetitor: "HubSpot Starter: $100/mo for comparable features",
-    features: [
-      { text: "1 user included", included: true },
-      { text: "Add up to 4 more users ($25/user/mo)", included: true },
-      { text: "5,000 contacts", included: true },
-      { text: "Core CRM — contacts, companies, deals, pipeline", included: true },
-      { text: "Tasks, activities, notes, calendar", included: true },
-      { text: "25 email templates", included: true },
-      { text: "500 email sends/month", included: true },
-      { text: "AI Assistant — 50 queries/month FREE", included: true, freemium: true },
-      { text: "One-click migration from any CRM — FREE", included: true, highlight: true },
-      { text: "Business category intelligence — FREE", included: true, highlight: true },
-      { text: "Basic AR/AP (manual entry) — FREE", included: true, freemium: true },
-      { text: "Basic Shipping & Receiving — FREE", included: true, freemium: true },
-      { text: "BNB Prospecting — 50 prospects/month FREE", included: true, freemium: true },
-      { text: "1 domain health monitor", included: true },
-      { text: "Email support", included: true },
-      { text: "Marketing automation & sequences", included: false },
-      { text: "260 SMTP rotation engine", included: false },
-      { text: "Compliance Fortress™", included: false },
-      { text: "Ghost Mode sequences", included: false },
-      { text: "White-labeling", included: false },
-    ],
-  },
-
-  // ─── Tier 1: Growth Foundation ───────────────────────────────────────────
-  // HubSpot Pro 5-seat: $500/mo | Salesforce Pro 5-seat: $500/mo | Close Growth 5-seat: $545/mo
-  // Apex at $149/mo = 70% below HubSpot Pro for 5 users.
-  // Per-seat: $29.80 vs HubSpot $100 = 70% savings.
-  {
-    id: "growth_foundation",
-    name: "Growth Foundation",
-    tagline: "Scale your pipeline with automation.",
-    description: "Full automation, lead scoring, and the BNB Paradigm Engine™ for teams ready to grow — at 70% less than HubSpot Pro.",
-    monthlyPriceId: process.env.STRIPE_PRICE_GROWTH_FOUNDATION_MONTHLY || "",
-    annualPriceId:  process.env.STRIPE_PRICE_GROWTH_FOUNDATION_ANNUAL  || "",
-    monthlyPrice:        14900,  // $149.00/mo
-    annualPricePerMonth: 13410,  // $134.10/mo (10% off)
-    annualPriceTotal:   160920,  // $1,609.20/yr
-    baseUsers: 5,
-    maxUsers: 15,
-    addOnMaxUsers: 15,
-    addOnPricePerUser: 2500,
-    contactLimit: 25000,
-    emailSendsPerMonth: 5000,
-    tier: "growth_foundation",
-    competitorSavings: "70% less than HubSpot Pro",
-    vsCompetitor: "HubSpot Pro (5 users): $500/mo",
-    features: [
-      { text: "5 users included", included: true },
-      { text: "Add up to 10 more users ($25/user/mo)", included: true },
-      { text: "25,000 contacts", included: true },
-      { text: "Full CRM suite", included: true },
-      { text: "Unlimited email templates", included: true },
-      { text: "5,000 email sends/month", included: true },
-      { text: "Marketing automation (visual workflow builder)", included: true, highlight: true },
-      { text: "Lead scoring", included: true },
-      { text: "BNB Paradigm Engine™ — 500 prospects/month", included: true, highlight: true },
-      { text: "Ghost Mode sequences — 3 active", included: true },
-      { text: "Deliverability suite (warm-up, SPF/DKIM guidance)", included: true },
-      { text: "5 domain health monitors", included: true },
-      { text: "Compliance Fortress™ — CAN-SPAM", included: true },
-      { text: "AR/AP automation (rules, bulk invoicing)", included: true },
-      { text: "Shipping & Receiving full module", included: true },
-      { text: "AI Assistant — 50 queries/month FREE + credit overage", included: true, freemium: true },
-      { text: "One-click migration — FREE", included: true },
-      { text: "Business category intelligence — FREE", included: true },
-      { text: "Email + live chat support", included: true },
-      { text: "260 SMTP rotation engine", included: false },
-      { text: "Full Compliance Fortress™ (GDPR/CCPA)", included: false },
-      { text: "Voice Agent", included: false },
-      { text: "White-labeling", included: false },
-    ],
-  },
-
-  // ─── Tier 2: Fortune Foundation ──────────────────────────────────────────
-  // HubSpot Pro 15-seat: $1,500/mo | Salesforce Enterprise 15-seat: $2,625/mo
-  // Apex at $374/mo = 75% below HubSpot Pro for 15 users.
-  // Per-seat: $24.93 vs HubSpot $100 = 75% savings.
-  // HIGH-MAINTENANCE services unlocked here: 260 SMTP, Full Compliance, Full BNB Engine.
-  // These carry real operational cost — justified at this tier.
-  {
-    id: "fortune_foundation",
-    name: "Fortune Foundation",
-    tagline: "Enterprise deliverability. Mid-market price.",
-    description: "The full Apex arsenal: 260 SMTP rotation, Compliance Fortress™, and the complete BNB Paradigm Engine™ — at 75% less than HubSpot Pro.",
-    monthlyPriceId: process.env.STRIPE_PRICE_FORTUNE_FOUNDATION_MONTHLY || "",
-    annualPriceId:  process.env.STRIPE_PRICE_FORTUNE_FOUNDATION_ANNUAL  || "",
-    monthlyPrice:        37400,  // $374.00/mo
-    annualPricePerMonth: 33660,  // $336.60/mo (10% off)
-    annualPriceTotal:   403920,  // $4,039.20/yr
-    baseUsers: 15,
-    maxUsers: 25,
-    addOnMaxUsers: 25,
-    addOnPricePerUser: 2500,
-    contactLimit: 100000,
-    emailSendsPerMonth: 50000,
-    tier: "fortune_foundation",
-    popular: true,
-    competitorSavings: "75% less than HubSpot Pro",
-    vsCompetitor: "HubSpot Pro (15 users): $1,500/mo",
-    features: [
-      { text: "15 users included", included: true },
-      { text: "Add up to 10 more users ($25/user/mo)", included: true },
-      { text: "100,000 contacts", included: true },
-      { text: "All Growth Foundation features", included: true },
-      { text: "260 SMTP rotation engine", included: true, highlight: true, premium: true },
-      { text: "Compliance Fortress™ — CAN-SPAM + GDPR + CCPA", included: true, highlight: true, premium: true },
-      { text: "BNB Paradigm Engine™ Full — unlimited prospects, all 8 AI layers", included: true, highlight: true, premium: true },
-      { text: "Ghost Mode — unlimited sequences", included: true },
-      { text: "Battle Cards — AI tactical summaries", included: true },
-      { text: "Behavioral DNA Profiler", included: true },
-      { text: "Predictive Send Time Optimizer", included: true },
-      { text: "50,000 email sends/month", included: true },
-      { text: "Voice Agent — 200 calls/month", included: true, premium: true },
-      { text: "DocScan — 50 scans/month", included: true, premium: true },
-      { text: "Win Probability Engine", included: true },
-      { text: "Visitor Tracking — 1,000/month", included: true },
-      { text: "Custom branding (logo, colors)", included: true },
-      { text: "Unlimited domain health monitors", included: true },
-      { text: "Priority support", included: true },
-      { text: "White-labeling", included: false },
-      { text: "Dedicated SMTP infrastructure", included: false },
-      { text: "Revenue Autopilot", included: false },
-    ],
-  },
-
-  // ─── Tier 3: Fortune ─────────────────────────────────────────────────────
-  // HubSpot Enterprise 25-seat: $3,000/mo | Salesforce Enterprise 25-seat: $4,375/mo
-  // Apex at $524/mo = 83% below HubSpot Enterprise for 25 users.
-  // White-labeling unlocked here — medium maintenance, premium value.
-  {
-    id: "fortune",
-    name: "Fortune",
-    tagline: "Your brand. Your platform. Unlimited scale.",
-    description: "White-labeling, Revenue Autopilot, and unlimited AI — the complete platform for high-performance teams at 83% less than HubSpot Enterprise.",
-    monthlyPriceId: process.env.STRIPE_PRICE_FORTUNE_MONTHLY || "",
-    annualPriceId:  process.env.STRIPE_PRICE_FORTUNE_ANNUAL  || "",
-    monthlyPrice:        52400,  // $524.00/mo
-    annualPricePerMonth: 47160,  // $471.60/mo (10% off)
-    annualPriceTotal:   565920,  // $5,659.20/yr
-    baseUsers: 25,
-    maxUsers: 40,
-    addOnMaxUsers: 40,
-    addOnPricePerUser: 2500,
-    contactLimit: 250000,
-    emailSendsPerMonth: 200000,
-    tier: "fortune",
-    competitorSavings: "83% less than HubSpot Enterprise",
-    vsCompetitor: "HubSpot Enterprise (25 users): $3,000/mo",
-    features: [
-      { text: "25 users included", included: true },
-      { text: "Add up to 15 more users ($25/user/mo)", included: true },
-      { text: "250,000 contacts", included: true },
-      { text: "All Fortune Foundation features", included: true },
-      { text: "Voice Agent — unlimited calls", included: true, premium: true },
-      { text: "DocScan — unlimited scans", included: true, premium: true },
-      { text: "Revenue Autopilot (\"Money Machine\")", included: true, highlight: true, premium: true },
-      { text: "Apex Autopilot (freight consolidation + lane prediction)", included: true, highlight: true, premium: true },
-      { text: "200,000 email sends/month", included: true },
-      { text: "Visitor Tracking — unlimited", included: true },
-      { text: "White-labeling — full platform branding", included: true, highlight: true, premium: true },
-      { text: "Custom AI training (basic)", included: true, premium: true },
-      { text: "Dedicated account manager", included: true },
-      { text: "99.5% SLA guarantee", included: true },
-      { text: "Dedicated SMTP infrastructure", included: false },
-      { text: "Custom AI training (full)", included: false },
-      { text: "99.9% SLA", included: false },
-    ],
-  },
-
-  // ─── Tier 4: Fortune Plus ─────────────────────────────────────────────────
-  // Salesforce Unlimited 50-seat: $17,500/mo | HubSpot Enterprise 50-seat: $6,000/mo
-  // Apex at $1,124/mo = 81% below HubSpot Enterprise for 50 users.
-  // VERY HIGH MAINTENANCE services: dedicated SMTP infra, full custom AI training.
-  // These carry real infrastructure cost — justified at top tier with markup.
-  {
-    id: "fortune_plus",
-    name: "Fortune Plus",
-    tagline: "Dedicated infrastructure. White-glove service.",
-    description: "Your own dedicated SMTP infrastructure, full custom AI training, and 24/7 white-glove support — at 81% less than HubSpot Enterprise.",
-    monthlyPriceId: process.env.STRIPE_PRICE_FORTUNE_PLUS_MONTHLY || "",
-    annualPriceId:  process.env.STRIPE_PRICE_FORTUNE_PLUS_ANNUAL  || "",
-    monthlyPrice:        112400,  // $1,124.00/mo
-    annualPricePerMonth: 101160,  // $1,011.60/mo (10% off)
-    annualPriceTotal:   1213920,  // $12,139.20/yr
-    baseUsers: 50,
-    maxUsers: 50,
-    addOnMaxUsers: null,
+    maxUsers: 1,
     addOnPricePerUser: 0,
-    contactLimit: null,           // unlimited
-    emailSendsPerMonth: null,     // unlimited
-    tier: "fortune_plus",
-    competitorSavings: "81% less than HubSpot Enterprise",
-    vsCompetitor: "HubSpot Enterprise (50 users): $6,000/mo",
+    addOnMaxUsers: 0,
+    maxUserAddons: 0,
+    contactLimit: 2500,
+    emailSendsPerMonth: 1000,
+    tier: 'success_starter',
+    competitorSavings: '50% less than GoHighLevel Starter',
+    vsCompetitor: 'GoHighLevel Starter: $97/mo | HubSpot Starter: $100/mo',
     features: [
-      { text: "50 users included", included: true },
-      { text: "Unlimited contacts", included: true },
-      { text: "All Fortune features", included: true },
-      { text: "Dedicated SMTP infrastructure (your own IPs + domain pools)", included: true, highlight: true, premium: true },
-      { text: "Unlimited email sends", included: true },
-      { text: "Custom AI training — full, unlimited", included: true, highlight: true, premium: true },
-      { text: "99.9% SLA guarantee", included: true, highlight: true },
-      { text: "Priority 24/7 white-glove support", included: true, premium: true },
-      { text: "Dedicated infrastructure team", included: true },
-      { text: "Custom integrations", included: true },
+      { text: '1 user included', included: true },
+      { text: '2,500 contacts', included: true },
+      { text: 'Core CRM — contacts, companies, deals, pipeline', included: true },
+      { text: 'Tasks, activities, notes, calendar', included: true },
+      { text: '500 AI credits/month', included: true, freemium: true },
+      { text: 'AI Assistant — write emails, answer questions, take action', included: true, highlight: true, apexOnly: true },
+      { text: '1,000 email sends/month', included: true },
+      { text: '100 BNB prospects/month', included: true },
+      { text: '1 Ghost Mode sequence', included: true },
+      { text: '20 DocScans/month', included: true },
+      { text: 'One-click migration from any CRM', included: true, highlight: true, apexOnly: true },
+      { text: 'Business category intelligence', included: true, apexOnly: true },
+      { text: 'Basic AR/AP (manual entry)', included: true },
+      { text: 'Basic Shipping & Receiving', included: true },
+      { text: 'Free onboarding & setup', included: true, highlight: true },
+      { text: 'Email support', included: true },
+      { text: 'Voice Agent', included: false },
+      { text: '260 SMTP Rotation Engine', included: false },
+      { text: 'Compliance Fortress™', included: false },
+    ],
+  },
+
+  // ─── Starter — $97/mo ─────────────────────────────────────────────────────
+  {
+    id: 'growth_foundation',
+    name: 'Starter',
+    tagline: 'For small teams ready to scale their outreach.',
+    description: 'For small teams who need more contacts, more sends, and smarter AI to grow their pipeline.',
+    monthlyPriceId: process.env.STRIPE_PRICE_GROWTH_FOUNDATION_MONTHLY || '',
+    annualPriceId:  process.env.STRIPE_PRICE_GROWTH_FOUNDATION_ANNUAL  || '',
+    monthlyPrice:        9700,
+    annualPricePerMonth: 8730,
+    annualPriceTotal:    104760,
+    trialDays: 60,
+    usersIncluded: 3,
+    baseUsers: 3,
+    maxUsers: 15,
+    addOnPricePerUser: 3500,
+    addOnMaxUsers: null,
+    maxUserAddons: null,
+    contactLimit: 10000,
+    emailSendsPerMonth: 10000,
+    tier: 'growth_foundation',
+    competitorSavings: '68% less than HubSpot for 3 users',
+    vsCompetitor: 'HubSpot Starter for 3 users: $300/mo',
+    features: [
+      { text: '3 users included (+$35/user/mo)', included: true },
+      { text: '10,000 contacts', included: true },
+      { text: 'Everything in Solo', included: true },
+      { text: '2,000 AI credits/month', included: true, freemium: true },
+      { text: 'AI email personalization', included: true, highlight: true },
+      { text: 'AI call summaries', included: true },
+      { text: 'Win probability scoring', included: true, apexOnly: true },
+      { text: '10,000 email sends/month', included: true },
+      { text: '500 BNB prospects/month', included: true },
+      { text: '5 Ghost Mode sequences', included: true },
+      { text: '100 DocScans/month', included: true },
+      { text: 'Full AR/AP automation', included: true, apexOnly: true },
+      { text: 'Full Shipping & Receiving', included: true, apexOnly: true },
+      { text: 'Email warmup (2 accounts)', included: true },
+      { text: 'Email support', included: true },
+      { text: 'Voice Agent', included: false },
+      { text: '260 SMTP Rotation Engine', included: false },
+    ],
+  },
+
+  // ─── Growth — $297/mo ─────────────────────────────────────────────────────
+  {
+    id: 'fortune_foundation',
+    name: 'Growth',
+    tagline: 'For growing teams who need real prospecting power and voice.',
+    description: 'For scaling teams who need behavioral AI, voice calling, and serious email volume.',
+    monthlyPriceId: process.env.STRIPE_PRICE_FORTUNE_FOUNDATION_MONTHLY || '',
+    annualPriceId:  process.env.STRIPE_PRICE_FORTUNE_FOUNDATION_ANNUAL  || '',
+    monthlyPrice:        29700,
+    annualPricePerMonth: 26730,
+    annualPriceTotal:    320760,
+    trialDays: 60,
+    usersIncluded: 10,
+    baseUsers: 10,
+    maxUsers: 25,
+    addOnPricePerUser: 3500,
+    addOnMaxUsers: null,
+    maxUserAddons: null,
+    contactLimit: 100000,
+    emailSendsPerMonth: 100000,
+    tier: 'fortune_foundation',
+    competitorSavings: '55% less than GHL + Instantly combined',
+    vsCompetitor: 'GHL Unlimited ($297) + Instantly ($358) = $655/mo',
+    features: [
+      { text: '10 users included (+$35/user/mo)', included: true },
+      { text: '100,000 contacts', included: true },
+      { text: 'Everything in Starter', included: true },
+      { text: '10,000 AI credits/month', included: true, freemium: true },
+      { text: 'Behavioral DNA Profiling', included: true, highlight: true, apexOnly: true },
+      { text: 'Predictive Send Time Optimizer', included: true, apexOnly: true },
+      { text: 'Battle Cards (AI tactical summaries)', included: true, apexOnly: true },
+      { text: '100,000 email sends/month', included: true },
+      { text: '5,000 BNB prospects/month', included: true },
+      { text: '25 Ghost Mode sequences', included: true },
+      { text: '200 voice minutes/month', included: true, highlight: true },
+      { text: '500 DocScans/month', included: true },
+      { text: 'Blacklist monitoring', included: true },
+      { text: 'High-priority SMTP routing', included: true },
+      { text: 'Email warmup (10 accounts)', included: true },
+      { text: 'Chat support', included: true },
+      { text: '260 SMTP Rotation Engine', included: false },
+      { text: 'Compliance Fortress™', included: false },
+    ],
+  },
+
+  // ─── Fortune Foundation — $497/mo ─────────────────────────────────────────
+  {
+    id: 'fortune',
+    name: 'Fortune Foundation',
+    tagline: 'Elite deliverability. Full compliance. The agency standard.',
+    description: 'Unlock the 260 SMTP Rotation Engine and Compliance Fortress — the deliverability and compliance stack no competitor can match.',
+    monthlyPriceId: process.env.STRIPE_PRICE_FORTUNE_MONTHLY || '',
+    annualPriceId:  process.env.STRIPE_PRICE_FORTUNE_ANNUAL  || '',
+    monthlyPrice:        49700,
+    annualPricePerMonth: 44730,
+    annualPriceTotal:    536760,
+    trialDays: 60,
+    usersIncluded: 20,
+    baseUsers: 20,
+    maxUsers: 40,
+    addOnPricePerUser: 3500,
+    addOnMaxUsers: null,
+    maxUserAddons: null,
+    contactLimit: null,
+    emailSendsPerMonth: 500000,
+    popular: true,
+    badge: 'Most Popular',
+    tier: 'fortune',
+    competitorSavings: '57% less than GHL + Instantly + OneTrust',
+    vsCompetitor: 'GHL Pro ($497) + Instantly ($358) + compliance ($300) = $1,155/mo',
+    features: [
+      { text: '20 users included (+$35/user/mo)', included: true },
+      { text: 'Unlimited contacts', included: true },
+      { text: 'Everything in Growth', included: true },
+      { text: '30,000 AI credits/month', included: true, freemium: true },
+      { text: '260 SMTP Rotation Engine™', included: true, highlight: true, premium: true, apexOnly: true },
+      { text: 'Compliance Fortress™ (GDPR + CCPA + CAN-SPAM auto)', included: true, highlight: true, premium: true, apexOnly: true },
+      { text: 'Unlimited BNB prospects', included: true, highlight: true },
+      { text: 'Unlimited Ghost Mode sequences', included: true },
+      { text: '500,000 email sends/month', included: true },
+      { text: '1,000 voice minutes/month', included: true },
+      { text: '2,000 DocScans/month', included: true },
+      { text: 'Email warmup (50 accounts)', included: true },
+      { text: 'Priority support', included: true },
+      { text: 'Revenue Autopilot™', included: false },
+      { text: 'Apex Autopilot™', included: false },
+      { text: 'White-labeling', included: false },
+    ],
+  },
+
+  // ─── Fortune Plus — $1,497/mo ─────────────────────────────────────────────
+  {
+    id: 'fortune_plus',
+    name: 'Fortune Plus',
+    tagline: 'Dedicated infrastructure. Custom AI. Resell Apex as your own.',
+    description: 'Enterprise-grade dedicated infrastructure, unlimited everything, Revenue Autopilot, and the ability to resell Apex as your own SaaS product.',
+    monthlyPriceId: process.env.STRIPE_PRICE_FORTUNE_PLUS_MONTHLY || '',
+    annualPriceId:  process.env.STRIPE_PRICE_FORTUNE_PLUS_ANNUAL  || '',
+    monthlyPrice:        149700,
+    annualPricePerMonth: 134730,
+    annualPriceTotal:    1616760,
+    trialDays: 60,
+    usersIncluded: 100,
+    baseUsers: 100,
+    maxUsers: 999,
+    addOnPricePerUser: 3000,
+    addOnMaxUsers: null,
+    maxUserAddons: null,
+    contactLimit: null,
+    emailSendsPerMonth: null,
+    tier: 'fortune_plus',
+    competitorSavings: '85% less than HubSpot Enterprise for 100 users',
+    vsCompetitor: 'HubSpot Enterprise for 100 users: $10,000+/mo',
+    features: [
+      { text: '100 users included (+$30/user/mo)', included: true },
+      { text: 'Unlimited everything', included: true },
+      { text: 'Everything in Fortune Foundation', included: true },
+      { text: '200,000 AI credits/month', included: true, freemium: true },
+      { text: 'Revenue Autopilot™', included: true, highlight: true, premium: true, apexOnly: true },
+      { text: 'Apex Autopilot™ (fully autonomous sales)', included: true, highlight: true, premium: true, apexOnly: true },
+      { text: 'White-labeling (your brand, FREE setup)', included: true, highlight: true, apexOnly: true },
+      { text: 'Dedicated SMTP infrastructure (your own IP blocks)', included: true, premium: true, apexOnly: true },
+      { text: 'SaaS Mode — resell Apex as your own product', included: true, premium: true, apexOnly: true },
+      { text: 'Custom AI model training (unlimited)', included: true, premium: true, apexOnly: true },
+      { text: '99.9% uptime SLA', included: true },
+      { text: '24/7 white-glove support', included: true },
+      { text: 'Custom contract & invoicing', included: true },
+      { text: 'Dedicated infrastructure team', included: true },
+      { text: 'Priority feature requests', included: true },
     ],
   },
 ];
 
-// ─── Add-On Pricing ───────────────────────────────────────────────────────────
-export const USER_ADDON_PRICE_ID = process.env.STRIPE_PRICE_USER_ADDON || "";
+// ─────────────────────────────────────────────────────────────────────────────
+// FREE SERVICES
+// ─────────────────────────────────────────────────────────────────────────────
+export const FREE_SERVICES = [
+  { name: 'White-Label Setup', competitorPrice: '$299', description: 'Your brand, your domain — set up at no charge' },
+  { name: 'Priority Onboarding', competitorPrice: '$199', description: 'Live expert onboarding session — free for all plans' },
+  { name: 'Custom Integration', competitorPrice: '$499', description: 'Connect any outside tool — no integration fees' },
+  { name: 'Data Export', competitorPrice: '$49', description: 'Export all your data anytime, any format — free' },
+  { name: 'One-Click Migration', competitorPrice: '$500+', description: 'Move from any CRM in under 30 minutes — always free' },
+];
 
-export const ADD_ONS = {
-  extraUser: {
-    pricePerMonth: 2500,          // $25/user/mo
-    priceId: USER_ADDON_PRICE_ID,
-  },
-  aiCredits: {
-    markup: 0.25,                 // 25% markup on Manus pricing for non-CRM AI
-    freeQueriesPerMonth: 50,      // First 50 queries/month always free
-  },
-  extraEmailSends: {
-    pricePerTenThousand: 1000,    // $10/10,000 sends (Fortune Foundation+)
-  },
-  voiceAgentOverage: {
-    pricePerCall: 5,              // $0.05/call overage (Fortune Foundation+)
-  },
-  docScanOverage: {
-    pricePerScan: 50,             // $0.50/scan overage (Fortune Foundation+)
-  },
-  dedicatedIp: {
-    pricePerMonth: 5000,          // $50/IP/mo (Fortune Plus only)
-  },
-  whiteLabelSetup: {
-    oneTimePrice: 29900,          // $299 one-time setup fee (Fortune tier)
-  },
-  customAiTraining: {
-    pricePerModel: 49900,         // $499/model (Fortune Plus only)
-  },
-};
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPETITOR COMPARISON
+// ─────────────────────────────────────────────────────────────────────────────
+export const COMPETITOR_FEATURES = [
+  { name: 'Full CRM (contacts, deals, pipeline)',          apex: true,  hubspot: true,      ghl: true,      salesforce: true,  outreach: false,    instantly: false },
+  { name: 'AI Assistant (action-capable)',                 apex: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'One-Click CRM Migration (free)',                apex: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: '260 SMTP Rotation Engine',                      apex: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: 'partial' },
+  { name: 'BNB Paradigm Engine™',                         apex: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'Ghost Mode™ (AI sequences)',                    apex: true,  hubspot: false,     ghl: 'partial', salesforce: false, outreach: true,     instantly: true },
+  { name: 'Compliance Fortress™ (GDPR/CCPA auto)',         apex: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'Voice Agent (AI calling)',                      apex: true,  hubspot: false,     ghl: 'partial', salesforce: false, outreach: false,    instantly: false },
+  { name: 'Revenue Autopilot™',                           apex: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'Apex Autopilot™ (fully autonomous)',            apex: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'AR/AP Automation',                             apex: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'Shipping & Receiving Module',                   apex: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'DocScan AI',                                   apex: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'Business Category Intelligence',                apex: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'White-Labeling / SaaS Mode',                   apex: true,  hubspot: false,     ghl: true,      salesforce: false, outreach: false,    instantly: false },
+  { name: 'Behavioral DNA Profiling',                     apex: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'Dedicated SMTP Infrastructure',                apex: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: 'partial' },
+  { name: 'Free Onboarding & Setup',                      apex: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'Free Migration from Any CRM',                  apex: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+];
 
-// ─── Utility Functions ────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// UTILITY FUNCTIONS
+// ─────────────────────────────────────────────────────────────────────────────
 
+export function getPlan(id: TierKey): StripePlan | undefined {
+  return PLANS.find(p => p.id === id);
+}
+
+/** @deprecated Use getPlan() */
 export function getPlanById(id: string): StripePlan | undefined {
   return PLANS.find(p => p.id === id);
 }
 
-export function getPlanByTier(tier: string): StripePlan | undefined {
-  return PLANS.find(p => p.tier === tier);
+export function getAllPlans(): StripePlan[] {
+  return PLANS;
 }
 
-/** Check if a tier has access to a specific feature */
-export function hasFeatureAccess(tier: string, featureKey: string): boolean {
-  const tierLevel = TIER_LEVELS[tier] ?? 0;
-  const requiredLevel = FEATURE_GATES[featureKey] ?? 999;
-  return tierLevel >= requiredLevel;
+export function getTierLevel(tier: TierKey): number {
+  return TIER_LEVELS[tier] ?? 0;
 }
 
-/** Get the minimum plan name required for a feature */
-export function getRequiredPlanName(featureKey: string): string {
-  const requiredLevel = FEATURE_GATES[featureKey] ?? 999;
-  const tierNames: Record<number, string> = {
-    0: "All Plans",
-    1: "Success Starter",
-    2: "Growth Foundation",
-    3: "Fortune Foundation",
-    4: "Fortune",
-    5: "Fortune Plus",
-  };
-  return tierNames[requiredLevel] ?? "Fortune Plus";
+export function getTierLabel(tier: TierKey): string {
+  return TIER_DISPLAY_NAMES[tier] ?? tier;
 }
 
-/** Get usage limits for a tier */
-export function getTierLimits(tier: string) {
-  return TIER_LIMITS[tier] ?? TIER_LIMITS.trial;
+export function hasFeatureAccess(userTier: TierKey, featureKey: string): boolean {
+  const userLevel = TIER_LEVELS[userTier] ?? 0;
+  const required = FEATURE_GATES[featureKey] ?? 999;
+  return userLevel >= required;
 }
 
-/** Calculate the add-on cost for extra users on a given plan (in cents) */
-export function calculateAddOnCost(plan: StripePlan, extraUsers: number): number {
-  if (!plan.addOnMaxUsers || extraUsers <= 0) return 0;
-  const maxExtra = plan.addOnMaxUsers - plan.baseUsers;
-  const billableExtra = Math.min(extraUsers, maxExtra);
-  return billableExtra * plan.addOnPricePerUser;
+export function tierMeetsRequirement(userTier: TierKey, requiredTier: TierKey): boolean {
+  return getTierLevel(userTier) >= getTierLevel(requiredTier);
 }
 
-/** Get the tier display label for UI */
-export function getTierLabel(tierId: string): string {
-  const labels: Record<string, string> = {
-    trial: "Free Trial",
-    success_starter: "Success Starter",
-    growth_foundation: "Growth Foundation",
-    fortune_foundation: "Fortune Foundation",
-    fortune: "Fortune",
-    fortune_plus: "Fortune Plus",
-  };
-  return labels[tierId] ?? tierId;
+export function getNextTier(currentTier: TierKey): StripePlan | null {
+  const order: TierKey[] = ['success_starter', 'growth_foundation', 'fortune_foundation', 'fortune', 'fortune_plus'];
+  const idx = order.indexOf(currentTier);
+  if (idx === -1 || idx === order.length - 1) return null;
+  return getPlan(order[idx + 1]) || null;
 }
 
-/** Annual billing policy notice — must be shown and acknowledged before annual checkout */
-export const ANNUAL_POLICY_NOTICE =
-  "Annual plans are billed upfront and are NON-REFUNDABLE for any reason. " +
-  "By proceeding, you acknowledge and agree that no refunds will be issued for annual subscriptions, " +
-  "including partial-year cancellations.";
-
-/** Format price in cents to display string */
 export function formatPrice(cents: number): string {
-  return `$${(cents / 100).toFixed(0)}`;
+  return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 }
 
-/** Get savings percentage vs a competitor price */
-export function getSavingsPercent(apexCents: number, competitorCents: number): number {
-  return Math.round((1 - apexCents / competitorCents) * 100);
+export function formatLimit(value: number | null): string {
+  if (value === null) return 'Unlimited';
+  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
+  return value.toLocaleString();
+}
+
+export function calculateOverage(
+  type: keyof typeof OVERAGE_RATES,
+  used: number,
+  included: number
+): number {
+  if (used <= included) return 0;
+  const overage = used - included;
+  const rate = OVERAGE_RATES[type];
+  return Math.ceil(overage / rate.unitSize) * rate.priceCents;
+}
+
+export function getTierFromPriceId(priceId: string): TierKey | null {
+  for (const plan of PLANS) {
+    if (plan.monthlyPriceId === priceId || plan.annualPriceId === priceId) {
+      return plan.id;
+    }
+  }
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LEGACY / COMPAT EXPORTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Annual policy notice string */
+export const ANNUAL_POLICY_NOTICE = 'Annual plans are non-refundable for any reason. By selecting annual billing, you acknowledge and agree to this policy.';
+
+/** User add-on Stripe price ID */
+export const USER_ADDON_PRICE_ID = process.env.STRIPE_PRICE_USER_ADDON || '';
+
+/** @deprecated Use getTierLabel() */
+export function getPlanByTier(tier: TierKey): StripePlan | undefined {
+  return PLANS.find(p => p.id === tier);
+}
+
+/** Calculate add-on cost in cents for a given number of extra users */
+export function calculateAddOnCost(plan: StripePlan, extraUsers: number): number {
+  if (!plan.addOnPricePerUser || plan.addOnPricePerUser === 0) return 0;
+  const maxExtra = plan.maxUsers !== undefined && plan.baseUsers !== undefined
+    ? (plan.maxUsers || 999) - (plan.baseUsers || 1)
+    : null;
+  const capped = maxExtra !== null ? Math.min(extraUsers, maxExtra) : extraUsers;
+  return capped * plan.addOnPricePerUser;
 }

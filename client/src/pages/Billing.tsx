@@ -189,11 +189,11 @@ export default function Billing() {
       {/* ─── Competitor Savings Banner ─── */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
         {[
-          { tier: "1 user", apex: "$74/mo", vs: "HubSpot: $100", save: "26% less" },
-          { tier: "5 users", apex: "$149/mo", vs: "HubSpot: $500", save: "70% less" },
-          { tier: "15 users", apex: "$374/mo", vs: "HubSpot: $1,500", save: "75% less" },
-          { tier: "25 users", apex: "$524/mo", vs: "HubSpot: $3,000", save: "83% less" },
-          { tier: "50 users", apex: "$1,124/mo", vs: "HubSpot: $6,000", save: "81% less" },
+          { tier: "1 user (Solo)", apex: "$49/mo", vs: "HubSpot: $100", save: "51% less" },
+          { tier: "3 users (Starter)", apex: "$97/mo", vs: "HubSpot: $300", save: "68% less" },
+          { tier: "10 users (Growth)", apex: "$297/mo", vs: "GHL+Instantly: $655", save: "55% less" },
+          { tier: "20 users (Fortune Fdn)", apex: "$497/mo", vs: "HubSpot: $2,000", save: "75% less" },
+          { tier: "100 users (Fortune+)", apex: "$1,497/mo", vs: "HubSpot: $10,000+", save: "85% less" },
         ].map((item) => (
           <div key={item.tier} className="rounded-lg bg-green-50 border border-green-200 p-3 text-center">
             <p className="text-xs text-muted-foreground">{item.tier}</p>
@@ -247,13 +247,13 @@ export default function Billing() {
       {/* ─── Pricing Cards ─── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {(plans || []).map((plan) => {
-          // New pricing: SS=$74, GF=$149, FF=$374, F=$524, FP=$1124
+          // Final approved pricing: Solo=$49, Starter=$97, Growth=$297, Fortune Foundation=$497, Fortune Plus=$1,497
           const newPrices: Record<string, { monthly: number; annual: number }> = {
-            success_starter:    { monthly: 7400,   annual: 6660 },
-            growth_foundation:  { monthly: 14900,  annual: 13410 },
-            fortune_foundation: { monthly: 37400,  annual: 33660 },
-            fortune:            { monthly: 52400,  annual: 47160 },
-            fortune_plus:       { monthly: 112400, annual: 101160 },
+            success_starter:    { monthly: 4900,   annual: 4410 },
+            growth_foundation:  { monthly: 9700,   annual: 8730 },
+            fortune_foundation: { monthly: 29700,  annual: 26730 },
+            fortune:            { monthly: 49700,  annual: 44730 },
+            fortune_plus:       { monthly: 149700, annual: 134730 },
           };
           const pricingOverride = newPrices[plan.tier];
           const price = billingCycle === "annual"

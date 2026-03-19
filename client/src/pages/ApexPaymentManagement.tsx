@@ -32,10 +32,10 @@ const TIER_COLORS: Record<string, string> = {
 };
 
 const TIER_LABELS: Record<string, string> = {
-  success_starter:    "Success Starter",
-  growth_foundation:  "Growth Foundation",
-  fortune_foundation: "Fortune Foundation",
-  fortune:            "Fortune",
+  success_starter:    "Solo",
+  growth_foundation:  "Starter",
+  fortune_foundation: "Growth",
+  fortune:            "Fortune Foundation",
   fortune_plus:       "Fortune Plus",
   trial:              "Trial",
 };

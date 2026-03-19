@@ -1538,3 +1538,22 @@
 - [x] Create useFeatureGate hook
 - [x] Create FeatureGate component with locked overlay + upgrade CTA
 - [x] Apply FeatureGate to: Prospects, GhostSequences, SmtpAccounts, ComplianceDashboard, VoiceAgent, RevenueAutopilot, WhiteLabel, ApexAutopilot
+
+## Phase 33: Final Approved Pricing Implementation
+
+- [x] Rewrite stripe-products.ts: 5 tiers (Solo $49, Starter $97, Growth $297, Fortune Foundation $497, Fortune Plus $1,497)
+- [x] AI credit limits per tier (500/2K/10K/30K/200K) + $10/500 overage flat rate
+- [x] Voice minute limits per tier + $10/100 overage flat rate
+- [x] BNB prospect limits per tier + $10/500 overage flat rate
+- [x] Email send limits per tier + $10/10K overage flat rate
+- [x] DocScan limits per tier + $10/100 overage flat rate
+- [x] Fortune Plus: 100 users included, $30/user add-on; all others $35/user
+- [x] All service fees eliminated (white-label setup, onboarding, integration, data export — FREE)
+- [x] Update Subscription.tsx with new 5-tier pricing and overage table
+- [x] Update Billing.tsx with new pricing and overage explanation
+- [x] Update MarketingHome.tsx pricing grid with 5 tiers
+- [x] Update Signup.tsx with new tier options
+- [x] Update ApexDashboard.tsx admin dropdowns
+- [x] Update useFeatureGate.ts, TenantBilling.tsx, ApexPaymentManagement.tsx display names
+- [x] Update subscription-tiers.test.ts — 19 tests passing
+- [x] Save checkpoint

@@ -24,29 +24,29 @@ const TIER_COLORS: Record<string, string> = {
 
 const TIER_LABELS: Record<string, string> = {
   trial:              "Trial",
-  success_starter:    "Success Starter",
-  growth_foundation:  "Growth Foundation",
-  fortune_foundation: "Fortune Foundation",
-  fortune:            "Fortune",
+  success_starter:    "Solo",
+  growth_foundation:  "Starter",
+  fortune_foundation: "Growth",
+  fortune:            "Fortune Foundation",
   fortune_plus:       "Fortune Plus",
 };
 
 const TIER_PRICES: Record<string, number> = {
   trial:              0,
-  success_starter:    74,
-  growth_foundation:  149,
-  fortune_foundation: 374,
-  fortune:            524,
-  fortune_plus:       1124,
+  success_starter:    49,
+  growth_foundation:  97,
+  fortune_foundation: 297,
+  fortune:            497,
+  fortune_plus:       1497,
 };
 
 const TIER_MAX_USERS: Record<string, number> = {
   trial:              5,
-  success_starter:    5,
-  growth_foundation:  15,
-  fortune_foundation: 25,
-  fortune:            40,
-  fortune_plus:       50,
+  success_starter:    1,
+  growth_foundation:  3,
+  fortune_foundation: 10,
+  fortune:            20,
+  fortune_plus:       100,
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -205,11 +205,11 @@ export default function ApexDashboard() {
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="trial">Trial ($0/mo)</SelectItem>
-                      <SelectItem value="success_starter">Success Starter ($74/mo)</SelectItem>
-                      <SelectItem value="growth_foundation">Growth Foundation ($149/mo)</SelectItem>
-                      <SelectItem value="fortune_foundation">Fortune Foundation ($374/mo)</SelectItem>
-                      <SelectItem value="fortune">Fortune ($524/mo)</SelectItem>
-                      <SelectItem value="fortune_plus">Fortune Plus ($1,124/mo)</SelectItem>
+                      <SelectItem value="success_starter">Solo ($49/mo)</SelectItem>
+                      <SelectItem value="growth_foundation">Starter ($97/mo)</SelectItem>
+                      <SelectItem value="fortune_foundation">Growth ($297/mo)</SelectItem>
+                      <SelectItem value="fortune">Fortune Foundation ($497/mo)</SelectItem>
+                      <SelectItem value="fortune_plus">Fortune Plus ($1,497/mo)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -347,11 +347,11 @@ export default function ApexDashboard() {
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="trial">Trial ($0/mo)</SelectItem>
-                      <SelectItem value="success_starter">Success Starter ($74/mo)</SelectItem>
-                      <SelectItem value="growth_foundation">Growth Foundation ($149/mo)</SelectItem>
-                      <SelectItem value="fortune_foundation">Fortune Foundation ($374/mo)</SelectItem>
-                      <SelectItem value="fortune">Fortune ($524/mo)</SelectItem>
-                      <SelectItem value="fortune_plus">Fortune Plus ($1,124/mo)</SelectItem>
+                      <SelectItem value="success_starter">Solo ($49/mo)</SelectItem>
+                      <SelectItem value="growth_foundation">Starter ($97/mo)</SelectItem>
+                      <SelectItem value="fortune_foundation">Growth ($297/mo)</SelectItem>
+                      <SelectItem value="fortune">Fortune Foundation ($497/mo)</SelectItem>
+                      <SelectItem value="fortune_plus">Fortune Plus ($1,497/mo)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -9,19 +9,19 @@ import { cn } from "@/lib/utils";
 const fmt = (cents: number) => `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
 
 const TIER_LABELS: Record<string, string> = {
-  success_starter:    "Success Starter",
-  growth_foundation:  "Growth Foundation",
-  fortune_foundation: "Fortune Foundation",
-  fortune:            "Fortune",
+  success_starter:    "Solo",
+  growth_foundation:  "Starter",
+  fortune_foundation: "Growth",
+  fortune:            "Fortune Foundation",
   fortune_plus:       "Fortune Plus",
   trial:              "Trial",
 };
 
 const TIER_PRICES: Record<string, number> = {
-  success_starter:    99,
-  growth_foundation:  197,
-  fortune_foundation: 497,
-  fortune:            697,
+  success_starter:    49,
+  growth_foundation:  97,
+  fortune_foundation: 297,
+  fortune:            497,
   fortune_plus:       1497,
 };
 

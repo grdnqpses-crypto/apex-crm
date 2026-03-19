@@ -31,13 +31,13 @@ const FEATURE_GATES: Record<string, number> = {
   shipping_receiving_basic:   0,
   bnb_engine_freemium:        0,
 
-  // Success Starter — level 1
+  // Solo — level 1
   core_crm:                   1,
   email_templates:            1,
   basic_campaigns:            1,
   domain_health_single:       1,
 
-  // Growth Foundation — level 2
+  // Starter — level 2
   marketing_automation:       2,
   lead_scoring:               2,
   bnb_engine_growth:          2,
@@ -48,7 +48,7 @@ const FEATURE_GATES: Record<string, number> = {
   ar_ap_automation:           2,
   shipping_receiving_full:    2,
 
-  // Fortune Foundation — level 3
+  // Growth — level 3
   smtp_260_rotation:          3,
   compliance_full:            3,
   bnb_engine_full:            3,
@@ -62,7 +62,7 @@ const FEATURE_GATES: Record<string, number> = {
   visitor_tracking_limited:   3,
   custom_branding:            3,
 
-  // Fortune — level 4
+  // Fortune Foundation — level 4
   voice_agent_unlimited:      4,
   docscan_unlimited:          4,
   revenue_autopilot:          4,
@@ -82,9 +82,9 @@ const FEATURE_GATES: Record<string, number> = {
 
 const TIER_NAMES: Record<number, string> = {
   0: "All Plans",
-  1: "Success Starter",
-  2: "Growth Foundation",
-  3: "Fortune Foundation",
+  1: "Solo",
+  2: "Starter",
+  3: "Growth",
   4: "Fortune",
   5: "Fortune Plus",
 };
