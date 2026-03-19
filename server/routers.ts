@@ -3258,12 +3258,14 @@ export const appRouter = router({
       return db.listB2BContacts(ctx.user.id, input);
     }),
     search: protectedProcedure.input(z.object({
-      query: z.string(), industry: z.string().optional(), location: z.string().optional(), companySize: z.string().optional(),
+      query: z.string(), industry: z.string().optional(), location: z.string().optional(),
+      state: z.string().optional(), companySize: z.string().optional(), limit: z.number().min(5).max(50).default(10),
     })).mutation(async ({ ctx, input }) => {
+      const locationStr = [input.state, input.location].filter(Boolean).join(', ') || 'US';
       const response = await invokeLLM({
         messages: [
-          { role: 'system', content: 'You are a B2B contact database for the freight/logistics industry. Generate realistic but fictional contact data based on the search criteria. Return JSON with contacts array, each having: firstName, lastName, email, phone, jobTitle, companyName, companyDomain, industry, companySize, revenue, location, confidence (0-100).' },
-          { role: 'user', content: `Search for: ${input.query}. Industry: ${input.industry || 'logistics/freight'}. Location: ${input.location || 'US'}. Company size: ${input.companySize || 'any'}. Return 10 contacts.` },
+          { role: 'system', content: 'You are a B2B contact database. Generate realistic but fictional contact data based on the search criteria. Return JSON with contacts array, each having: firstName, lastName, email, phone, jobTitle, companyName, companyDomain, industry, companySize, revenue, location, confidence (0-100).' },
+          { role: 'user', content: `Search for: ${input.query}. Industry: ${input.industry || 'any'}. Location: ${locationStr}. Company size: ${input.companySize || 'any'}. Return exactly ${input.limit} contacts.` },
         ],
         response_format: { type: 'json_schema', json_schema: { name: 'b2b_search', strict: true, schema: { type: 'object', properties: { contacts: { type: 'array', items: { type: 'object', properties: { firstName: { type: 'string' }, lastName: { type: 'string' }, email: { type: 'string' }, phone: { type: 'string' }, jobTitle: { type: 'string' }, companyName: { type: 'string' }, companyDomain: { type: 'string' }, industry: { type: 'string' }, companySize: { type: 'string' }, revenue: { type: 'string' }, location: { type: 'string' }, confidence: { type: 'integer' } }, required: ['firstName', 'lastName', 'email', 'phone', 'jobTitle', 'companyName', 'companyDomain', 'industry', 'companySize', 'revenue', 'location', 'confidence'], additionalProperties: false } } }, required: ['contacts'], additionalProperties: false } } },
       });
@@ -3275,7 +3277,7 @@ export const appRouter = router({
       return result.contacts;
     }),
     importToContacts: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
-      const b2b = await db.listB2BContacts(ctx.user.id, { limit: 1 });
+      const b2b = await db.listB2BContacts(ctx.user.id, { limit: 1000 });
       const contact = b2b.find((c: any) => c.id === input.id);
       if (!contact) throw new TRPCError({ code: 'NOT_FOUND' });
       const newContactId = await db.createContact({ firstName: contact.firstName || '', lastName: contact.lastName || '', email: contact.email || '', phone: contact.phone || '', jobTitle: contact.jobTitle || '', userId: ctx.user.id } as any);
@@ -3305,6 +3307,21 @@ export const appRouter = router({
 
   // ─── Visitor Tracking ─────────────────────────────────────────
   visitorTracking: router({
+    listWebsites: protectedProcedure.query(async ({ ctx }) => {
+      return db.listTrackedWebsites(ctx.user.id);
+    }),
+    addWebsite: protectedProcedure.input(z.object({
+      name: z.string().min(1), domain: z.string().min(1),
+    })).mutation(async ({ ctx, input }) => {
+      const trackingId = `apex-${Math.random().toString(36).slice(2, 10)}-${ctx.user.id}`;
+      const cleanDomain = input.domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+      await db.addTrackedWebsite(ctx.user.id, { name: input.name, domain: cleanDomain, trackingId });
+      return { trackingId };
+    }),
+    removeWebsite: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.removeTrackedWebsite(input.id, ctx.user.id);
+      return { success: true };
+    }),
     list: protectedProcedure.input(z.object({ identified: z.boolean().optional(), limit: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
       return db.listVisitorSessions(ctx.user.id, input);
     }),

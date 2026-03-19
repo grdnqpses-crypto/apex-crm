@@ -1756,6 +1756,17 @@ export const visitorSessions = mysqlTable("visitor_sessions", {
 });
 export type VisitorSession = typeof visitorSessions.$inferSelect;
 
+export const trackedWebsites = mysqlTable("tracked_websites", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("twUserId").notNull(),
+  name: varchar("twName", { length: 256 }).notNull(),
+  domain: varchar("twDomain", { length: 256 }).notNull(),
+  trackingId: varchar("twTrackingId", { length: 64 }).notNull(),
+  isActive: boolean("twIsActive").default(true),
+  createdAt: bigint("twCreatedAt", { mode: "number" }).notNull(),
+});
+export type TrackedWebsite = typeof trackedWebsites.$inferSelect;
+
 // ─── AI Order Entry (Email-to-Load) ─────────────────────────────────
 export const inboundEmails = mysqlTable("inbound_emails", {
   id: int("id").autoincrement().primaryKey(),

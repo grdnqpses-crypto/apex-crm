@@ -3911,3 +3911,23 @@ export async function setUserAiAllocation(tenantCompanyId: number, userId: numbe
     });
   }
 }
+
+// ─── Tracked Websites ──────────────────────────────────────────────────────
+export async function listTrackedWebsites(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.execute(sql`SELECT * FROM tracked_websites WHERE twUserId = ${userId} ORDER BY twCreatedAt DESC`);
+  return (rows as any)[0] as any[];
+}
+
+export async function addTrackedWebsite(userId: number, data: { name: string; domain: string; trackingId: string }) {
+  const db = await getDb();
+  if (!db) return;
+  await db.execute(sql`INSERT INTO tracked_websites (twUserId, twName, twDomain, twTrackingId, twIsActive, twCreatedAt) VALUES (${userId}, ${data.name}, ${data.domain}, ${data.trackingId}, true, ${Date.now()})`);
+}
+
+export async function removeTrackedWebsite(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.execute(sql`DELETE FROM tracked_websites WHERE id = ${id} AND twUserId = ${userId}`);
+}

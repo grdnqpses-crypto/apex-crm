@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import {
   Users, Building2, Kanban, DollarSign, Mail, ListChecks,
@@ -9,10 +13,12 @@ import {
   FileText, Workflow, LayoutGrid, AlertCircle, Truck,
   Package, Brain, Phone, ArrowRight, Sparkles,
   StickyNote, PhoneCall, MailOpen, Calendar, Clock, User, ImagePlus,
+  Upload, Wand2, RefreshCw,
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useSkin } from "@/contexts/SkinContext";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 /*
  * Enterprise CRM Color System:
@@ -188,10 +194,35 @@ function RecentActivityFeed() {
 export default function Dashboard() {
   const { t } = useSkin();
   const { user } = useAuth();
+  const [, navigate] = useLocation();
   const { data: stats, isLoading } = trpc.dashboard.stats.useQuery();
-  const { data: company } = trpc.tenants.myCompany.useQuery();
+  const { data: company, refetch: refetchCompany } = trpc.tenants.myCompany.useQuery();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showLogoDialog, setShowLogoDialog] = useState(false);
+  const [logoPrompt, setLogoPrompt] = useState("");
+  const [logoGenerating, setLogoGenerating] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const utils = trpc.useUtils();
+
+  const generateLogoMutation = trpc.tenants.generateLogo.useMutation({
+    onSuccess: () => { refetchCompany(); setShowLogoDialog(false); toast.success("Logo generated!"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const uploadLogoMutation = trpc.tenants.uploadLogo.useMutation({
+    onSuccess: () => { refetchCompany(); setShowLogoDialog(false); toast.success("Logo uploaded!"); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string;
+      uploadLogoMutation.mutate({ dataUrl, mimeType: file.type });
+    };
+    reader.readAsDataURL(file);
+  };
 
   const formatCurrency = (val: number) => {
     if (val >= 1_000_000) return `$${(val / 1_000_000).toFixed(1)}M`;
@@ -215,20 +246,25 @@ export default function Dashboard() {
             <div className="flex items-start gap-4">
               {/* Company logo or upload prompt */}
               {company?.logoUrl ? (
-                <img
-                  src={company.logoUrl}
-                  alt={company.name || "Company logo"}
-                  className="h-14 w-14 rounded-2xl object-contain bg-white/80 border border-border/30 shadow-sm shrink-0"
-                />
+                <button
+                  onClick={() => setShowLogoDialog(true)}
+                  className="h-14 w-14 rounded-2xl overflow-hidden bg-white/80 border border-border/30 shadow-sm shrink-0 hover:opacity-80 transition-opacity group relative"
+                  title="Change company logo"
+                >
+                  <img src={company.logoUrl} alt={company.name || "Company logo"} className="h-full w-full object-contain" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <ImagePlus className="h-5 w-5 text-white" />
+                  </div>
+                </button>
               ) : (
-                <Link
-                  href="/settings"
+                <button
+                  onClick={() => setShowLogoDialog(true)}
                   className="h-14 w-14 rounded-2xl bg-white/60 border-2 border-dashed border-primary/30 flex flex-col items-center justify-center shrink-0 hover:border-primary/60 hover:bg-white/80 transition-all group"
                   title="Upload or generate your company logo"
                 >
                   <ImagePlus className="h-5 w-5 text-primary/50 group-hover:text-primary transition-colors" />
                   <span className="text-[9px] text-primary/50 group-hover:text-primary font-semibold mt-0.5 transition-colors">Logo</span>
-                </Link>
+                </button>
               )}
               <div>
                 <h1 className="text-2xl font-bold text-foreground">
@@ -249,14 +285,18 @@ export default function Dashboard() {
               >
                 <Sparkles className="h-3.5 w-3.5" /> Getting Started
               </button>
-              {!company?.logoUrl && (
-                <Link
-                  href="/settings"
-                  className="px-4 py-2 rounded-xl bg-white/60 border border-border/40 hover:bg-white/80 text-foreground text-xs font-semibold transition-all flex items-center gap-1.5"
-                >
-                  <ImagePlus className="h-3.5 w-3.5 text-primary" /> Add Logo
-                </Link>
-              )}
+              <button
+                onClick={() => setShowLogoDialog(true)}
+                className="px-4 py-2 rounded-xl bg-white/60 border border-border/40 hover:bg-white/80 text-foreground text-xs font-semibold transition-all flex items-center gap-1.5"
+              >
+                <ImagePlus className="h-3.5 w-3.5 text-primary" /> {company?.logoUrl ? "Change Logo" : "Upload Logo"}
+              </button>
+              <Link
+                href="/migration"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white text-xs font-bold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-1.5"
+              >
+                <RefreshCw className="h-3.5 w-3.5" /> Migrate from CRM
+              </Link>
             </div>
           </div>
         </div>
@@ -412,6 +452,71 @@ export default function Dashboard() {
           onComplete={() => utils.dashboard.stats.invalidate()}
         />
       )}
+
+      {/* ─── Logo Dialog ─── */}
+      <Dialog open={showLogoDialog} onOpenChange={setShowLogoDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ImagePlus className="h-5 w-5 text-primary" />
+              Company Logo
+            </DialogTitle>
+          </DialogHeader>
+          <Tabs defaultValue="upload" className="mt-2">
+            <TabsList className="w-full">
+              <TabsTrigger value="upload" className="flex-1 flex items-center gap-1.5">
+                <Upload className="h-3.5 w-3.5" /> Upload
+              </TabsTrigger>
+              <TabsTrigger value="generate" className="flex-1 flex items-center gap-1.5">
+                <Wand2 className="h-3.5 w-3.5" /> AI Generate
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="upload" className="space-y-4 pt-4">
+              <p className="text-sm text-muted-foreground">Upload a PNG, JPG, or SVG file. Recommended size: 256×256px or larger.</p>
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-border/60 rounded-xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary/40 hover:bg-accent/30 transition-all"
+              >
+                {uploadLogoMutation.isPending ? (
+                  <><RefreshCw className="h-8 w-8 text-primary animate-spin" /><p className="text-sm text-muted-foreground">Uploading...</p></>
+                ) : (
+                  <><Upload className="h-8 w-8 text-muted-foreground/40" /><p className="text-sm font-medium text-foreground">Click to choose a file</p><p className="text-xs text-muted-foreground">PNG, JPG, SVG up to 5MB</p></>
+                )}
+              </div>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+            </TabsContent>
+            <TabsContent value="generate" className="space-y-4 pt-4">
+              <p className="text-sm text-muted-foreground">Our AI will create a professional logo based on your company name and industry.</p>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Company Name</label>
+                  <Input value={company?.name || ""} disabled className="bg-muted/50" />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Industry (optional)</label>
+                  <Input
+                    placeholder="e.g. Technology, Healthcare, Logistics..."
+                    value={logoPrompt}
+                    onChange={e => setLogoPrompt(e.target.value)}
+                  />
+                </div>
+              </div>
+              <Button
+                className="w-full"
+                disabled={generateLogoMutation.isPending || !company?.name}
+                onClick={() => generateLogoMutation.mutate({ companyName: company!.name!, industry: logoPrompt || undefined })}
+              >
+                {generateLogoMutation.isPending ? (
+                  <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Generating...</>
+                ) : (
+                  <><Wand2 className="h-4 w-4 mr-2" /> Generate Logo with AI</>
+                )}
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">Generation takes 10–20 seconds. The logo will be saved automatically.</p>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -89,7 +89,6 @@ const WorkflowBuilder = lazy(() => import("./pages/WorkflowBuilder"));
 const IntegrationHub = lazy(() => import("./pages/IntegrationHub"));
 const Proposals = lazy(() => import("./pages/Proposals"));
 const Dialer = lazy(() => import("./pages/Dialer"));
-const Login = lazy(() => import("./pages/Login"));
 const ApexDashboard = lazy(() => import("./pages/ApexDashboard"));
 const Signup = lazy(() => import("./pages/Signup"));
 const MarketingHome = lazy(() => import("./pages/MarketingHome"));
@@ -235,7 +234,7 @@ function App() {
           <Switch>
             <Route path="/login">
               <Suspense fallback={<PageLoader />}>
-                <Login />
+                <MarketingHome loginOpen={true} />
               </Suspense>
             </Route>
             <Route path="/signup">

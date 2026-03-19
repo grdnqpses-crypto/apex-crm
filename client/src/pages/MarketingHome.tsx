@@ -217,13 +217,13 @@ const FAQS = [
 ];
 
 // ─── Main component ───────────────────────────────────────────────────────
-export default function MarketingHome() {
+export default function MarketingHome({ loginOpen: initialLoginOpen = false }: { loginOpen?: boolean } = {}) {
   const [annual, setAnnual] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
-  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(initialLoginOpen);
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -463,25 +463,30 @@ export default function MarketingHome() {
                         <button
                           type="button"
                           onClick={() => setShowPassword(v => !v)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors p-1"
-                          tabIndex={-1}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
+                          tabIndex={0}
                           aria-label={showPassword ? "Hide password" : "Show password"}
+                          title={showPassword ? "Hide password" : "Show password"}
                         >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                         </button>
                       </div>
                     </div>
 
-                    <label className="flex items-center gap-2.5 cursor-pointer select-none group">
+                    <label className="flex items-center gap-3 cursor-pointer select-none group">
                       <div
                         onClick={() => setRememberMe(v => !v)}
-                        className={`w-4 h-4 rounded flex items-center justify-center border transition-all flex-shrink-0 ${
+                        className={`w-5 h-5 rounded-md flex items-center justify-center border-2 transition-all flex-shrink-0 ${
                           rememberMe
-                            ? 'bg-orange-500 border-orange-500'
-                            : 'bg-white/5 border-white/20 group-hover:border-white/40'
+                            ? 'bg-orange-500 border-orange-500 shadow-sm shadow-orange-500/40'
+                            : 'bg-white/8 border-white/40 group-hover:border-orange-400/70'
                         }`}
+                        role="checkbox"
+                        aria-checked={rememberMe}
+                        tabIndex={0}
+                        onKeyDown={e => e.key === ' ' && (e.preventDefault(), setRememberMe(v => !v))}
                       >
-                        {rememberMe && <Check className="h-2.5 w-2.5 text-black" strokeWidth={3} />}
+                        {rememberMe && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                       </div>
                       <input
                         type="checkbox"
@@ -489,7 +494,7 @@ export default function MarketingHome() {
                         onChange={e => setRememberMe(e.target.checked)}
                         className="sr-only"
                       />
-                      <span className="text-sm text-white/50 group-hover:text-white/70 transition-colors">Remember me for 30 days</span>
+                      <span className="text-sm text-white/80 group-hover:text-white transition-colors font-medium">Remember me for 30 days</span>
                     </label>
 
                     {loginError && (

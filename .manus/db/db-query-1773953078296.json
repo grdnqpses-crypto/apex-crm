@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `tracked_websites` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `twUserId` int NOT NULL,\n  `twName` varchar(256) NOT NULL,\n  `twDomain` varchar(256) NOT NULL,\n  `twTrackingId` varchar(64) NOT NULL,\n  `twIsActive` boolean NOT NULL DEFAULT true,\n  `twCreatedAt` bigint NOT NULL,\n  CONSTRAINT `tracked_websites_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute CREATE TABLE IF NOT EXISTS `tracked_websites` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `twUserId` int NOT NULL,\n  `twName` varchar(256) NOT NULL,\n  `twDomain` varchar(256) NOT NULL,\n  `twTrackingId` varchar(64) NOT NULL,\n  `twIsActive` boolean NOT NULL DEFAULT true,\n  `twCreatedAt` bigint NOT NULL,\n  CONSTRAINT `tracked_websites_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 222
+}
