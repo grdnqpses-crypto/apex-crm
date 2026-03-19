@@ -721,6 +721,108 @@ const TASKS: AITask[] = [
         actionsTaken
       };
     }
+  },
+
+  // ── Prospect Enrichment Engine ────────────────────────────────────────────────
+  {
+    key: "prospect_enrichment",
+    name: "Prospect Enrichment Engine",
+    description: "Enriches new and stale prospects with AI-generated psychographic profiles, intent signals, and engagement stage updates every 30 minutes.",
+    category: "enrichment",
+    priority: "normal" as any,
+    intervalMinutes: 30,
+    async run({ log }) {
+      const db = await getDb();
+      if (!db) return { success: false, summary: "Database unavailable", error: "No DB connection" };
+      log("Scanning for prospects needing enrichment...");
+
+      const staleThreshold = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const rawResult = await (await getDb())!.execute(sql.raw(
+        `SELECT id, first_name, last_name, email, company_name, job_title, linkedin_url, engagement_stage, psychographic_profile
+         FROM prospects
+         WHERE (psychographic_profile IS NULL OR updated_at < ${staleThreshold})
+           AND engagement_stage NOT IN ('converted', 'unsubscribed', 'dead')
+         ORDER BY created_at DESC
+         LIMIT 10`
+      ));
+
+      const rows = (rawResult as any[])[0] as any[];
+      if (!rows || rows.length === 0) {
+        return { success: true, summary: "All prospects are enriched and up to date.", actionsTaken: [] };
+      }
+
+      log(`Found ${rows.length} prospects to enrich.`);
+      const actionsTaken: string[] = [];
+
+      for (const prospect of rows) {
+        try {
+          log(`Enriching: ${prospect.first_name} ${prospect.last_name} (${prospect.email})...`);
+
+          const aiResponse = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: "You are an expert B2B sales intelligence analyst. Generate a psychographic profile for the prospect. Return JSON only."
+              },
+              {
+                role: "user",
+                content: `Prospect: ${prospect.first_name} ${prospect.last_name}, ${prospect.job_title || 'Unknown title'} at ${prospect.company_name || 'Unknown company'}. Email: ${prospect.email}. LinkedIn: ${prospect.linkedin_url || 'N/A'}. Current engagement stage: ${prospect.engagement_stage || 'new'}.\n\nGenerate a psychographic profile.`
+              }
+            ],
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "psychographic_profile",
+                strict: true,
+                schema: {
+                  type: "object",
+                  properties: {
+                    personality_type: { type: "string" },
+                    communication_style: { type: "string" },
+                    primary_motivators: { type: "array", items: { type: "string" } },
+                    buying_triggers: { type: "array", items: { type: "string" } },
+                    risk_tolerance: { type: "string" },
+                    decision_speed: { type: "string" },
+                    recommended_approach: { type: "string" },
+                    intent_signals: { type: "array", items: { type: "string" } },
+                    confidence_score: { type: "number" }
+                  },
+                  required: ["personality_type", "communication_style", "primary_motivators", "buying_triggers", "risk_tolerance", "decision_speed", "recommended_approach", "intent_signals", "confidence_score"],
+                  additionalProperties: false
+                }
+              }
+            }
+          });
+
+          const profileJson = aiResponse?.choices?.[0]?.message?.content as string | null;
+          if (profileJson) {
+            const profile = JSON.parse(profileJson);
+            const profileStr = JSON.stringify(profile).replace(/'/g, "''");
+            await (await getDb())!.execute(sql.raw(
+              `UPDATE prospects SET psychographic_profile = '${profileStr}', updated_at = ${Date.now()} WHERE id = ${prospect.id}`
+            ));
+            // Insert intent signals as trigger signals
+            for (const signal of (profile.intent_signals || []).slice(0, 3)) {
+              const signalData = JSON.stringify({ signal, source: 'ai_enrichment', confidence: profile.confidence_score }).replace(/'/g, "''");
+              await (await getDb())!.execute(sql.raw(
+                `INSERT INTO trigger_signals (prospect_id, signal_type, signal_data, detected_at, created_at)
+                 VALUES (${prospect.id}, 'intent_signal', '${signalData}', ${Date.now()}, ${Date.now()})`
+              )).catch(() => {});
+            }
+            actionsTaken.push(`Enriched ${prospect.first_name} ${prospect.last_name} — ${profile.personality_type}, confidence: ${profile.confidence_score}%`);
+          }
+        } catch (err: any) {
+          log(`Failed to enrich ${prospect.email}: ${err.message}`);
+        }
+      }
+
+      return {
+        success: true,
+        summary: `Enriched ${actionsTaken.length} of ${rows.length} prospects with psychographic profiles and intent signals.`,
+        reasoning: `Prospects without psychographic profiles cannot be targeted with personalized outreach. Enrichment runs every 30 minutes to keep profiles fresh.`,
+        actionsTaken
+      };
+    }
   }
 ];
 
