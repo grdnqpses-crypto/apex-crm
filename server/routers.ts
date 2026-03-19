@@ -13,6 +13,9 @@ import { createHash } from "crypto";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 import { randomBytes } from "crypto";
+import { migrationRouter } from "./routers/migration";
+import { aiEngineRouter } from "./routers/ai-engine";
+import { systemHealthRouter } from "./routers/system-health";
 
 export const appRouter = router({
   system: systemRouter,
@@ -3397,32 +3400,10 @@ export const appRouter = router({
     }),
   }),
 
-  // ─── One-Touch Migration ──────────────────────────────────────
-  migration: router({
-    list: protectedProcedure.query(async ({ ctx }) => {
-      return db.listMigrationJobs(ctx.user.id);
-    }),
-    get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-      return db.getMigrationJob(input.id, ctx.user.id);
-    }),
-    start: protectedProcedure.input(z.object({
-      sourcePlatform: z.string(), entityTypes: z.array(z.string()).optional(),
-      csvData: z.string().optional(),
-    })).mutation(async ({ ctx, input }) => {
-      const job = await db.createMigrationJob(ctx.user.id, {
-        sourcePlatform: input.sourcePlatform, entityTypes: input.entityTypes || ['contacts', 'companies', 'deals'],
-        status: 'validating', startedAt: Date.now(),
-      } as any);
-      // Simulate migration progress
-      setTimeout(async () => {
-        if (job) await db.updateMigrationJob(job.id, ctx.user.id, { status: 'importing', totalRecords: 150, importedRecords: 0 } as any);
-      }, 2000);
-      setTimeout(async () => {
-        if (job) await db.updateMigrationJob(job.id, ctx.user.id, { status: 'completed', importedRecords: 150, completedAt: Date.now() } as any);
-      }, 8000);
-      return job;
-    }),
-  }),
+  // ─── One-Touch Migration Monster ─────────────────────────────
+  migration: migrationRouter,
+  aiEngine: aiEngineRouter,
+  systemHealth: systemHealthRouter,
 
   // ============================================================
   // PHASE 16: MARKETPLACE + AUTOPILOT ROUTERS

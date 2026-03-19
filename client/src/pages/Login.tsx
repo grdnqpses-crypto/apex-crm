@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { getLoginUrl } from "@/const";
 import { Zap, Eye, EyeOff, LogIn } from "lucide-react";
 
@@ -12,6 +13,7 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +25,7 @@ export default function Login() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, rememberMe }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -31,8 +33,8 @@ export default function Login() {
         setLoading(false);
         return;
       }
-      // Session cookie is set by the server, just redirect
-      window.location.href = "/";
+      // Session cookie is set by the server — redirect to dashboard
+      window.location.href = "/dashboard";
     } catch (err) {
       setError("Network error. Please try again.");
       setLoading(false);
@@ -69,6 +71,8 @@ export default function Login() {
                 {error}
               </div>
             )}
+
+            {/* Username */}
             <div className="space-y-2">
               <Label htmlFor="username" className="text-slate-300">Username</Label>
               <Input
@@ -83,6 +87,8 @@ export default function Login() {
                 autoFocus
               />
             </div>
+
+            {/* Password with eye toggle */}
             <div className="space-y-2">
               <Label htmlFor="password" className="text-slate-300">Password</Label>
               <div className="relative">
@@ -92,19 +98,39 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-500 focus:border-indigo-500 pr-10"
+                  className="bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-500 focus:border-indigo-500 pr-12"
                   required
                   autoComplete="current-password"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                  tabIndex={0}
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-md text-slate-300 hover:text-white hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
+
+            {/* Remember Me */}
+            <div className="flex items-center gap-3 py-1">
+              <Checkbox
+                id="remember-me"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked === true)}
+                className="border-slate-500 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+              />
+              <Label
+                htmlFor="remember-me"
+                className="text-slate-300 text-sm cursor-pointer select-none"
+              >
+                Remember me for 30 days
+              </Label>
+            </div>
+
+            {/* Submit */}
             <Button
               type="submit"
               className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium"
@@ -122,6 +148,17 @@ export default function Login() {
                 </div>
               )}
             </Button>
+
+            {/* Forgot password */}
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => navigate("/forgot-password")}
+                className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+              >
+                Forgot password?
+              </button>
+            </div>
           </form>
 
           {/* Signup link */}

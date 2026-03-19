@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
+import { SkinProvider } from "./contexts/SkinContext";
 import "./index.css";
 
 // Remove platform-injected billing banners (targeted — only the first non-root div before #root)
@@ -78,7 +79,9 @@ const trpcClient = trpc.createClient({
 createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <SkinProvider>
+        <App />
+      </SkinProvider>
     </QueryClientProvider>
   </trpc.Provider>
 );

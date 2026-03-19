@@ -70,6 +70,9 @@ const VisitorTracking = lazy(() => import("./pages/VisitorTracking"));
 const OrderEntry = lazy(() => import("./pages/OrderEntry"));
 const WhiteLabel = lazy(() => import("./pages/WhiteLabel"));
 const MigrationEngine = lazy(() => import("./pages/MigrationEngine"));
+const MigrationWizard = lazy(() => import("./pages/MigrationWizard"));
+const SystemHealth = lazy(() => import("./pages/SystemHealth"));
+const AIEnginePanel = lazy(() => import("./pages/AIEnginePanel"));
 const Subscription = lazy(() => import("./pages/Subscription"));
 const CommandCenter = lazy(() => import("./pages/CommandCenter"));
 const FreightMarketplace = lazy(() => import("./pages/FreightMarketplace"));
@@ -173,6 +176,9 @@ function Router() {
           <Route path="/order-entry" component={OrderEntry} />
           <Route path="/white-label" component={WhiteLabel} />
           <Route path="/migration" component={MigrationEngine} />
+          <Route path="/migration/wizard" component={MigrationWizard} />
+          <Route path="/system-health" component={SystemHealth} />
+          <Route path="/ai-engine" component={AIEnginePanel} />
           <Route path="/subscription" component={Subscription} />
           <Route path="/command-center" component={CommandCenter} />
           <Route path="/freight-marketplace" component={FreightMarketplace} />

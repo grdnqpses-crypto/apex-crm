@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, bigint, decimal } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, bigint, decimal, double } from "drizzle-orm/mysql-core";
 
 // ─── Tenant Companies ───
 export const tenantCompanies = mysqlTable("tenant_companies", {
@@ -1950,10 +1950,9 @@ export const migrationJobs = mysqlTable("migration_jobs", {
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
 });
 export type MigrationJob = typeof migrationJobs.$inferSelect;
-
-
+export type InsertMigrationJob = typeof migrationJobs.$inferInsert;
 // ============================================================
-// PHASE 16: AUTONOMOUS DIGITAL FREIGHT MARKETPLACE + APEX AUTOPILOT
+// PHASE 16:6: AUTONOMOUS DIGITAL FREIGHT MARKETPLACE + APEX AUTOPILOT
 // ============================================================
 
 // Marketplace Loads — shippers post loads for free
@@ -2516,3 +2515,157 @@ export const apBills = mysqlTable("ap_bills", {
 });
 export type ApBill = typeof apBills.$inferSelect;
 export type InsertApBill = typeof apBills.$inferInsert;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MIGRATION MONSTER — Custom Fields, Activity History, Skins, Migration Jobs
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── Skin / UI Mode Preferences ─────────────────────────────────────────────
+export const skinPreferences = mysqlTable("skin_preferences", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  skin: mysqlEnum("skin", ["apex", "hubspot", "salesforce", "pipedrive", "zoho", "gohighlevel", "close"]).default("apex").notNull(),
+  migratedFrom: mysqlEnum("migratedFrom", ["hubspot", "salesforce", "pipedrive", "zoho", "gohighlevel", "close", "spreadsheet", "other"]),
+  graduatedToApex: boolean("graduatedToApex").default(false).notNull(),
+  graduatedAt: bigint("graduatedAt", { mode: "number" }),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type SkinPreference = typeof skinPreferences.$inferSelect;
+export type InsertSkinPreference = typeof skinPreferences.$inferInsert;
+
+// ─── Custom Field Definitions ────────────────────────────────────────────────
+// Stores tenant-defined custom fields for any record type
+export const customFieldDefs = mysqlTable("custom_field_defs", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  objectType: mysqlEnum("objectType", ["contact", "company", "deal", "lead", "activity", "custom_object"]).notNull(),
+  fieldKey: varchar("fieldKey", { length: 128 }).notNull(),   // internal key e.g. "annual_revenue"
+  label: varchar("label", { length: 256 }).notNull(),          // display label e.g. "Annual Revenue"
+  fieldType: mysqlEnum("fieldType", ["text", "number", "currency", "date", "datetime", "boolean", "select", "multiselect", "url", "email", "phone", "textarea", "user", "company", "contact"]).notNull(),
+  options: json("options").$type<string[]>(),                  // for select/multiselect
+  isRequired: boolean("isRequired").default(false).notNull(),
+  isSearchable: boolean("isSearchable").default(true).notNull(),
+  displayOrder: int("displayOrder").default(0).notNull(),
+  groupName: varchar("groupName", { length: 128 }),            // field group/section label
+  sourceSystem: varchar("sourceSystem", { length: 64 }),       // "hubspot", "salesforce", etc.
+  sourceFieldId: varchar("sourceFieldId", { length: 256 }),    // original field ID in source CRM
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type CustomFieldDef = typeof customFieldDefs.$inferSelect;
+export type InsertCustomFieldDef = typeof customFieldDefs.$inferInsert;
+
+// ─── Custom Field Values ─────────────────────────────────────────────────────
+// Stores the actual values for custom fields on any record
+export const customFieldValues = mysqlTable("custom_field_values", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  fieldDefId: int("fieldDefId").notNull(),
+  objectType: mysqlEnum("objectType", ["contact", "company", "deal", "lead", "activity", "custom_object"]).notNull(),
+  recordId: int("recordId").notNull(),   // ID of the contact/company/deal/etc.
+  valueText: text("valueText"),
+  valueNumber: double("valueNumber"),
+  valueBoolean: boolean("valueBoolean"),
+  valueDate: bigint("valueDate", { mode: "number" }),
+  valueJson: json("valueJson"),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type CustomFieldValue = typeof customFieldValues.$inferSelect;
+export type InsertCustomFieldValue = typeof customFieldValues.$inferInsert;
+
+// ─── Custom Object Definitions ───────────────────────────────────────────────
+// Allows tenants to define entirely new record types (e.g. "Properties", "Vehicles", "Tickets")
+export const customObjectDefs = mysqlTable("custom_object_defs", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  name: varchar("name", { length: 128 }).notNull(),           // e.g. "Property"
+  namePlural: varchar("namePlural", { length: 128 }).notNull(), // e.g. "Properties"
+  icon: varchar("icon", { length: 64 }),                      // lucide icon name
+  color: varchar("color", { length: 32 }),
+  sourceSystem: varchar("sourceSystem", { length: 64 }),
+  sourceObjectId: varchar("sourceObjectId", { length: 256 }),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type CustomObjectDef = typeof customObjectDefs.$inferSelect;
+
+// ─── Custom Object Records ───────────────────────────────────────────────────
+export const customObjectRecords = mysqlTable("custom_object_records", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  objectDefId: int("objectDefId").notNull(),
+  name: varchar("name", { length: 512 }),
+  ownerId: int("ownerId"),
+  sourceRecordId: varchar("sourceRecordId", { length: 256 }),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type CustomObjectRecord = typeof customObjectRecords.$inferSelect;
+
+// ─── Activity History ────────────────────────────────────────────────────────
+// Universal activity timeline for any record — emails, calls, notes, meetings, stage changes
+export const activityHistory = mysqlTable("activity_history", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  activityType: mysqlEnum("activityType", ["email_sent", "email_received", "call", "meeting", "note", "task", "stage_change", "field_change", "deal_created", "contact_created", "file_upload", "sms", "linkedin", "import"]).notNull(),
+  objectType: mysqlEnum("objectType", ["contact", "company", "deal", "lead", "custom_object"]).notNull(),
+  recordId: int("recordId").notNull(),
+  userId: int("userId"),                    // who performed the action (null = system/import)
+  subject: varchar("subject", { length: 512 }),
+  body: text("body"),
+  direction: mysqlEnum("direction", ["inbound", "outbound"]),
+  durationSeconds: int("durationSeconds"),  // for calls/meetings
+  outcome: varchar("outcome", { length: 128 }), // "connected", "voicemail", "no_answer", etc.
+  fromEmail: varchar("fromEmail", { length: 320 }),
+  toEmail: varchar("toEmail", { length: 320 }),
+  fromField: varchar("fromField", { length: 256 }),  // for field_change
+  toField: varchar("toField", { length: 256 }),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  occurredAt: bigint("occurredAt", { mode: "number" }).notNull(), // when it actually happened
+  sourceSystem: varchar("sourceSystem", { length: 64 }),          // "hubspot", "salesforce", "apex"
+  sourceActivityId: varchar("sourceActivityId", { length: 256 }), // original ID in source CRM
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+export type ActivityHistory = typeof activityHistory.$inferSelect;
+export type InsertActivityHistory = typeof activityHistory.$inferInsert;
+
+// ─── Migration Jobs ──────────────────────────────────────────────────────────
+// ─── Field Mapping Templates ─────────────────────────────────────────────────
+// Saved field mapping configs so a company can re-run imports without remapping
+export const fieldMappingTemplates = mysqlTable("field_mapping_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenantCompanyId").notNull(),
+  sourceSystem: varchar("sourceSystem", { length: 64 }).notNull(),
+  name: varchar("name", { length: 256 }).notNull(),
+  mapping: json("mapping").$type<Record<string, string>>().notNull(),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+export type FieldMappingTemplate = typeof fieldMappingTemplates.$inferSelect;
+
+// ─── Self-Healing System Health Tables ───────────────────────────────────────
+
+// Individual error/correction events
+export const systemHealthEvents = mysqlTable("system_health_events", {
+  id: int("id").autoincrement().primaryKey(),
+  eventType: mysqlEnum("eventType", ["error", "auto_correction", "warning", "info"]).notNull(),
+  severity: mysqlEnum("severity", ["info", "warning", "error", "critical"]).notNull(),
+  subsystem: varchar("subsystem", { length: 64 }).notNull().default("server"),
+  message: text("message").notNull(),
+  details: json("details").$type<Record<string, unknown>>(),
+  autoCorrectAttempted: boolean("autoCorrectAttempted").notNull().default(false),
+  autoCorrectSuccess: boolean("autoCorrectSuccess"),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+export type SystemHealthEvent = typeof systemHealthEvents.$inferSelect;
+export type InsertSystemHealthEvent = typeof systemHealthEvents.$inferInsert;
+
+// Periodic health check snapshots (every 5 min)
+export const systemHealthLogs = mysqlTable("system_health_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  overallStatus: mysqlEnum("overallStatus", ["healthy", "degraded", "critical", "unknown"]).notNull(),
+  healthScore: int("healthScore").notNull().default(100),
+  subsystemData: json("subsystemData").$type<Record<string, unknown>[]>(),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+export type SystemHealthLog = typeof systemHealthLogs.$inferSelect;

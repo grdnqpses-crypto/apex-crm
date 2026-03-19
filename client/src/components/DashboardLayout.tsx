@@ -45,6 +45,7 @@ import AIAssistantPanel from "./AIAssistantPanel";
 import OnboardingTutorial from "./OnboardingTutorial";
 import PaymentFailedBanner from "./PaymentFailedBanner";
 import { trpc } from "@/lib/trpc";
+import { SkinSwitcher } from "./SkinSwitcher";
 
 // ─── Menu Sections (Developer is separate, hidden by default) ───
 
@@ -158,6 +159,7 @@ const standardSections = [
       { icon: Download, label: "HubSpot Import", path: "/import/hubspot" },
       { icon: Paintbrush, label: "White Label", path: "/white-label" },
       { icon: ArrowRightLeft, label: "Migration", path: "/migration" },
+      { icon: ArrowRightLeft, label: "Migration Wizard", path: "/migration/wizard" },
       { icon: Crown, label: "Subscription", path: "/subscription" },
       { icon: CreditCard, label: "Billing & Plans", path: "/billing" },
       { icon: Receipt, label: "Billing History", path: "/billing-history" },
@@ -192,6 +194,8 @@ const developerSection = {
     { icon: Building2, label: "Companies", path: "/dev/companies" },
     { icon: UserCog, label: "All Users", path: "/dev/users" },
     { icon: Activity, label: "System Health", path: "/dev/health" },
+    { icon: ShieldCheck, label: "Self-Healing Engine", path: "/system-health" },
+    { icon: Brain, label: "AI Engine Panel", path: "/ai-engine" },
     { icon: ScrollText, label: "Activity Log", path: "/dev/activity" },
     { icon: Eye, label: "Impersonate", path: "/dev/impersonate" },
     { icon: FileSearch, label: "FMCSA Scanner", path: "/fmcsa-scanner" },
@@ -462,6 +466,9 @@ function DashboardLayoutContent({
 
           {/* ─── Sidebar Footer ─── */}
           <SidebarFooter className="p-3 border-t border-border/40">
+            <div className="mb-1 group-data-[collapsible=icon]:hidden">
+              <SkinSwitcher />
+            </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-accent/60 transition-all duration-200 w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">

@@ -21,8 +21,8 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function MigrationEngine() {
-  const jobs = trpc.migration.list.useQuery();
-  const startMigration = trpc.migration.start.useMutation({ onSuccess: () => { jobs.refetch(); toast.success("Migration started!"); } });
+  const jobs = trpc.migration.listJobs.useQuery();
+  const startMigration = trpc.migration.startMigration.useMutation({ onSuccess: () => { jobs.refetch(); toast.success("Migration started!"); } });
 
   return (
     <div className="space-y-6">
@@ -30,7 +30,7 @@ export default function MigrationEngine() {
 
       <div className="grid grid-cols-3 gap-4">
         {PLATFORMS.map(p => (
-          <Card key={p.id} className="border-border/50 hover:border-primary/30 transition-all cursor-pointer group" onClick={() => startMigration.mutate({ sourcePlatform: p.id })}>
+          <Card key={p.id} className="border-border/50 hover:border-primary/30 transition-all cursor-pointer group" onClick={() => startMigration.mutate({ sourceSystem: p.id as any })}>
             <CardContent className="p-6 text-center">
               <div className={`w-14 h-14 rounded-xl ${p.color} flex items-center justify-center mx-auto mb-3`}><ArrowRightLeft className="w-7 h-7" /></div>
               <h3 className="font-semibold">{p.name}</h3>

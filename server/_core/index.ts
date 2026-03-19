@@ -8,6 +8,8 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerStripeWebhook } from "../stripe";
+import { registerErrorInterceptor, startHealthMonitor } from "../self-healing";
+import { startAIEngine } from "../ai-engine";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -60,8 +62,15 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
+  // Self-healing error interceptor (must be last middleware)
+  registerErrorInterceptor(app);
+
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    // Start health monitor daemon after server is up
+    startHealthMonitor();
+    // Start AI Autonomous Engine (developer-only background tasks)
+    startAIEngine();
   });
 }
 

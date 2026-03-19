@@ -1557,3 +1557,154 @@
 - [x] Update useFeatureGate.ts, TenantBilling.tsx, ApexPaymentManagement.tsx display names
 - [x] Update subscription-tiers.test.ts — 19 tests passing
 - [x] Save checkpoint
+
+## Phase 34: Three Square Promo Videos (1080×1080)
+
+- [ ] Define full feature comparison list (Apex vs HubSpot, Salesforce, Pipedrive) — green ✓ / red ✗
+- [ ] Write scene scripts for 30-second, 90-second, and 3-minute videos
+- [ ] Build 30-second pitch video — left scrolling comparison, right main content, slow transitions
+- [ ] Build 90-second video — left scrolling comparison, right main content, slow transitions
+- [ ] Build 3-minute video — left scrolling comparison, right main content, slow transitions
+- [ ] Upload all three to CDN
+- [ ] Embed/link on marketing homepage
+
+## Phase 35: "See the Light" Platform Retheme
+
+- [ ] Retheme MarketingHome.tsx: bright/luminous, light rays, warm gold/orange/white palette
+- [ ] Retheme DashboardLayout.tsx: light sidebar, airy backgrounds, orange accents
+- [ ] Update index.css: new CSS variables for light theme (white/gold/orange/sky blue)
+- [ ] Update ThemeProvider to light mode default
+- [ ] Apply consistent typography: Inter Black headlines, Inter Medium body
+- [ ] Add subtle particle/bokeh animations to key pages
+- [ ] Ensure all text is readable on bright backgrounds (dark charcoal text)
+- [ ] Save checkpoint after retheme
+
+## Phase 36: Migration Monster + Adaptive Skin System
+
+- [ ] DB schema: custom_fields, custom_field_values, custom_objects, custom_object_records, activity_history, migration_jobs, skin_preference
+- [ ] Migration Wizard page: competitor select, connect/upload, field mapping, preview, import
+- [ ] Skin context system: SkinProvider, useSkin hook, skin definitions for all 6 competitors
+- [ ] HubSpot skin: nav labels, colors, terminology (Contacts/Companies/Deals/Marketing/Service/Reports)
+- [ ] Salesforce skin: nav labels, colors, terminology (Leads/Accounts/Contacts/Opportunities/Cases/Reports)
+- [ ] Pipedrive skin: nav labels, colors, terminology (Leads/Deals/Contacts/Organizations/Activities/Insights)
+- [ ] Zoho skin: nav labels, colors, terminology
+- [ ] GoHighLevel skin: nav labels, colors, terminology
+- [ ] Close skin: nav labels, colors, terminology
+- [ ] Skin switcher UI in settings + onboarding
+- [ ] Graduation flow: "Ready to switch to Apex native?" prompt
+- [ ] Custom field renderer on contact/company/deal detail pages
+- [ ] Activity history timeline on all record pages
+- [ ] Apex native Limitless retheme (orange primary, luminous whites)
+- [ ] Vitest tests for migration and skin logic
+- [ ] Save checkpoint
+
+## Phase 37: Login Bug Fixes
+- [x] Add password eye toggle (show/hide password) — visible button with hover state
+- [x] Fix "Remember me for 30 days" checkbox — added Checkbox component, wired to rememberMe state, sends to server
+- [x] Fix login redirect loop — changed window.location.href from "/" to "/dashboard" after successful login
+
+## Phase 38: Self-Healing System Engine
+
+### Backend: Error Interception & Auto-Correction
+- [ ] Global error interceptor middleware — catches every unhandled server error, logs it with full context (route, user, payload, stack trace)
+- [ ] Health monitor daemon — runs every 5 minutes, checks DB connectivity, memory, disk, queue depth, SMTP health, API response times
+- [ ] Auto-correction rules engine — detects known error patterns and applies fixes automatically (reconnect DB, flush stuck queues, clear corrupted cache, restart stalled workers)
+- [ ] Predictive failure detection — AI analyzes error frequency trends and warns before thresholds are breached
+- [ ] Self-healing audit log table — every error detected, every correction attempted, every outcome recorded
+- [ ] Alert escalation — if auto-correction fails 3 times, escalate to owner notification
+
+### Frontend: Error Boundary & Client Health
+- [ ] Global React error boundary — catches all component crashes, logs them to server, shows graceful fallback UI
+- [ ] Client-side error reporter — captures JS errors, unhandled promise rejections, network failures and sends to server
+- [ ] Stale data detector — identifies queries that haven't refreshed and auto-invalidates
+
+### System Health Dashboard
+- [ ] /dev/system-health page — live health scores for DB, server, queues, SMTP, AI, storage
+- [ ] Auto-correction activity log — what was broken, what was fixed, when, how
+- [ ] Error frequency charts — trending up = warning, trending down = recovering
+- [ ] Alert configuration — set thresholds for when to notify owner
+- [ ] One-click manual health check trigger
+- [ ] Add to DashboardLayout sidebar under Dev Tools
+
+## Phase 38 Completion Update
+- [x] Self-healing engine server module (self-healing.ts) — 4 layers built
+- [x] systemHealthEvents and systemHealthLogs tables created in DB
+- [x] systemHealthRouter wired into appRouter
+- [x] SystemHealth dashboard UI page built (/system-health)
+- [x] Self-healing engine wired into server startup — monitors every 5 minutes
+- [x] Self-Healing Engine and System Health moved to Developer section only (hidden from regular users)
+
+## Phase 39: Migration Monster + Skin System (Completion Update)
+- [x] AI migration engine (migration-engine.ts) — LLM field mapper, competitor profiles, import pipeline
+- [x] Migration router (server/routers/migration.ts) — startMigration, getStatus, listJobs
+- [x] MigrationWizard page built (/migration/wizard)
+- [x] SkinContext — 6 competitor skins (HubSpot, Salesforce, Pipedrive, Zoho, GoHighLevel, Close) + Apex native
+- [x] SkinSwitcher component in sidebar footer
+- [x] SkinProvider wired into main.tsx
+- [x] Migration Wizard and System Health routes added to App.tsx
+- [x] MigrationWizard TS errors resolved — 0 TypeScript errors
+- [x] 19/19 vitest tests still passing
+
+## Phase 40: AI Autonomous Engine (Developer-Only)
+
+### Backend: AI Task Runner
+- [ ] ai-engine.ts — continuous AI job scheduler with named tasks, intervals, and priority queues
+- [ ] Task types: self-healing monitor, migration field mapper, prospect enricher, email optimizer, data deduplicator, health predictor, sequence optimizer
+- [ ] AI engine wired into server startup — starts all tasks automatically
+- [ ] Per-task AI invocation with structured JSON output
+- [ ] Task result logging to DB (ai_engine_logs table)
+- [ ] Task failure handling — retry with backoff, escalate after 3 failures
+- [ ] Developer-only tRPC router: getTasks, getTaskLogs, pauseTask, resumeTask, runTaskNow, getEngineStatus
+
+### Frontend: AI Engine Control Panel
+- [ ] /dev/ai-engine page — developer-only control panel
+- [ ] Live task status grid: task name, last run, next run, status (running/idle/paused/failed), success rate
+- [ ] Per-task log viewer: last 50 AI invocations with input, output, duration, result
+- [ ] Manual trigger button per task ("Run Now")
+- [ ] Pause/Resume controls per task
+- [ ] Global engine health score (% tasks healthy)
+- [ ] AI output preview — see what the AI decided and why
+- [ ] Gate entire page behind developer role check (redirect non-developers)
+- [ ] Add to Developer section in DashboardLayout sidebar
+
+### Integration
+- [ ] Self-healing engine calls AI engine for predictive analysis
+- [ ] Migration wizard uses AI engine for field mapping jobs
+- [ ] Prospect enrichment runs as scheduled AI task
+- [ ] Email send-time optimization runs nightly via AI engine
+
+## Future: Manus Developer Panel (Build Later)
+- [ ] Developer-only chat panel in CRM that connects to Manus API
+- [ ] CRM-aware LLM configured with full knowledge of Apex CRM codebase
+- [ ] Upgrade path to real Manus API when available
+
+## Phase 40: AI Autonomous Engine — COMPLETED
+- [x] ai_engine_tasks and ai_engine_logs tables created in DB
+- [x] ai-engine.ts server module — 10 background AI tasks across 6 categories (healing, migration, enrichment, optimization, monitoring, intelligence)
+- [x] AI engine wired into server startup: [AIEngine] Started — 10 tasks registered
+- [x] aiEngineRouter — developer-only tRPC procedures (getStatus, getTasks, triggerTask, pause/resume, start/stop)
+- [x] aiEngineRouter wired into appRouter
+- [x] AIEnginePanel.tsx — developer-only control panel UI with live status, health scores, task cards, manual triggers
+- [x] /ai-engine route added to App.tsx
+- [x] AI Engine Panel added to Developer section in DashboardLayout (hidden from non-developers)
+- [x] 0 TypeScript errors
+
+## Phase 37-39: Login Fixes + Self-Healing + Migration Monster — COMPLETED
+- [x] Login: password eye toggle visible and functional
+- [x] Login: Remember Me checkbox added and wired to server
+- [x] Login: redirect fixed — goes to /dashboard after successful login
+- [x] Self-healing engine (self-healing.ts) — 4 layers: intercept, auto-correct, predict, escalate
+- [x] System health tables in DB (systemHealthEvents, systemHealthLogs)
+- [x] SystemHealth dashboard UI (/system-health) — developer section only
+- [x] Self-Healing Engine in Developer section only
+- [x] SkinContext — 6 competitor skins (HubSpot, Salesforce, Pipedrive, Zoho, GoHighLevel, Close) + Apex native
+- [x] SkinSwitcher component in sidebar footer
+- [x] SkinProvider wired into main.tsx
+- [x] MigrationWizard page (/migration/wizard) — one-button AI-powered migration
+- [x] AI migration engine (migration-engine.ts) — LLM field mapper, competitor profiles, import pipeline
+- [x] Migration router (server/routers/migration.ts) wired into appRouter
+
+## Future: Manus Developer Panel
+- [ ] Developer-only panel inside Apex CRM with embedded Manus chat interface
+- [ ] Connect to Manus API when publicly available
+- [ ] CRM-aware LLM fallback until real Manus API is ready
