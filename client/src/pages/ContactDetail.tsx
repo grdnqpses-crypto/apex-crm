@@ -17,6 +17,7 @@ import {
 import { useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 import CustomFieldsPanel from "@/components/CustomFieldsPanel";
 
 const STAGES = ["subscriber", "lead", "mql", "sql", "opportunity", "customer", "evangelist"] as const;
@@ -58,6 +59,7 @@ const ACTIVITY_ICONS: Record<string, any> = {
 const ACTIVITY_FILTERS = ["all", "note", "email", "call", "meeting", "task"] as const;
 
 export default function ContactDetail() {
+  const { t, skinId } = useSkin();
   const params = useParams<{ id: string }>();
   const contactId = parseInt(params.id ?? "0");
   const [, setLocation] = useLocation();
@@ -135,7 +137,7 @@ export default function ContactDetail() {
         <User className="h-7 w-7 text-muted-foreground/40" />
       </div>
       <p className="text-sm font-medium text-foreground">Contact not found</p>
-      <Button variant="outline" size="sm" className="mt-3 rounded-xl" onClick={() => setLocation("/contacts")}>Back to Contacts</Button>
+      <Button variant="outline" size="sm" className="mt-3 rounded-xl" onClick={() => setLocation("/contacts")}>Back to {t("contacts")}</Button>
     </div>
   );
 
@@ -182,7 +184,12 @@ export default function ContactDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Skin-aware layout: HubSpot = 1/4 + 3/4 (narrow properties, wide timeline), Salesforce = full-width stacked, default = 1/3 + 2/3 */}
+      <div className={`grid gap-6 ${
+        skinId === 'hubspot' ? 'grid-cols-1 lg:grid-cols-4' :
+        skinId === 'salesforce' ? 'grid-cols-1' :
+        'grid-cols-1 lg:grid-cols-3'
+      }`}>
         {/* ─── Left: Contact Info ─── */}
         <div className="space-y-4">
           <Card className="rounded-2xl border-border/40 shadow-sm">
@@ -232,13 +239,13 @@ export default function ContactDetail() {
         </div>
 
         {/* ─── Right: Tabs ─── */}
-        <div className="lg:col-span-2">
+        <div className={skinId === 'hubspot' ? 'lg:col-span-3' : 'lg:col-span-2'}>
           <Tabs defaultValue="overview">
             <TabsList className="bg-muted/40 rounded-xl p-1">
               <TabsTrigger value="overview" className="rounded-lg text-xs">Overview</TabsTrigger>
               <TabsTrigger value="deals" className="rounded-lg text-xs">Deals{contactDeals && contactDeals.length > 0 ? ` (${contactDeals.length})` : ''}</TabsTrigger>
               <TabsTrigger value="tasks" className="rounded-lg text-xs">Tasks{contactTasks && contactTasks.length > 0 ? ` (${contactTasks.length})` : ''}</TabsTrigger>
-              <TabsTrigger value="activities" className="rounded-lg text-xs">Activities</TabsTrigger>
+              <TabsTrigger value="activities" className="rounded-lg text-xs">{t("activities")}</TabsTrigger>
               <TabsTrigger value="edit" className="rounded-lg text-xs">Edit</TabsTrigger>
             </TabsList>
 

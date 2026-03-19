@@ -16,6 +16,7 @@ import {
 import { useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 import CustomFieldsPanel from "@/components/CustomFieldsPanel";
 
 const LEAD_STATUSES = [
@@ -46,6 +47,7 @@ const ACTIVITY_ICONS: Record<string, any> = {
 };
 
 export default function CompanyDetail() {
+  const { t, skinId } = useSkin();
   const params = useParams<{ id: string }>();
   const companyId = parseInt(params.id ?? "0");
   const [, setLocation] = useLocation();
@@ -120,7 +122,7 @@ export default function CompanyDetail() {
         <Building2 className="h-7 w-7 text-muted-foreground/40" />
       </div>
       <p className="text-sm font-medium text-foreground">Company not found</p>
-      <Button variant="outline" size="sm" className="mt-3 rounded-xl" onClick={() => setLocation("/companies")}>Back to Companies</Button>
+      <Button variant="outline" size="sm" className="mt-3 rounded-xl" onClick={() => setLocation("/companies")}>Back to {t("companies")}</Button>
     </div>
   );
 
@@ -222,7 +224,7 @@ export default function CompanyDetail() {
               <TabsTrigger value="contacts" className="rounded-lg text-xs">Contacts ({totalContacts})</TabsTrigger>
               <TabsTrigger value="deals" className="rounded-lg text-xs">Deals{companyDeals && companyDeals.length > 0 ? ` (${companyDeals.length})` : ''}</TabsTrigger>
               <TabsTrigger value="tasks" className="rounded-lg text-xs">Tasks{companyTasks && companyTasks.length > 0 ? ` (${companyTasks.length})` : ''}</TabsTrigger>
-              <TabsTrigger value="activities" className="rounded-lg text-xs">Activities</TabsTrigger>
+              <TabsTrigger value="activities" className="rounded-lg text-xs">{t("activities")}</TabsTrigger>
               <TabsTrigger value="edit" className="rounded-lg text-xs">Edit</TabsTrigger>
             </TabsList>
 

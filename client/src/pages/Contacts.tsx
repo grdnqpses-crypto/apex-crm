@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 
 const STAGES = ["subscriber", "lead", "mql", "sql", "opportunity", "customer", "evangelist"] as const;
 const STAGE_COLORS: Record<string, string> = {
@@ -58,6 +59,7 @@ const emptyForm = {
 };
 
 export default function Contacts() {
+  const { t } = useSkin();
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -128,7 +130,7 @@ export default function Contacts() {
             <Users className="h-5 w-5 text-blue-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Contacts</h1>
+            <h1 className="text-2xl font-bold text-foreground">{t("contacts")}</h1>
             <p className="text-sm text-muted-foreground">{data?.total ?? 0} contacts &middot; Every contact is linked to a company. Track interactions, log calls, send emails, and nurture relationships from here.</p>
           </div>
         </div>

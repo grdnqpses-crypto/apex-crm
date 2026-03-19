@@ -10,6 +10,7 @@ import { Plus, DollarSign, MoreHorizontal, Trash2, Trophy, X, GripVertical, Kanb
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 
 const DEFAULT_STAGES = [
   { name: "Qualification", probability: 10, color: "#6366f1" },
@@ -27,6 +28,7 @@ const PRIORITY_STYLES: Record<string, string> = {
 };
 
 export default function Deals() {
+  const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
   const [showPipeline, setShowPipeline] = useState(false);
   const utils = trpc.useUtils();
@@ -103,7 +105,7 @@ export default function Deals() {
               <Kanban className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Deals</h1>
+              <h1 className="text-2xl font-bold text-foreground">{t("deals")}</h1>
               <p className="text-xs text-muted-foreground/70 mt-0.5 mb-1">Your visual pipeline — move deals across stages to track progress from first contact to closed-won.</p>
               <div className="flex items-center gap-3">
                 <span className="text-sm text-muted-foreground">{totalOpenDeals} open deals</span>

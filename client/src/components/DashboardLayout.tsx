@@ -464,7 +464,10 @@ function DashboardLayoutContent({
                       className={`h-8 w-8 rounded-lg object-contain shrink-0 ${devMode ? "ring-2 ring-amber-400" : ""}`}
                     />
                   ) : (
-                    <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 font-bold text-sm ${devMode ? "bg-amber-100 text-amber-500" : "bg-primary/10 text-primary"}`}>
+                    <div
+                      className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 font-bold text-sm"
+                      style={devMode ? { background: "#fef3c7", color: "#f59e0b" } : { background: `${skin.primaryColor}1a`, color: skin.primaryColor }}
+                    >
                       {devMode ? <Zap className="h-4.5 w-4.5" /> : (myCompany?.name?.charAt(0).toUpperCase() ?? <Zap className="h-4.5 w-4.5" />)}
                     </div>
                   )}
@@ -495,8 +498,11 @@ function DashboardLayoutContent({
 
           {/* ─── Competitor skin banner ─── */}
           {isCompetitorSkin && !isCollapsed && (
-            <div className="mx-3 mt-2 mb-1 px-3 py-2 rounded-lg bg-primary/8 border border-primary/20">
-              <p className="text-[11px] font-medium text-primary leading-tight">
+            <div
+              className="mx-3 mt-2 mb-1 px-3 py-2 rounded-lg border"
+              style={{ background: `${skin.primaryColor}12`, borderColor: `${skin.primaryColor}33` }}
+            >
+              <p className="text-[11px] font-medium leading-tight" style={{ color: skin.primaryColor }}>
                 {skin.tagline}
               </p>
             </div>
@@ -526,11 +532,12 @@ function DashboardLayoutContent({
                           tooltip={item.label}
                           className={`h-9 rounded-lg transition-all duration-200 font-normal text-[13px] ${
                             isActive
-                              ? "bg-primary/8 text-primary font-medium shadow-sm"
+                              ? "font-medium shadow-sm"
                               : "hover:bg-accent/60 text-muted-foreground hover:text-foreground"
                           }`}
+                          style={isActive ? { background: `${skin.primaryColor}14`, color: skin.primaryColor } : {}}
                         >
-                          <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
+                          <item.icon className="h-4 w-4" style={isActive ? { color: skin.primaryColor } : {}} />
                           <span>{item.label}</span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -547,7 +554,7 @@ function DashboardLayoutContent({
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-accent/60 transition-all duration-200 w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <Avatar className="h-9 w-9 shrink-0 shadow-sm">
-                    <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary rounded-lg">
+                    <AvatarFallback className="text-xs font-semibold rounded-lg" style={{ background: `${skin.primaryColor}1a`, color: skin.primaryColor }}>
                       {user?.name?.charAt(0).toUpperCase() ?? "U"}
                     </AvatarFallback>
                   </Avatar>
@@ -605,7 +612,7 @@ function DashboardLayoutContent({
           </SidebarFooter>
         </Sidebar>
         <div
-          className={`absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors ${isCollapsed ? "hidden" : ""}`}
+          className={`absolute top-0 right-0 w-1 h-full cursor-col-resize transition-colors ${isCollapsed ? "hidden" : ""}`}
           onMouseDown={() => { if (!isCollapsed) setIsResizing(true); }}
           style={{ zIndex: 50 }}
         />
@@ -624,8 +631,8 @@ function DashboardLayoutContent({
               {myCompany?.logoUrl ? (
                 <img src={myCompany.logoUrl} alt={myCompany.name} className="h-7 w-7 rounded-lg object-contain" />
               ) : (
-                <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Zap className="h-4 w-4 text-primary" />
+                <div className="h-7 w-7 rounded-lg flex items-center justify-center" style={{ background: `${skin.primaryColor}1a` }}>
+                  <Zap className="h-4 w-4" style={{ color: skin.primaryColor }} />
                 </div>
               )}
               <span className="font-bold text-foreground text-sm tracking-tight">{myCompany?.name || "Apex CRM"}</span>

@@ -11,8 +11,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function Companies() {
+  const { t } = useSkin();
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
@@ -54,7 +56,7 @@ export default function Companies() {
               <Building2 className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Companies</h1>
+              <h1 className="text-2xl font-bold text-foreground">{t("companies")}</h1>
               <p className="text-sm text-muted-foreground">{data?.total ?? 0} companies &middot; Companies are your primary entity — every contact, deal, and activity belongs to a company. Start here to build your pipeline.</p>
             </div>
           </div>
