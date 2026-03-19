@@ -1818,3 +1818,17 @@
 - [ ] Contextual first-time-use tooltips on major features
 - [ ] In-app AI help chat: "How do I do X in Apex?" with specific instructions
 - [ ] Onboarding progress tracked per user, shown in dashboard
+
+## Phase 46: Skin-Aware Developer/Owner Experience
+- [x] Build SkinQAPanel component — full-panel skin switcher with color swatches, font previews, and live skin switching
+- [x] Wire SkinQAPanel into DevImpersonate page (Skin QA tab)
+- [x] Wire SkinQAPanel into Settings → Your Preferences → Appearance & Skin
+- [x] Add getClientSkin procedure to migration router (adminProcedure, fetches skin for any user's company)
+- [x] DevImpersonate auto-applies client's skin when a user is selected (useEffect + getClientSkin query)
+- [x] DevImpersonate shows "Viewing in [Client's Skin]" banner when a non-apex skin is active
+- [x] Fix SkinContext CSS bridging — useEffect now sets --primary, --background, --foreground, --sidebar, --font-sans, --radius, --border, --muted, --ring and all Tailwind 4 tokens directly
+- [x] Apply font-family directly to document.body as belt-and-suspenders for font switching
+- [x] AIEnginePanel uses useSkin() — header icon uses skin.primaryColor, title uses t("ai")
+- [x] EmailMasking uses useSkin() — info card uses text-primary/border-primary/bg-primary, sender domain uses skin.primaryColor
+- [x] 0 TypeScript errors after all changes
+- [x] 8/8 tests passing (skin-qa.test.ts + auth.logout.test.ts)

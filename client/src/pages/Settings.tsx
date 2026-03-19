@@ -20,6 +20,7 @@ import {
   Palette, BookOpen, ShoppingCart, ChevronRight,
   Search, Check, AlertTriangle, Info, Monitor
 } from "lucide-react";
+import { SkinQAPanel } from "@/components/SkinQAPanel";
 
 // ─── Settings Navigation Structure (from SettingsPage.docx) ───
 const SETTINGS_SECTIONS = [
@@ -35,6 +36,7 @@ const SETTINGS_SECTIONS = [
       { id: "tasks-prefs", label: "Tasks", icon: ListTodo, description: "These preferences only apply to you." },
       { id: "security-prefs", label: "Security", icon: Shield, description: "Personal security settings." },
       { id: "automation-prefs", label: "Automation", icon: Zap, description: "These preferences only apply to you." },
+      { id: "appearance", label: "Appearance & Skin", icon: Palette, description: "Switch UI mode to match your previous CRM or QA-test all skins." },
     ],
   },
   {
@@ -1228,6 +1230,19 @@ export default function SettingsPage() {
       "tasks-prefs": <ComingSoonPanel title="Task Preferences" description="Configure your task defaults and reminders." />,
       "security-prefs": <SecurityPanel />,
       "automation-prefs": <ComingSoonPanel title="Automation Preferences" description="Configure your automation defaults." />,
+      "appearance": (
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold">Appearance &amp; Skin</h3>
+            <p className="text-sm text-muted-foreground">Switch UI mode to match your previous CRM, or QA-test all skins to verify the experience your clients see.</p>
+          </div>
+          <Card className="rounded-2xl border-border/40">
+            <CardContent className="p-6">
+              <SkinQAPanel />
+            </CardContent>
+          </Card>
+        </div>
+      ),
       "email-desktop": <NotificationSettings />,
       "other-apps": <ComingSoonPanel title="Other App Notifications" description="Manage notifications from connected applications." />,
       "account-defaults": <AccountDefaults />,

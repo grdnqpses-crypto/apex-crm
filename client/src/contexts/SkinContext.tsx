@@ -349,15 +349,53 @@ export function SkinProvider({ children }: { children: ReactNode }) {
     graduateMutation.mutate();
   };
 
-  // Apply CSS variables for the active skin
+  // Apply CSS variables — bridge skin config to Tailwind 4 tokens so every
+  // bg-primary, text-foreground, bg-background, font-sans, rounded-* class
+  // in the entire app instantly reflects the active competitor skin.
   useEffect(() => {
     const root = document.documentElement;
+
+    // ── Legacy skin-* aliases (kept for backward compat) ──────────────────
     root.style.setProperty("--skin-primary", skin.primaryColor);
     root.style.setProperty("--skin-accent", skin.accentColor);
     root.style.setProperty("--skin-bg", skin.bgColor);
     root.style.setProperty("--skin-text", skin.textColor);
     root.style.setProperty("--skin-radius", skin.borderRadius);
     root.style.setProperty("--skin-font", skin.fontFamily);
+
+    // ── Bridge to Tailwind 4 CSS tokens ───────────────────────────────────
+    // Convert hex color to oklch approximation for Tailwind 4 compatibility
+    // We use a simplified approach: set the raw hex on the token directly
+    // (Tailwind 4 accepts raw color values in CSS vars when used with `color-mix`)
+    root.style.setProperty("--primary", skin.primaryColor);
+    root.style.setProperty("--primary-foreground", skin.id === "gohighlevel" ? "#ffffff" : "#ffffff");
+    root.style.setProperty("--background", skin.bgColor);
+    root.style.setProperty("--foreground", skin.textColor);
+    root.style.setProperty("--card", skin.bgColor);
+    root.style.setProperty("--card-foreground", skin.textColor);
+    root.style.setProperty("--popover", skin.bgColor);
+    root.style.setProperty("--popover-foreground", skin.textColor);
+    root.style.setProperty("--accent", skin.accentColor);
+    root.style.setProperty("--accent-foreground", "#ffffff");
+    root.style.setProperty("--muted", skin.id === "gohighlevel" ? "#1e293b" : "#f1f5f9");
+    root.style.setProperty("--muted-foreground", skin.id === "gohighlevel" ? "#94a3b8" : "#64748b");
+    root.style.setProperty("--border", skin.id === "gohighlevel" ? "#334155" : "#e2e8f0");
+    root.style.setProperty("--input", skin.id === "gohighlevel" ? "#334155" : "#e2e8f0");
+    root.style.setProperty("--ring", skin.primaryColor);
+    root.style.setProperty("--radius", skin.borderRadius);
+    // Sidebar tokens
+    root.style.setProperty("--sidebar", skin.bgColor);
+    root.style.setProperty("--sidebar-foreground", skin.textColor);
+    root.style.setProperty("--sidebar-primary", skin.primaryColor);
+    root.style.setProperty("--sidebar-primary-foreground", "#ffffff");
+    root.style.setProperty("--sidebar-accent", skin.accentColor);
+    root.style.setProperty("--sidebar-accent-foreground", "#ffffff");
+    root.style.setProperty("--sidebar-border", skin.id === "gohighlevel" ? "#334155" : "#e2e8f0");
+    root.style.setProperty("--sidebar-ring", skin.primaryColor);
+    // Font
+    root.style.setProperty("--font-sans", skin.fontFamily);
+    // Apply font-family directly to body as well (belt-and-suspenders)
+    document.body.style.fontFamily = skin.fontFamily;
   }, [skin]);
 
   const t = (key: keyof SkinConfig["terms"]) => skin.terms[key];

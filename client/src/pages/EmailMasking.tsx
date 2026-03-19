@@ -9,8 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Mail, Shield, Eye, Trash2, Plus, CheckCircle, AlertTriangle, Info } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function EmailMasking() {
+  const { skin } = useSkin();
   const masks = trpc.emailMask.list.useQuery();
   const preview = trpc.emailMask.preview.useQuery({});
   const saveMask = trpc.emailMask.save.useMutation({
@@ -76,12 +78,12 @@ export default function EmailMasking() {
       </div>
 
       {/* How It Works - Simple Explanation */}
-      <Card className="border-blue-500/20 bg-blue-500/5">
+      <Card className="border-primary/20 bg-primary/5">
         <CardContent className="pt-6">
           <div className="flex gap-3">
-            <Info className="h-5 w-5 text-blue-400 shrink-0 mt-0.5" />
+            <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
             <div className="space-y-2">
-              <p className="font-medium text-blue-400">How Email Masking Works</p>
+              <p className="font-medium text-primary">How Email Masking Works</p>
               <p className="text-sm text-muted-foreground">
                 When you send emails through multiple domains for deliverability (outreach1.company.com, outreach2.company.com, etc.),
                 the recipient always sees your <strong>display address</strong> (e.g., <code>you@company.com</code>) in their inbox.
@@ -89,7 +91,7 @@ export default function EmailMasking() {
               </p>
               <div className="flex items-center gap-4 text-xs text-muted-foreground mt-3 p-3 rounded-lg bg-background/50">
                 <div className="text-center">
-                  <div className="font-mono text-orange-400">outreach1.co</div>
+                  <div className="font-mono" style={{ color: skin.primaryColor }}>outreach1.co</div>
                   <div className="text-[10px]">Actual Sender</div>
                 </div>
                 <div className="text-lg">→</div>

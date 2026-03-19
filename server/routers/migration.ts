@@ -4,11 +4,11 @@
  */
 
 import { z } from "zod";
-import { router, protectedProcedure, companyAdminProcedure } from "../_core/trpc";
+import { router, protectedProcedure, companyAdminProcedure, adminProcedure } from "../_core/trpc";
 import { getDb } from "../db";
 import {
   migrationJobs, skinPreferences, customFieldDefs, customFieldValues,
-  activityHistory, contacts, companies, deals,
+  activityHistory, contacts, companies, deals, users,
 } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import {
@@ -35,7 +35,24 @@ export const migrationRouter = router({
     }));
   }),
 
-  // ─── Get current skin preference ─────────────────────────────────────────
+  // ─── Get skin for a specific user's company (developer/apex_owner QA use) ─────
+  getClientSkin: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return { skin: "apex", migratedFrom: null };
+      const [targetUser] = await db.select({ tenantCompanyId: users.tenantCompanyId })
+        .from(users)
+        .where(eq(users.id, input.userId))
+        .limit(1);
+      if (!targetUser?.tenantCompanyId) return { skin: "apex", migratedFrom: null };
+      const [pref] = await db.select()
+        .from(skinPreferences)
+        .where(eq(skinPreferences.tenantCompanyId, targetUser.tenantCompanyId))
+        .limit(1);
+      return pref || { skin: "apex", migratedFrom: null };
+    }),
+  // ─── Get current skin preferencece ─────────────────────────────────────────
   getSkin: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db || !ctx.user.tenantCompanyId) return { skin: "apex", migratedFrom: null };

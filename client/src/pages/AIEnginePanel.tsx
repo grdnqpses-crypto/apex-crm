@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { useSkin } from "@/contexts/SkinContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -87,6 +88,7 @@ function formatNextRun(ts: number | null): string {
 }
 
 export default function AIEnginePanel() {
+  const { t, skin } = useSkin();
   const [triggeringTask, setTriggeringTask] = useState<string | null>(null);
 
   const { data: status, refetch, isLoading } = trpc.aiEngine.getStatus.useQuery(undefined, {
@@ -153,11 +155,11 @@ export default function AIEnginePanel() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-100 rounded-lg">
-            <Brain className="w-6 h-6 text-indigo-600" />
+          <div className="p-2 rounded-lg" style={{ backgroundColor: `${skin.primaryColor}20` }}>
+            <Brain className="w-6 h-6" style={{ color: skin.primaryColor }} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">AI Autonomous Engine</h1>
+            <h1 className="text-2xl font-bold text-foreground">{t("ai")} — Autonomous Engine</h1>
             <p className="text-sm text-muted-foreground">
               Developer-only · {tasks.length} tasks registered · Runs continuously in background
             </p>
