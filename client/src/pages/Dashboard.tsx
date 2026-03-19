@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -212,6 +212,18 @@ export default function Dashboard() {
   const [previewLogoUrl, setPreviewLogoUrl] = useState<string | null>(null);
   const [customizeIdeas, setCustomizeIdeas] = useState("");
   const [logoIndustry, setLogoIndustry] = useState("");
+  const [autoBannerLogoUrl, setAutoBannerLogoUrl] = useState<string | null>(null);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
+  // Read URL params for Stripe return
+  const [searchParams] = useState(() => new URLSearchParams(window.location.search));
+  const logoCustomizationPaid = searchParams.get('logo_customization') === 'paid';
+  const [stripeReturnHandled, setStripeReturnHandled] = useState(false);
+
+  // Logo history query
+  const { data: logoHistory, refetch: refetchLogoHistory } = trpc.tenants.getLogoHistory.useQuery(
+    undefined, { enabled: showLogoDialog }
+  );
 
   const generateLogoMutation = trpc.tenants.generateLogo.useMutation({
     onSuccess: (data) => {
@@ -248,6 +260,50 @@ export default function Dashboard() {
     onError: (e) => toast.error(e.message),
   });
 
+  const restoreLogoMutation = trpc.tenants.restoreLogo.useMutation({
+    onSuccess: (data) => {
+      utils.tenants.myCompany.setData(undefined, (old) =>
+        old ? { ...old, logoUrl: data.logoUrl } : old
+      );
+      toast.success("Logo restored!");
+      refetchCompany();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const checkoutMutation = trpc.tenants.createLogoCustomizationCheckout.useMutation({
+    onSuccess: (data) => {
+      if (data.checkoutUrl) window.open(data.checkoutUrl, '_blank');
+      toast.info("Redirecting to checkout...");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const autoGenerateMutation = trpc.tenants.autoGenerateLogo.useMutation({
+    onSuccess: (data) => {
+      if (data.logoUrl) setAutoBannerLogoUrl(data.logoUrl);
+    },
+  });
+
+  // Auto-generate logo on first load if company has no logo
+  useEffect(() => {
+    if (company && !company.logoUrl && !autoBannerLogoUrl && !bannerDismissed) {
+      autoGenerateMutation.mutate();
+    }
+  }, [company?.id]);
+
+  // Handle Stripe return: open customize-input step automatically
+  useEffect(() => {
+    if (logoCustomizationPaid && !stripeReturnHandled) {
+      setStripeReturnHandled(true);
+      setShowLogoDialog(true);
+      setLogoStep('customize-input');
+      toast.success("Payment confirmed! Describe your logo vision below.");
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [logoCustomizationPaid, stripeReturnHandled]);
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -274,6 +330,38 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
+      {/* ─── Auto-Generate Logo Banner ─── */}
+      {autoBannerLogoUrl && !bannerDismissed && !company?.logoUrl && (
+        <div className="flex items-center gap-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+          <div className="h-12 w-12 rounded-xl overflow-hidden border border-border/30 bg-white/80 shrink-0">
+            <img src={autoBannerLogoUrl} alt="AI-generated logo" className="h-full w-full object-contain" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">We made you a logo!</p>
+            <p className="text-xs text-muted-foreground">Our AI generated a logo for {company?.name}. Want to use it?</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              size="sm"
+              className="gap-1.5"
+              onClick={() => {
+                restoreLogoMutation.mutate({ logoUrl: autoBannerLogoUrl });
+                setBannerDismissed(true);
+              }}
+            >
+              <Sparkles className="h-3.5 w-3.5" /> Use It
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setBannerDismissed(true)}
+            >
+              Dismiss
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* ─── Welcome Header ─── */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/8 via-primary/4 to-transparent border border-primary/10 p-7">
           <div className="relative z-10">
@@ -570,9 +658,14 @@ export default function Dashboard() {
               <div className="flex flex-col gap-2">
                 <Button
                   className="w-full gap-2"
-                  onClick={() => setLogoStep('customize-input')}
+                  disabled={checkoutMutation.isPending}
+                  onClick={() => checkoutMutation.mutate({ origin: window.location.origin })}
                 >
-                  <Wand2 className="h-4 w-4" /> Yes, Customize for $9.99
+                  {checkoutMutation.isPending ? (
+                    <><RefreshCw className="h-4 w-4 animate-spin" /> Opening checkout...</>
+                  ) : (
+                    <><Wand2 className="h-4 w-4" /> Yes, Customize for $9.99</>
+                  )}
                 </Button>
                 <Button
                   variant="outline"
@@ -657,6 +750,9 @@ export default function Dashboard() {
                 <TabsTrigger value="generate" className="flex-1 flex items-center gap-1.5">
                   <Wand2 className="h-3.5 w-3.5" /> AI Generate
                 </TabsTrigger>
+                <TabsTrigger value="history" className="flex-1 flex items-center gap-1.5">
+                  <RefreshCw className="h-3.5 w-3.5" /> History
+                </TabsTrigger>
               </TabsList>
               <TabsContent value="upload" className="space-y-4 pt-4">
                 <p className="text-sm text-muted-foreground">Upload a PNG, JPG, or SVG file. Recommended size: 256×256px or larger.</p>
@@ -703,6 +799,36 @@ export default function Dashboard() {
                   )}
                 </Button>
                 <p className="text-xs text-muted-foreground text-center">Generation takes 10–20 seconds. Free with your plan.</p>
+              </TabsContent>
+              <TabsContent value="history" className="pt-4">
+                {!logoHistory || logoHistory.length === 0 ? (
+                  <div className="flex flex-col items-center gap-3 py-8 text-center">
+                    <RefreshCw className="h-8 w-8 text-muted-foreground/30" />
+                    <p className="text-sm text-muted-foreground">No logo history yet. Generate your first logo to see it here.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-xs text-muted-foreground">Click any logo to restore it as your current logo.</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      {logoHistory.map((entry) => (
+                        <button
+                          key={entry.id}
+                          onClick={() => {
+                            restoreLogoMutation.mutate({ logoUrl: entry.logoUrl });
+                            setShowLogoDialog(false);
+                          }}
+                          className="group relative rounded-xl border border-border/40 bg-muted/30 p-3 hover:border-primary/40 hover:bg-accent/30 transition-all aspect-square flex items-center justify-center"
+                          title="Click to restore this logo"
+                        >
+                          <img src={entry.logoUrl} alt="Logo history" className="h-full w-full object-contain" />
+                          <div className="absolute inset-0 rounded-xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span className="text-white text-xs font-semibold">Restore</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           )}

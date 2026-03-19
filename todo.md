@@ -1898,3 +1898,14 @@
 - [x] Step 5: Confirm and apply — "Use This Logo" saves and closes dialog
 - [x] Fix: logo navigation bug (setLocation "/" → "/dashboard") already done in Phase 51
 - [x] Fix: generated logo cache update already done in Phase 51
+
+## Phase 53: Logo Enhancements — Stripe Payment, History Panel, Auto-Generate
+- [x] DB: logo_generations table (id, tenant_company_id, logo_url, prompt, created_at)
+- [x] Server: save every generated logo to logo_generations table
+- [x] Server: getLogoHistory procedure (last 5 logos for tenant)
+- [x] Server: restoreLogo procedure (set logoUrl from history entry)
+- [x] Server: createLogoCustomizationCheckout — Stripe Checkout Session for $9.99
+- [x] Server: autoGenerateLogo procedure — generate silently if company has no logo
+- [x] Frontend: Stripe payment gate in customize flow (redirect to checkout, return to customize-input on success)
+- [x] Frontend: Logo history tab in logo dialog (grid of last 5, click to restore)
+- [x] Frontend: Auto-generate banner on first dashboard load if no logo (non-intrusive, dismissable)

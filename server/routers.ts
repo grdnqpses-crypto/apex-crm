@@ -1951,8 +1951,112 @@ export const appRouter = router({
       const buffer = Buffer.from(await response.arrayBuffer());
       const key = `company-logos/${ctx.user.tenantCompanyId}-logo-${Date.now()}.png`;
       const { url: s3Url } = await storagePut(key, buffer, "image/png");
-      // Save to company record
-      await db.updateTenantCompany(ctx.user.tenantCompanyId!, { logoUrl: s3Url, updatedAt: Date.now() } as any);
+      // Save to logo history
+      const dbConn = await (await import("./db.js")).getDb();
+      if (dbConn && ctx.user.tenantCompanyId) {
+        const { logoGenerations } = await import("../drizzle/schema.js");
+        await dbConn.insert(logoGenerations).values({
+          tenantCompanyId: ctx.user.tenantCompanyId,
+          logoUrl: s3Url,
+          prompt: input.industry || null,
+          createdAt: Date.now(),
+        });
+      }
+      // Note: we do NOT save to company record here — frontend applies it explicitly
+      return { logoUrl: s3Url };
+    }),
+
+    // Get logo generation history for current tenant (last 10)
+    getLogoHistory: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user.tenantCompanyId) return [];
+      const dbConn = await (await import("./db.js")).getDb();
+      if (!dbConn) return [];
+      const { logoGenerations } = await import("../drizzle/schema.js");
+      const { desc, eq } = await import("drizzle-orm");
+      const rows = await dbConn
+        .select()
+        .from(logoGenerations)
+        .where(eq(logoGenerations.tenantCompanyId, ctx.user.tenantCompanyId))
+        .orderBy(desc(logoGenerations.createdAt))
+        .limit(10);
+      return rows;
+    }),
+
+    // Restore a logo from history
+    restoreLogo: protectedProcedure.input(z.object({
+      logoUrl: z.string().url(),
+    })).mutation(async ({ ctx, input }) => {
+      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
+      if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST" });
+      await db.updateTenantCompany(ctx.user.tenantCompanyId, { logoUrl: input.logoUrl, updatedAt: Date.now() } as any);
+      return { logoUrl: input.logoUrl };
+    }),
+
+    // Create Stripe checkout for $9.99 logo customization
+    createLogoCustomizationCheckout: protectedProcedure.input(z.object({
+      origin: z.string(),
+    })).mutation(async ({ ctx, input }) => {
+      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
+      const { stripe } = await import("./stripe.js");
+      if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe is not configured. Please add your Stripe keys in Settings → Payment." });
+      const company = await db.getTenantCompanyById(ctx.user.tenantCompanyId!);
+      const session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        allow_promotion_codes: true,
+        customer_email: company?.stripeCustomerId ? undefined : (ctx.user.email || undefined),
+        customer: company?.stripeCustomerId || undefined,
+        line_items: [{
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "AI Logo Customization",
+              description: "One-time fee for custom AI logo generation with your specific design requirements.",
+            },
+            unit_amount: 999, // $9.99
+          },
+          quantity: 1,
+        }],
+        client_reference_id: String(ctx.user.id),
+        metadata: {
+          user_id: String(ctx.user.id),
+          tenant_company_id: String(ctx.user.tenantCompanyId),
+          feature: "logo_customization",
+        },
+        success_url: `${input.origin}/dashboard?logo_customization=paid`,
+        cancel_url: `${input.origin}/dashboard?logo_customization=cancelled`,
+      });
+      return { checkoutUrl: session.url };
+    }),
+
+    // Auto-generate logo silently if company has no logo
+    autoGenerateLogo: protectedProcedure.mutation(async ({ ctx }) => {
+      if (!ctx.user.tenantCompanyId) return { logoUrl: null };
+      const company = await db.getTenantCompanyById(ctx.user.tenantCompanyId);
+      if (!company || company.logoUrl) return { logoUrl: null }; // already has logo
+      const { generateImage } = await import("./_core/imageGeneration.js");
+      const prompt = `Professional business logo for a company called "${company.name}"${
+        company.industry ? ` in the ${company.industry} industry` : ""
+      }. Modern, clean, vector-style logo on a transparent or dark background. Bold typography, minimal design, suitable for a CRM software platform.`;
+      const result = await generateImage({ prompt });
+      if (!result?.url) return { logoUrl: null };
+      const { storagePut } = await import("./storage.js");
+      const response = await fetch(result.url);
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const key = `company-logos/${ctx.user.tenantCompanyId}-logo-auto-${Date.now()}.png`;
+      const { url: s3Url } = await storagePut(key, buffer, "image/png");
+      // Save to history only — don't apply automatically, let user confirm
+      const dbConn = await (await import("./db.js")).getDb();
+      if (dbConn) {
+        const { logoGenerations } = await import("../drizzle/schema.js");
+        await dbConn.insert(logoGenerations).values({
+          tenantCompanyId: ctx.user.tenantCompanyId,
+          logoUrl: s3Url,
+          prompt: "auto-generated",
+          createdAt: Date.now(),
+        });
+      }
       return { logoUrl: s3Url };
     }),
 

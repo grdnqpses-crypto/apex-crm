@@ -1,6 +1,16 @@
 import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, bigint, decimal, double, tinyint } from "drizzle-orm/mysql-core";
 
 // ─── Tenant Companies ───
+export const logoGenerations = mysqlTable("logo_generations", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  logoUrl: text("logo_url").notNull(),
+  prompt: text("prompt"),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+
+export type LogoGeneration = typeof logoGenerations.$inferSelect;
+
 export const tenantCompanies = mysqlTable("tenant_companies", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 256 }).notNull(),
