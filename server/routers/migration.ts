@@ -222,6 +222,68 @@ export const migrationRouter = router({
         .orderBy(desc(activityHistory.occurredAt))
         .limit(100);
     }),
+
+  // ─── Set / update a custom field value for a record ───────────────────────
+  setCustomFieldValue: protectedProcedure
+    .input(z.object({
+      objectType: z.enum(["contact", "company", "deal", "lead", "activity", "custom_object"]),
+      recordId: z.number(),
+      fieldDefId: z.number(),
+      fieldType: z.string(),
+      value: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db || !ctx.user.tenantCompanyId) throw new Error("Unauthorized");
+      const now = Date.now();
+      // Parse value based on field type
+      let valueText: string | null = null;
+      let valueNumber: number | null = null;
+      let valueBoolean: boolean | null = null;
+      let valueDate: number | null = null;
+      let valueJson: unknown = null;
+      switch (input.fieldType) {
+        case "number": case "currency":
+          valueNumber = parseFloat(input.value) || null;
+          break;
+        case "boolean":
+          valueBoolean = input.value === "true" || input.value === "Yes";
+          break;
+        case "date": case "datetime":
+          valueDate = new Date(input.value).getTime() || null;
+          break;
+        case "multiselect":
+          valueJson = input.value.split(",").map((s: string) => s.trim()).filter(Boolean);
+          break;
+        default:
+          valueText = input.value || null;
+      }
+      // Upsert: check if value exists
+      const existing = await db.select({ id: customFieldValues.id })
+        .from(customFieldValues)
+        .where(and(
+          eq(customFieldValues.tenantCompanyId, ctx.user.tenantCompanyId),
+          eq(customFieldValues.fieldDefId, input.fieldDefId),
+          eq(customFieldValues.objectType, input.objectType),
+          eq(customFieldValues.recordId, input.recordId),
+        ))
+        .limit(1);
+      if (existing.length > 0) {
+        await db.update(customFieldValues)
+          .set({ valueText, valueNumber, valueBoolean, valueDate, valueJson: valueJson as any, updatedAt: now })
+          .where(eq(customFieldValues.id, existing[0].id));
+      } else {
+        await db.insert(customFieldValues).values({
+          tenantCompanyId: ctx.user.tenantCompanyId,
+          fieldDefId: input.fieldDefId,
+          objectType: input.objectType,
+          recordId: input.recordId,
+          valueText, valueNumber, valueBoolean, valueDate, valueJson: valueJson as any,
+          createdAt: now, updatedAt: now,
+        });
+      }
+      return { success: true };
+    }),
 });
 
 // ─── Async Migration Runner ───────────────────────────────────────────────────

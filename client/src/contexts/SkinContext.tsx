@@ -7,6 +7,7 @@
  * Supported skins: apex (native), hubspot, salesforce, pipedrive, zoho, gohighlevel, close
  */
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { trpc } from "@/lib/trpc";
 
 export type SkinId = "apex" | "hubspot" | "salesforce" | "pipedrive" | "zoho" | "gohighlevel" | "close";
 
@@ -295,29 +296,57 @@ const SKINS: Record<SkinId, SkinConfig> = {
   },
 };
 
-const SKIN_STORAGE_KEY = "apex_crm_skin";
-
 interface SkinContextValue {
   skin: SkinConfig;
   skinId: SkinId;
   setSkin: (id: SkinId) => void;
+  graduateToApex: () => void;
   allSkins: SkinConfig[];
-  t: (key: keyof SkinConfig["terms"]) => string; // terminology helper
+  t: (key: keyof SkinConfig["terms"]) => string;
+  migratedFrom: string | null;
 }
 
 const SkinContext = createContext<SkinContextValue | null>(null);
 
 export function SkinProvider({ children }: { children: ReactNode }) {
-  const [skinId, setSkinId] = useState<SkinId>(() => {
-    const stored = localStorage.getItem(SKIN_STORAGE_KEY) as SkinId | null;
-    return stored && SKINS[stored] ? stored : "apex";
+  // Start with apex skin, will be overridden by DB preference on load
+  const [skinId, setSkinId] = useState<SkinId>("apex");
+  const [migratedFrom, setMigratedFrom] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  // Load skin preference from DB (authoritative source)
+  const { data: prefData, isError: prefError } = trpc.migration.getSkin.useQuery(undefined, {
+    retry: false,
   });
+
+  useEffect(() => {
+    if (prefData) {
+      if (prefData.skin && SKINS[prefData.skin as SkinId]) {
+        setSkinId(prefData.skin as SkinId);
+        setMigratedFrom(prefData.migratedFrom ?? null);
+      }
+      setLoaded(true);
+    }
+  }, [prefData]);
+
+  useEffect(() => {
+    if (prefError) setLoaded(true);
+  }, [prefError]);
+
+  const setSkinMutation = trpc.migration.setSkin.useMutation();
+  const graduateMutation = trpc.migration.graduateToApex.useMutation();
 
   const skin = SKINS[skinId];
 
   const setSkin = (id: SkinId) => {
     setSkinId(id);
-    localStorage.setItem(SKIN_STORAGE_KEY, id);
+    setSkinMutation.mutate({ skin: id });
+  };
+
+  const graduateToApex = () => {
+    setSkinId("apex");
+    setMigratedFrom(null);
+    graduateMutation.mutate();
   };
 
   // Apply CSS variables for the active skin
@@ -334,7 +363,7 @@ export function SkinProvider({ children }: { children: ReactNode }) {
   const t = (key: keyof SkinConfig["terms"]) => skin.terms[key];
 
   return (
-    <SkinContext.Provider value={{ skin, skinId, setSkin, allSkins: Object.values(SKINS), t }}>
+    <SkinContext.Provider value={{ skin, skinId, setSkin, graduateToApex, allSkins: Object.values(SKINS), t, migratedFrom }}>
       {children}
     </SkinContext.Provider>
   );

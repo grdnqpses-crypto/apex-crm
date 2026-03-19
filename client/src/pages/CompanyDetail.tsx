@@ -16,6 +16,7 @@ import {
 import { useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
+import CustomFieldsPanel from "@/components/CustomFieldsPanel";
 
 const LEAD_STATUSES = [
   "Qualified", "Cold", "Cold-Upwork", "Hot", "Warm", "Customer",
@@ -207,6 +208,7 @@ export default function CompanyDetail() {
             </Card>
           )}
 
+          <CustomFieldsPanel objectType="company" recordId={companyId} />
           <div className="text-xs text-muted-foreground px-1">
             Created {new Date(company.createdAt).toLocaleDateString()}
           </div>

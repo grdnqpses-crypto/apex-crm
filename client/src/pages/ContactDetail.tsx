@@ -17,6 +17,7 @@ import {
 import { useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
+import CustomFieldsPanel from "@/components/CustomFieldsPanel";
 
 const STAGES = ["subscriber", "lead", "mql", "sql", "opportunity", "customer", "evangelist"] as const;
 const STAGE_COLORS: Record<string, string> = {
@@ -214,6 +215,7 @@ export default function ContactDetail() {
             </CardContent>
           </Card>
 
+          <CustomFieldsPanel objectType="contact" recordId={contactId} />
           {(contact.decisionMakerRole || contact.freightVolume || contact.customerType) && (
             <Card className="rounded-2xl border-border/40 shadow-sm">
               <CardContent className="p-5 space-y-3">

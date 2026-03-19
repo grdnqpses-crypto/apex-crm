@@ -32,7 +32,8 @@ import {
   Phone, FileText, TrendingUp, Rocket, Bell, PenTool, Briefcase, ScanLine, Truck,
   Receipt, Globe2, UserPlus, Headphones, Database as DatabaseIcon, Flame as FlameIcon,
   EyeIcon, MailOpen, Paintbrush, ArrowRightLeft, Crown, Command, Package, CreditCard,
-  TrendingDown, DollarSign, Tag,
+  TrendingDown, DollarSign, Tag, Home, Calendar, MessageSquare, Megaphone, BarChart2,
+  Inbox, LucideIcon,
 } from "lucide-react";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -45,7 +46,24 @@ import AIAssistantPanel from "./AIAssistantPanel";
 import OnboardingTutorial from "./OnboardingTutorial";
 import PaymentFailedBanner from "./PaymentFailedBanner";
 import { trpc } from "@/lib/trpc";
-import { SkinSwitcher } from "./SkinSwitcher";
+import { useSkin } from "@/contexts/SkinContext";
+
+// ─── Icon resolver for skin nav items ───
+const ICON_MAP: Record<string, LucideIcon> = {
+  LayoutDashboard, Users, Building2, Kanban, Mail, Shield,
+  BarChart3, ListChecks, GitBranch, FlaskConical, Key, Webhook,
+  Filter, Zap, Send, Brain, Target, Radar, Ghost, Flame, Plug,
+  ShieldCheck, Ban, Settings, Globe, Sparkles, BookOpen, FileSearch,
+  Activity, Eye, ScrollText, UserCog, Download, Phone, FileText,
+  TrendingUp, Rocket, Bell, PenTool, Briefcase, ScanLine, Truck,
+  Receipt, UserPlus, Headphones, Paintbrush, ArrowRightLeft, Crown,
+  Command, Package, CreditCard, TrendingDown, DollarSign, Tag,
+  Home, Calendar, MessageSquare, Megaphone, BarChart2, Inbox,
+};
+
+function resolveIcon(name: string): LucideIcon {
+  return ICON_MAP[name] ?? LayoutDashboard;
+}
 
 // ─── Menu Sections (Developer is separate, hidden by default) ───
 
@@ -250,8 +268,7 @@ function useDevMode() {
 
 function getMenuSections(devMode: boolean, userRole?: string) {
   const sections = [...standardSections];
-  const resourcesIdx = sections.findIndex(s => s.label === "Resources");
-  
+
   // Add Apex Platform section for apex_owner and developer roles
   if (userRole === "apex_owner" || userRole === "developer") {
     const overviewIdx = sections.findIndex(s => s.label === "Overview");
@@ -261,7 +278,7 @@ function getMenuSections(devMode: boolean, userRole?: string) {
       sections.unshift(apexPlatformSection);
     }
   }
-  
+
   // Add Developer section for developer role (when dev mode is active)
   if (devMode && userRole === "developer") {
     const resIdx = sections.findIndex(s => s.label === "Resources");
@@ -271,7 +288,7 @@ function getMenuSections(devMode: boolean, userRole?: string) {
       sections.push(developerSection);
     }
   }
-  
+
   return sections;
 }
 
@@ -339,11 +356,49 @@ function DashboardLayoutContent({
   // White-label: only Company Admin and above see "powered by Apex"
   const showApexBranding = isDeveloper || isApexOwner || isAdmin;
 
-  const menuSections = getMenuSections(devMode, user?.systemRole);
-  const filteredSections = menuSections.map(section => ({
+  // ─── Skin system ───
+  const { skin, skinId, graduateToApex, migratedFrom } = useSkin();
+  const isCompetitorSkin = skinId !== "apex";
+
+  // Build nav sections: competitor skin overrides standard sections
+  let displaySections: Array<{ label: string; items: Array<{ icon: LucideIcon; label: string; path: string }> }>;
+
+  if (isCompetitorSkin) {
+    // Competitor skin: show their exact nav items as a single section
+    const skinNavItems = skin.navItems.map(item => ({
+      icon: resolveIcon(item.icon),
+      label: item.label,
+      path: item.path,
+    }));
+    displaySections = [
+      {
+        label: skin.name,
+        items: skinNavItems,
+      },
+      // Always include Resources section for settings/billing access
+      {
+        label: "Resources",
+        items: [
+          { icon: ArrowRightLeft, label: "Migration", path: "/migration" },
+          { icon: Settings, label: "Settings", path: "/settings" },
+          { icon: Crown, label: "Subscription", path: "/subscription" },
+        ],
+      },
+    ];
+    // Add developer section if needed
+    if (devMode && user?.systemRole === "developer") {
+      displaySections.push(developerSection);
+    }
+  } else {
+    const menuSections = getMenuSections(devMode, user?.systemRole);
+    displaySections = menuSections;
+  }
+
+  const filteredSections = displaySections.map(section => ({
     ...section,
     items: section.items.filter(item => canAccessSidebarItem(item.path)),
   })).filter(section => section.items.length > 0);
+
   const allMenuItems = filteredSections.flatMap(s => s.items);
   const activeMenuItem = allMenuItems.find(item => item.path === location) || allMenuItems.find(item => location.startsWith(item.path) && item.path !== "/");
 
@@ -408,7 +463,11 @@ function DashboardLayoutContent({
                     <span className="font-bold tracking-tight text-foreground text-[15px] block truncate">
                       {myCompany?.name || "Apex CRM"}
                     </span>
-                    {myCompany?.name && showApexBranding && <span className="text-[10px] text-muted-foreground/60 block -mt-0.5">powered by Apex</span>}
+                    {isCompetitorSkin ? (
+                      <span className="text-[10px] text-muted-foreground/60 block -mt-0.5">powered by Apex</span>
+                    ) : (
+                      myCompany?.name && showApexBranding && <span className="text-[10px] text-muted-foreground/60 block -mt-0.5">powered by Apex</span>
+                    )}
                   </div>
                   {devMode && (
                     <span className="text-[9px] font-bold uppercase tracking-widest text-amber-500/80 ml-0.5 bg-amber-50 px-1.5 py-0.5 rounded">DEV</span>
@@ -422,6 +481,15 @@ function DashboardLayoutContent({
           {!isCollapsed && (
             <div className="px-3 pt-3 pb-1">
               <GlobalSearch />
+            </div>
+          )}
+
+          {/* ─── Competitor skin banner ─── */}
+          {isCompetitorSkin && !isCollapsed && (
+            <div className="mx-3 mt-2 mb-1 px-3 py-2 rounded-lg bg-primary/8 border border-primary/20">
+              <p className="text-[11px] font-medium text-primary leading-tight">
+                {skin.tagline}
+              </p>
             </div>
           )}
 
@@ -466,9 +534,6 @@ function DashboardLayoutContent({
 
           {/* ─── Sidebar Footer ─── */}
           <SidebarFooter className="p-3 border-t border-border/40">
-            <div className="mb-1 group-data-[collapsible=icon]:hidden">
-              <SkinSwitcher />
-            </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-accent/60 transition-all duration-200 w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -488,7 +553,7 @@ function DashboardLayoutContent({
                   <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/60 group-data-[collapsible=icon]:hidden" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52 rounded-xl shadow-lg border-border/50">
+              <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-lg border-border/50">
                 {devMode && (
                   <>
                     <DropdownMenuItem
@@ -497,6 +562,24 @@ function DashboardLayoutContent({
                     >
                       <Zap className="mr-2 h-4 w-4" />
                       <span>Hide Dev Options</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                {isCompetitorSkin && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        graduateToApex();
+                        toast.success("Welcome to native Apex CRM!", {
+                          description: "You've graduated to the full Apex experience.",
+                          duration: 4000,
+                        });
+                      }}
+                      className="cursor-pointer rounded-lg"
+                    >
+                      <Sparkles className="mr-2 h-4 w-4 text-amber-500" />
+                      <span className="text-sm">Graduate to Apex Native</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>

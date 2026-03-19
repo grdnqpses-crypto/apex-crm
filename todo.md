@@ -1708,3 +1708,57 @@
 - [ ] Developer-only panel inside Apex CRM with embedded Manus chat interface
 - [ ] Connect to Manus API when publicly available
 - [ ] CRM-aware LLM fallback until real Manus API is ready
+
+## Phase 41: Migration Monster — Complete Build
+
+### Skin System (Auto-Apply, No User Choice)
+- [x] Remove SkinSwitcher from sidebar — users never choose a skin manually
+- [x] Auto-apply competitor skin immediately on migration completion (stored in user DB record)
+- [x] Skin persists across sessions — user always sees their migrated CRM's look until they graduate
+- [x] Add "Graduate to Apex Native" button in user dropdown menu
+- [x] Store activeSkin field on user record in DB (skinPreferences table)
+
+### Competitor UI Layouts (Exact Mirroring)
+- [x] HubSpot skin: exact nav tabs (Contacts, Companies, Deals, Activities, Reports, Marketing), HubSpot blue/orange colors, HubSpot field names and terminology
+- [x] Salesforce skin: exact nav (Accounts, Contacts, Opportunities, Leads, Cases, Reports, Dashboards), Salesforce blue, Salesforce terminology (Accounts not Companies, Opportunities not Deals)
+- [x] Pipedrive skin: exact nav (Deals, Contacts, Organizations, Activities, Mail, Insights), Pipedrive green, pipeline-first layout
+- [x] Zoho skin: exact nav (Leads, Contacts, Accounts, Deals, Activities, Reports, Analytics), Zoho red/blue
+- [x] GoHighLevel skin: exact nav (Contacts, Opportunities, Calendars, Conversations, Marketing, Automation), GHL dark theme
+- [x] Close skin: exact nav (Inbox, Contacts, Leads, Opportunities, Reports), Close purple/dark
+
+### Custom Fields on Record Pages
+- [x] Contact detail page: CustomFieldsPanel renders all migrated custom fields
+- [x] Company detail page: CustomFieldsPanel renders all migrated custom fields
+- [ ] Deal detail page: render all migrated custom fields
+- [x] Custom field types: text, number, date, dropdown, checkbox, multi-select, URL
+- [x] Custom fields editable inline on record pages (edit mode in CustomFieldsPanel)
+
+### One-Click Migration Pipeline (End-to-End)
+- [ ] AI field mapper: LLM maps ALL fields including custom, with confidence scores logged (not shown to user)
+- [ ] Deduplication: auto-merge exact duplicates, flag fuzzy matches for post-import review
+- [ ] Activity history import: calls, emails, notes, meetings all imported with original timestamps
+- [ ] Custom objects: create equivalent custom record types in Apex
+- [ ] Post-import cheat sheet: AI generates "Your [Competitor] → Apex guide" after migration
+- [ ] Migration progress: real-time progress bar with phase labels (Connecting → Analyzing → Mapping → Importing → Deduplicating → Finalizing)
+- [ ] Skin auto-applied at completion
+
+### Competitive Feature Gaps
+- [ ] Gmail/Outlook email sync UI (connect inbox, view email thread on contact record)
+- [ ] Google/Outlook calendar sync UI (connect calendar, view meetings on contact record)
+- [ ] Click-to-call dialer UI (dial from contact record, log call automatically)
+- [ ] Workflow automation builder (trigger → condition → action visual builder)
+- [ ] Meeting scheduler (shareable booking link, calendar availability)
+- [ ] Mobile-responsive layout audit (all pages work on phone)
+- [ ] Proposal/e-signature UI (create proposal from deal, send for signature)
+- [ ] Integration marketplace UI (Zapier, Slack, Teams, QuickBooks connectors)
+
+### AI Engine — Move All Tasks
+- [ ] All self-healing rules moved to AI engine task queue
+- [ ] Migration field mapping runs as AI engine job
+- [ ] Prospect enrichment runs as AI engine job
+- [ ] Email optimization runs as AI engine job
+- [ ] Duplicate detection runs as AI engine job
+- [ ] Lead scoring recalculation runs as AI engine job
+- [ ] Domain health monitoring runs as AI engine job
+- [ ] Self-healing escalation: notify owner after 3 failed auto-corrections
+- [ ] Vitest tests for migration router, AI engine router, self-healing engine
