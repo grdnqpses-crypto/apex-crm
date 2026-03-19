@@ -1769,3 +1769,7 @@
 - [x] Vitest tests for migration router
 - [x] Vitest tests for AI engine router
 - [x] Vitest tests for self-healing engine (system health router)
+
+## Phase 43: Migration Completion + Adoption Monitoring
+- [x] Show duplicates merged count on migration completion screen
+- [x] Add adoption_monitor AI engine task (30-day user activity check, notifies admin of inactive users) — Task 12, runs daily

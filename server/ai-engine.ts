@@ -823,6 +823,93 @@ const TASKS: AITask[] = [
         actionsTaken
       };
     }
+  },
+
+  // ── Task 12: Adoption Monitor ─────────────────────────────────────────────────────────────
+  {
+    key: "adoption_monitor",
+    name: "Adoption Monitor",
+    description: "Monitors user login activity after migration. After 30 days, identifies users who haven't logged in or are still inactive, and notifies the admin with AI-generated action recommendations.",
+    category: "monitoring" as any,
+    priority: "normal" as any,
+    intervalMinutes: 1440, // once per day
+    async run({ log }) {
+      const db = await getDb();
+      if (!db) return { success: false, summary: "Database unavailable", error: "No DB connection" };
+      log("Checking 30-day adoption metrics...");
+
+      const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+
+      // Find companies that completed migration >= 30 days ago
+      const migratedResult = await db.execute(sql.raw(
+        `SELECT DISTINCT company_id, source_platform, created_at
+         FROM migration_jobs
+         WHERE status = 'completed' AND created_at <= ${thirtyDaysAgo}
+         ORDER BY created_at ASC
+         LIMIT 50`
+      ));
+      const migratedCompanies = ((migratedResult as any[])[0] || []) as any[];
+
+      if (migratedCompanies.length === 0) {
+        return { success: true, summary: "No companies have reached the 30-day adoption checkpoint yet.", actionsTaken: [] };
+      }
+
+      log(`Found ${migratedCompanies.length} companies past the 30-day mark. Checking user activity...`);
+      const actionsTaken: string[] = [];
+      const alerts: string[] = [];
+
+      for (const company of migratedCompanies) {
+        const usersResult = await db.execute(sql.raw(
+          `SELECT id, name, email, last_login_at
+           FROM users
+           WHERE tenant_company_id = ${company.company_id}
+             AND role != 'developer'`
+        ));
+        const users = ((usersResult as any[])[0] || []) as any[];
+        if (users.length === 0) continue;
+
+        const inactive = users.filter((u: any) => !u.last_login_at || Number(u.last_login_at) < sevenDaysAgo);
+        const neverLoggedIn = users.filter((u: any) => !u.last_login_at);
+        const activeUsers = users.length - inactive.length;
+        const adoptionRate = Math.round((activeUsers / users.length) * 100);
+
+        log(`Company ${company.company_id}: ${activeUsers}/${users.length} active (${adoptionRate}% adoption)`);
+
+        if (inactive.length > 0) {
+          const alert = `Company ${company.company_id} (migrated from ${company.source_platform}): ${inactive.length}/${users.length} users inactive. Adoption: ${adoptionRate}%.`;
+          alerts.push(alert);
+          actionsTaken.push(alert);
+          if (neverLoggedIn.length > 0) {
+            actionsTaken.push(`  → ${neverLoggedIn.length} users have NEVER logged in: ${neverLoggedIn.map((u: any) => u.email).slice(0, 5).join(', ')}`);
+          }
+        }
+      }
+
+      if (alerts.length > 0) {
+        const aiAnalysis = await invokeLLM({
+          messages: [
+            { role: "system", content: "You are a CRM adoption specialist. Analyze the adoption data and provide 3 specific, actionable recommendations. Be concise." },
+            { role: "user", content: `Adoption issues:\n${alerts.join('\n')}\n\nProvide 3 recommendations.` }
+          ]
+        });
+        const recommendations = (aiAnalysis?.choices?.[0]?.message?.content as string) || "Send re-engagement emails to inactive users.";
+        await notifyOwner({
+          title: `⚠️ Adoption Alert: ${alerts.length} company${alerts.length !== 1 ? 'ies' : 'y'} with low engagement`,
+          content: `30-day adoption check.\n\n${alerts.join('\n')}\n\n**AI Recommendations:**\n${recommendations}`
+        }).catch(() => {});
+        log(`Adoption alert sent for ${alerts.length} companies.`);
+      }
+
+      return {
+        success: true,
+        summary: alerts.length > 0
+          ? `Adoption alert: ${alerts.length} company${alerts.length !== 1 ? 'ies' : 'y'} with inactive users. Owner notified.`
+          : `All ${migratedCompanies.length} migrated companies show healthy adoption.`,
+        reasoning: "Monitoring adoption 30 days post-migration identifies at-risk accounts before they churn.",
+        actionsTaken
+      };
+    }
   }
 ];
 

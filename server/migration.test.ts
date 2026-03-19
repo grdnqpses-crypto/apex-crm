@@ -67,11 +67,12 @@ vi.mock("./_core/notification", () => ({
 vi.mock("./ai-engine", () => ({
   getEngineStatus: vi.fn().mockReturnValue({
     isRunning: true,
-    taskCount: 11,
+    taskCount: 12,
     healthScore: 100,
     tasks: [
       { key: "self_healing_monitor", name: "Self-Healing Monitor", status: "idle", isPaused: false, consecutiveFailures: 0, runCount: 5, successCount: 5, failureCount: 0, lastRunAt: Date.now() - 60000, nextRunAt: Date.now() + 240000, intervalMinutes: 5, category: "healing", priority: "critical", description: "Monitors system health", lastResult: null },
       { key: "prospect_enrichment", name: "Prospect Enrichment Engine", status: "idle", isPaused: false, consecutiveFailures: 0, runCount: 2, successCount: 2, failureCount: 0, lastRunAt: Date.now() - 60000, nextRunAt: Date.now() + 1740000, intervalMinutes: 30, category: "enrichment", priority: "normal", description: "Enriches prospects", lastResult: null },
+      { key: "adoption_monitor", name: "Adoption Monitor", status: "idle", isPaused: false, consecutiveFailures: 0, runCount: 1, successCount: 1, failureCount: 0, lastRunAt: Date.now() - 3600000, nextRunAt: Date.now() + 82800000, intervalMinutes: 1440, category: "monitoring", priority: "normal", description: "Monitors user adoption after migration", lastResult: null },
     ]
   }),
   triggerTask: vi.fn().mockResolvedValue({ success: true, summary: "Task triggered", actionsTaken: [] }),
@@ -340,10 +341,10 @@ describe("systemHealth.getPrediction", () => {
 // ─── AI Engine Task Registry Tests ───────────────────────────────────────────
 
 describe("AI Engine Task Registry", () => {
-  it("includes all 11 required tasks", async () => {
+  it("includes all 12 required tasks", async () => {
     const { getEngineStatus } = await import("./ai-engine");
     const status = getEngineStatus();
-    expect(status.taskCount).toBeGreaterThanOrEqual(2); // mocked to 2, real would be 11
+    expect(status.taskCount).toBeGreaterThanOrEqual(2); // mocked to 2, real would be 12
   });
 
   it("includes the prospect_enrichment task", async () => {
@@ -352,6 +353,14 @@ describe("AI Engine Task Registry", () => {
     const enrichmentTask = status.tasks.find((t: any) => t.key === "prospect_enrichment");
     expect(enrichmentTask).toBeDefined();
     expect(enrichmentTask?.category).toBe("enrichment");
+  });
+
+  it("includes the adoption_monitor task", async () => {
+    const { getEngineStatus } = await import("./ai-engine");
+    const status = getEngineStatus();
+    const adoptionTask = status.tasks.find((t: any) => t.key === "adoption_monitor");
+    expect(adoptionTask).toBeDefined();
+    expect(adoptionTask?.intervalMinutes).toBe(1440); // runs daily
   });
 
   it("engine reports as running", async () => {

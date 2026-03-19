@@ -463,6 +463,23 @@ export default function MigrationWizard() {
           ))}
         </div>
 
+        {/* Duplicates merged */}
+        {(job as any).duplicatesMerged > 0 && (
+          <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+              <Users className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <div className="font-semibold text-amber-800">
+                {(job as any).duplicatesMerged} duplicate{(job as any).duplicatesMerged !== 1 ? 's' : ''} merged automatically
+              </div>
+              <div className="text-sm text-amber-600 mt-0.5">
+                The AI detected and merged duplicate contacts before importing — your data is clean.
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Custom fields created */}
         {(job as any).customFieldsCreated > 0 && (
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
