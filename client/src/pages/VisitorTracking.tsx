@@ -1,161 +1,393 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Eye, Building2, Globe, UserPlus, Clock, Plus, Code, Copy, Trash2, CheckCircle, AlertCircle, MonitorSmartphone } from "lucide-react";
+import {
+  Eye, Building2, Globe, UserPlus, Clock, Code, Copy, Trash2,
+  CheckCircle, AlertCircle, MonitorSmartphone, Sparkles, Loader2,
+  Mail, ChevronDown, ChevronUp, Zap,
+} from "lucide-react";
+
+// ─── AI progress steps shown during setup ───────────────────────────────────
+const PROGRESS_STEPS = [
+  { id: "fetch",   label: "Fetching your website…" },
+  { id: "detect",  label: "Detecting platform…" },
+  { id: "attempt", label: "Attempting automatic installation…" },
+  { id: "finalize","label": "Finalising…" },
+];
+
+function ProgressStep({ label, state }: { label: string; state: "pending" | "active" | "done" }) {
+  return (
+    <div className="flex items-center gap-3 py-1.5">
+      {state === "done"    && <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />}
+      {state === "active"  && <Loader2 className="w-4 h-4 text-primary animate-spin flex-shrink-0" />}
+      {state === "pending" && <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/30 flex-shrink-0" />}
+      <span className={state === "pending" ? "text-muted-foreground text-sm" : "text-sm font-medium"}>{label}</span>
+    </div>
+  );
+}
+
+// ─── Platform badge colours ──────────────────────────────────────────────────
+const PLATFORM_COLORS: Record<string, string> = {
+  wordpress:   "bg-blue-500/10 text-blue-400 border-blue-500/30",
+  shopify:     "bg-green-500/10 text-green-400 border-green-500/30",
+  webflow:     "bg-purple-500/10 text-purple-400 border-purple-500/30",
+  wix:         "bg-yellow-500/10 text-yellow-400 border-yellow-500/30",
+  squarespace: "bg-gray-500/10 text-gray-400 border-gray-500/30",
+  framer:      "bg-pink-500/10 text-pink-400 border-pink-500/30",
+  weebly:      "bg-orange-500/10 text-orange-400 border-orange-500/30",
+  godaddy:     "bg-green-600/10 text-green-300 border-green-600/30",
+  custom:      "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
+  unknown:     "bg-muted text-muted-foreground border-border",
+};
 
 export default function VisitorTracking() {
-  const [showAddWebsite, setShowAddWebsite] = useState(false);
-  const [showScript, setShowScript] = useState<{ name: string; trackingId: string } | null>(null);
-  const [siteName, setSiteName] = useState("");
-  const [siteDomain, setSiteDomain] = useState("");
+  // ── Setup state ─────────────────────────────────────────────────────────────
+  const [url, setUrl] = useState("");
+  const [isRunning, setIsRunning] = useState(false);
+  const [activeStep, setActiveStep] = useState(-1);
+  const [result, setResult] = useState<null | {
+    installMethod: "auto" | "mailto";
+    platform: string;
+    platformTitle: string;
+    siteName: string;
+    trackingId: string;
+    trackingScript: string;
+    message: string;
+    mailtoLink: string | null;
+    manualSteps: string[];
+  }>(null);
+  const [showSteps, setShowSteps] = useState(false);
+  const [showScript, setShowScript] = useState(false);
 
+  // ── Website list + sessions ──────────────────────────────────────────────────
   const websites = trpc.visitorTracking.listWebsites.useQuery();
-  const sessions = trpc.visitorTracking.list.useQuery();
-  const utils = trpc.useUtils();
+  const sessions  = trpc.visitorTracking.list.useQuery();
+  const utils     = trpc.useUtils();
 
-  const addWebsite = trpc.visitorTracking.addWebsite.useMutation({
+  const setupTracking = trpc.visitorTracking.setupTracking.useMutation({
     onSuccess: (data) => {
-      utils.visitorTracking.listWebsites.invalidate();
-      setShowAddWebsite(false);
-      setShowScript({ name: siteName, trackingId: data.trackingId });
-      setSiteName("");
-      setSiteDomain("");
-      toast.success("Website added! Copy the tracking script below.");
+      setActiveStep(3);
+      setTimeout(() => {
+        setIsRunning(false);
+        setActiveStep(-1);
+        setResult(data);
+        utils.visitorTracking.listWebsites.invalidate();
+      }, 600);
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => {
+      setIsRunning(false);
+      setActiveStep(-1);
+      toast.error(e.message || "Setup failed — please try again.");
+    },
   });
 
   const removeWebsite = trpc.visitorTracking.removeWebsite.useMutation({
     onSuccess: () => { utils.visitorTracking.listWebsites.invalidate(); toast.success("Website removed"); },
   });
 
+  const verify = trpc.visitorTracking.verifyInstallation.useMutation({
+    onSuccess: (d) => {
+      if (d.verified) toast.success("✅ Tracking script detected on your website!");
+      else toast.error("Script not found yet — it may take a few minutes after installation.");
+    },
+  });
+
   const convert = trpc.visitorTracking.convertToProspect.useMutation({
     onSuccess: () => { sessions.refetch(); toast.success("Converted to prospect"); },
   });
 
-  const identified = sessions.data?.filter((s: any) => s.identifiedCompany) || [];
-  const anonymous = sessions.data?.filter((s: any) => !s.identifiedCompany) || [];
+  // Animate progress steps while running
+  const stepTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!isRunning) return;
+    setActiveStep(0);
+    const delays = [0, 1200, 2800, 5000];
+    delays.forEach((d, i) => {
+      stepTimer.current = setTimeout(() => setActiveStep(i), d);
+    });
+    return () => { if (stepTimer.current) clearTimeout(stepTimer.current); };
+  }, [isRunning]);
 
-  const getTrackingScript = (trackingId: string) =>
-    `<!-- Apex CRM Visitor Tracking -->\n<script>\n  (function(a,p,e,x,c,r,m){\n    a[x]=a[x]||function(){(a[x].q=a[x].q||[]).push(arguments)};\n    c=p.createElement(e);c.async=1;\n    c.src='https://track.apexcrm.io/v1/tracker.js?id='+r;\n    m=p.getElementsByTagName(e)[0];m.parentNode.insertBefore(c,m);\n  })(window,document,'script','apexTrack','${trackingId}');\n  apexTrack('init', '${trackingId}');\n  apexTrack('pageview');\n</script>`;
-
-  const copyScript = (trackingId: string) => {
-    navigator.clipboard.writeText(getTrackingScript(trackingId));
-    toast.success("Tracking script copied to clipboard!");
+  const handleSetup = () => {
+    if (!url.trim()) { toast.error("Please enter your website URL"); return; }
+    setResult(null);
+    setIsRunning(true);
+    setupTracking.mutate({ url: url.trim() });
   };
+
+  const copyScript = (script: string) => {
+    navigator.clipboard.writeText(script);
+    toast.success("Tracking script copied!");
+  };
+
+  const identified = sessions.data?.filter((s: any) => s.identifiedCompany) || [];
+  const anonymous  = sessions.data?.filter((s: any) => !s.identifiedCompany) || [];
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Visitor Tracking</h1>
-          <p className="text-muted-foreground">Identify anonymous website visitors — reveal companies, track behavior, convert to prospects</p>
-        </div>
-        <Button onClick={() => setShowAddWebsite(true)}>
-          <Plus className="w-4 h-4 mr-2" />Add Website
-        </Button>
+      {/* ── Header ────────────────────────────────────────────────────────────── */}
+      <div>
+        <h1 className="text-2xl font-bold">Visitor Tracking</h1>
+        <p className="text-muted-foreground">Identify anonymous website visitors — reveal companies, track behaviour, convert to prospects. Free on all plans.</p>
       </div>
 
-      <Tabs defaultValue={websites.data?.length === 0 ? "setup" : "visitors"}>
+      <Tabs defaultValue="setup">
         <TabsList>
           <TabsTrigger value="setup">
-            <MonitorSmartphone className="w-4 h-4 mr-2" />My Websites
+            <MonitorSmartphone className="w-4 h-4 mr-2" />Set Up Tracking
+          </TabsTrigger>
+          <TabsTrigger value="websites">
+            <Globe className="w-4 h-4 mr-2" />My Websites
             {websites.data && websites.data.length > 0 && (
               <Badge className="ml-2 text-xs">{websites.data.length}</Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="visitors">
-            <Eye className="w-4 h-4 mr-2" />Visitor Sessions
+            <Eye className="w-4 h-4 mr-2" />Visitors
             {sessions.data && sessions.data.length > 0 && (
               <Badge className="ml-2 text-xs">{sessions.data.length}</Badge>
             )}
           </TabsTrigger>
         </TabsList>
 
-        {/* My Websites Tab */}
-        <TabsContent value="setup" className="space-y-4">
-          {websites.data?.length === 0 ? (
-            <Card className="border-dashed border-2 border-border">
-              <CardContent className="py-16 text-center">
-                <Globe className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No websites added yet</h3>
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  Add your website to start tracking visitors. You will get a JavaScript snippet to paste into your site's head tag.
+        {/* ── Set Up Tracking Tab ───────────────────────────────────────────── */}
+        <TabsContent value="setup" className="space-y-4 mt-4">
+          <Card className="border-border/60">
+            <CardContent className="pt-6 pb-6">
+              {/* Hero */}
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
+                  <Sparkles className="w-7 h-7 text-primary" />
+                </div>
+                <h2 className="text-xl font-bold mb-1">AI-Powered One-Click Install</h2>
+                <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                  Enter your website URL. Apex detects your platform and installs the tracking script automatically — no technical knowledge needed.
                 </p>
-                <Button onClick={() => setShowAddWebsite(true)}>
-                  <Plus className="w-4 h-4 mr-2" />Add Your First Website
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {websites.data?.map((site: any) => (
-                <Card key={site.id} className="border-border/50">
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Globe className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold">{site.twName}</span>
-                          <Badge variant={site.twIsActive ? "default" : "secondary"} className="text-xs">
-                            {site.twIsActive ? "Active" : "Inactive"}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{site.twDomain}</p>
-                        <p className="text-xs text-muted-foreground font-mono mt-1">ID: {site.twTrackingId}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setShowScript({ name: site.twName, trackingId: site.twTrackingId })}>
-                        <Code className="w-4 h-4 mr-1" />Get Script
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => removeWebsite.mutate({ id: site.id })}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              <Button variant="outline" onClick={() => setShowAddWebsite(true)} className="w-full">
-                <Plus className="w-4 h-4 mr-2" />Add Another Website
-              </Button>
-            </div>
-          )}
+              </div>
 
-          {/* Setup Instructions */}
-          <Card className="bg-muted/30">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />How It Works
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <div className="flex gap-3"><span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center flex-shrink-0 font-bold">1</span><span>Add your website and get a unique tracking ID</span></div>
-              <div className="flex gap-3"><span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center flex-shrink-0 font-bold">2</span><span>Paste the JavaScript snippet into your website's head section</span></div>
-              <div className="flex gap-3"><span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center flex-shrink-0 font-bold">3</span><span>Apex identifies anonymous visitors using IP intelligence and reverse DNS lookup</span></div>
-              <div className="flex gap-3"><span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center flex-shrink-0 font-bold">4</span><span>Convert identified companies to prospects with one click</span></div>
+              {/* Input + button */}
+              <div className="flex gap-2 max-w-xl mx-auto">
+                <Input
+                  placeholder="https://yourwebsite.com"
+                  value={url}
+                  onChange={e => setUrl(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && !isRunning && handleSetup()}
+                  disabled={isRunning}
+                  className="flex-1 h-11 text-base"
+                />
+                <Button
+                  onClick={handleSetup}
+                  disabled={isRunning || !url.trim()}
+                  className="h-11 px-6 font-semibold"
+                >
+                  {isRunning ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
+                  {isRunning ? "Setting up…" : "Set Up Tracking"}
+                </Button>
+              </div>
+
+              {/* Progress animation */}
+              {isRunning && (
+                <div className="mt-6 max-w-sm mx-auto bg-muted/40 rounded-xl p-4 border border-border/40">
+                  {PROGRESS_STEPS.map((step, i) => (
+                    <ProgressStep
+                      key={step.id}
+                      label={step.label}
+                      state={i < activeStep ? "done" : i === activeStep ? "active" : "pending"}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Result */}
+              {result && !isRunning && (
+                <div className="mt-6 max-w-xl mx-auto space-y-4">
+                  {/* Status banner */}
+                  {result.installMethod === "auto" ? (
+                    <div className="flex items-start gap-3 bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+                      <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-semibold text-green-400">Installed automatically!</p>
+                        <p className="text-sm text-muted-foreground mt-0.5">{result.message}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
+                      <Mail className="w-6 h-6 text-amber-400 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-semibold text-amber-400">One more step needed</p>
+                          <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${PLATFORM_COLORS[result.platform] || PLATFORM_COLORS.unknown}`}>
+                            {result.platformTitle}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{result.message}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action buttons */}
+                  <div className="flex flex-wrap gap-2">
+                    {result.mailtoLink && (
+                      <Button
+                        asChild
+                        className="bg-amber-500 hover:bg-amber-600 text-white font-semibold"
+                      >
+                        <a href={result.mailtoLink}>
+                          <Mail className="w-4 h-4 mr-2" />Open in Email — Send to Developer
+                        </a>
+                      </Button>
+                    )}
+                    <Button variant="outline" onClick={() => setShowScript(s => !s)}>
+                      <Code className="w-4 h-4 mr-2" />{showScript ? "Hide Script" : "View Script"}
+                    </Button>
+                    {result.manualSteps.length > 0 && (
+                      <Button variant="ghost" onClick={() => setShowSteps(s => !s)}>
+                        {showSteps ? <ChevronUp className="w-4 h-4 mr-2" /> : <ChevronDown className="w-4 h-4 mr-2" />}
+                        {showSteps ? "Hide Steps" : "Show Manual Steps"}
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Tracking script */}
+                  {showScript && (
+                    <div className="relative">
+                      <pre className="bg-zinc-900 text-zinc-100 rounded-xl p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap border border-border leading-relaxed">
+                        {result.trackingScript}
+                      </pre>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="absolute top-2 right-2"
+                        onClick={() => copyScript(result.trackingScript)}
+                      >
+                        <Copy className="w-3 h-3 mr-1" />Copy
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Manual steps */}
+                  {showSteps && result.manualSteps.length > 0 && (
+                    <div className="bg-muted/40 rounded-xl p-4 border border-border/40">
+                      <p className="text-sm font-semibold mb-3">Manual installation steps ({result.platformTitle}):</p>
+                      <ol className="space-y-2">
+                        {result.manualSteps.map((step, i) => (
+                          <li key={i} className="flex gap-3 text-sm">
+                            <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center flex-shrink-0 font-bold mt-0.5">{i + 1}</span>
+                            <span className="text-muted-foreground">{step}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+
+                  {/* Verify button */}
+                  <div className="flex items-center gap-3 pt-1">
+                    <p className="text-xs text-muted-foreground">After installation, verify it's working:</p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const site = websites.data?.find((w: any) => w.twTrackingId === result.trackingId);
+                        if (site) verify.mutate({ id: site.id });
+                        else toast.info("Website saved — check the My Websites tab to verify.");
+                      }}
+                      disabled={verify.isPending}
+                    >
+                      {verify.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <CheckCircle className="w-3 h-3 mr-1" />}
+                      Verify Installation
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* How it works — shown when idle */}
+              {!isRunning && !result && (
+                <div className="mt-8 grid grid-cols-3 gap-4 max-w-xl mx-auto">
+                  {[
+                    { icon: Globe,        title: "Detects Platform",      desc: "WordPress, Shopify, Webflow, Wix, Squarespace, and more" },
+                    { icon: Zap,          title: "Auto-Installs",         desc: "Injects the script via platform API — no code editing needed" },
+                    { icon: Building2,    title: "Identifies Visitors",   desc: "Reveals which companies are browsing your site in real time" },
+                  ].map(({ icon: Icon, title, desc }) => (
+                    <div key={title} className="text-center p-3 rounded-xl bg-muted/30 border border-border/40">
+                      <Icon className="w-5 h-5 text-primary mx-auto mb-2" />
+                      <p className="text-xs font-semibold mb-1">{title}</p>
+                      <p className="text-xs text-muted-foreground leading-snug">{desc}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Visitor Sessions Tab */}
-        <TabsContent value="visitors" className="space-y-4">
+        {/* ── My Websites Tab ───────────────────────────────────────────────── */}
+        <TabsContent value="websites" className="space-y-3 mt-4">
+          {websites.data?.length === 0 ? (
+            <Card className="border-dashed border-2 border-border">
+              <CardContent className="py-12 text-center">
+                <Globe className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+                <p className="font-semibold mb-1">No websites yet</p>
+                <p className="text-sm text-muted-foreground">Use the Set Up Tracking tab to add your first website.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            websites.data?.map((site: any) => (
+              <Card key={site.id} className="border-border/50">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Globe className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">{site.twName}</span>
+                        <Badge variant={site.twIsActive ? "default" : "secondary"} className="text-xs">
+                          {site.twIsActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{site.twDomain}</p>
+                      <p className="text-xs text-muted-foreground font-mono mt-0.5">ID: {site.twTrackingId}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => verify.mutate({ id: site.id })}
+                      disabled={verify.isPending}
+                    >
+                      {verify.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <CheckCircle className="w-3 h-3 mr-1" />}
+                      Verify
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => removeWebsite.mutate({ id: site.id })}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </TabsContent>
+
+        {/* ── Visitor Sessions Tab ──────────────────────────────────────────── */}
+        <TabsContent value="visitors" className="space-y-4 mt-4">
           <div className="grid grid-cols-4 gap-4">
             {[
-              { label: "Total Visitors", value: sessions.data?.length || 0, icon: Eye, color: "text-blue-400" },
-              { label: "Identified", value: identified.length, icon: Building2, color: "text-green-400" },
-              { label: "Anonymous", value: anonymous.length, icon: Globe, color: "text-gray-400" },
-              { label: "Converted", value: sessions.data?.filter((s: any) => s.convertedToProspect).length || 0, icon: UserPlus, color: "text-purple-400" },
+              { label: "Total Visitors",  value: sessions.data?.length || 0,                                              icon: Eye,       color: "text-blue-400" },
+              { label: "Identified",      value: identified.length,                                                       icon: Building2, color: "text-green-400" },
+              { label: "Anonymous",       value: anonymous.length,                                                        icon: Globe,     color: "text-gray-400" },
+              { label: "Converted",       value: sessions.data?.filter((s: any) => s.convertedToProspect).length || 0,   icon: UserPlus,  color: "text-purple-400" },
             ].map(s => (
               <Card key={s.label} className="border-border/50">
                 <CardContent className="p-4 flex items-center justify-between">
@@ -170,8 +402,8 @@ export default function VisitorTracking() {
             <Card className="border-dashed border-2 border-border">
               <CardContent className="py-12 text-center">
                 <AlertCircle className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-                <h3 className="font-semibold mb-1">No visitor sessions yet</h3>
-                <p className="text-sm text-muted-foreground">Add a website and install the tracking script to start seeing visitors.</p>
+                <p className="font-semibold mb-1">No visitor sessions yet</p>
+                <p className="text-sm text-muted-foreground">Set up tracking on your website to start seeing visitors.</p>
               </CardContent>
             </Card>
           ) : (
@@ -186,15 +418,24 @@ export default function VisitorTracking() {
                           <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center"><Building2 className="w-5 h-5 text-green-400" /></div>
                             <div>
-                              <div className="flex items-center gap-2"><span className="font-semibold">{s.identifiedCompany}</span>{s.identifiedIndustry && <Badge variant="outline">{s.identifiedIndustry}</Badge>}</div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold">{s.identifiedCompany}</span>
+                                {s.identifiedIndustry && <Badge variant="outline">{s.identifiedIndustry}</Badge>}
+                              </div>
                               <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
                                 {s.identifiedDomain && <span><Globe className="w-3 h-3 inline mr-1" />{s.identifiedDomain}</span>}
                                 <span><Clock className="w-3 h-3 inline mr-1" />{s.totalPageViews || 0} pages · {Math.round((s.totalDuration || 0) / 60)}min</span>
                               </div>
                             </div>
                           </div>
-                          <Button variant="outline" size="sm" onClick={() => convert.mutate({ id: s.id })} disabled={s.convertedToProspect || convert.isPending}>
-                            <UserPlus className="w-4 h-4 mr-1" />{s.convertedToProspect ? "Converted" : "Convert to Prospect"}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => convert.mutate({ id: s.id })}
+                            disabled={s.convertedToProspect || convert.isPending}
+                          >
+                            <UserPlus className="w-4 h-4 mr-1" />
+                            {s.convertedToProspect ? "Converted" : "Convert to Prospect"}
                           </Button>
                         </CardContent>
                       </Card>
@@ -202,18 +443,21 @@ export default function VisitorTracking() {
                   </div>
                 </div>
               )}
+
               {anonymous.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold mb-3 flex items-center gap-2"><Eye className="w-5 h-5" />Anonymous Visitors</h3>
                   <div className="space-y-2">
-                    {anonymous.slice(0, 10).map((s: any) => (
+                    {anonymous.slice(0, 20).map((s: any) => (
                       <Card key={s.id} className="border-border/50">
                         <CardContent className="p-3 flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"><Eye className="w-4 h-4 text-muted-foreground" /></div>
                             <div>
                               <p className="text-sm font-medium">Anonymous Visitor</p>
-                              <p className="text-xs text-muted-foreground">{s.totalPageViews || 1} page{(s.totalPageViews || 1) > 1 ? "s" : ""} · {new Date(s.lastVisit).toLocaleDateString()}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {s.totalPageViews || 1} page{(s.totalPageViews || 1) > 1 ? "s" : ""} · {new Date(s.lastVisit).toLocaleDateString()}
+                              </p>
                             </div>
                           </div>
                           <Badge variant="secondary">Unidentified</Badge>
@@ -227,75 +471,6 @@ export default function VisitorTracking() {
           )}
         </TabsContent>
       </Tabs>
-
-      {/* Add Website Dialog */}
-      <Dialog open={showAddWebsite} onOpenChange={setShowAddWebsite}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add Website</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="siteName">Website Name</Label>
-              <Input id="siteName" placeholder="e.g. My Company Website" value={siteName} onChange={e => setSiteName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="siteDomain">Domain</Label>
-              <Input id="siteDomain" placeholder="e.g. mycompany.com or https://mycompany.com" value={siteDomain} onChange={e => setSiteDomain(e.target.value)} />
-              <p className="text-xs text-muted-foreground">Enter your website's domain. The protocol will be stripped automatically.</p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddWebsite(false)}>Cancel</Button>
-            <Button onClick={() => addWebsite.mutate({ name: siteName, domain: siteDomain })} disabled={!siteName || !siteDomain || addWebsite.isPending}>
-              {addWebsite.isPending ? "Adding..." : "Add Website & Get Script"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Tracking Script Dialog */}
-      <Dialog open={!!showScript} onOpenChange={() => setShowScript(null)}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Code className="w-5 h-5" />Tracking Script for {showScript?.name}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-              <div className="text-sm">
-                <p className="font-medium text-green-700 dark:text-green-400">Website added successfully!</p>
-                <p className="text-muted-foreground mt-1">Paste this script into the head section of every page on your website.</p>
-              </div>
-            </div>
-            <div className="relative">
-              <pre className="bg-muted rounded-lg p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap border border-border">
-                {showScript && getTrackingScript(showScript.trackingId)}
-              </pre>
-              <Button size="sm" variant="outline" className="absolute top-2 right-2" onClick={() => showScript && copyScript(showScript.trackingId)}>
-                <Copy className="w-3 h-3 mr-1" />Copy
-              </Button>
-            </div>
-            <div className="text-sm text-muted-foreground space-y-1">
-              <p className="font-medium">Where to add this script:</p>
-              <ul className="list-disc list-inside space-y-1 text-xs">
-                <li><strong>WordPress:</strong> Appearance → Theme Editor → header.php, or use a header plugin</li>
-                <li><strong>Shopify:</strong> Online Store → Themes → Edit Code → theme.liquid</li>
-                <li><strong>Webflow:</strong> Project Settings → Custom Code → Head Code</li>
-                <li><strong>Any HTML site:</strong> Paste before the closing head tag</li>
-              </ul>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => showScript && copyScript(showScript.trackingId)}>
-              <Copy className="w-4 h-4 mr-2" />Copy Script
-            </Button>
-            <Button variant="outline" onClick={() => setShowScript(null)}>Done</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

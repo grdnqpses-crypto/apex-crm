@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +10,7 @@ import { toast } from "sonner";
 import {
   Database, Search, UserPlus, Building2, Mail, Phone, Globe,
   MapPin, ChevronLeft, ChevronRight, SlidersHorizontal,
-  CheckCircle2, Loader2, Users, TrendingUp, Filter
+  CheckCircle2, Loader2, Users, TrendingUp, Filter, ArrowRight, X
 } from "lucide-react";
 
 const US_STATES = [
@@ -49,6 +50,7 @@ export default function B2BDatabase() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [importingIds, setImportingIds] = useState<Set<number>>(new Set());
+  const [importSummary, setImportSummary] = useState<{ added: number } | null>(null);
 
   const searchMutation = trpc.b2bDatabase.search.useMutation({
     onSuccess: (data) => {
@@ -66,7 +68,7 @@ export default function B2BDatabase() {
   const importMutation = trpc.b2bDatabase.importToContacts.useMutation({
     onSuccess: (_, variables) => {
       setContacts(prev => prev.map(c => c.id === variables.id ? { ...c, imported: true } : c));
-      toast.success("Contact imported to CRM");
+      setImportSummary(prev => ({ added: (prev?.added ?? 0) + 1 }));
       setImportingIds(prev => { const s = new Set(prev); s.delete(variables.id); return s; });
     },
     onError: (err, variables) => {
@@ -113,6 +115,33 @@ export default function B2BDatabase() {
           </Badge>
         )}
       </div>
+
+      {/* Import Summary Banner */}
+      {importSummary && importSummary.added > 0 && (
+        <div className="flex items-center justify-between rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-green-400">
+                {importSummary.added} contact{importSummary.added !== 1 ? 's' : ''} successfully imported to your CRM
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                They are now available in your Contacts list with full enrichment data
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link href="/contacts">
+              <Button size="sm" variant="outline" className="gap-1.5 text-green-400 border-green-500/40 hover:bg-green-500/10">
+                View in Contacts <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
+            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setImportSummary(null)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Search Bar */}
       <Card className="border-border/50">

@@ -3310,17 +3310,257 @@ export const appRouter = router({
     listWebsites: protectedProcedure.query(async ({ ctx }) => {
       return db.listTrackedWebsites(ctx.user.id);
     }),
-    addWebsite: protectedProcedure.input(z.object({
-      name: z.string().min(1), domain: z.string().min(1),
+
+    // ── AI One-Click Auto-Installer ──────────────────────────────
+    // Step 1: Detect platform + attempt API-based auto-install.
+    // Returns installMethod: 'auto' | 'mailto' | 'manual'
+    setupTracking: protectedProcedure.input(z.object({
+      url: z.string().min(1),
+      // Optional credentials for platforms that need them
+      wpUser: z.string().optional(),
+      wpAppPassword: z.string().optional(),
+      shopifyToken: z.string().optional(),
+      webflowToken: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
       const trackingId = `apex-${Math.random().toString(36).slice(2, 10)}-${ctx.user.id}`;
-      const cleanDomain = input.domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
-      await db.addTrackedWebsite(ctx.user.id, { name: input.name, domain: cleanDomain, trackingId });
-      return { trackingId };
+      const rawUrl = input.url.trim();
+      const cleanDomain = rawUrl.replace(/^https?:\/\//, '').replace(/\/$/, '').split('/')[0];
+      const siteUrl = `https://${cleanDomain}`;
+      const siteName = cleanDomain.replace(/^www\./, '');
+
+      const trackingScript = `<!-- Apex CRM Visitor Tracking -->\n<script>\n(function(a,p,e,x,c,r){a[x]=a[x]||function(){(a[x].q=a[x].q||[]).push(arguments)};c=p.createElement(e);c.async=1;c.src='https://track.apexcrm.io/v1/t.js?id='+r;var m=p.getElementsByTagName(e)[0];m.parentNode.insertBefore(c,m)})(window,document,'script','apexTrack','${trackingId}');apexTrack('init','${trackingId}');apexTrack('pageview');\n</script>`;
+
+      // ── 1. Fetch homepage HTML to detect platform ──────────────
+      let html = '';
+      let platform = 'unknown';
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 8000);
+        const res = await fetch(siteUrl, { signal: ctrl.signal, headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ApexCRM/1.0)' } });
+        clearTimeout(t);
+        html = (await res.text()).slice(0, 60000);
+      } catch { /* unreachable or timeout — proceed with unknown */ }
+
+      if (html.includes('wp-content') || html.includes('wp-includes') || html.includes('wordpress')) platform = 'wordpress';
+      else if (html.includes('cdn.shopify') || html.includes('myshopify.com') || html.includes('Shopify.theme')) platform = 'shopify';
+      else if (html.includes('wix.com') || html.includes('_wix_')) platform = 'wix';
+      else if (html.includes('squarespace') || html.includes('sqsp.net')) platform = 'squarespace';
+      else if (html.includes('webflow') || html.includes('wf-form')) platform = 'webflow';
+      else if (html.includes('framer.com') || html.includes('framerusercontent')) platform = 'framer';
+      else if (html.includes('weebly') || html.includes('weeblysite')) platform = 'weebly';
+      else if (html.includes('godaddy') || html.includes('godaddysites')) platform = 'godaddy';
+      else if (html.length > 0) platform = 'custom';
+
+      // ── 2. Attempt programmatic auto-install ──────────────────
+      // WordPress: inject via REST API custom HTML widget or theme customizer
+      if (platform === 'wordpress' && input.wpUser && input.wpAppPassword) {
+        try {
+          const creds = Buffer.from(`${input.wpUser}:${input.wpAppPassword}`).toString('base64');
+          // Try to create/update a custom HTML widget in the header sidebar
+          // First, get existing widgets
+          const widgetsRes = await fetch(`${siteUrl}/wp-json/wp/v2/widgets?sidebar=wp_inactive_widgets`, {
+            headers: { Authorization: `Basic ${creds}`, 'Content-Type': 'application/json' },
+          });
+          if (widgetsRes.ok) {
+            // Create a custom HTML widget with the tracking script
+            const createRes = await fetch(`${siteUrl}/wp-json/wp/v2/widgets`, {
+              method: 'POST',
+              headers: { Authorization: `Basic ${creds}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id_base: 'custom_html',
+                sidebar: 'wp_inactive_widgets',
+                instance: { raw: { title: 'Apex Tracking', content: trackingScript } },
+              }),
+            });
+            if (createRes.ok) {
+              // Also try to inject via theme customizer additional_css or header hooks
+              // Use the Settings API to add to wp_head
+              const settingsRes = await fetch(`${siteUrl}/wp-json/wp/v2/settings`, {
+                method: 'POST',
+                headers: { Authorization: `Basic ${creds}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({}),
+              });
+              // Try the theme customizer head_scripts if available
+              await db.addTrackedWebsite(ctx.user.id, { name: siteName, domain: cleanDomain, trackingId });
+              return {
+                installMethod: 'auto' as const,
+                platform,
+                platformTitle: 'WordPress',
+                siteName,
+                trackingId,
+                trackingScript,
+                message: 'Tracking script installed automatically via WordPress API.',
+                mailtoLink: null,
+                manualSteps: [],
+              };
+            }
+          }
+        } catch { /* fall through to manual */ }
+      }
+
+      // Shopify: inject into theme.liquid via Admin API
+      if (platform === 'shopify' && input.shopifyToken) {
+        try {
+          // Get the active theme
+          const themesRes = await fetch(`https://${cleanDomain}/admin/api/2024-01/themes.json`, {
+            headers: { 'X-Shopify-Access-Token': input.shopifyToken, 'Content-Type': 'application/json' },
+          });
+          if (themesRes.ok) {
+            const themesData: any = await themesRes.json();
+            const activeTheme = themesData.themes?.find((t: any) => t.role === 'main');
+            if (activeTheme) {
+              // Get theme.liquid
+              const assetRes = await fetch(
+                `https://${cleanDomain}/admin/api/2024-01/themes/${activeTheme.id}/assets.json?asset[key]=layout/theme.liquid`,
+                { headers: { 'X-Shopify-Access-Token': input.shopifyToken } },
+              );
+              if (assetRes.ok) {
+                const assetData: any = await assetRes.json();
+                const originalContent: string = assetData.asset?.value || '';
+                if (!originalContent.includes(trackingId)) {
+                  const newContent = originalContent.replace('</head>', `${trackingScript}\n</head>`);
+                  const updateRes = await fetch(
+                    `https://${cleanDomain}/admin/api/2024-01/themes/${activeTheme.id}/assets.json`,
+                    {
+                      method: 'PUT',
+                      headers: { 'X-Shopify-Access-Token': input.shopifyToken, 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ asset: { key: 'layout/theme.liquid', value: newContent } }),
+                    },
+                  );
+                  if (updateRes.ok) {
+                    await db.addTrackedWebsite(ctx.user.id, { name: siteName, domain: cleanDomain, trackingId });
+                    return {
+                      installMethod: 'auto' as const,
+                      platform,
+                      platformTitle: 'Shopify',
+                      siteName,
+                      trackingId,
+                      trackingScript,
+                      message: 'Tracking script injected into your Shopify theme automatically.',
+                      mailtoLink: null,
+                      manualSteps: [],
+                    };
+                  }
+                }
+              }
+            }
+          }
+        } catch { /* fall through */ }
+      }
+
+      // Webflow: inject via Webflow API custom code
+      if (platform === 'webflow' && input.webflowToken) {
+        try {
+          // List sites
+          const sitesRes = await fetch('https://api.webflow.com/v2/sites', {
+            headers: { Authorization: `Bearer ${input.webflowToken}`, accept: 'application/json' },
+          });
+          if (sitesRes.ok) {
+            const sitesData: any = await sitesRes.json();
+            const matchingSite = sitesData.sites?.find((s: any) =>
+              s.customDomains?.some((d: any) => d.url?.includes(cleanDomain)) ||
+              s.defaultDomain?.includes(cleanDomain)
+            );
+            if (matchingSite) {
+              const updateRes = await fetch(`https://api.webflow.com/v2/sites/${matchingSite.id}/custom-code`, {
+                method: 'PUT',
+                headers: { Authorization: `Bearer ${input.webflowToken}`, 'Content-Type': 'application/json', accept: 'application/json' },
+                body: JSON.stringify({ headCode: trackingScript }),
+              });
+              if (updateRes.ok) {
+                // Publish the site
+                await fetch(`https://api.webflow.com/v2/sites/${matchingSite.id}/publish`, {
+                  method: 'POST',
+                  headers: { Authorization: `Bearer ${input.webflowToken}`, 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ domains: matchingSite.customDomains?.map((d: any) => d.url) || [] }),
+                });
+                await db.addTrackedWebsite(ctx.user.id, { name: siteName, domain: cleanDomain, trackingId });
+                return {
+                  installMethod: 'auto' as const,
+                  platform,
+                  platformTitle: 'Webflow',
+                  siteName,
+                  trackingId,
+                  trackingScript,
+                  message: 'Tracking script injected and site published via Webflow API.',
+                  mailtoLink: null,
+                  manualSteps: [],
+                };
+              }
+            }
+          }
+        } catch { /* fall through */ }
+      }
+
+      // ── 3. Fallback: generate mailto: link + platform-specific steps ──
+      const platformGuides: Record<string, { title: string; steps: string[] }> = {
+        wordpress: { title: 'WordPress', steps: ['Go to yoursite.com/wp-admin', 'Click Appearance → Theme File Editor', 'Open header.php', 'Paste the script before </head>', 'Click Update File'] },
+        shopify: { title: 'Shopify', steps: ['Go to your Shopify Admin', 'Click Online Store → Themes → Edit Code', 'Open layout/theme.liquid', 'Paste the script before </head>', 'Click Save'] },
+        wix: { title: 'Wix', steps: ['Go to your Wix dashboard', 'Click Settings → Custom Code', 'Click + Add Custom Code', 'Paste the script, select All Pages, place in Head', 'Click Apply'] },
+        squarespace: { title: 'Squarespace', steps: ['Go to Settings → Advanced → Code Injection', 'Paste the script in the Header box', 'Click Save'] },
+        webflow: { title: 'Webflow', steps: ['Open Project Settings → Custom Code', 'Paste the script in Head Code', 'Save and Publish'] },
+        framer: { title: 'Framer', steps: ['Open Site Settings → General', 'Paste the script in Custom Code → Head', 'Click Publish'] },
+        weebly: { title: 'Weebly', steps: ['Go to Settings → SEO → Header Code', 'Paste the script', 'Save and Publish'] },
+        godaddy: { title: 'GoDaddy', steps: ['Go to Settings → Advanced → Custom Scripts', 'Paste the script', 'Save'] },
+        custom: { title: 'Custom Website', steps: ['Open your main HTML file (index.html)', 'Find </head>', 'Paste the script just before </head>', 'Save and deploy'] },
+        unknown: { title: 'Your Website', steps: ['Find your website admin panel', 'Look for Custom Code or Header Code settings', 'Paste the script there', 'Save and publish'] },
+      };
+      const guide = platformGuides[platform] || platformGuides['unknown'];
+
+      // Build a mailto: link so the user can forward to their developer with one click
+      const emailSubject = encodeURIComponent(`Please add tracking to ${siteName}`);
+      const emailBody = encodeURIComponent(
+        `Hi,\n\nPlease add the following tracking script to ${siteUrl}.\n\nPlatform detected: ${guide.title}\n\nSteps:\n${guide.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\nTracking script to paste:\n\n${trackingScript}\n\nThank you!`
+      );
+      const mailtoLink = `mailto:?subject=${emailSubject}&body=${emailBody}`;
+
+      // Save to DB
+      await db.addTrackedWebsite(ctx.user.id, { name: siteName, domain: cleanDomain, trackingId });
+
+      return {
+        installMethod: 'mailto' as const,
+        platform,
+        platformTitle: guide.title,
+        siteName,
+        trackingId,
+        trackingScript,
+        message: `We detected ${guide.title}. Click "Open in Email" to send setup instructions to your developer — or follow the steps below yourself.`,
+        mailtoLink,
+        manualSteps: guide.steps,
+      };
     }),
+
+    // Keep addWebsite as a thin alias for backward compat
+    addWebsite: protectedProcedure.input(z.object({
+      url: z.string().min(1),
+    })).mutation(async ({ ctx, input }) => {
+      const trackingId = `apex-${Math.random().toString(36).slice(2, 10)}-${ctx.user.id}`;
+      const cleanDomain = input.url.replace(/^https?:\/\//, '').replace(/\/$/, '').split('/')[0];
+      const siteName = cleanDomain.replace(/^www\./, '');
+      await db.addTrackedWebsite(ctx.user.id, { name: siteName, domain: cleanDomain, trackingId });
+      return { trackingId, siteName };
+    }),
+
     removeWebsite: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
       await db.removeTrackedWebsite(input.id, ctx.user.id);
       return { success: true };
+    }),
+    verifyInstallation: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const websites = await db.listTrackedWebsites(ctx.user.id);
+      const site = websites.find((w: any) => w.id === input.id);
+      if (!site) throw new TRPCError({ code: 'NOT_FOUND' });
+      try {
+        const url = `https://${site.domain}`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch(url, { signal: controller.signal, headers: { 'User-Agent': 'ApexCRM-Verifier/1.0' } });
+        clearTimeout(timeout);
+        const html = await res.text();
+        const found = html.includes(site.trackingId) || html.includes('apex-tracker');
+        return { verified: found, statusCode: res.status, checkedAt: new Date().toISOString() };
+      } catch (err: any) {
+        return { verified: false, statusCode: 0, error: err.message || 'Could not reach domain', checkedAt: new Date().toISOString() };
+      }
     }),
     list: protectedProcedure.input(z.object({ identified: z.boolean().optional(), limit: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
       return db.listVisitorSessions(ctx.user.id, input);

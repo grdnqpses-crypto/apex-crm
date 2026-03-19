@@ -1832,3 +1832,23 @@
 - [x] EmailMasking uses useSkin() — info card uses text-primary/border-primary/bg-primary, sender domain uses skin.primaryColor
 - [x] 0 TypeScript errors after all changes
 - [x] 8/8 tests passing (skin-qa.test.ts + auth.logout.test.ts)
+
+## Phase 47b: Visitor Tracking Installation Wizard
+- [ ] Platform selector: WordPress, Shopify, Wix, Squarespace, Webflow, Custom HTML, Email Developer
+- [ ] Step-by-step instructions per platform (numbered steps, clear language, no jargon)
+- [ ] "Copy Script" button with visual confirmation
+- [ ] "Email to My Developer" option with pre-written email template
+- [ ] verifyInstallation server procedure that fetches domain HTML and checks for tracking ID
+- [ ] "Verify Installation" button per website with live status indicator
+
+## Phase 48: AI One-Click Visitor Tracking Auto-Installer (Free on All Plans)
+- [x] Server: autoInstall procedure — WordPress REST API injection (no credentials needed for public sites, optional WP credentials for private)
+- [x] Server: autoInstall procedure — Shopify Admin API injection (requires Shopify API token)
+- [x] Server: autoInstall procedure — Webflow API injection (requires Webflow API token)
+- [x] Server: autoInstall procedure — smart fallback: generate mailto: link with pre-drafted email + script for unsupported platforms
+- [x] Frontend: Simplify VisitorTracking UI to single URL input + "Set Up Tracking" button
+- [x] Frontend: Live AI progress animation showing detection steps
+- [x] Frontend: Show result — "Installed automatically ✅" or "One-click email ready 📧"
+- [x] Frontend: For fallback platforms, show "Open in Email" button (mailto: with pre-filled body)
+- [x] Frontend: Copy script button always available as manual fallback
+- [x] Visitor tracking free on all plans (no feature gate)
