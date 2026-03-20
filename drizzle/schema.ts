@@ -306,6 +306,50 @@ export const deals = mysqlTable("deals", {
 export type Deal = typeof deals.$inferSelect;
 export type InsertDeal = typeof deals.$inferInsert;
 
+// ─── Audit Logs ───
+export const auditLogs = mysqlTable("audit_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId"),
+  userId: int("userId").notNull(),
+  userEmail: varchar("userEmail", { length: 320 }),
+  userName: varchar("userName", { length: 256 }),
+  action: varchar("action", { length: 64 }).notNull(),
+  entityType: varchar("entityType", { length: 64 }).notNull(),
+  entityId: int("entityId"),
+  entityName: varchar("entityName", { length: 512 }),
+  changes: json("changes"),
+  ipAddress: varchar("ipAddress", { length: 64 }),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+export type AuditLog = typeof auditLogs.$inferSelect;
+
+// ─── Smart Views (Saved Filters) ───
+export const smartViews = mysqlTable("smart_views", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId"),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 256 }).notNull(),
+  entityType: varchar("entityType", { length: 64 }).notNull(),
+  filters: json("filters").notNull(),
+  isShared: tinyint("isShared").default(0),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type SmartView = typeof smartViews.$inferSelect;
+
+// ─── Territories ───
+export const territories = mysqlTable("territories", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId"),
+  name: varchar("name", { length: 256 }).notNull(),
+  description: text("description"),
+  assignedUserIds: json("assignedUserIds").$type<number[]>(),
+  rules: json("rules"),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type Territory = typeof territories.$inferSelect;
+
 // ─── Activities / Timeline (expanded per instructions) ───
 export const activities = mysqlTable("activities", {
   id: int("id").autoincrement().primaryKey(),

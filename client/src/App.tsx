@@ -105,6 +105,13 @@ const AccountsReceivable = lazy(() => import("./pages/AccountsReceivable"));
 const AccountsPayable = lazy(() => import("./pages/AccountsPayable"));
 const TenantBilling = lazy(() => import("./pages/TenantBilling"));
 const ApexPaymentManagement = lazy(() => import("./pages/ApexPaymentManagement"));
+const RottenDeals = lazy(() => import("./pages/RottenDeals"));
+const WinLossAnalysis = lazy(() => import("./pages/WinLossAnalysis"));
+const AuditLogs = lazy(() => import("./pages/AuditLogs"));
+const SmartViews = lazy(() => import("./pages/SmartViews"));
+const AccountHierarchy = lazy(() => import("./pages/AccountHierarchy"));
+const TerritoryManagement = lazy(() => import("./pages/TerritoryManagement"));
+const BulkActions = lazy(() => import("./pages/BulkActions"));
 
 function PageLoader() {
   return (
@@ -217,6 +224,13 @@ function Router() {
           <Route path="/accounts-payable" component={AccountsPayable} />
           <Route path="/settings/billing" component={TenantBilling} />
           <Route path="/apex/payments" component={ApexPaymentManagement} />
+          <Route path="/rotten-deals" component={RottenDeals} />
+          <Route path="/win-loss" component={WinLossAnalysis} />
+          <Route path="/audit-logs" component={AuditLogs} />
+          <Route path="/smart-views" component={SmartViews} />
+          <Route path="/account-hierarchy" component={AccountHierarchy} />
+          <Route path="/territories" component={TerritoryManagement} />
+          <Route path="/bulk-actions" component={BulkActions} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>

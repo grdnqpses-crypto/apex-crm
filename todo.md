@@ -1927,3 +1927,40 @@
 - [x] Frontend: "Set as Favicon" button in preview step — calls setFavicon, injects <link rel="icon"> dynamically
 - [x] Frontend: "Regenerate with Same Style" buttons in History tab (top 3 entries)
 - [x] Email templates: auto-embed company logoUrl at top of all outgoing CRM campaign emails
+
+## Phase 57: Competitive Audit — Batch 1 (Quick Wins)
+- [ ] Rotten Deals: flag deals inactive > configurable N days with amber/red badge on deal cards
+- [ ] Bulk Actions: multi-select on Contacts, Deals, Companies pages with bulk assign/tag/delete/export
+- [ ] Win/Loss Analysis: reason field on deal close + dedicated analytics page with charts
+- [ ] Audit Logs: admin page showing all user actions (create/update/delete) with timestamps and filters
+- [ ] Kanban View for Contacts: toggle between list and kanban on Contacts page (group by lifecycle stage)
+- [ ] Smart Views / Advanced Filters: save named filter combinations on Contacts, Deals, Companies
+- [ ] Account Hierarchy: parent company field on Companies + child companies list view
+
+## Phase 58: Competitive Audit — Batch 2 (Medium Effort)
+- [ ] Sales Forecasting Dashboard: quota setting + commit/best-case/pipeline visual with attainment %
+- [ ] Product Catalog: products with name, SKU, price, description — used in deals and proposals
+- [ ] Territory Management: assign contacts/deals to territories, round-robin routing rules
+- [ ] Lead Scoring Rule Builder: visual UI to configure Quantum Score rules (no-code)
+- [ ] AI Next Best Action: per-deal recommendation panel ("Call now", "Send proposal", "Discount offer")
+- [ ] Pipeline Inspection: pipeline health score, stuck deal alerts, velocity metrics per stage
+
+## Phase 59: Competitive Audit — Batch 3 (Larger Features)
+- [ ] Email Sequences / Cadences: multi-step drip builder with reply detection, pause on reply, A/B steps
+- [ ] Web Forms Builder: embeddable lead capture forms with field builder and CRM auto-create
+- [ ] Reputation Management: review request automation + embeddable review widget
+- [ ] E-Signature: native document signing or deep DocuSign/PandaDoc integration
+- [ ] AI Out-of-Office Detection: parse email replies, auto-pause sequences on OOO detection
+
+## Phase 60: Competitive Audit — Batch 4 (Remaining Gaps)
+- [ ] Journey Orchestration: visual drag-and-drop customer journey map with triggers and actions
+- [ ] WhatsApp Integration: send/receive WhatsApp messages via Twilio or Meta Business API
+- [ ] Social Media Scheduler: schedule posts to LinkedIn, Facebook, Instagram from CRM
+- [ ] Power Dialer mode: auto-advance to next contact after call ends
+- [ ] AI Anomaly Detection: flag unusual drops in pipeline/revenue with explanation
+
+## Phase 61: AI Panel Resize
+- [ ] AI chat panel expandable to half-page, full-page, or custom drag-resize
+- [ ] Size preference persisted in localStorage
+- [ ] Smooth CSS transitions between size modes
+- [ ] Keyboard shortcut to toggle full-screen AI panel

@@ -33,7 +33,7 @@ import {
   Receipt, Globe2, UserPlus, Headphones, Database as DatabaseIcon, Flame as FlameIcon,
   EyeIcon, MailOpen, Paintbrush, ArrowRightLeft, Crown, Command, Package, CreditCard,
   TrendingDown, DollarSign, Tag, Home, Calendar, MessageSquare, Megaphone, BarChart2,
-  Inbox, LucideIcon,
+  Inbox, Layers, LucideIcon,
 } from "lucide-react";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -89,6 +89,9 @@ const standardSections = [
       { icon: Briefcase, label: "Meeting Scheduler", path: "/meeting-scheduler" },
       { icon: FileText, label: "Proposals", path: "/proposals" },
       { icon: DatabaseIcon, label: "Custom Objects", path: "/custom-objects" },
+      { icon: TrendingDown, label: "Rotten Deals", path: "/rotten-deals" },
+      { icon: Building2, label: "Account Hierarchy", path: "/account-hierarchy" },
+      { icon: Globe2, label: "Territory Management", path: "/territory-management" },
     ],
   },
   {
@@ -129,6 +132,7 @@ const standardSections = [
     label: "Compliance & Safety",
     items: [
       { icon: ShieldCheck, label: "Compliance Center", path: "/compliance" },
+      { icon: ScrollText, label: "Audit Logs", path: "/audit-logs" },
       { icon: Ban, label: "Suppression List", path: "/suppression" },
       { icon: Settings, label: "Sender Settings", path: "/sender-settings" },
       { icon: Globe, label: "Domain Stats", path: "/domain-stats" },
@@ -175,6 +179,9 @@ const standardSections = [
     items: [
       { icon: BarChart3, label: "Reports", path: "/analytics" },
       { icon: BarChart2, label: "Report Builder", path: "/report-builder" },
+      { icon: TrendingUp, label: "Win/Loss Analysis", path: "/win-loss" },
+      { icon: Filter, label: "Smart Views", path: "/smart-views" },
+      { icon: Layers, label: "Bulk Actions", path: "/bulk-actions" },
     ],
   },
   {

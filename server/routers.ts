@@ -29,9 +29,11 @@ import {
   onboardingRouter,
   historyImporterRouter,
 } from "./routers/phase44";
+import { batch1Router } from "./routers/batch1";
 
 export const appRouter = router({
   system: systemRouter,
+  batch1: batch1Router,
   calendar: calendarRouter,
   emailSync: emailSyncRouter,
   scheduler: schedulerRouter,
