@@ -3547,7 +3547,7 @@ export async function listCompaniesByRole(user: { id: number; systemRole: string
       db.select({ companyId: deals.companyId, openDeals: sql<number>`SUM(CASE WHEN ${deals.status} = 'open' THEN 1 ELSE 0 END)`, pipelineValue: sql<number>`SUM(CASE WHEN ${deals.status} = 'open' THEN COALESCE(${deals.value}, 0) ELSE 0 END)` }).from(deals).where(inArray(deals.companyId, companyIds)).groupBy(deals.companyId),
     ]);
     contactMap = new Map(contactCounts.map(c => [c.companyId, Number(c.count)]));
-    dealMap = new Map(dealMetrics.map(d => [d.companyId, { openDeals: Number(d.openDeals ?? 0), pipelineValue: Number(d.pipelineValue ?? 0) }]));
+    dealMap = new Map(dealMetrics.filter(d => d.companyId != null).map(d => [d.companyId as number, { openDeals: Number(d.openDeals ?? 0), pipelineValue: Number(d.pipelineValue ?? 0) }]));
   }
   const items = rawItems.map(c => ({
     ...c,
