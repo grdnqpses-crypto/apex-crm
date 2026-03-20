@@ -33,7 +33,7 @@ import {
   Receipt, Globe2, UserPlus, Headphones, Database as DatabaseIcon, Flame as FlameIcon,
   EyeIcon, MailOpen, Paintbrush, ArrowRightLeft, Crown, Command, Package, CreditCard,
   TrendingDown, DollarSign, Tag, Home, Calendar, MessageSquare, Megaphone, BarChart2,
-  Inbox, Layers, Star, LucideIcon,
+  Inbox, Layers, Star, LucideIcon, FileSignature, ClipboardList, ThumbsUp, Plane,
 } from "lucide-react";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -95,6 +95,10 @@ const standardSections = [
       { icon: Globe2, label: "Territory Management", path: "/territories" },
       { icon: Package, label: "Product Catalog", path: "/product-catalog" },
       { icon: Brain, label: "AI Next Best Action", path: "/ai-next-best-action" },
+      { icon: ClipboardList, label: "Web Forms Builder", path: "/web-forms" },
+      { icon: FileSignature, label: "E-Signature", path: "/esignature" },
+      { icon: ThumbsUp, label: "Reputation Mgmt", path: "/reputation" },
+      { icon: Plane, label: "OOO Detection", path: "/ooo-detection" },
     ],
   },
   {

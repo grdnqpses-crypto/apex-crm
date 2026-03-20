@@ -116,6 +116,10 @@ const SalesForecasting = lazy(() => import("./pages/SalesForecasting"));
 const ProductCatalog = lazy(() => import("./pages/ProductCatalog"));
 const LeadScoring = lazy(() => import("./pages/LeadScoring"));
 const AINextBestAction = lazy(() => import("./pages/AINextBestAction"));
+const WebFormsBuilder = lazy(() => import("./pages/WebFormsBuilder"));
+const ESignature = lazy(() => import("./pages/ESignature"));
+const ReputationManagement = lazy(() => import("./pages/ReputationManagement"));
+const OOODetection = lazy(() => import("./pages/OOODetection"));
 
 function PageLoader() {
   return (
@@ -239,6 +243,10 @@ function Router() {
           <Route path="/product-catalog" component={ProductCatalog} />
           <Route path="/lead-scoring" component={LeadScoring} />
           <Route path="/ai-next-best-action" component={AINextBestAction} />
+          <Route path="/web-forms" component={WebFormsBuilder} />
+          <Route path="/esignature" component={ESignature} />
+          <Route path="/reputation" component={ReputationManagement} />
+          <Route path="/ooo-detection" component={OOODetection} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>

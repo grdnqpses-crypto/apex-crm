@@ -1947,10 +1947,10 @@
 
 ## Phase 59: Competitive Audit — Batch 3 (Larger Features)
 - [ ] Email Sequences / Cadences: multi-step drip builder with reply detection, pause on reply, A/B steps
-- [ ] Web Forms Builder: embeddable lead capture forms with field builder and CRM auto-create
-- [ ] Reputation Management: review request automation + embeddable review widget
-- [ ] E-Signature: native document signing or deep DocuSign/PandaDoc integration
-- [ ] AI Out-of-Office Detection: parse email replies, auto-pause sequences on OOO detection
+- [x] Web Forms Builder: embeddable lead capture forms with field builder and CRM auto-create
+- [x] Reputation Management: review request automation + embeddable review widget
+- [x] E-Signature: native document signing or deep DocuSign/PandaDoc integration
+- [x] AI Out-of-Office Detection: parse email replies, auto-pause sequences on OOO detection
 
 ## Phase 60: Competitive Audit — Batch 4 (Remaining Gaps)
 - [ ] Journey Orchestration: visual drag-and-drop customer journey map with triggers and actions

@@ -2997,3 +2997,92 @@ export const leadScoringRules = mysqlTable("lead_scoring_rules", {
   updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
 });
 export type LeadScoringRule = typeof leadScoringRules.$inferSelect;
+
+// ─── Batch 3: Web Forms Builder ───────────────────────────────────────────────
+export const webForms = mysqlTable("web_forms", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  fields: json("fields").$type<Record<string, unknown>[]>().notNull().default([]),
+  settings: json("settings").$type<Record<string, unknown>>().notNull().default({}),
+  embedCode: text("embed_code"),
+  isActive: boolean("is_active").notNull().default(true),
+  submissionCount: int("submission_count").notNull().default(0),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+});
+export type WebForm = typeof webForms.$inferSelect;
+
+export const formSubmissions = mysqlTable("form_submissions", {
+  id: int("id").autoincrement().primaryKey(),
+  formId: int("form_id").notNull(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  data: json("data").$type<Record<string, unknown>>().notNull().default({}),
+  contactId: int("contact_id"),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+export type FormSubmission = typeof formSubmissions.$inferSelect;
+
+// ─── Batch 3: E-Signature ─────────────────────────────────────────────────────
+export const esignatureDocuments = mysqlTable("esignature_documents", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  title: varchar("title", { length: 300 }).notNull(),
+  content: text("content").notNull(),
+  status: mysqlEnum("esig_status", ["draft", "sent", "completed", "voided", "expired"]).notNull().default("draft"),
+  dealId: int("deal_id"),
+  contactId: int("contact_id"),
+  createdBy: int("created_by").notNull(),
+  expiresAt: bigint("expires_at", { mode: "number" }),
+  completedAt: bigint("completed_at", { mode: "number" }),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+});
+export type EsignatureDocument = typeof esignatureDocuments.$inferSelect;
+
+export const esignatureSigners = mysqlTable("esignature_signers", {
+  id: int("id").autoincrement().primaryKey(),
+  documentId: int("document_id").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  email: varchar("email", { length: 300 }).notNull(),
+  token: varchar("token", { length: 100 }).notNull(),
+  status: mysqlEnum("signer_status", ["pending", "viewed", "signed", "declined"]).notNull().default("pending"),
+  signedAt: bigint("signed_at", { mode: "number" }),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+export type EsignatureSigner = typeof esignatureSigners.$inferSelect;
+
+// ─── Batch 3: Reputation Management ──────────────────────────────────────────
+export const reputationReviews = mysqlTable("reputation_reviews", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  platform: varchar("platform", { length: 100 }).notNull(),
+  reviewerName: varchar("reviewer_name", { length: 200 }),
+  rating: tinyint("rating"),
+  reviewText: text("review_text"),
+  reviewUrl: varchar("review_url", { length: 1024 }),
+  sentiment: mysqlEnum("review_sentiment", ["positive", "neutral", "negative"]).notNull().default("neutral"),
+  responded: boolean("responded").notNull().default(false),
+  responseText: text("response_text"),
+  reviewDate: bigint("review_date", { mode: "number" }).notNull(),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+export type ReputationReview = typeof reputationReviews.$inferSelect;
+
+// ─── Batch 3: OOO Detection ───────────────────────────────────────────────────
+export const oooDetections = mysqlTable("ooo_detections", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  contactId: int("contact_id"),
+  email: varchar("email", { length: 300 }).notNull(),
+  detectedAt: bigint("detected_at", { mode: "number" }).notNull(),
+  returnDate: bigint("return_date", { mode: "number" }),
+  oooMessage: text("ooo_message"),
+  followUpScheduled: boolean("follow_up_scheduled").notNull().default(false),
+  followUpDate: bigint("follow_up_date", { mode: "number" }),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+export type OooDetection = typeof oooDetections.$inferSelect;

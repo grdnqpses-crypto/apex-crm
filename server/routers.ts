@@ -31,11 +31,13 @@ import {
 } from "./routers/phase44";
 import { batch1Router } from "./routers/batch1";
 import { batch2Router } from "./routers/batch2";
+import { batch3Router } from "./routers/batch3";
 
 export const appRouter = router({
   system: systemRouter,
   batch1: batch1Router,
   batch2: batch2Router,
+  batch3: batch3Router,
   calendar: calendarRouter,
   emailSync: emailSyncRouter,
   scheduler: schedulerRouter,
