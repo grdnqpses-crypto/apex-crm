@@ -3,26 +3,26 @@ import { BUSINESS_CATEGORIES, getCategory, getCategoryFeatures } from "../shared
 
 describe("Business Categories", () => {
   it("should have 10 business categories defined", () => {
-    expect(Object.keys(BUSINESS_CATEGORIES).length).toBeGreaterThanOrEqual(10);
+    expect(BUSINESS_CATEGORIES.length).toBeGreaterThanOrEqual(10);
   });
 
   it("should include Freight & Logistics category", () => {
-    const freight = BUSINESS_CATEGORIES["freight_logistics"];
+    const freight = BUSINESS_CATEGORIES.find(c => c.key === "freight_logistics");
     expect(freight).toBeDefined();
-    expect(freight.label).toContain("Freight");
-    expect(freight.features).toContain("load_management");
+    expect(freight!.label).toContain("Freight");
+    expect(freight!.enabledModules).toContain("load_management");
   });
 
   it("should include Manufacturing category with shipping feature", () => {
-    const mfg = BUSINESS_CATEGORIES["manufacturing"];
+    const mfg = BUSINESS_CATEGORIES.find(c => c.key === "manufacturing");
     expect(mfg).toBeDefined();
-    expect(mfg.features).toContain("shipping_receiving");
+    expect(mfg!.enabledModules).toContain("shipping_receiving");
   });
 
   it("should include Professional Services category", () => {
-    const ps = BUSINESS_CATEGORIES["professional_services"];
+    const ps = BUSINESS_CATEGORIES.find(c => c.key === "professional_services");
     expect(ps).toBeDefined();
-    expect(ps.features).toContain("accounts_receivable");
+    expect(ps!.enabledModules).toContain("accounts_receivable");
   });
 
   it("getCategory should return the correct category object", () => {
@@ -31,9 +31,10 @@ describe("Business Categories", () => {
     expect(cat?.key).toBe("freight_logistics");
   });
 
-  it("getCategory should return null for unknown category", () => {
+  it("getCategory should return general fallback for unknown category", () => {
     const cat = getCategory("unknown_category");
-    expect(cat).toBeNull();
+    expect(cat).toBeDefined();
+    expect(cat.key).toBe("general");
   });
 
   it("getCategoryFeatures should return feature list for valid category", () => {
@@ -42,24 +43,24 @@ describe("Business Categories", () => {
     expect(features.length).toBeGreaterThan(0);
   });
 
-  it("getCategoryFeatures should return empty array for unknown category", () => {
+  it("getCategoryFeatures should return general features for unknown category", () => {
     const features = getCategoryFeatures("nonexistent");
-    expect(features).toEqual([]);
+    expect(Array.isArray(features)).toBe(true);
   });
 
   it("all categories should have required fields", () => {
-    for (const [key, cat] of Object.entries(BUSINESS_CATEGORIES)) {
-      expect(cat.key).toBe(key);
+    for (const cat of BUSINESS_CATEGORIES) {
+      expect(cat.key).toBeTruthy();
       expect(cat.label).toBeTruthy();
       expect(cat.icon).toBeTruthy();
-      expect(Array.isArray(cat.features)).toBe(true);
+      expect(Array.isArray(cat.enabledModules)).toBe(true);
       expect(Array.isArray(cat.subTypes)).toBe(true);
     }
   });
 
   it("all categories should have at least one feature", () => {
-    for (const cat of Object.values(BUSINESS_CATEGORIES)) {
-      expect(cat.features.length).toBeGreaterThan(0);
+    for (const cat of BUSINESS_CATEGORIES) {
+      expect(cat.enabledModules.length).toBeGreaterThan(0);
     }
   });
 });

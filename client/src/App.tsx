@@ -120,6 +120,13 @@ const WebFormsBuilder = lazy(() => import("./pages/WebFormsBuilder"));
 const ESignature = lazy(() => import("./pages/ESignature"));
 const ReputationManagement = lazy(() => import("./pages/ReputationManagement"));
 const OOODetection = lazy(() => import("./pages/OOODetection"));
+const EmailSequences = lazy(() => import("./pages/EmailSequences"));
+const JourneyOrchestration = lazy(() => import("./pages/JourneyOrchestration"));
+const WhatsAppMessaging = lazy(() => import("./pages/WhatsAppMessaging"));
+const SocialScheduler = lazy(() => import("./pages/SocialScheduler"));
+const PowerDialer = lazy(() => import("./pages/PowerDialer"));
+const AnomalyDetection = lazy(() => import("./pages/AnomalyDetection"));
+const PipelineInspection = lazy(() => import("./pages/PipelineInspection"));
 
 function PageLoader() {
   return (
@@ -247,6 +254,13 @@ function Router() {
           <Route path="/esignature" component={ESignature} />
           <Route path="/reputation" component={ReputationManagement} />
           <Route path="/ooo-detection" component={OOODetection} />
+          <Route path="/email-sequences" component={EmailSequences} />
+          <Route path="/journey-orchestration" component={JourneyOrchestration} />
+          <Route path="/whatsapp" component={WhatsAppMessaging} />
+          <Route path="/social-scheduler" component={SocialScheduler} />
+          <Route path="/power-dialer" component={PowerDialer} />
+          <Route path="/anomaly-detection" component={AnomalyDetection} />
+          <Route path="/pipeline-inspection" component={PipelineInspection} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>

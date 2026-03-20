@@ -83,6 +83,44 @@ export default function Contacts() {
   const deleteMutation = trpc.contacts.delete.useMutation({
     onSuccess: () => { utils.contacts.list.invalidate(); toast.success("Contact deleted"); },
   });
+  const [showImport, setShowImport] = useState(false);
+  const [importCsv, setImportCsv] = useState("");
+  const importMutation = trpc.contacts.importCsv.useMutation({
+    onSuccess: (d) => { utils.contacts.list.invalidate(); toast.success(`Imported ${d.imported} contacts`); setShowImport(false); setImportCsv(""); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const exportQuery = trpc.contacts.exportCsv.useQuery(undefined, { enabled: false });
+  const handleExport = async () => {
+    const result = await exportQuery.refetch();
+    if (!result.data) return;
+    const blob = new Blob([result.data.csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "contacts.csv"; a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${result.data.count} contacts`);
+  };
+  const handleImportSubmit = () => {
+    const lines = importCsv.trim().split("\n");
+    if (lines.length < 2) { toast.error("CSV must have a header row and at least one data row"); return; }
+    const headers = lines[0].split(",").map(h => h.trim().toLowerCase().replace(/\s+/g, ""));
+    const rows = lines.slice(1).map(line => {
+      const vals = line.split(",");
+      const obj: Record<string, string> = {};
+      headers.forEach((h, i) => { obj[h] = vals[i]?.trim() ?? ""; });
+      return {
+        firstName: obj["firstname"] || obj["first_name"] || obj["first"] || "",
+        lastName: obj["lastname"] || obj["last_name"] || obj["last"] || "",
+        email: obj["email"] || "",
+        phone: obj["phone"] || obj["directphone"] || obj["direct_phone"] || "",
+        jobTitle: obj["jobtitle"] || obj["job_title"] || obj["title"] || "",
+        company: obj["company"] || obj["companyname"] || "",
+        city: obj["city"] || "",
+        state: obj["state"] || obj["stateregion"] || "",
+        country: obj["country"] || "",
+      };
+    });
+    importMutation.mutate({ rows });
+  };
 
   const [form, setForm] = useState({ ...emptyForm });
   const [showQuickCompany, setShowQuickCompany] = useState(false);
@@ -135,11 +173,11 @@ export default function Contacts() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2 rounded-xl" onClick={() => toast.info("CSV import coming soon")}>
+          <Button variant="outline" size="sm" className="gap-2 rounded-xl" onClick={() => setShowImport(true)}>
             <Upload className="h-4 w-4" /> Import
           </Button>
-          <Button variant="outline" size="sm" className="gap-2 rounded-xl" onClick={() => toast.info("CSV export coming soon")}>
-            <Download className="h-4 w-4" /> Export
+          <Button variant="outline" size="sm" className="gap-2 rounded-xl" onClick={handleExport} disabled={exportQuery.isFetching}>
+            <Download className="h-4 w-4" /> {exportQuery.isFetching ? "Exporting..." : "Export"}
           </Button>
           <Button onClick={() => setShowCreate(true)} size="sm" className="gap-2 rounded-xl shadow-sm">
             <UserPlus className="h-4 w-4" /> Add Contact
@@ -457,6 +495,29 @@ export default function Contacts() {
               {createMutation.isPending ? "Creating..." : "Create Contact"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* CSV Import Dialog */}
+      <Dialog open={showImport} onOpenChange={setShowImport}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Import Contacts from CSV</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <p className="text-sm text-muted-foreground">Paste CSV content below. First row must be headers. Supported columns: firstName, lastName, email, phone, jobTitle, company, city, state, country.</p>
+            <textarea
+              className="w-full h-48 text-xs font-mono border rounded-md p-2 bg-secondary/20 resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
+              placeholder={"firstName,lastName,email,phone,jobTitle,company\nJohn,Doe,john@acme.com,555-1234,CEO,Acme Inc"}
+              value={importCsv}
+              onChange={e => setImportCsv(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-end gap-2 mt-3">
+            <Button variant="outline" onClick={() => setShowImport(false)}>Cancel</Button>
+            <Button onClick={handleImportSubmit} disabled={!importCsv.trim() || importMutation.isPending}>
+              {importMutation.isPending ? "Importing..." : "Import"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

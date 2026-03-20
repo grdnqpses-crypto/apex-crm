@@ -32,12 +32,14 @@ import {
 import { batch1Router } from "./routers/batch1";
 import { batch2Router } from "./routers/batch2";
 import { batch3Router } from "./routers/batch3";
+import { batch4Router } from "./routers/batch4";
 
 export const appRouter = router({
   system: systemRouter,
   batch1: batch1Router,
   batch2: batch2Router,
   batch3: batch3Router,
+  batch4: batch4Router,
   calendar: calendarRouter,
   emailSync: emailSyncRouter,
   scheduler: schedulerRouter,
@@ -268,6 +270,61 @@ export const appRouter = router({
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
       await db.deleteContact(input.id, ctx.user.id);
       return { success: true };
+    }),
+    exportCsv: protectedProcedure.query(async ({ ctx }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const { contacts: contactsTable } = await import("../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      const rows = await dbConn.select().from(contactsTable)
+        .where(eq(contactsTable.userId, ctx.user.id))
+        .limit(10000);
+      const headers = ["id","firstName","lastName","email","directPhone","jobTitle","city","state","country","createdAt"];
+      const csvRows = rows.map(r => headers.map(h => {
+        const v = (r as Record<string,unknown>)[h];
+        if (v == null) return "";
+        if (h === "createdAt" && typeof v === "number") return new Date(v).toISOString();
+        return String(v).replace(/,/g, ";").replace(/\n/g, " ");
+      }).join(","));
+      return { csv: [headers.join(","), ...csvRows].join("\n"), count: rows.length };
+    }),
+    importCsv: protectedProcedure.input(z.object({
+      rows: z.array(z.object({
+        firstName: z.string().optional(),
+        lastName: z.string().optional(),
+        email: z.string().optional(),
+        phone: z.string().optional(),
+        jobTitle: z.string().optional(),
+        company: z.string().optional(),
+        city: z.string().optional(),
+        state: z.string().optional(),
+        country: z.string().optional(),
+      })).max(5000),
+    })).mutation(async ({ ctx, input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const { contacts: contactsTable } = await import("../drizzle/schema");
+      const now = Date.now();
+      let imported = 0;
+      for (const row of input.rows) {
+        if (!row.email && !row.firstName && !row.lastName) continue;
+        await dbConn.insert(contactsTable).values({
+          userId: ctx.user.id,
+          companyId: 0,
+          firstName: row.firstName ?? "",
+          lastName: row.lastName ?? "",
+          email: row.email ?? null,
+          directPhone: row.phone ?? null,
+          jobTitle: row.jobTitle ?? null,
+          city: row.city ?? null,
+          stateRegion: row.state ?? null,
+          country: row.country ?? null,
+          createdAt: now,
+          updatedAt: now,
+        }).onDuplicateKeyUpdate({ set: { updatedAt: now } });
+        imported++;
+      }
+      return { imported };
     }),
   }),
 

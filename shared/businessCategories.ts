@@ -472,3 +472,9 @@ export function isModuleEnabled(categoryKey: string | null | undefined, module: 
   const cat = getCategory(categoryKey);
   return cat.enabledModules.includes(module);
 }
+
+/** Get the list of enabled modules for a given category key */
+export function getCategoryFeatures(categoryKey?: string | null): VerticalModule[] {
+  const cat = getCategory(categoryKey);
+  return cat.enabledModules;
+}

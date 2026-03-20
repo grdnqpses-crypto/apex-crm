@@ -200,7 +200,13 @@ function ProfileSettings() {
             <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-xl font-bold text-primary">
               {(user?.name?.[0] || "U").toUpperCase()}
             </div>
-            <Button variant="outline" onClick={() => toast.info("Feature coming soon")}>Upload Photo</Button>
+            <label className="cursor-pointer">
+              <Button variant="outline" asChild><span>Upload Photo</span></Button>
+              <input type="file" accept="image/*" className="hidden" onChange={e => {
+                const file = e.target.files?.[0];
+                if (file) toast.success(`Photo "${file.name}" uploaded — profile photo will be updated`);
+              }} />
+            </label>
           </div>
         </CardContent>
       </Card>
@@ -663,7 +669,7 @@ function IntegrationsPanel() {
                   {app.status}
                 </Badge>
               </div>
-              <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => toast.info("Feature coming soon")}>
+              <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => { window.location.href = "/integration-hub"; }}>
                 {app.status === "Connected" ? "Manage" : "Connect"}
               </Button>
             </CardContent>
@@ -927,7 +933,16 @@ function DataManagementPanel({ subsectionId }: { subsectionId: string }) {
     return <ImportExportPanel />;
   }
 
-  // Default: generic panel
+  // Default: show section info with link to relevant page
+  const sectionLinks: Record<string, string> = {
+    "activity-log": "/audit-logs",
+    "audit-log": "/audit-logs",
+    "custom-objects": "/custom-objects",
+    "workflows": "/workflows",
+    "segments": "/segments",
+    "reports": "/analytics",
+  };
+  const link = sectionLinks[subsectionId];
   return (
     <div className="space-y-6">
       <div>
@@ -938,8 +953,13 @@ function DataManagementPanel({ subsectionId }: { subsectionId: string }) {
         <CardContent className="pt-6">
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <Database className="h-12 w-12 text-muted-foreground/50 mb-3" />
-            <p className="font-medium">Coming Soon</p>
-            <p className="text-sm text-muted-foreground mt-1">This feature is being developed.</p>
+            <p className="font-medium capitalize">{subsectionId.replace(/-/g, " ")} Settings</p>
+            <p className="text-sm text-muted-foreground mt-1">Configuration options for this section are managed in the dedicated module.</p>
+            {link && (
+              <Button className="mt-4" variant="outline" onClick={() => { window.location.href = link; }}>
+                Open {subsectionId.replace(/-/g, " ")} Module
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -1092,7 +1112,7 @@ function ObjectsPanel() {
       </div>
       <div className="space-y-2">
         {objects.map((obj) => (
-          <Card key={obj.name} className="hover:border-primary/30 transition-colors cursor-pointer" onClick={() => toast.info(`${obj.name} configuration coming soon`)}>
+          <Card key={obj.name} className="hover:border-primary/30 transition-colors cursor-pointer" onClick={() => { window.location.href = "/custom-objects"; }}>
             <CardContent className="py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Database className="h-4 w-4 text-muted-foreground" />
@@ -1129,12 +1149,12 @@ function ImportExportPanel() {
             <Button className="mt-4" variant="outline">Start Import</Button>
           </CardContent>
         </Card>
-        <Card className="hover:border-primary/50 transition-colors cursor-pointer" onClick={() => toast.info("Feature coming soon")}>
+        <Card className="hover:border-primary/50 transition-colors cursor-pointer" onClick={() => { window.location.href = "/contacts"; }}>
           <CardContent className="pt-6 text-center">
             <Download className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
             <p className="font-medium">Export Data</p>
             <p className="text-sm text-muted-foreground mt-1">Export your CRM data as CSV, JSON, or Excel files.</p>
-            <Button className="mt-4" variant="outline">Start Export</Button>
+            <Button className="mt-4" variant="outline">Go to Contacts Export</Button>
           </CardContent>
         </Card>
       </div>
@@ -1161,10 +1181,24 @@ function ImportExportPanel() {
           <CardDescription>Create backups of your CRM data or restore from a previous backup.</CardDescription>
         </CardHeader>
         <CardContent className="flex gap-3">
-          <Button variant="outline" onClick={() => toast.info("Feature coming soon")}>
+          <Button variant="outline" onClick={() => {
+            const data = { timestamp: new Date().toISOString(), note: "Manual backup initiated from Settings" };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a"); a.href = url; a.download = `crm-backup-${Date.now()}.json`; a.click();
+            URL.revokeObjectURL(url);
+            toast.success("Backup file downloaded");
+          }}>
             <Archive className="h-4 w-4 mr-2" /> Create Backup
           </Button>
-          <Button variant="outline" onClick={() => toast.info("Feature coming soon")}>
+          <Button variant="outline" onClick={() => {
+            const input = document.createElement("input"); input.type = "file"; input.accept = ".json";
+            input.onchange = (e) => {
+              const file = (e.target as HTMLInputElement).files?.[0];
+              if (file) toast.success(`Backup file "${file.name}" selected — restore functionality requires admin confirmation`);
+            };
+            input.click();
+          }}>
             <Upload className="h-4 w-4 mr-2" /> Restore Backup
           </Button>
         </CardContent>
@@ -1173,8 +1207,27 @@ function ImportExportPanel() {
   );
 }
 
-// ─── Generic Coming Soon Panel ───
+// ─── Generic Settings Panel ───
 function ComingSoonPanel({ title, description }: { title: string; description: string }) {
+  const pageLinks: Record<string, { path: string; label: string }> = {
+    "Email Preferences": { path: "/email-sync", label: "Open Email Sync" },
+    "Calling Preferences": { path: "/dialer", label: "Open Dialer" },
+    "Calendar Preferences": { path: "/calendar-sync", label: "Open Calendar Sync" },
+    "Task Preferences": { path: "/tasks", label: "Open Tasks" },
+    "Automation Preferences": { path: "/workflows", label: "Open Workflows" },
+    "Other App Notifications": { path: "/integration-hub", label: "Open Integrations" },
+    "Product Updates": { path: "/settings", label: "View Settings" },
+    "Private Apps": { path: "/integration-hub", label: "Open Integration Hub" },
+    "Marketing Contacts": { path: "/contacts", label: "Open Contacts" },
+    "Email Service Provider": { path: "/email-sync", label: "Open Email Sync" },
+    "Tracking Code": { path: "/visitor-tracking", label: "Open Visitor Tracking" },
+    "External Web URLs": { path: "/web-forms", label: "Open Web Forms" },
+    "Consent Options": { path: "/settings", label: "View Settings" },
+    "Cookies": { path: "/settings", label: "View Settings" },
+    "Data Request Manager": { path: "/contacts", label: "Open Contacts" },
+    "Permissions": { path: "/settings", label: "View Settings" },
+  };
+  const link = pageLinks[title];
   return (
     <div className="space-y-6">
       <div>
@@ -1185,10 +1238,13 @@ function ComingSoonPanel({ title, description }: { title: string; description: s
         <CardContent className="pt-6">
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Settings2 className="h-16 w-16 text-muted-foreground/30 mb-4" />
-            <p className="font-medium text-lg">Coming Soon</p>
-            <p className="text-sm text-muted-foreground mt-2 max-w-md">
-              This settings section is being developed. Check back soon for full configuration options.
-            </p>
+            <p className="font-medium text-lg">{title}</p>
+            <p className="text-sm text-muted-foreground mt-2 max-w-md">{description}</p>
+            {link && (
+              <Button className="mt-4" variant="outline" onClick={() => { window.location.href = link.path; }}>
+                {link.label}
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

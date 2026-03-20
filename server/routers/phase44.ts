@@ -338,6 +338,21 @@ export const schedulerRouter = router({
     });
     return { success: true, cancelToken };
   }),
+  deleteType: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const profile = await db.select({ id: meetingSchedulerProfiles.id })
+      .from(meetingSchedulerProfiles)
+      .where(and(
+        eq(meetingSchedulerProfiles.userId, ctx.user.id),
+        eq(meetingSchedulerProfiles.tenantCompanyId, ctx.user.tenantCompanyId!)
+      ))
+      .limit(1);
+    if (!profile[0]) throw new TRPCError({ code: "NOT_FOUND" });
+    await db.delete(meetingTypes)
+      .where(and(eq(meetingTypes.id, input.id), eq(meetingTypes.schedulerProfileId, profile[0].id)));
+    return { success: true };
+  }),
 });
 
 // ─── Custom Object Builder ────────────────────────────────────────────────────

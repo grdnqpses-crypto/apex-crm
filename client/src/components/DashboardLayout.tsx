@@ -34,6 +34,7 @@ import {
   EyeIcon, MailOpen, Paintbrush, ArrowRightLeft, Crown, Command, Package, CreditCard,
   TrendingDown, DollarSign, Tag, Home, Calendar, MessageSquare, Megaphone, BarChart2,
   Inbox, Layers, Star, LucideIcon, FileSignature, ClipboardList, ThumbsUp, Plane,
+  MessageCircle, Share2, PhoneCall, AlertTriangle, Search as SearchIcon, Route, ListOrdered,
 } from "lucide-react";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -99,6 +100,13 @@ const standardSections = [
       { icon: FileSignature, label: "E-Signature", path: "/esignature" },
       { icon: ThumbsUp, label: "Reputation Mgmt", path: "/reputation" },
       { icon: Plane, label: "OOO Detection", path: "/ooo-detection" },
+      { icon: ListOrdered, label: "Email Sequences", path: "/email-sequences" },
+      { icon: Route, label: "Journey Orchestration", path: "/journey-orchestration" },
+      { icon: MessageCircle, label: "WhatsApp Messaging", path: "/whatsapp" },
+      { icon: Share2, label: "Social Scheduler", path: "/social-scheduler" },
+      { icon: PhoneCall, label: "Power Dialer", path: "/power-dialer" },
+      { icon: AlertTriangle, label: "Anomaly Detection", path: "/anomaly-detection" },
+      { icon: SearchIcon, label: "Pipeline Inspection", path: "/pipeline-inspection" },
     ],
   },
   {

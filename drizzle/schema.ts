@@ -3086,3 +3086,254 @@ export const oooDetections = mysqlTable("ooo_detections", {
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
 });
 export type OooDetection = typeof oooDetections.$inferSelect;
+
+// ─── Email Sequences / Cadences ───────────────────────────────────────────────
+export const emailSequences = mysqlTable("email_sequences", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  status: varchar("status", { length: 32 }).notNull().default("draft"),
+  replyDetection: boolean("reply_detection").notNull().default(true),
+  pauseOnReply: boolean("pause_on_reply").notNull().default(true),
+  enrolledCount: int("enrolled_count").notNull().default(0),
+  completedCount: int("completed_count").notNull().default(0),
+  replyCount: int("reply_count").notNull().default(0),
+  createdBy: int("created_by"),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+});
+export type EmailSequence = typeof emailSequences.$inferSelect;
+
+export const emailSequenceSteps = mysqlTable("email_sequence_steps", {
+  id: int("id").autoincrement().primaryKey(),
+  sequenceId: int("sequence_id").notNull(),
+  stepNumber: int("step_number").notNull(),
+  type: varchar("type", { length: 32 }).notNull().default("email"),
+  subject: varchar("subject", { length: 500 }),
+  body: text("body"),
+  waitDays: int("wait_days").notNull().default(1),
+  waitHours: int("wait_hours").notNull().default(0),
+  abVariantSubject: varchar("ab_variant_subject", { length: 500 }),
+  abVariantBody: text("ab_variant_body"),
+  abEnabled: boolean("ab_enabled").notNull().default(false),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+export type EmailSequenceStep = typeof emailSequenceSteps.$inferSelect;
+
+export const emailSequenceEnrollments = mysqlTable("email_sequence_enrollments", {
+  id: int("id").autoincrement().primaryKey(),
+  sequenceId: int("sequence_id").notNull(),
+  contactId: int("contact_id").notNull(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  status: varchar("status", { length: 32 }).notNull().default("active"),
+  currentStep: int("current_step").notNull().default(1),
+  nextSendAt: bigint("next_send_at", { mode: "number" }),
+  enrolledAt: bigint("enrolled_at", { mode: "number" }).notNull(),
+  completedAt: bigint("completed_at", { mode: "number" }),
+  repliedAt: bigint("replied_at", { mode: "number" }),
+});
+export type EmailSequenceEnrollment = typeof emailSequenceEnrollments.$inferSelect;
+
+// ─── Journey Orchestration ────────────────────────────────────────────────────
+export const journeys = mysqlTable("journeys", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  status: varchar("status", { length: 32 }).notNull().default("draft"),
+  triggerType: varchar("trigger_type", { length: 64 }).notNull().default("manual"),
+  triggerConfig: json("trigger_config"),
+  nodes: json("nodes"),
+  edges: json("edges"),
+  enrolledCount: int("enrolled_count").notNull().default(0),
+  completedCount: int("completed_count").notNull().default(0),
+  createdBy: int("created_by"),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+});
+export type Journey = typeof journeys.$inferSelect;
+
+export const journeyEnrollments = mysqlTable("journey_enrollments", {
+  id: int("id").autoincrement().primaryKey(),
+  journeyId: int("journey_id").notNull(),
+  contactId: int("contact_id").notNull(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  status: varchar("status", { length: 32 }).notNull().default("active"),
+  currentNodeId: varchar("current_node_id", { length: 64 }),
+  enrolledAt: bigint("enrolled_at", { mode: "number" }).notNull(),
+  completedAt: bigint("completed_at", { mode: "number" }),
+});
+export type JourneyEnrollment = typeof journeyEnrollments.$inferSelect;
+
+// ─── WhatsApp Integration ─────────────────────────────────────────────────────
+export const whatsappMessages = mysqlTable("whatsapp_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  contactId: int("contact_id"),
+  phone: varchar("phone", { length: 32 }).notNull(),
+  direction: varchar("direction", { length: 8 }).notNull(),
+  body: text("body").notNull(),
+  status: varchar("status", { length: 32 }).notNull().default("sent"),
+  messageId: varchar("message_id", { length: 128 }),
+  mediaUrl: varchar("media_url", { length: 1024 }),
+  sentBy: int("sent_by"),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+export type WhatsappMessage = typeof whatsappMessages.$inferSelect;
+
+export const whatsappTemplates = mysqlTable("whatsapp_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  category: varchar("category", { length: 64 }).notNull().default("general"),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+export type WhatsappTemplate = typeof whatsappTemplates.$inferSelect;
+
+// ─── Social Media Scheduler ───────────────────────────────────────────────────
+export const socialPosts = mysqlTable("social_posts", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  content: text("content").notNull(),
+  platforms: json("platforms").notNull(),
+  mediaUrls: json("media_urls"),
+  scheduledAt: bigint("scheduled_at", { mode: "number" }),
+  publishedAt: bigint("published_at", { mode: "number" }),
+  status: varchar("status", { length: 32 }).notNull().default("draft"),
+  linkedContactId: int("linked_contact_id"),
+  linkedDealId: int("linked_deal_id"),
+  platformPostIds: json("platform_post_ids"),
+  createdBy: int("created_by"),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+});
+export type SocialPost = typeof socialPosts.$inferSelect;
+
+export const socialAccounts = mysqlTable("social_accounts", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  platform: varchar("platform", { length: 32 }).notNull(),
+  accountName: varchar("account_name", { length: 255 }).notNull(),
+  accountId: varchar("account_id", { length: 128 }),
+  accessToken: text("access_token"),
+  tokenExpiresAt: bigint("token_expires_at", { mode: "number" }),
+  isActive: boolean("is_active").notNull().default(true),
+  connectedAt: bigint("connected_at", { mode: "number" }).notNull(),
+});
+export type SocialAccount = typeof socialAccounts.$inferSelect;
+
+// ─── Power Dialer ─────────────────────────────────────────────────────────────
+export const dialerSessions = mysqlTable("dialer_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  userId: int("user_id").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  status: varchar("status", { length: 32 }).notNull().default("active"),
+  contactIds: json("contact_ids").notNull(),
+  currentIndex: int("current_index").notNull().default(0),
+  callsMade: int("calls_made").notNull().default(0),
+  callsConnected: int("calls_connected").notNull().default(0),
+  callsSkipped: int("calls_skipped").notNull().default(0),
+  script: text("script"),
+  startedAt: bigint("started_at", { mode: "number" }).notNull(),
+  completedAt: bigint("completed_at", { mode: "number" }),
+});
+export type DialerSession = typeof dialerSessions.$inferSelect;
+
+// ─── AI Anomaly Detection ─────────────────────────────────────────────────────
+export const anomalyAlerts = mysqlTable("anomaly_alerts", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  type: varchar("type", { length: 64 }).notNull(),
+  severity: varchar("severity", { length: 16 }).notNull().default("medium"),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  aiExplanation: text("ai_explanation"),
+  metric: varchar("metric", { length: 128 }),
+  previousValue: double("previous_value"),
+  currentValue: double("current_value"),
+  changePercent: double("change_percent"),
+  isResolved: boolean("is_resolved").notNull().default(false),
+  resolvedAt: bigint("resolved_at", { mode: "number" }),
+  detectedAt: bigint("detected_at", { mode: "number" }).notNull(),
+});
+export type AnomalyAlert = typeof anomalyAlerts.$inferSelect;
+
+// ─── Pipeline Inspection ──────────────────────────────────────────────────────
+export const pipelineInspections = mysqlTable("pipeline_inspections", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  pipelineId: int("pipeline_id").notNull(),
+  healthScore: int("health_score").notNull().default(0),
+  stuckDealsCount: int("stuck_deals_count").notNull().default(0),
+  avgDaysInStage: json("avg_days_in_stage"),
+  velocityScore: int("velocity_score").notNull().default(0),
+  aiInsights: text("ai_insights"),
+  inspectedAt: bigint("inspected_at", { mode: "number" }).notNull(),
+});
+export type PipelineInspection = typeof pipelineInspections.$inferSelect;
+
+// ─── Domain Auto-Healing Logs ─────────────────────────────────────────────────
+export const domainAutoHealingLogs = mysqlTable("domain_auto_healing_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  domain: varchar("domain", { length: 255 }).notNull(),
+  action: varchar("action", { length: 64 }).notNull(),
+  reason: text("reason"),
+  previousLimit: int("previous_limit"),
+  newLimit: int("new_limit"),
+  triggeredAt: bigint("triggered_at", { mode: "number" }).notNull(),
+});
+export type DomainAutoHealingLog = typeof domainAutoHealingLogs.$inferSelect;
+
+// ─── Continuous A/B Test Runs ─────────────────────────────────────────────────
+export const abTestRuns = mysqlTable("ab_test_runs", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  campaignId: int("campaign_id"),
+  name: varchar("name", { length: 255 }).notNull(),
+  status: varchar("status", { length: 32 }).notNull().default("running"),
+  variantA: json("variant_a").notNull(),
+  variantB: json("variant_b").notNull(),
+  splitPercent: int("split_percent").notNull().default(50),
+  winnerVariant: varchar("winner_variant", { length: 4 }),
+  confidenceLevel: double("confidence_level"),
+  sentA: int("sent_a").notNull().default(0),
+  sentB: int("sent_b").notNull().default(0),
+  opensA: int("opens_a").notNull().default(0),
+  opensB: int("opens_b").notNull().default(0),
+  clicksA: int("clicks_a").notNull().default(0),
+  clicksB: int("clicks_b").notNull().default(0),
+  repliesA: int("replies_a").notNull().default(0),
+  repliesB: int("replies_b").notNull().default(0),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  completedAt: bigint("completed_at", { mode: "number" }),
+});
+export type AbTestRun = typeof abTestRuns.$inferSelect;
+
+// ─── Feature Tiers ────────────────────────────────────────────────────────────
+export const featureTiers = mysqlTable("feature_tiers", {
+  id: int("id").autoincrement().primaryKey(),
+  featureKey: varchar("feature_key", { length: 128 }).notNull(),
+  featureName: varchar("feature_name", { length: 255 }).notNull(),
+  minTier: varchar("min_tier", { length: 32 }).notNull().default("starter"),
+  description: text("description"),
+  usageLimit: int("usage_limit"),
+  usageUnit: varchar("usage_unit", { length: 64 }),
+});
+export type FeatureTier = typeof featureTiers.$inferSelect;
+
+// ─── Feature Usage Metering ───────────────────────────────────────────────────
+export const featureUsageLogs = mysqlTable("feature_usage_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  userId: int("user_id"),
+  featureKey: varchar("feature_key", { length: 128 }).notNull(),
+  usageCount: int("usage_count").notNull().default(1),
+  periodStart: bigint("period_start", { mode: "number" }).notNull(),
+  periodEnd: bigint("period_end", { mode: "number" }).notNull(),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+export type FeatureUsageLog = typeof featureUsageLogs.$inferSelect;

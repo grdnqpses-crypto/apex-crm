@@ -35,7 +35,7 @@ export default function MeetingScheduler() {
   const meetingTypes = profileData?.meetingTypes ?? [];
   const { data: bookings = [] } = trpc.scheduler.getBookings.useQuery({});
   const createTypeMutation = trpc.scheduler.addMeetingType.useMutation();
-  // deleteMeetingType not yet in backend — handled via toast
+
 
   const handleCreate = async () => {
     if (!form.name.trim()) return;
@@ -53,8 +53,14 @@ export default function MeetingScheduler() {
     } catch { toast.error("Create failed"); }
   };
 
-  const handleDelete = async (_id: number, name: string) => {
-    toast.info(`Deleting "${name}" — coming soon`);
+  const deleteTypeMutation = trpc.scheduler.deleteType.useMutation({
+    onSuccess: () => { toast.success("Meeting type deleted"); refetch(); },
+    onError: () => toast.error("Delete failed"),
+  });
+
+  const handleDelete = (id: number, name: string) => {
+    if (!window.confirm(`Delete meeting type "${name}"?`)) return;
+    deleteTypeMutation.mutate({ id });
   };
 
   const copyBookingLink = (slug: string) => {

@@ -3534,10 +3534,27 @@ export async function listCompaniesByRole(user: { id: number; systemRole: string
   if (opts?.leadStatus) conditions.push(eq(companies.leadStatus, opts.leadStatus));
   if (opts?.search) conditions.push(or(like(companies.name, `%${opts.search}%`), like(companies.domain, `%${opts.search}%`))!);
   const where = and(...conditions);
-  const [items, countResult] = await Promise.all([
+  const [rawItems, countResult] = await Promise.all([
     db.select().from(companies).where(where).orderBy(desc(companies.createdAt)).limit(opts?.limit ?? 50).offset(opts?.offset ?? 0),
     db.select({ count: sql<number>`count(*)` }).from(companies).where(where),
   ]);
+  const companyIds = rawItems.map(c => c.id);
+  let contactMap = new Map<number, number>();
+  let dealMap = new Map<number, { openDeals: number; pipelineValue: number }>();
+  if (companyIds.length > 0) {
+    const [contactCounts, dealMetrics] = await Promise.all([
+      db.select({ companyId: contacts.companyId, count: sql<number>`count(*)` }).from(contacts).where(inArray(contacts.companyId, companyIds)).groupBy(contacts.companyId),
+      db.select({ companyId: deals.companyId, openDeals: sql<number>`SUM(CASE WHEN ${deals.status} = 'open' THEN 1 ELSE 0 END)`, pipelineValue: sql<number>`SUM(CASE WHEN ${deals.status} = 'open' THEN COALESCE(${deals.value}, 0) ELSE 0 END)` }).from(deals).where(inArray(deals.companyId, companyIds)).groupBy(deals.companyId),
+    ]);
+    contactMap = new Map(contactCounts.map(c => [c.companyId, Number(c.count)]));
+    dealMap = new Map(dealMetrics.map(d => [d.companyId, { openDeals: Number(d.openDeals ?? 0), pipelineValue: Number(d.pipelineValue ?? 0) }]));
+  }
+  const items = rawItems.map(c => ({
+    ...c,
+    contactCount: contactMap.get(c.id) ?? 0,
+    openDeals: dealMap.get(c.id)?.openDeals ?? 0,
+    pipelineValue: dealMap.get(c.id)?.pipelineValue ?? 0,
+  }));
   return { items, total: countResult[0]?.count ?? 0 };
 }
 
