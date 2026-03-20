@@ -1,0 +1,66 @@
+{
+  "query": "\n-- Rename the column\nALTER TABLE skin_preferences \n  CHANGE COLUMN `graduatedToRealm` `graduatedToAxiom` tinyint(1) NOT NULL DEFAULT 0;\n\n-- Fix the skin enum to include 'axiom' instead of 'apex'\nALTER TABLE skin_preferences \n  MODIFY COLUMN `skin` enum('axiom','hubspot','salesforce','pipedrive','zoho','gohighlevel','close') NOT NULL DEFAULT 'axiom';\n\n-- Update any existing 'apex' values to 'axiom'\nUPDATE skin_preferences SET skin = 'axiom' WHERE skin = 'apex';\n\n-- Verify\nSHOW COLUMNS FROM skin_preferences;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute \n-- Rename the column\nALTER TABLE skin_preferences \n  CHANGE COLUMN `graduatedToRealm` `graduatedToAxiom` tinyint(1) NOT NULL DEFAULT 0;\n\n-- Fix the skin enum to include 'axiom' instead of 'apex'\nALTER TABLE skin_preferences \n  MODIFY COLUMN `skin` enum('axiom','hubspot','salesforce','pipedrive','zoho','gohighlevel','close') NOT NULL DEFAULT 'axiom';\n\n-- Update any existing 'apex' values to 'axiom'\nUPDATE skin_preferences SET skin = 'axiom' WHERE skin = 'apex';\n\n-- Verify\nSHOW COLUMNS FROM skin_preferences;\n",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "tenantCompanyId",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "skin",
+      "Type": "enum('axiom','hubspot','salesforce','pipedrive','zoho','gohighlevel','close')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "axiom",
+      "Extra": ""
+    },
+    {
+      "Field": "migratedFrom",
+      "Type": "enum('hubspot','salesforce','pipedrive','zoho','gohighlevel','close','spreadsheet','other')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "graduatedToAxiom",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "graduatedAt",
+      "Type": "bigint",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedAt",
+      "Type": "bigint",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint\tNO\tPRI\tNULL\tauto_increment\ntenantCompanyId\tint\tNO\t\tNULL\t\nskin\tenum('axiom','hubspot','salesforce','pipedrive','zoho','gohighlevel','close')\tNO\t\taxiom\t\nmigratedFrom\tenum('hubspot','salesforce','pipedrive','zoho','gohighlevel','close','spreadsheet','other')\tYES\t\tNULL\t\ngraduatedToAxiom\ttinyint(1)\tNO\t\t0\t\ngraduatedAt\tbigint\tYES\t\tNULL\t\nupdatedAt\tbigint\tNO\t\tNULL\t\n",
+  "stderr": "",
+  "execution_time_ms": 1941
+}

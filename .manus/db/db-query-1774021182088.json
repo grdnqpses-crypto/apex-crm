@@ -1,0 +1,66 @@
+{
+  "query": "SHOW COLUMNS FROM skin_preferences;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SHOW COLUMNS FROM skin_preferences;",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "tenantCompanyId",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "skin",
+      "Type": "enum('apex','hubspot','salesforce','pipedrive','zoho','gohighlevel','close')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "apex",
+      "Extra": ""
+    },
+    {
+      "Field": "migratedFrom",
+      "Type": "enum('hubspot','salesforce','pipedrive','zoho','gohighlevel','close','spreadsheet','other')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "graduatedToRealm",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "graduatedAt",
+      "Type": "bigint",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedAt",
+      "Type": "bigint",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint\tNO\tPRI\tNULL\tauto_increment\ntenantCompanyId\tint\tNO\t\tNULL\t\nskin\tenum('apex','hubspot','salesforce','pipedrive','zoho','gohighlevel','close')\tNO\t\tapex\t\nmigratedFrom\tenum('hubspot','salesforce','pipedrive','zoho','gohighlevel','close','spreadsheet','other')\tYES\t\tNULL\t\ngraduatedToRealm\ttinyint(1)\tNO\t\t0\t\ngraduatedAt\tbigint\tYES\t\tNULL\t\nupdatedAt\tbigint\tNO\t\tNULL\t\n",
+  "stderr": "",
+  "execution_time_ms": 378
+}

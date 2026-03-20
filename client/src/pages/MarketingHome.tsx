@@ -865,54 +865,163 @@ export default function MarketingHome({
         </div>
       </section>
 
-      {/* ── Full Promo Video ──────────────────────────────────────────────── */}
-      <section id="demo" className="py-20 px-6">
-        <div className="max-w-6xl mx-auto">
+      {/* ── EPIC CINEMATIC TRAILER + Scrolling Feature Comparison ─────── */}
+      <section id="demo" className="py-0 relative overflow-hidden" style={{background:'#000'}}>
+        <div className="max-w-7xl mx-auto px-6 pt-20 pb-8">
           <FadeIn>
-            <div className="text-center mb-12">
-              <p className="text-xs font-bold text-orange-400 uppercase tracking-widest mb-3">Full Promo Video</p>
-              <h2 className="text-4xl md:text-5xl font-black mb-4">
-                The Full Story. <GradText>48 Seconds.</GradText>
+            <div className="text-center mb-10">
+              <p className="text-xs font-black tracking-widest mb-3" style={{color:'#c9a84c'}}>CINEMATIC TRAILER</p>
+              <h2 className="text-4xl md:text-6xl font-black mb-4">
+                <span style={{background:'linear-gradient(135deg,#1a6cf6,#c9a84c)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>See What Limitless</span><br />
+                <span className="text-white">Looks Like.</span>
               </h2>
-              <p className="text-white/40 text-lg max-w-2xl mx-auto">
-                15 features. 5 competitors. 1 winner. Every module, every advantage, every reason to switch — in under 2 minutes.
+              <p className="text-white/50 text-lg max-w-2xl mx-auto">
+                Every feature. Every competitor. One undeniable truth — AXIOM wins.
               </p>
             </div>
           </FadeIn>
+        </div>
 
-          <FadeIn delay={0.15}>
-            <div className="relative rounded-2xl overflow-hidden border border-orange-500/20 shadow-2xl shadow-orange-500/10">
-              {/* Gradient border glow */}
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-orange-500/10 via-transparent to-orange-500/10 pointer-events-none z-10" />
-              <video
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/axiom-promo-final_10e5790e.mp4"
-                className="w-full aspect-video object-contain bg-black"
-                controls
-                playsInline
-              />
+        {/* Main layout: scrolling comparison LEFT + video RIGHT */}
+        <div className="flex flex-col lg:flex-row max-w-7xl mx-auto">
+
+          {/* LEFT: Infinite Scrolling Feature Comparison */}
+          <div className="w-full lg:w-72 xl:w-80 flex-shrink-0 relative" style={{background:'linear-gradient(180deg,#050a1a 0%,#020510 100%)',borderRight:'1px solid rgba(26,108,246,0.2)',maxHeight:'540px',overflow:'hidden'}}>
+            {/* Header */}
+            <div className="px-4 py-3 sticky top-0 z-10" style={{background:'#050a1a',borderBottom:'1px solid rgba(26,108,246,0.2)'}}>
+              <div className="text-xs font-black tracking-widest mb-2" style={{color:'#1a6cf6'}}>AXIOM VS THE WORLD</div>
+              <div className="grid grid-cols-4 gap-1 text-center">
+                {['AXIOM','HubSpot','Salesforce','Pipedrive'].map((c,i)=>(
+                  <div key={i} className="text-xs font-bold py-1 rounded" style={i===0?{background:'linear-gradient(135deg,#1a6cf6,#0d4db5)',color:'white',borderRadius:'6px'}:{color:'rgba(255,255,255,0.4)'}}>{c}</div>
+                ))}
+              </div>
             </div>
-            {/* Scene breakdown */}
-            <div className="mt-6 grid grid-cols-3 md:grid-cols-5 gap-3">
-              {[
-                { label: "The Problem", time: "0:00" },
-                { label: "AXIOM Intro", time: "0:06" },
-                { label: "vs Competitors", time: "0:12" },
-                { label: "One-Touch Migration", time: "0:20" },
-                { label: "BNB AI Engine", time: "0:26" },
-                { label: "260 SMTP", time: "0:32" },
-                { label: "AI Voice Agent", time: "0:38" },
-                { label: "Compliance", time: "0:44" },
-                { label: "AR/AP + Logistics", time: "0:50" },
-                { label: "Pricing — 25% Less", time: "1:14" },
-              ].map((scene, i) => (
-                <div key={i} className="bg-white/5 border border-white/8 rounded-xl px-3 py-2 text-center">
-                  <p className="text-orange-400 text-xs font-bold">{scene.time}</p>
-                  <p className="text-white/60 text-xs mt-0.5">{scene.label}</p>
+            {/* Scrolling rows */}
+            <style>{`
+              @keyframes featureScrollUp { 0%{transform:translateY(0)} 100%{transform:translateY(-50%)} }
+              .feat-scroll { animation: featureScrollUp 80s linear infinite; }
+              .feat-scroll:hover { animation-play-state: paused; }
+            `}</style>
+            <div className="feat-scroll px-3 py-2">
+              {([
+                {cat:'CORE CRM',f:'Contact Management',a:true,b:true,c:true,d:true},
+                {cat:'',f:'Company Records',a:true,b:true,c:true,d:true},
+                {cat:'',f:'Multi-Pipeline Kanban',a:true,b:'Paid',c:'Paid',d:'Paid'},
+                {cat:'',f:'Custom Fields',a:true,b:true,c:true,d:true},
+                {cat:'',f:'Smart Views',a:true,b:'Limited',c:'Limited',d:false},
+                {cat:'',f:'Bulk Actions',a:true,b:'Limited',c:true,d:'Limited'},
+                {cat:'AI & INTELLIGENCE',f:'AI Lead Scoring',a:true,b:'$500+/mo',c:'$150+/user',d:false},
+                {cat:'',f:'Win Probability AI',a:true,b:'$500+/mo',c:'$150+/user',d:false},
+                {cat:'',f:'Next Best Action AI',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Behavioral DNA Profile',a:true,b:false,c:false,d:false},
+                {cat:'',f:'AI Email Writer',a:true,b:'Add-on',c:'Add-on',d:false},
+                {cat:'',f:'AI Ghostwriter',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Paradigm Pulse™ Intel',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Quantum Score™',a:true,b:false,c:false,d:false},
+                {cat:'EMAIL MARKETING',f:'Email Campaigns',a:true,b:true,c:'Add-on',d:'Add-on'},
+                {cat:'',f:'260 SMTP Rotation™',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Ghost Sequences™',a:true,b:false,c:false,d:false},
+                {cat:'',f:'A/B Testing',a:true,b:true,c:'Add-on',d:'Limited'},
+                {cat:'',f:'98.7% Inbox Placement',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Suppression Lists',a:true,b:true,c:true,d:'Limited'},
+                {cat:'AUTOMATION',f:'Workflow Builder',a:true,b:true,c:true,d:'Limited'},
+                {cat:'',f:'Revenue Autopilot™',a:true,b:false,c:false,d:false},
+                {cat:'',f:'AI Sequences',a:true,b:'Add-on',c:'Add-on',d:false},
+                {cat:'',f:'Behavioral Triggers',a:true,b:'Limited',c:'Limited',d:false},
+                {cat:'',f:'Auto Lead Assignment',a:true,b:true,c:true,d:true},
+                {cat:'PROSPECTING',f:'BNB Prospect Engine™',a:true,b:false,c:false,d:false},
+                {cat:'',f:'FMCSA Scanner',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Visitor Tracking',a:true,b:'Add-on',c:'Add-on',d:false},
+                {cat:'',f:'Intent Signals',a:true,b:'Add-on',c:'Add-on',d:false},
+                {cat:'',f:'Battle Cards',a:true,b:false,c:false,d:false},
+                {cat:'VOICE & CALLS',f:'AI Voice Agent',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Call Recording',a:true,b:'Add-on',c:'Add-on',d:'Add-on'},
+                {cat:'',f:'Voice Transcription',a:true,b:'Add-on',c:'Add-on',d:false},
+                {cat:'FINANCE & OPS',f:'Accounts Receivable',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Accounts Payable',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Shipping Module',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Invoice Management',a:true,b:false,c:false,d:false},
+                {cat:'COMPLIANCE',f:'Compliance Fortress™',a:true,b:'Add-on',c:'Add-on',d:false},
+                {cat:'',f:'GDPR Tools',a:true,b:true,c:true,d:'Limited'},
+                {cat:'',f:'CCPA Compliance',a:true,b:true,c:true,d:false},
+                {cat:'',f:'CAN-SPAM Mgmt',a:true,b:true,c:true,d:true},
+                {cat:'MIGRATION',f:'One-Touch Migration™',a:true,b:false,c:false,d:false},
+                {cat:'',f:'HubSpot Import',a:true,b:'N/A',c:false,d:false},
+                {cat:'',f:'Salesforce Import',a:true,b:false,c:'N/A',d:false},
+                {cat:'',f:'Pipedrive Import',a:true,b:false,c:false,d:'N/A'},
+                {cat:'',f:'CSV Import',a:true,b:true,c:true,d:true},
+                {cat:'PLATFORM',f:'White Labeling',a:true,b:false,c:false,d:false},
+                {cat:'',f:'SaaS Resell Mode',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Multi-Tenant',a:true,b:'Enterprise',c:'Enterprise',d:false},
+                {cat:'',f:'API Access',a:true,b:true,c:true,d:true},
+                {cat:'',f:'Webhooks',a:true,b:true,c:true,d:true},
+                {cat:'PRICING (10 users)',f:'Monthly Cost',a:'$297',b:'$1,000',c:'$1,750',d:'$1,090'},
+                {cat:'',f:'AI Features Included',a:'✓ All',b:'$500+ add-on',c:'$150+/user',d:'None'},
+                {cat:'',f:'Migration Cost',a:'FREE',b:'N/A',c:'N/A',d:'N/A'},
+                // duplicate for seamless infinite loop
+                {cat:'CORE CRM',f:'Contact Management',a:true,b:true,c:true,d:true},
+                {cat:'',f:'Company Records',a:true,b:true,c:true,d:true},
+                {cat:'',f:'Multi-Pipeline Kanban',a:true,b:'Paid',c:'Paid',d:'Paid'},
+                {cat:'AI & INTELLIGENCE',f:'AI Lead Scoring',a:true,b:'$500+/mo',c:'$150+/user',d:false},
+                {cat:'',f:'Win Probability AI',a:true,b:'$500+/mo',c:'$150+/user',d:false},
+                {cat:'',f:'Next Best Action AI',a:true,b:false,c:false,d:false},
+                {cat:'EMAIL MARKETING',f:'260 SMTP Rotation™',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Ghost Sequences™',a:true,b:false,c:false,d:false},
+                {cat:'AUTOMATION',f:'Revenue Autopilot™',a:true,b:false,c:false,d:false},
+                {cat:'PROSPECTING',f:'BNB Prospect Engine™',a:true,b:false,c:false,d:false},
+                {cat:'FINANCE & OPS',f:'Accounts Receivable',a:true,b:false,c:false,d:false},
+                {cat:'MIGRATION',f:'One-Touch Migration™',a:true,b:false,c:false,d:false},
+                {cat:'PRICING (10 users)',f:'Monthly Cost',a:'$297',b:'$1,000',c:'$1,750',d:'$1,090'},
+              ] as {cat:string,f:string,a:boolean|string,b:boolean|string,c:boolean|string,d:boolean|string}[]).map((row,i)=>(
+                <div key={i}>
+                  {row.cat && <div className="text-xs font-black mt-3 mb-1 px-1" style={{color:'#c9a84c',letterSpacing:'0.1em'}}>{row.cat}</div>}
+                  <div className="grid grid-cols-4 gap-1 py-1.5" style={{borderBottom:'1px solid rgba(255,255,255,0.04)'}}>
+                    <div className="text-white/60 leading-tight pr-1" style={{fontSize:'10px'}}>{row.f}</div>
+                    {([row.a,row.b,row.c,row.d] as (boolean|string)[]).map((val,ci)=>(
+                      <div key={ci} className="text-center" style={{fontSize:'10px'}}>
+                        {val===true?<span style={{color:'#1a6cf6',fontWeight:'bold'}}>✓</span>
+                          :val===false?<span style={{color:'rgba(255,255,255,0.2)'}}>✗</span>
+                          :<span style={{color:ci===0?'#c9a84c':'rgba(255,255,255,0.35)',fontWeight:ci===0?'bold':'normal'}}>{val as string}</span>}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
-          </FadeIn>
+          </div>
+
+          {/* RIGHT: Cinematic Video Player */}
+          <div className="flex-1 relative bg-black">
+            <div className="relative w-full" style={{aspectRatio:'16/9'}}>
+              <video
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/axiom-trailer-64s_5c4e5e4e.mp4"
+                className="w-full h-full object-cover"
+                controls
+                playsInline
+                poster="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/ax-s8-logo-GPHWvuWsy5if7PqiNcirSw.png"
+              />
+              <div className="absolute top-4 left-4 z-20 pointer-events-none">
+                <div className="text-xs font-black px-3 py-1 rounded-full" style={{background:'rgba(26,108,246,0.85)',color:'white',backdropFilter:'blur(8px)',letterSpacing:'0.15em'}}>AXIOM CRM</div>
+              </div>
+              <div className="absolute top-4 right-4 z-20 pointer-events-none">
+                <div className="text-xs font-black px-3 py-1 rounded-full" style={{background:'rgba(201,168,76,0.85)',color:'#000',backdropFilter:'blur(8px)',letterSpacing:'0.1em'}}>COMMAND YOUR MARKET</div>
+              </div>
+            </div>
+            {/* Scene chapter markers */}
+            <div className="grid grid-cols-4 md:grid-cols-8 gap-1 p-3" style={{background:'#050a1a'}}>
+              {[
+                {t:'0:00',l:'The Problem'},{t:'0:08',l:'Awakening'},{t:'0:16',l:'Full Speed'},{t:'0:24',l:'AI Intel'},
+                {t:'0:32',l:'Rival Falls'},{t:'0:40',l:'One Touch'},{t:'0:48',l:'Triumph'},{t:'0:56',l:'AXIOM'},
+              ].map((s,i)=>(
+                <div key={i} className="text-center py-2 rounded-lg" style={{background:'rgba(255,255,255,0.04)'}}>
+                  <div className="text-xs font-bold" style={{color:'#1a6cf6'}}>{s.t}</div>
+                  <div className="text-white/40" style={{fontSize:'9px',marginTop:'2px'}}>{s.l}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
+        <div className="pb-16" />
       </section>
 
       {/* ── Features — tabbed deep-dive ──────────────────────────────────── */}
