@@ -2022,3 +2022,9 @@
 - [ ] Generate AXIOM CRM hero video
 - [ ] Integrate video and new assets into marketing page
 - [ ] Update index.html title and meta tags
+
+## Marketing Page UI Improvements (March 2026)
+- [x] Overlay scrolling comparison panel lightly on top of the trailer video (semi-transparent, both visible simultaneously)
+- [x] Fix video end cutoff — add loop with fade-out or extend ending gracefully
+- [x] Change competitor false/missing values in comparison scroll to red ✗ dots (currently faded white)
+- [x] Make competitor false values big bold red X marks (larger, more prominent)

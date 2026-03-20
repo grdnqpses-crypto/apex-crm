@@ -882,27 +882,45 @@ export default function MarketingHome({
           </FadeIn>
         </div>
 
-        {/* Main layout: scrolling comparison LEFT + video RIGHT */}
-        <div className="flex flex-col lg:flex-row max-w-7xl mx-auto">
+        {/* Main layout: video fills full width, comparison panel overlays on top-left */}
+        <div className="relative max-w-7xl mx-auto">
 
-          {/* LEFT: Infinite Scrolling Feature Comparison */}
-          <div className="w-full lg:w-72 xl:w-80 flex-shrink-0 relative" style={{background:'linear-gradient(180deg,#050a1a 0%,#020510 100%)',borderRight:'1px solid rgba(26,108,246,0.2)',maxHeight:'540px',overflow:'hidden'}}>
-            {/* Header */}
-            <div className="px-4 py-3 sticky top-0 z-10" style={{background:'#050a1a',borderBottom:'1px solid rgba(26,108,246,0.2)'}}>
-              <div className="text-xs font-black tracking-widest mb-2" style={{color:'#1a6cf6'}}>AXIOM VS THE WORLD</div>
-              <div className="grid grid-cols-4 gap-1 text-center">
-                {['AXIOM','HubSpot','Salesforce','Pipedrive'].map((c,i)=>(
-                  <div key={i} className="text-xs font-bold py-1 rounded" style={i===0?{background:'linear-gradient(135deg,#1a6cf6,#0d4db5)',color:'white',borderRadius:'6px'}:{color:'rgba(255,255,255,0.4)'}}>{c}</div>
-                ))}
+          {/* BACKGROUND: Full-width Cinematic Video */}
+          <div className="relative w-full bg-black">
+            <div className="relative w-full" style={{aspectRatio:'16/9'}}>
+              <video
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/axiom-trailer-64s_5c4e5e4e.mp4"
+                className="w-full h-full object-cover"
+                controls
+                loop
+                playsInline
+                poster="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/ax-s8-logo-GPHWvuWsy5if7PqiNcirSw.png"
+              />
+              <div className="absolute top-4 left-4 z-20 pointer-events-none">
+                <div className="text-xs font-black px-3 py-1 rounded-full" style={{background:'rgba(26,108,246,0.85)',color:'white',backdropFilter:'blur(8px)',letterSpacing:'0.15em'}}>AXIOM CRM</div>
               </div>
-            </div>
-            {/* Scrolling rows */}
-            <style>{`
-              @keyframes featureScrollUp { 0%{transform:translateY(0)} 100%{transform:translateY(-50%)} }
-              .feat-scroll { animation: featureScrollUp 80s linear infinite; }
-              .feat-scroll:hover { animation-play-state: paused; }
-            `}</style>
-            <div className="feat-scroll px-3 py-2">
+              <div className="absolute top-4 right-4 z-20 pointer-events-none">
+                <div className="text-xs font-black px-3 py-1 rounded-full" style={{background:'rgba(201,168,76,0.85)',color:'#000',backdropFilter:'blur(8px)',letterSpacing:'0.1em'}}>COMMAND YOUR MARKET</div>
+              </div>
+
+              {/* OVERLAY: Scrolling Feature Comparison — floats on top of video */}
+              <div className="absolute top-0 left-0 bottom-0 z-30" style={{width:'260px',background:'linear-gradient(180deg,rgba(5,10,26,0.82) 0%,rgba(2,5,16,0.82) 100%)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',borderRight:'1px solid rgba(26,108,246,0.25)',overflow:'hidden'}}>
+                {/* Header */}
+                <div className="px-4 py-3 sticky top-0 z-10" style={{background:'rgba(5,10,26,0.9)',borderBottom:'1px solid rgba(26,108,246,0.2)'}}>
+                  <div className="text-xs font-black tracking-widest mb-2" style={{color:'#1a6cf6'}}>AXIOM VS THE WORLD</div>
+                  <div className="grid grid-cols-4 gap-1 text-center">
+                    {['AXIOM','HubSpot','Salesforce','Pipedrive'].map((c,i)=>(
+                      <div key={i} className="text-xs font-bold py-1 rounded" style={i===0?{background:'linear-gradient(135deg,#1a6cf6,#0d4db5)',color:'white',borderRadius:'6px'}:{color:'rgba(255,255,255,0.5)'}}>{c}</div>
+                    ))}
+                  </div>
+                </div>
+                {/* Scrolling rows */}
+                <style>{`
+                  @keyframes featureScrollUp { 0%{transform:translateY(0)} 100%{transform:translateY(-50%)} }
+                  .feat-scroll { animation: featureScrollUp 80s linear infinite; }
+                  .feat-scroll:hover { animation-play-state: paused; }
+                `}</style>
+                <div className="feat-scroll px-3 py-2">
               {([
                 {cat:'CORE CRM',f:'Contact Management',a:true,b:true,c:true,d:true},
                 {cat:'',f:'Company Records',a:true,b:true,c:true,d:true},
@@ -979,32 +997,15 @@ export default function MarketingHome({
                     <div className="text-white/60 leading-tight pr-1" style={{fontSize:'10px'}}>{row.f}</div>
                     {([row.a,row.b,row.c,row.d] as (boolean|string)[]).map((val,ci)=>(
                       <div key={ci} className="text-center" style={{fontSize:'10px'}}>
-                        {val===true?<span style={{color:'#1a6cf6',fontWeight:'bold'}}>✓</span>
-                          :val===false?<span style={{color:'rgba(255,255,255,0.2)'}}>✗</span>
-                          :<span style={{color:ci===0?'#c9a84c':'rgba(255,255,255,0.35)',fontWeight:ci===0?'bold':'normal'}}>{val as string}</span>}
+                        {val===true?<span style={{color:'#1a6cf6',fontWeight:'900',fontSize:'14px',lineHeight:'1'}}>✓</span>
+                          :val===false?<span style={{color:'#ef4444',fontWeight:'900',fontSize:'16px',lineHeight:'1',textShadow:'0 0 8px rgba(239,68,68,0.6)'}}>✗</span>
+                          :<span style={{color:ci===0?'#c9a84c':'#ef4444',fontWeight:ci===0?'bold':'600',fontSize:ci===0?'10px':'9px'}}>{val as string}</span>}
                       </div>
                     ))}
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-
-          {/* RIGHT: Cinematic Video Player */}
-          <div className="flex-1 relative bg-black">
-            <div className="relative w-full" style={{aspectRatio:'16/9'}}>
-              <video
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/axiom-trailer-64s_5c4e5e4e.mp4"
-                className="w-full h-full object-cover"
-                controls
-                playsInline
-                poster="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/ax-s8-logo-GPHWvuWsy5if7PqiNcirSw.png"
-              />
-              <div className="absolute top-4 left-4 z-20 pointer-events-none">
-                <div className="text-xs font-black px-3 py-1 rounded-full" style={{background:'rgba(26,108,246,0.85)',color:'white',backdropFilter:'blur(8px)',letterSpacing:'0.15em'}}>AXIOM CRM</div>
-              </div>
-              <div className="absolute top-4 right-4 z-20 pointer-events-none">
-                <div className="text-xs font-black px-3 py-1 rounded-full" style={{background:'rgba(201,168,76,0.85)',color:'#000',backdropFilter:'blur(8px)',letterSpacing:'0.1em'}}>COMMAND YOUR MARKET</div>
+                </div>
               </div>
             </div>
             {/* Scene chapter markers */}
