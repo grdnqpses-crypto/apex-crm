@@ -71,19 +71,21 @@ const TASKS: AITask[] = [
       const fiveMinutesAgo = now - 5 * 60 * 1000;
 
       // Pull recent error events
-      const recentErrors = await (await getDb())!.execute(sql.raw(`SELECT event_type, COUNT(*) as count, MAX(created_at) as latest
+      const recentErrors = await (await getDb())!.execute(sql.raw(
+        `SELECT eventType, COUNT(*) as count, MAX(createdAt) as latest
          FROM system_health_events
-         WHERE created_at > ? AND severity IN ('error','critical')
-         GROUP BY event_type
+         WHERE createdAt > ${fiveMinutesAgo} AND severity IN ('error','critical')
+         GROUP BY eventType
          ORDER BY count DESC
-         LIMIT 20`));
+         LIMIT 20`
+      ));
 
       const rows = (recentErrors as any[])[0] as any[];
       if (!rows || rows.length === 0) {
         return { success: true, summary: "No errors detected in last 5 minutes. System healthy.", actionsTaken: [] };
       }
 
-      const errorSummary = rows.map((r: any) => `${r.event_type}: ${r.count} occurrences`).join(", ");
+      const errorSummary = rows.map((r: any) => `${r.eventType}: ${r.count} occurrences`).join(", ");
       log(`Found ${rows.length} error types: ${errorSummary}`);
 
       // Ask AI to analyze and recommend corrections
@@ -160,7 +162,7 @@ const TASKS: AITask[] = [
 
       // Find contacts with same email
       const emailDupes = await (await getDb())!.execute(sql.raw(
-        `SELECT email, COUNT(*) as cnt, GROUP_CONCAT(id ORDER BY created_at ASC) as ids
+        `SELECT email, COUNT(*) as cnt, GROUP_CONCAT(id ORDER BY createdAt ASC) as ids
          FROM contacts
          WHERE email IS NOT NULL AND email != ''
          GROUP BY email
@@ -185,8 +187,8 @@ const TASKS: AITask[] = [
 
         // Reassign activities from dupes to keeper
         for (const dupeId of dupeIds) {
-          await (await getDb())!.execute(sql.raw(`UPDATE activities SET contact_id = ? WHERE contact_id = ?`));
-          await (await getDb())!.execute(sql.raw(`DELETE FROM contacts WHERE id = ?`));
+          await (await getDb())!.execute(sql.raw(`UPDATE activities SET contactId = ${keepId} WHERE contactId = ${dupeId}`));
+          await (await getDb())!.execute(sql.raw(`DELETE FROM contacts WHERE id = ${dupeId}`));
           mergedCount++;
         }
         actionsTaken.push(`Merged ${dupeIds.length} duplicate(s) for email ${row.email} into contact #${keepId}`);
@@ -215,10 +217,10 @@ const TASKS: AITask[] = [
       log("Recalculating lead scores...");
 
       const prospects = await (await getDb())!.execute(sql.raw(
-        `SELECT id, first_name, last_name, email, company_name, engagement_stage, psychographic_profile
+        `SELECT id, firstName, lastName, email, companyName, engagementStage, psychographicProfile
          FROM prospects
-         WHERE engagement_stage NOT IN ('converted','dead')
-         ORDER BY updated_at DESC
+         WHERE engagementStage NOT IN ('converted','dead')
+         ORDER BY updatedAt DESC
          LIMIT 100`
       ));
 
@@ -240,10 +242,10 @@ const TASKS: AITask[] = [
             role: "user",
             content: `Score these ${rows.length} prospects:\n${JSON.stringify(rows.map(r => ({
               id: r.id,
-              name: `${r.first_name} ${r.last_name}`,
-              company: r.company_name,
-              stage: r.engagement_stage,
-              hasProfile: !!r.psychographic_profile
+              name: `${r.firstName} ${r.lastName}`,
+              company: r.companyName,
+              stage: r.engagementStage,
+              hasProfile: !!r.psychographicProfile
             })))}`
           }
         ],
@@ -280,7 +282,7 @@ const TASKS: AITask[] = [
       let updated = 0;
 
       for (const s of scores) {
-        await (await getDb())!.execute(sql.raw(`UPDATE prospects SET quantum_score = ?, updated_at = ? WHERE id = ?`));
+        await (await getDb())!.execute(sql.raw(`UPDATE prospects SET score = ${s.score}, updatedAt = ${Date.now()} WHERE id = ${s.id}`));
         updated++;
       }
 
@@ -308,11 +310,13 @@ const TASKS: AITask[] = [
 
       const sixMonthsAgo = Date.now() - 180 * 24 * 60 * 60 * 1000;
 
-      const staleContacts = await (await getDb())!.execute(sql.raw(`SELECT id, email, first_name, last_name, updated_at
+      const staleContacts = await (await getDb())!.execute(sql.raw(
+        `SELECT id, email, firstName, lastName, updatedAt
          FROM contacts
-         WHERE updated_at < ? AND email IS NOT NULL
-         ORDER BY updated_at ASC
-         LIMIT 200`));
+         WHERE updatedAt < ${sixMonthsAgo} AND email IS NOT NULL
+         ORDER BY updatedAt ASC
+         LIMIT 200`
+      ));
 
       const rows = (staleContacts as any[])[0] as any[];
       if (!rows || rows.length === 0) {
@@ -322,7 +326,7 @@ const TASKS: AITask[] = [
       // Tag them for re-verification
       const ids = rows.map((r: any) => r.id);
       await (await getDb())!.execute(sql.raw(
-        `UPDATE contacts SET lifecycle_stage = 'needs_revalidation' WHERE id IN (${ids.join(',')})` 
+        `UPDATE contacts SET lifecycleStage = 'needs_revalidation' WHERE id IN (${ids.join(',')})`
       ));
 
       return {
@@ -349,30 +353,34 @@ const TASKS: AITask[] = [
 
       const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
-      const stalledDeals = await (await getDb())!.execute(sql.raw(`SELECT d.id, d.title, d.value, d.stage, d.assigned_to, d.updated_at,
-                u.name as owner_name
+      const stalledDeals = await (await getDb())!.execute(sql.raw(
+        `SELECT d.id, d.name, d.dealValue, d.status, d.userId, d.updatedAt,
+                u.name as ownerName
          FROM deals d
-         LEFT JOIN users u ON u.id = d.assigned_to
-         WHERE d.updated_at < ? AND d.stage NOT IN ('won','lost','closed')
-         ORDER BY d.value DESC
-         LIMIT 50`));
+         LEFT JOIN users u ON u.id = d.userId
+         WHERE d.updatedAt < ${sevenDaysAgo} AND d.status NOT IN ('won','lost','closed')
+         ORDER BY d.dealValue DESC
+         LIMIT 50`
+      ));
 
       const rows = (stalledDeals as any[])[0] as any[];
       if (!rows || rows.length === 0) {
         return { success: true, summary: "All deals have recent activity. Pipeline healthy.", actionsTaken: [] };
       }
 
-      const totalValue = rows.reduce((sum: number, r: any) => sum + (r.value || 0), 0);
+      const totalValue = rows.reduce((sum: number, r: any) => sum + (r.dealValue || 0), 0);
       const actionsTaken = [`Identified ${rows.length} stalled deals worth $${totalValue.toLocaleString()}`];
 
       // Create follow-up tasks for stalled deals
       let tasksCreated = 0;
       for (const deal of rows.slice(0, 10)) {
-        const existing = await (await getDb())!.execute(sql.raw(`SELECT id FROM tasks WHERE deal_id = ? AND status = 'pending' AND title LIKE '%follow up%' LIMIT 1`));
+        const existing = await (await getDb())!.execute(sql.raw(`SELECT id FROM tasks WHERE dealId = ${deal.id} AND taskStatus = 'pending' AND title LIKE '%follow up%' LIMIT 1`));
         const existingRows = (existing as any[])[0] as any[];
         if (!existingRows || existingRows.length === 0) {
-          await (await getDb())!.execute(sql.raw(`INSERT INTO tasks (title, type, status, priority, due_date, deal_id, assigned_to, notes, created_at, updated_at)
-             VALUES (?, 'follow_up', 'pending', 'high', ?, ?, ?, ?, ?, ?)`));
+          const now = Date.now();
+          const dueDate = now + 24 * 60 * 60 * 1000;
+          await (await getDb())!.execute(sql.raw(`INSERT INTO tasks (title, taskType, taskStatus, priority, dueDate, dealId, assignedTo, description, createdAt, updatedAt)
+             VALUES ('Follow up on stalled deal: ${deal.name?.replace(/'/g, "''")}', 'follow_up', 'pending', 'high', ${dueDate}, ${deal.id}, ${deal.userId || 'NULL'}, 'Auto-created by AI Engine: deal stalled for 7+ days', ${now}, ${now})`));
           tasksCreated++;
         }
       }
@@ -405,15 +413,17 @@ const TASKS: AITask[] = [
 
       const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
 
-      const engagementData = await (await getDb())!.execute(sql.raw(`SELECT contact_id, 
-                HOUR(FROM_UNIXTIME(created_at/1000)) as send_hour,
+      const engagementData = await (await getDb())!.execute(sql.raw(
+        `SELECT contactId,
+                HOUR(FROM_UNIXTIME(createdAt/1000)) as send_hour,
                 COUNT(*) as sends,
-                SUM(CASE WHEN type = 'email_open' THEN 1 ELSE 0 END) as opens
+                SUM(CASE WHEN activityType = 'email_open' THEN 1 ELSE 0 END) as opens
          FROM activities
-         WHERE created_at > ? AND type IN ('email_sent', 'email_open')
-         GROUP BY contact_id, send_hour
+         WHERE createdAt > ${thirtyDaysAgo} AND activityType IN ('email_sent', 'email_open')
+         GROUP BY contactId, send_hour
          HAVING sends > 2
-         LIMIT 500`));
+         LIMIT 500`
+      ));
 
       const rows = (engagementData as any[])[0] as any[];
       if (!rows || rows.length === 0) {
@@ -424,14 +434,14 @@ const TASKS: AITask[] = [
       const contactHours: Record<number, { hour: number; rate: number }> = {};
       for (const row of rows) {
         const rate = row.sends > 0 ? row.opens / row.sends : 0;
-        if (!contactHours[row.contact_id] || rate > contactHours[row.contact_id].rate) {
-          contactHours[row.contact_id] = { hour: row.send_hour, rate };
+        if (!contactHours[row.contactId] || rate > contactHours[row.contactId].rate) {
+          contactHours[row.contactId] = { hour: row.send_hour, rate };
         }
       }
 
       let updated = 0;
       for (const [contactId, best] of Object.entries(contactHours)) {
-        await (await getDb())!.execute(sql.raw(`UPDATE contacts SET custom_fields = JSON_SET(COALESCE(custom_fields, '{}'), '$.optimal_send_hour', ?) WHERE id = ?`));
+        await (await getDb())!.execute(sql.raw(`UPDATE contacts SET customFields = JSON_SET(COALESCE(customFields, '{}'), '$.optimal_send_hour', ${best.hour}) WHERE id = ${contactId}`));
         updated++;
       }
 
@@ -458,12 +468,12 @@ const TASKS: AITask[] = [
       log("Analyzing sequence performance...");
 
       const sequences = await (await getDb())!.execute(sql.raw(
-        `SELECT gs.id, gs.name, gs.status,
+        `SELECT gs.id, gs.name, gs.seqStatus,
                 COUNT(gss.id) as step_count,
-                gs.created_at
+                gs.createdAt
          FROM ghost_sequences gs
-         LEFT JOIN ghost_sequence_steps gss ON gss.sequence_id = gs.id
-         WHERE gs.status = 'active'
+         LEFT JOIN ghost_sequence_steps gss ON gss.sequenceId = gs.id
+         WHERE gs.seqStatus = 'active'
          GROUP BY gs.id
          LIMIT 20`
       ));
@@ -486,7 +496,7 @@ const TASKS: AITask[] = [
               id: r.id,
               name: r.name,
               steps: r.step_count,
-              age_days: Math.floor((Date.now() - r.created_at) / (1000 * 60 * 60 * 24))
+              age_days: Math.floor((Date.now() - r.createdAt) / (1000 * 60 * 60 * 24))
             })))}`
           }
         ],
@@ -544,10 +554,10 @@ const TASKS: AITask[] = [
       log("Checking domain reputation health...");
 
       const domains = await (await getDb())!.execute(sql.raw(
-        `SELECT id, domain, health_score, daily_sent, daily_limit, status
+        `SELECT id, domain, healthStatus, sentToday, dailyLimit, isActive
          FROM smtp_accounts
-         WHERE status = 'active'
-         ORDER BY health_score ASC
+         WHERE isActive = 1
+         ORDER BY sentToday DESC
          LIMIT 100`
       ));
 
@@ -561,19 +571,19 @@ const TASKS: AITask[] = [
       let warned = 0;
 
       for (const domain of rows) {
-        const score = domain.health_score || 100;
-        const utilization = domain.daily_limit > 0 ? (domain.daily_sent / domain.daily_limit) * 100 : 0;
+        const score = domain.healthStatus === 'healthy' ? 100 : domain.healthStatus === 'warning' ? 50 : 20;
+        const utilization = domain.dailyLimit > 0 ? (domain.sentToday / domain.dailyLimit) * 100 : 0;
 
         if (score < 30) {
           // Critical — pause immediately
-          await (await getDb())!.execute(sql.raw(`UPDATE smtp_accounts SET status = 'paused' WHERE id = ?`));
-          actionsTaken.push(`PAUSED domain ${domain.domain} (health score: ${score})`);
+          await (await getDb())!.execute(sql.raw(`UPDATE smtp_accounts SET isActive = 0 WHERE id = ${domain.id}`));
+          actionsTaken.push(`PAUSED domain ${domain.domain} (health status: ${domain.healthStatus})`);
           paused++;
         } else if (score < 60 || utilization > 90) {
           // Warning — reduce daily limit
-          const newLimit = Math.floor(domain.daily_limit * 0.7);
-          await (await getDb())!.execute(sql.raw(`UPDATE smtp_accounts SET daily_limit = ? WHERE id = ?`));
-          actionsTaken.push(`Throttled domain ${domain.domain} to ${newLimit}/day (score: ${score}, utilization: ${Math.round(utilization)}%)`);
+          const newLimit = Math.floor(domain.dailyLimit * 0.7);
+          await (await getDb())!.execute(sql.raw(`UPDATE smtp_accounts SET dailyLimit = ${newLimit} WHERE id = ${domain.id}`));
+          actionsTaken.push(`Throttled domain ${domain.domain} to ${newLimit}/day (utilization: ${Math.round(utilization)}%)`);
           warned++;
         }
       }
@@ -608,12 +618,12 @@ const TASKS: AITask[] = [
       log("Updating competitive intelligence battle cards...");
 
       const hotProspects = await (await getDb())!.execute(sql.raw(
-        `SELECT p.id, p.first_name, p.last_name, p.company_name, p.engagement_stage,
-                p.psychographic_profile, bc.id as battle_card_id
+        `SELECT p.id, p.firstName, p.lastName, p.companyName, p.engagementStage,
+                p.psychographicProfile, bc.id as battle_card_id
          FROM prospects p
-         LEFT JOIN battle_cards bc ON bc.prospect_id = p.id
-         WHERE p.engagement_stage IN ('hot','engaged','responding')
-         ORDER BY p.updated_at DESC
+         LEFT JOIN battle_cards bc ON bc.prospectId = p.id
+         WHERE p.engagementStage IN ('hot','engaged','responding')
+         ORDER BY p.updatedAt DESC
          LIMIT 20`
       ));
 
@@ -633,8 +643,8 @@ const TASKS: AITask[] = [
             },
             {
               role: "user",
-              content: `Generate battle card for ${prospect.first_name} ${prospect.last_name} at ${prospect.company_name}. 
-              Stage: ${prospect.engagement_stage}. Profile: ${prospect.psychographic_profile || 'not available'}`
+              content: `Generate battle card for ${prospect.firstName} ${prospect.lastName} at ${prospect.companyName}. 
+              Stage: ${prospect.engagementStage}. Profile: ${prospect.psychographicProfile || 'not available'}`
             }
           ],
           response_format: {
@@ -658,13 +668,17 @@ const TASKS: AITask[] = [
         });
 
         const card = JSON.parse(aiResponse.choices[0].message.content as string);
-        const cardContent = `**Key Insight:** ${card.key_insight}\n\n**Approach:** ${card.approach}\n\n**Likely Objections:** ${card.objections.join(', ')}\n\n**Close Strategy:** ${card.close_strategy}`;
+        // talkingPoints is JSON array, objectionHandlers is JSON array, recommendedApproach is TEXT
+        const talkingPointsJson = JSON.stringify([card.key_insight, card.approach, card.close_strategy]).replace(/'/g, "''");
+        const objectionHandlersJson = JSON.stringify(card.objections).replace(/'/g, "''");
+        const recommendedApproach = card.close_strategy.replace(/'/g, "''").replace(/\n/g, ' ');
+        const escapedName = (prospect.firstName + ' ' + prospect.lastName).replace(/'/g, "''");
 
+        const now = Date.now();
         if (prospect.battle_card_id) {
-          await (await getDb())!.execute(sql.raw(`UPDATE battle_cards SET content = ?, updated_at = ? WHERE id = ?`));
+          await (await getDb())!.execute(sql.raw(`UPDATE battle_cards SET talkingPoints = '${talkingPointsJson}', objectionHandlers = '${objectionHandlersJson}', recommendedApproach = '${recommendedApproach}', generatedAt = ${now} WHERE id = ${prospect.battle_card_id}`));
         } else {
-          await (await getDb())!.execute(sql.raw(`INSERT INTO battle_cards (prospect_id, title, content, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?)`));
+          await (await getDb())!.execute(sql.raw(`INSERT INTO battle_cards (prospectId, title, talkingPoints, objectionHandlers, recommendedApproach, createdAt, generatedAt) VALUES (${prospect.id}, 'Battle Card: ${escapedName}', '${talkingPointsJson}', '${objectionHandlersJson}', '${recommendedApproach}', ${now}, ${now})`));
         }
         updated++;
       }
@@ -692,10 +706,10 @@ const TASKS: AITask[] = [
       log("Checking for pending migration jobs...");
 
       const pendingJobs = await (await getDb())!.execute(sql.raw(
-        `SELECT id, competitor, status, field_mapping, created_at
+        `SELECT id, sourcePlatform, mjStatus, fieldMapping, createdAt
          FROM migration_jobs
-         WHERE status IN ('pending', 'mapping')
-         ORDER BY created_at ASC
+         WHERE mjStatus IN ('pending', 'mapping')
+         ORDER BY createdAt ASC
          LIMIT 5`
       ));
 
@@ -707,11 +721,11 @@ const TASKS: AITask[] = [
       const actionsTaken: string[] = [];
 
       for (const job of rows) {
-        log(`Processing migration job #${job.id} from ${job.competitor}...`);
+        log(`Processing migration job #${job.id} from ${job.sourcePlatform}...`);
 
-        await (await getDb())!.execute(sql.raw(`UPDATE migration_jobs SET status = 'mapping', updated_at = ? WHERE id = ?`));
+        await (await getDb())!.execute(sql.raw(`UPDATE migration_jobs SET mjStatus = 'mapping' WHERE id = ${job.id}`));
 
-        actionsTaken.push(`Processing migration job #${job.id} (${job.competitor})`);
+        actionsTaken.push(`Processing migration job #${job.id} (${job.sourcePlatform})`);
       }
 
       return {
@@ -738,11 +752,11 @@ const TASKS: AITask[] = [
 
       const staleThreshold = Date.now() - 7 * 24 * 60 * 60 * 1000;
       const rawResult = await (await getDb())!.execute(sql.raw(
-        `SELECT id, first_name, last_name, email, company_name, job_title, linkedin_url, engagement_stage, psychographic_profile
+        `SELECT id, userId, firstName, lastName, email, companyName, jobTitle, linkedinUrl, engagementStage, psychographicProfile
          FROM prospects
-         WHERE (psychographic_profile IS NULL OR updated_at < ${staleThreshold})
-           AND engagement_stage NOT IN ('converted', 'unsubscribed', 'dead')
-         ORDER BY created_at DESC
+         WHERE (psychographicProfile IS NULL OR updatedAt < ${staleThreshold})
+           AND engagementStage NOT IN ('converted', 'unsubscribed', 'dead')
+         ORDER BY createdAt DESC
          LIMIT 10`
       ));
 
@@ -756,7 +770,7 @@ const TASKS: AITask[] = [
 
       for (const prospect of rows) {
         try {
-          log(`Enriching: ${prospect.first_name} ${prospect.last_name} (${prospect.email})...`);
+          log(`Enriching: ${prospect.firstName} ${prospect.lastName} (${prospect.email})...`);
 
           const aiResponse = await invokeLLM({
             messages: [
@@ -766,7 +780,7 @@ const TASKS: AITask[] = [
               },
               {
                 role: "user",
-                content: `Prospect: ${prospect.first_name} ${prospect.last_name}, ${prospect.job_title || 'Unknown title'} at ${prospect.company_name || 'Unknown company'}. Email: ${prospect.email}. LinkedIn: ${prospect.linkedin_url || 'N/A'}. Current engagement stage: ${prospect.engagement_stage || 'new'}.\n\nGenerate a psychographic profile.`
+                content: `Prospect: ${prospect.firstName} ${prospect.lastName}, ${prospect.jobTitle || 'Unknown title'} at ${prospect.companyName || 'Unknown company'}. Email: ${prospect.email}. LinkedIn: ${prospect.linkedinUrl || 'N/A'}. Current engagement stage: ${prospect.engagementStage || 'new'}.\n\nGenerate a psychographic profile.`
               }
             ],
             response_format: {
@@ -799,17 +813,17 @@ const TASKS: AITask[] = [
             const profile = JSON.parse(profileJson);
             const profileStr = JSON.stringify(profile).replace(/'/g, "''");
             await (await getDb())!.execute(sql.raw(
-              `UPDATE prospects SET psychographic_profile = '${profileStr}', updated_at = ${Date.now()} WHERE id = ${prospect.id}`
+              `UPDATE prospects SET psychographicProfile = '${profileStr}', updatedAt = ${Date.now()} WHERE id = ${prospect.id}`
             ));
             // Insert intent signals as trigger signals
             for (const signal of (profile.intent_signals || []).slice(0, 3)) {
               const signalData = JSON.stringify({ signal, source: 'ai_enrichment', confidence: profile.confidence_score }).replace(/'/g, "''");
               await (await getDb())!.execute(sql.raw(
-                `INSERT INTO trigger_signals (prospect_id, signal_type, signal_data, detected_at, created_at)
-                 VALUES (${prospect.id}, 'intent_signal', '${signalData}', ${Date.now()}, ${Date.now()})`
+                `INSERT INTO trigger_signals (userId, prospectId, signalType, description, metadata, createdAt)
+                 VALUES (${prospect.userId || 0}, ${prospect.id}, 'intent_signal', 'AI-detected intent signal', '${signalData}', ${Date.now()})`
               )).catch(() => {});
             }
-            actionsTaken.push(`Enriched ${prospect.first_name} ${prospect.last_name} — ${profile.personality_type}, confidence: ${profile.confidence_score}%`);
+            actionsTaken.push(`Enriched ${prospect.firstName} ${prospect.lastName} — ${profile.personality_type}, confidence: ${profile.confidence_score}%`);
           }
         } catch (err: any) {
           log(`Failed to enrich ${prospect.email}: ${err.message}`);
@@ -843,10 +857,10 @@ const TASKS: AITask[] = [
 
       // Find companies that completed migration >= 30 days ago
       const migratedResult = await db.execute(sql.raw(
-        `SELECT DISTINCT company_id, source_platform, created_at
+        `SELECT DISTINCT mjCompanyId as company_id, sourcePlatform, createdAt
          FROM migration_jobs
-         WHERE status = 'completed' AND created_at <= ${thirtyDaysAgo}
-         ORDER BY created_at ASC
+         WHERE mjStatus = 'completed' AND createdAt <= ${thirtyDaysAgo}
+         ORDER BY createdAt ASC
          LIMIT 50`
       ));
       const migratedCompanies = ((migratedResult as any[])[0] || []) as any[];
@@ -861,16 +875,16 @@ const TASKS: AITask[] = [
 
       for (const company of migratedCompanies) {
         const usersResult = await db.execute(sql.raw(
-          `SELECT id, name, email, last_login_at
+          `SELECT id, name, email, lastSignedIn
            FROM users
-           WHERE tenant_company_id = ${company.company_id}
+           WHERE tenantCompanyId = ${company.company_id}
              AND role != 'developer'`
         ));
         const users = ((usersResult as any[])[0] || []) as any[];
         if (users.length === 0) continue;
 
-        const inactive = users.filter((u: any) => !u.last_login_at || Number(u.last_login_at) < sevenDaysAgo);
-        const neverLoggedIn = users.filter((u: any) => !u.last_login_at);
+        const inactive = users.filter((u: any) => !u.lastSignedIn || Number(u.lastSignedIn) < sevenDaysAgo);
+        const neverLoggedIn = users.filter((u: any) => !u.lastSignedIn);
         const activeUsers = users.length - inactive.length;
         const adoptionRate = Math.round((activeUsers / users.length) * 100);
 
@@ -959,8 +973,9 @@ async function runTask(state: RunningTask): Promise<void> {
   };
 
   // Log start
+  const _startTs = Date.now();
   await (await getDb())!.execute(sql.raw(`INSERT INTO ai_engine_logs (task_key, run_id, status, triggered_by, created_at)
-     VALUES (?, ?, 'started', 'scheduler', ?)`)).catch(() => {});
+     VALUES ('${state.task.key}', '${runId}', 'started', 'scheduler', ${_startTs})`)).catch(() => {});
 
   try {
     const result = await state.task.run(ctx);
@@ -978,8 +993,11 @@ async function runTask(state: RunningTask): Promise<void> {
     }
 
     // Log completion
+    const _summary = (result.summary || '').replace(/'/g, "''").substring(0, 500);
+    const _reasoning = (result.reasoning || '').replace(/'/g, "''").substring(0, 500);
+    const _actions = JSON.stringify(result.actionsTaken || []).replace(/'/g, "''").substring(0, 1000);
     await (await getDb())!.execute(sql.raw(`INSERT INTO ai_engine_logs (task_key, run_id, status, output_summary, ai_reasoning, actions_taken, duration_ms, triggered_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'scheduler', ?)`)).catch(() => {});
+       VALUES ('${state.task.key}', '${runId}', '${result.success ? 'success' : 'failed'}', '${_summary}', '${_reasoning}', '${_actions}', ${duration}, 'scheduler', ${Date.now()})`)).catch(() => {});
 
     // Escalate if too many consecutive failures
     if (state.consecutiveFailures >= 3) {
@@ -997,8 +1015,9 @@ async function runTask(state: RunningTask): Promise<void> {
     state.consecutiveFailures++;
     state.lastResult = { success: false, summary: "Task threw an exception", error: err.message };
 
+    const _errMsg = (err.message || '').replace(/'/g, "''").substring(0, 500);
     await (await getDb())!.execute(sql.raw(`INSERT INTO ai_engine_logs (task_key, run_id, status, error_message, duration_ms, triggered_by, created_at)
-       VALUES (?, ?, 'failed', ?, ?, 'scheduler', ?)`)).catch(() => {});
+       VALUES ('${state.task.key}', '${runId}', 'failed', '${_errMsg}', ${duration}, 'scheduler', ${Date.now()})`)).catch(() => {});
 
     console.error(`[AIEngine:${state.task.key}] Task failed:`, err.message);
   }
@@ -1088,8 +1107,11 @@ export async function triggerTask(taskKey: string, triggeredByUserId?: number): 
     if (result.success) { state.successCount++; state.consecutiveFailures = 0; }
     else { state.failureCount++; state.consecutiveFailures++; }
 
-    await (await getDb())!.execute(sql.raw(`INSERT INTO ai_engine_logs (task_key, run_id, status, output_summary, ai_reasoning, actions_taken, duration_ms, triggered_by, triggered_by_user_id, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'manual', ?, ?)`)).catch(() => {});
+    const _mSummary = (result.summary || '').replace(/'/g, "''").substring(0, 500);
+    const _mReasoning = (result.reasoning || '').replace(/'/g, "''").substring(0, 500);
+    const _mActions = JSON.stringify(result.actionsTaken || []).replace(/'/g, "''").substring(0, 1000);
+    await (await getDb())!.execute(sql.raw(`INSERT INTO ai_engine_logs (task_key, run_id, status, output_summary, ai_reasoning, actions_taken, duration_ms, triggered_by, created_at)
+       VALUES ('${state.task.key}', '${runId}', '${result.success ? 'success' : 'failed'}', '${_mSummary}', '${_mReasoning}', '${_mActions}', ${duration}, 'manual', ${Date.now()})`)).catch(() => {});
 
     return result;
   } catch (err: any) {

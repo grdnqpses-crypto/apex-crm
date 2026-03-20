@@ -1,0 +1,64 @@
+{
+  "query": "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'smtp_accounts' ORDER BY ORDINAL_POSITION;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'smtp_accounts' ORDER BY ORDINAL_POSITION;",
+  "rows": [
+    {
+      "COLUMN_NAME": "id"
+    },
+    {
+      "COLUMN_NAME": "userId"
+    },
+    {
+      "COLUMN_NAME": "emailAddress"
+    },
+    {
+      "COLUMN_NAME": "displayName"
+    },
+    {
+      "COLUMN_NAME": "domain"
+    },
+    {
+      "COLUMN_NAME": "smtpHost"
+    },
+    {
+      "COLUMN_NAME": "smtpPort"
+    },
+    {
+      "COLUMN_NAME": "smtpUsername"
+    },
+    {
+      "COLUMN_NAME": "smtpPassword"
+    },
+    {
+      "COLUMN_NAME": "useTls"
+    },
+    {
+      "COLUMN_NAME": "isActive"
+    },
+    {
+      "COLUMN_NAME": "dailyLimit"
+    },
+    {
+      "COLUMN_NAME": "sentToday"
+    },
+    {
+      "COLUMN_NAME": "lastSentAt"
+    },
+    {
+      "COLUMN_NAME": "lastResetDate"
+    },
+    {
+      "COLUMN_NAME": "healthStatus"
+    },
+    {
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "COLUMN_NAME": "updatedAt"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\nid\nuserId\nemailAddress\ndisplayName\ndomain\nsmtpHost\nsmtpPort\nsmtpUsername\nsmtpPassword\nuseTls\nisActive\ndailyLimit\nsentToday\nlastSentAt\nlastResetDate\nhealthStatus\ncreatedAt\nupdatedAt\n",
+  "stderr": "",
+  "execution_time_ms": 388
+}

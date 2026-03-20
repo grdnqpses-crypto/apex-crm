@@ -1,0 +1,90 @@
+{
+  "query": "SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('contacts', 'deals', 'activities', 'prospects', 'ghost_sequences', 'migration_jobs', 'smtp_accounts') ORDER BY TABLE_NAME, ORDINAL_POSITION LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('contacts', 'deals', 'activities', 'prospects', 'ghost_sequences', 'migration_jobs', 'smtp_accounts') ORDER BY TABLE_NAME, ORDINAL_POSITION LIMIT 20;",
+  "rows": [
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "userId"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "contactId"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "dealId"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "activityType"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "subject"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "body"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "callOutcome"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "callType"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "callDuration"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "emailTo"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "emailFrom"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "emailCc"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "emailOpened"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "emailClicked"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "meetingStartTime"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "meetingEndTime"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "meetingLocation"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "meetingAttendees"
+    }
+  ],
+  "messages": [],
+  "stdout": "TABLE_NAME\tCOLUMN_NAME\nactivities\tid\nactivities\tuserId\nactivities\tcontactId\nactivities\tcompanyId\nactivities\tdealId\nactivities\tactivityType\nactivities\tsubject\nactivities\tbody\nactivities\tcallOutcome\nactivities\tcallType\nactivities\tcallDuration\nactivities\temailTo\nactivities\temailFrom\nactivities\temailCc\nactivities\temailOpened\nactivities\temailClicked\nactivities\tmeetingStartTime\nactivities\tmeetingEndTime\nactivities\tmeetingLocation\nactivities\tmeetingAttendees\n",
+  "stderr": "",
+  "execution_time_ms": 363
+}

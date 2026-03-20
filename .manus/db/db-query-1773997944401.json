@@ -1,0 +1,154 @@
+{
+  "query": "SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('migration_jobs', 'smtp_accounts') ORDER BY TABLE_NAME, ORDINAL_POSITION;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('migration_jobs', 'smtp_accounts') ORDER BY TABLE_NAME, ORDINAL_POSITION;",
+  "rows": [
+    {
+      "TABLE_NAME": "migration_jobs",
+      "COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "migration_jobs",
+      "COLUMN_NAME": "mjUserId"
+    },
+    {
+      "TABLE_NAME": "migration_jobs",
+      "COLUMN_NAME": "mjCompanyId"
+    },
+    {
+      "TABLE_NAME": "migration_jobs",
+      "COLUMN_NAME": "sourcePlatform"
+    },
+    {
+      "TABLE_NAME": "migration_jobs",
+      "COLUMN_NAME": "sourceCredentials"
+    },
+    {
+      "TABLE_NAME": "migration_jobs",
+      "COLUMN_NAME": "mjStatus"
+    },
+    {
+      "TABLE_NAME": "migration_jobs",
+      "COLUMN_NAME": "totalRecords"
+    },
+    {
+      "TABLE_NAME": "migration_jobs",
+      "COLUMN_NAME": "importedRecords"
+    },
+    {
+      "TABLE_NAME": "migration_jobs",
+      "COLUMN_NAME": "failedRecords"
+    },
+    {
+      "TABLE_NAME": "migration_jobs",
+      "COLUMN_NAME": "skippedRecords"
+    },
+    {
+      "TABLE_NAME": "migration_jobs",
+      "COLUMN_NAME": "entityTypes"
+    },
+    {
+      "TABLE_NAME": "migration_jobs",
+      "COLUMN_NAME": "fieldMapping"
+    },
+    {
+      "TABLE_NAME": "migration_jobs",
+      "COLUMN_NAME": "importLog"
+    },
+    {
+      "TABLE_NAME": "migration_jobs",
+      "COLUMN_NAME": "errorDetails"
+    },
+    {
+      "TABLE_NAME": "migration_jobs",
+      "COLUMN_NAME": "mjStartedAt"
+    },
+    {
+      "TABLE_NAME": "migration_jobs",
+      "COLUMN_NAME": "mjCompletedAt"
+    },
+    {
+      "TABLE_NAME": "migration_jobs",
+      "COLUMN_NAME": "estimatedTimeRemaining"
+    },
+    {
+      "TABLE_NAME": "migration_jobs",
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts",
+      "COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts",
+      "COLUMN_NAME": "userId"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts",
+      "COLUMN_NAME": "emailAddress"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts",
+      "COLUMN_NAME": "displayName"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts",
+      "COLUMN_NAME": "domain"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts",
+      "COLUMN_NAME": "smtpHost"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts",
+      "COLUMN_NAME": "smtpPort"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts",
+      "COLUMN_NAME": "smtpUsername"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts",
+      "COLUMN_NAME": "smtpPassword"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts",
+      "COLUMN_NAME": "useTls"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts",
+      "COLUMN_NAME": "isActive"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts",
+      "COLUMN_NAME": "dailyLimit"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts",
+      "COLUMN_NAME": "sentToday"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts",
+      "COLUMN_NAME": "lastSentAt"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts",
+      "COLUMN_NAME": "lastResetDate"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts",
+      "COLUMN_NAME": "healthStatus"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts",
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts",
+      "COLUMN_NAME": "updatedAt"
+    }
+  ],
+  "messages": [],
+  "stdout": "TABLE_NAME\tCOLUMN_NAME\nmigration_jobs\tid\nmigration_jobs\tmjUserId\nmigration_jobs\tmjCompanyId\nmigration_jobs\tsourcePlatform\nmigration_jobs\tsourceCredentials\nmigration_jobs\tmjStatus\nmigration_jobs\ttotalRecords\nmigration_jobs\timportedRecords\nmigration_jobs\tfailedRecords\nmigration_jobs\tskippedRecords\nmigration_jobs\tentityTypes\nmigration_jobs\tfieldMapping\nmigration_jobs\timportLog\nmigration_jobs\terrorDetails\nmigration_jobs\tmjStartedAt\nmigration_jobs\tmjCompletedAt\nmigration_jobs\testimatedTimeRemaining\nmigration_jobs\tcreatedAt\nsmtp_accounts\tid\nsmtp_accounts\tuserId\nsmtp_accounts\temailAddress\nsmtp_accounts\tdisplayName\nsmtp_accounts\tdomain\nsmtp_accounts\tsmtpHost\nsmtp_accounts\tsmtpPort\nsmtp_accounts\tsmtpUsername\nsmtp_accounts\tsmtpPassword\nsmtp_accounts\tuseTls\nsmtp_accounts\tisActive\nsmtp_accounts\tdailyLimit\nsmtp_accounts\tsentToday\nsmtp_accounts\tlastSentAt\nsmtp_accounts\tlastResetDate\nsmtp_accounts\thealthStatus\nsmtp_accounts\tcreatedAt\nsmtp_accounts\tupdatedAt\n",
+  "stderr": "",
+  "execution_time_ms": 391
+}

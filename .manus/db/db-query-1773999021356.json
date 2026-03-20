@@ -1,0 +1,64 @@
+{
+  "query": "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'migration_jobs' ORDER BY ORDINAL_POSITION;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'migration_jobs' ORDER BY ORDINAL_POSITION;",
+  "rows": [
+    {
+      "COLUMN_NAME": "id"
+    },
+    {
+      "COLUMN_NAME": "mjUserId"
+    },
+    {
+      "COLUMN_NAME": "mjCompanyId"
+    },
+    {
+      "COLUMN_NAME": "sourcePlatform"
+    },
+    {
+      "COLUMN_NAME": "sourceCredentials"
+    },
+    {
+      "COLUMN_NAME": "mjStatus"
+    },
+    {
+      "COLUMN_NAME": "totalRecords"
+    },
+    {
+      "COLUMN_NAME": "importedRecords"
+    },
+    {
+      "COLUMN_NAME": "failedRecords"
+    },
+    {
+      "COLUMN_NAME": "skippedRecords"
+    },
+    {
+      "COLUMN_NAME": "entityTypes"
+    },
+    {
+      "COLUMN_NAME": "fieldMapping"
+    },
+    {
+      "COLUMN_NAME": "importLog"
+    },
+    {
+      "COLUMN_NAME": "errorDetails"
+    },
+    {
+      "COLUMN_NAME": "mjStartedAt"
+    },
+    {
+      "COLUMN_NAME": "mjCompletedAt"
+    },
+    {
+      "COLUMN_NAME": "estimatedTimeRemaining"
+    },
+    {
+      "COLUMN_NAME": "createdAt"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\nid\nmjUserId\nmjCompanyId\nsourcePlatform\nsourceCredentials\nmjStatus\ntotalRecords\nimportedRecords\nfailedRecords\nskippedRecords\nentityTypes\nfieldMapping\nimportLog\nerrorDetails\nmjStartedAt\nmjCompletedAt\nestimatedTimeRemaining\ncreatedAt\n",
+  "stderr": "",
+  "execution_time_ms": 384
+}

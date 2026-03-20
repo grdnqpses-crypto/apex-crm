@@ -1,0 +1,199 @@
+{
+  "query": "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'contacts' ORDER BY ORDINAL_POSITION LIMIT 20;\nSELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'deals' ORDER BY ORDINAL_POSITION;\nSELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'prospects' ORDER BY ORDINAL_POSITION LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'contacts' ORDER BY ORDINAL_POSITION LIMIT 20;\nSELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'deals' ORDER BY ORDINAL_POSITION;\nSELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'prospects' ORDER BY ORDINAL_POSITION LIMIT 20;",
+  "rows": [
+    {
+      "COLUMN_NAME": "id"
+    },
+    {
+      "COLUMN_NAME": "userId"
+    },
+    {
+      "COLUMN_NAME": "firstName"
+    },
+    {
+      "COLUMN_NAME": "lastName"
+    },
+    {
+      "COLUMN_NAME": "jobTitle"
+    },
+    {
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "COLUMN_NAME": "contactOwnerId"
+    },
+    {
+      "COLUMN_NAME": "email"
+    },
+    {
+      "COLUMN_NAME": "companyPhone"
+    },
+    {
+      "COLUMN_NAME": "directPhone"
+    },
+    {
+      "COLUMN_NAME": "mobilePhone"
+    },
+    {
+      "COLUMN_NAME": "faxNumber"
+    },
+    {
+      "COLUMN_NAME": "linkedinUrl"
+    },
+    {
+      "COLUMN_NAME": "websiteUrl"
+    },
+    {
+      "COLUMN_NAME": "streetAddress"
+    },
+    {
+      "COLUMN_NAME": "addressLine2"
+    },
+    {
+      "COLUMN_NAME": "city"
+    },
+    {
+      "COLUMN_NAME": "stateRegion"
+    },
+    {
+      "COLUMN_NAME": "postalCode"
+    },
+    {
+      "COLUMN_NAME": "country"
+    },
+    {
+      "COLUMN_NAME": "COLUMN_NAME"
+    },
+    {
+      "COLUMN_NAME": "id"
+    },
+    {
+      "COLUMN_NAME": "userId"
+    },
+    {
+      "COLUMN_NAME": "pipelineId"
+    },
+    {
+      "COLUMN_NAME": "stageId"
+    },
+    {
+      "COLUMN_NAME": "contactId"
+    },
+    {
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "COLUMN_NAME": "name"
+    },
+    {
+      "COLUMN_NAME": "dealValue"
+    },
+    {
+      "COLUMN_NAME": "currency"
+    },
+    {
+      "COLUMN_NAME": "status"
+    },
+    {
+      "COLUMN_NAME": "priority"
+    },
+    {
+      "COLUMN_NAME": "expectedCloseDate"
+    },
+    {
+      "COLUMN_NAME": "closedAt"
+    },
+    {
+      "COLUMN_NAME": "lostReason"
+    },
+    {
+      "COLUMN_NAME": "notes"
+    },
+    {
+      "COLUMN_NAME": "tags"
+    },
+    {
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "COLUMN_NAME": "updatedAt"
+    },
+    {
+      "COLUMN_NAME": "tenantId"
+    },
+    {
+      "COLUMN_NAME": "wonReason"
+    },
+    {
+      "COLUMN_NAME": "closeNote"
+    },
+    {
+      "COLUMN_NAME": "COLUMN_NAME"
+    },
+    {
+      "COLUMN_NAME": "id"
+    },
+    {
+      "COLUMN_NAME": "userId"
+    },
+    {
+      "COLUMN_NAME": "contactId"
+    },
+    {
+      "COLUMN_NAME": "firstName"
+    },
+    {
+      "COLUMN_NAME": "lastName"
+    },
+    {
+      "COLUMN_NAME": "email"
+    },
+    {
+      "COLUMN_NAME": "jobTitle"
+    },
+    {
+      "COLUMN_NAME": "companyName"
+    },
+    {
+      "COLUMN_NAME": "companyDomain"
+    },
+    {
+      "COLUMN_NAME": "linkedinUrl"
+    },
+    {
+      "COLUMN_NAME": "phone"
+    },
+    {
+      "COLUMN_NAME": "location"
+    },
+    {
+      "COLUMN_NAME": "industry"
+    },
+    {
+      "COLUMN_NAME": "sourceType"
+    },
+    {
+      "COLUMN_NAME": "sourceSignalId"
+    },
+    {
+      "COLUMN_NAME": "apolloId"
+    },
+    {
+      "COLUMN_NAME": "verificationStatus"
+    },
+    {
+      "COLUMN_NAME": "verificationProvider"
+    },
+    {
+      "COLUMN_NAME": "verifiedAt"
+    },
+    {
+      "COLUMN_NAME": "bounceRisk"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\nid\nuserId\nfirstName\nlastName\njobTitle\ncompanyId\ncontactOwnerId\nemail\ncompanyPhone\ndirectPhone\nmobilePhone\nfaxNumber\nlinkedinUrl\nwebsiteUrl\nstreetAddress\naddressLine2\ncity\nstateRegion\npostalCode\ncountry\nCOLUMN_NAME\nid\nuserId\npipelineId\nstageId\ncontactId\ncompanyId\nname\ndealValue\ncurrency\nstatus\npriority\nexpectedCloseDate\nclosedAt\nlostReason\nnotes\ntags\ncreatedAt\nupdatedAt\ntenantId\nwonReason\ncloseNote\nCOLUMN_NAME\nid\nuserId\ncontactId\nfirstName\nlastName\nemail\njobTitle\ncompanyName\ncompanyDomain\nlinkedinUrl\nphone\nlocation\nindustry\nsourceType\nsourceSignalId\napolloId\nverificationStatus\nverificationProvider\nverifiedAt\nbounceRisk\n",
+  "stderr": "",
+  "execution_time_ms": 484
+}

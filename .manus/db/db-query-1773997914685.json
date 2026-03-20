@@ -1,0 +1,90 @@
+{
+  "query": "SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('deals', 'ghost_sequences', 'migration_jobs', 'smtp_accounts') ORDER BY TABLE_NAME, ORDINAL_POSITION LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('deals', 'ghost_sequences', 'migration_jobs', 'smtp_accounts') ORDER BY TABLE_NAME, ORDINAL_POSITION LIMIT 20;",
+  "rows": [
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "userId"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "pipelineId"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "stageId"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "contactId"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "name"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "dealValue"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "currency"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "status"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "priority"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "expectedCloseDate"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "closedAt"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "lostReason"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "notes"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "tags"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "updatedAt"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "tenantId"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "wonReason"
+    }
+  ],
+  "messages": [],
+  "stdout": "TABLE_NAME\tCOLUMN_NAME\ndeals\tid\ndeals\tuserId\ndeals\tpipelineId\ndeals\tstageId\ndeals\tcontactId\ndeals\tcompanyId\ndeals\tname\ndeals\tdealValue\ndeals\tcurrency\ndeals\tstatus\ndeals\tpriority\ndeals\texpectedCloseDate\ndeals\tclosedAt\ndeals\tlostReason\ndeals\tnotes\ndeals\ttags\ndeals\tcreatedAt\ndeals\tupdatedAt\ndeals\ttenantId\ndeals\twonReason\n",
+  "stderr": "",
+  "execution_time_ms": 389
+}

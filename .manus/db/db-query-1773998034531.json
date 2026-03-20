@@ -1,0 +1,145 @@
+{
+  "query": "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tasks' ORDER BY ORDINAL_POSITION;\nSELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' ORDER BY ORDINAL_POSITION LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tasks' ORDER BY ORDINAL_POSITION;\nSELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' ORDER BY ORDINAL_POSITION LIMIT 20;",
+  "rows": [
+    {
+      "COLUMN_NAME": "id"
+    },
+    {
+      "COLUMN_NAME": "userId"
+    },
+    {
+      "COLUMN_NAME": "title"
+    },
+    {
+      "COLUMN_NAME": "taskType"
+    },
+    {
+      "COLUMN_NAME": "dueDate"
+    },
+    {
+      "COLUMN_NAME": "dueTime"
+    },
+    {
+      "COLUMN_NAME": "assignedTo"
+    },
+    {
+      "COLUMN_NAME": "priority"
+    },
+    {
+      "COLUMN_NAME": "description"
+    },
+    {
+      "COLUMN_NAME": "taskStatus"
+    },
+    {
+      "COLUMN_NAME": "queue"
+    },
+    {
+      "COLUMN_NAME": "reminderDate"
+    },
+    {
+      "COLUMN_NAME": "reminderSent"
+    },
+    {
+      "COLUMN_NAME": "contactId"
+    },
+    {
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "COLUMN_NAME": "dealId"
+    },
+    {
+      "COLUMN_NAME": "completedAt"
+    },
+    {
+      "COLUMN_NAME": "completedBy"
+    },
+    {
+      "COLUMN_NAME": "outcome"
+    },
+    {
+      "COLUMN_NAME": "isRecurring"
+    },
+    {
+      "COLUMN_NAME": "recurringFrequency"
+    },
+    {
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "COLUMN_NAME": "updatedAt"
+    },
+    {
+      "COLUMN_NAME": "tenantId"
+    },
+    {
+      "COLUMN_NAME": "COLUMN_NAME"
+    },
+    {
+      "COLUMN_NAME": "id"
+    },
+    {
+      "COLUMN_NAME": "openId"
+    },
+    {
+      "COLUMN_NAME": "name"
+    },
+    {
+      "COLUMN_NAME": "email"
+    },
+    {
+      "COLUMN_NAME": "loginMethod"
+    },
+    {
+      "COLUMN_NAME": "role"
+    },
+    {
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "COLUMN_NAME": "updatedAt"
+    },
+    {
+      "COLUMN_NAME": "lastSignedIn"
+    },
+    {
+      "COLUMN_NAME": "systemRole"
+    },
+    {
+      "COLUMN_NAME": "tenantCompanyId"
+    },
+    {
+      "COLUMN_NAME": "managerId"
+    },
+    {
+      "COLUMN_NAME": "isActive"
+    },
+    {
+      "COLUMN_NAME": "invitedBy"
+    },
+    {
+      "COLUMN_NAME": "jobTitle"
+    },
+    {
+      "COLUMN_NAME": "phone"
+    },
+    {
+      "COLUMN_NAME": "avatarUrl"
+    },
+    {
+      "COLUMN_NAME": "lastActiveAt"
+    },
+    {
+      "COLUMN_NAME": "username"
+    },
+    {
+      "COLUMN_NAME": "passwordHash"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\nid\nuserId\ntitle\ntaskType\ndueDate\ndueTime\nassignedTo\npriority\ndescription\ntaskStatus\nqueue\nreminderDate\nreminderSent\ncontactId\ncompanyId\ndealId\ncompletedAt\ncompletedBy\noutcome\nisRecurring\nrecurringFrequency\ncreatedAt\nupdatedAt\ntenantId\nCOLUMN_NAME\nid\nopenId\nname\nemail\nloginMethod\nrole\ncreatedAt\nupdatedAt\nlastSignedIn\nsystemRole\ntenantCompanyId\nmanagerId\nisActive\ninvitedBy\njobTitle\nphone\navatarUrl\nlastActiveAt\nusername\npasswordHash\n",
+  "stderr": "",
+  "execution_time_ms": 464
+}

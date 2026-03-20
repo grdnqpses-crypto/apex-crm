@@ -1,0 +1,40 @@
+{
+  "query": "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('contacts', 'prospects', 'ghost_sequences', 'ghost_sequence_steps', 'migration_jobs', 'smtp_accounts', 'activities', 'deals', 'system_health_events', 'system_health_logs') ORDER BY TABLE_NAME;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('contacts', 'prospects', 'ghost_sequences', 'ghost_sequence_steps', 'migration_jobs', 'smtp_accounts', 'activities', 'deals', 'system_health_events', 'system_health_logs') ORDER BY TABLE_NAME;",
+  "rows": [
+    {
+      "TABLE_NAME": "activities"
+    },
+    {
+      "TABLE_NAME": "contacts"
+    },
+    {
+      "TABLE_NAME": "deals"
+    },
+    {
+      "TABLE_NAME": "ghost_sequence_steps"
+    },
+    {
+      "TABLE_NAME": "ghost_sequences"
+    },
+    {
+      "TABLE_NAME": "migration_jobs"
+    },
+    {
+      "TABLE_NAME": "prospects"
+    },
+    {
+      "TABLE_NAME": "smtp_accounts"
+    },
+    {
+      "TABLE_NAME": "system_health_events"
+    },
+    {
+      "TABLE_NAME": "system_health_logs"
+    }
+  ],
+  "messages": [],
+  "stdout": "TABLE_NAME\nactivities\ncontacts\ndeals\nghost_sequence_steps\nghost_sequences\nmigration_jobs\nprospects\nsmtp_accounts\nsystem_health_events\nsystem_health_logs\n",
+  "stderr": "",
+  "execution_time_ms": 378
+}

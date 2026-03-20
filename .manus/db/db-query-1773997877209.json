@@ -1,0 +1,427 @@
+{
+  "query": "SHOW TABLES;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SHOW TABLES;",
+  "rows": [
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "__drizzle_migrations"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "ab_test_runs"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "ab_tests"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "activities"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "activity_history"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "ai_credit_packages"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "ai_credit_transactions"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "ai_engine_logs"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "ai_engine_tasks"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "anomaly_alerts"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "ap_bills"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "api_keys"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "ar_invoices"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "audit_logs"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "b2b_contacts"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "battle_cards"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "bible_shares"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "broker_filings"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "calendar_connections"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "call_logs"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "call_recordings"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "carrier_packets"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "carrier_profiles"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "companies"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "company_invites"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "compliance_audit_log"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "consolidation_opportunities"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "contacts"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "custom_field_defs"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "custom_field_values"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "custom_object_defs"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "custom_object_records"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "custom_object_types"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "deal_scores"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "deals"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "dialer_sessions"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "documents"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "domain_auto_healing_logs"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "domain_health"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "domain_health_records"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "domain_sending_stats"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "email_campaigns"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "email_connections"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "email_mask_settings"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "email_queue"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "email_sequence_enrollments"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "email_sequence_steps"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "email_sequences"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "email_templates"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "enrichment_logs"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "esignature_documents"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "esignature_signers"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "feature_assignments"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "feature_tiers"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "feature_usage_logs"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "feature_usage_tracking"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "field_mapping_templates"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "form_submissions"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "ghost_sequence_steps"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "ghost_sequences"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "inbound_emails"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "integration_connectors"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "integration_credentials"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "invoices"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "journey_enrollments"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "journeys"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "lane_analytics"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "lead_scoring_rules"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "lead_status_options"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "load_board_posts"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "load_status_history"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "loads"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "logo_generations"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "marketplace_bids"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "marketplace_documents"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "marketplace_loads"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "marketplace_payments"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "marketplace_tracking"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "meeting_bookings"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "meeting_preps"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "meeting_scheduler_profiles"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "meeting_types"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "migration_jobs"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "onboarding_flows"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "onboarding_submissions"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "ooo_detections"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "password_reset_tokens"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "payment_methods"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "pipeline_inspections"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "pipeline_stages"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "pipelines"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "portal_access"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "portal_quotes"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "products"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "proposals"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "prospect_outreach"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "prospect_scores"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "prospects"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "reputation_reviews"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "revenue_briefings"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "saved_reports"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "segments"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "sender_settings"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "shipments"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "skin_preferences"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "smart_notifications"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "smart_views"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "smtp_accounts"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "social_accounts"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "social_posts"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "subscription_invoices"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "subscription_plans"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "suppression_list"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "system_health_events"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "system_health_logs"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "tasks"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "tenant_ai_credits"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "tenant_companies"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "tenant_subscriptions"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "territories"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "tracked_websites"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "trial_email_log"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "trial_health_scores"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "trigger_signals"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "user_ai_allocations"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "users"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "visitor_sessions"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "voice_campaigns"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "warmup_campaigns"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "web_forms"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "webhook_logs"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "webhooks"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "website_platform_credentials"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "whatsapp_messages"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "whatsapp_templates"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "white_label_config"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "workflow_definitions"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "workflow_runs"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY": "workflows"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_mLLZEfmfSEuH47dfeJgVGY\n__drizzle_migrations\nab_test_runs\nab_tests\nactivities\nactivity_history\nai_credit_packages\nai_credit_transactions\nai_engine_logs\nai_engine_tasks\nanomaly_alerts\nap_bills\napi_keys\nar_invoices\naudit_logs\nb2b_contacts\nbattle_cards\nbible_shares\nbroker_filings\ncalendar_connections\ncall_logs\ncall_recordings\ncarrier_packets\ncarrier_profiles\ncompanies\ncompany_invites\ncompliance_audit_log\nconsolidation_opportunities\ncontacts\ncustom_field_defs\ncustom_field_values\ncustom_object_defs\ncustom_object_records\ncustom_object_types\ndeal_scores\ndeals\ndialer_sessions\ndocuments\ndomain_auto_healing_logs\ndomain_health\ndomain_health_records\ndomain_sending_stats\nemail_campaigns\nemail_connections\nemail_mask_settings\nemail_queue\nemail_sequence_enrollments\nemail_sequence_steps\nemail_sequences\nemail_templates\nenrichment_logs\nesignature_documents\nesignature_signers\nfeature_assignments\nfeature_tiers\nfeature_usage_logs\nfeature_usage_tracking\nfield_mapping_templates\nform_submissions\nghost_sequence_steps\nghost_sequences\ninbound_emails\nintegration_connectors\nintegration_credentials\ninvoices\njourney_enrollments\njourneys\nlane_analytics\nlead_scoring_rules\nlead_status_options\nload_board_posts\nload_status_history\nloads\nlogo_generations\nmarketplace_bids\nmarketplace_documents\nmarketplace_loads\nmarketplace_payments\nmarketplace_tracking\nmeeting_bookings\nmeeting_preps\nmeeting_scheduler_profiles\nmeeting_types\nmigration_jobs\nonboarding_flows\nonboarding_submissions\nooo_detections\npassword_reset_tokens\npayment_methods\npipeline_inspections\npipeline_stages\npipelines\nportal_access\nportal_quotes\nproducts\nproposals\nprospect_outreach\nprospect_scores\nprospects\nreputation_reviews\nrevenue_briefings\nsaved_reports\nsegments\nsender_settings\nshipments\nskin_preferences\nsmart_notifications\nsmart_views\nsmtp_accounts\nsocial_accounts\nsocial_posts\nsubscription_invoices\nsubscription_plans\nsuppression_list\nsystem_health_events\nsystem_health_logs\ntasks\ntenant_ai_credits\ntenant_companies\ntenant_subscriptions\nterritories\ntracked_websites\ntrial_email_log\ntrial_health_scores\ntrigger_signals\nuser_ai_allocations\nusers\nvisitor_sessions\nvoice_campaigns\nwarmup_campaigns\nweb_forms\nwebhook_logs\nwebhooks\nwebsite_platform_credentials\nwhatsapp_messages\nwhatsapp_templates\nwhite_label_config\nworkflow_definitions\nworkflow_runs\nworkflows\n",
+  "stderr": "",
+  "execution_time_ms": 362
+}

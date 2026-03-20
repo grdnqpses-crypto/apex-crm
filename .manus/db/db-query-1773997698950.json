@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `system_health_logs` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `overallStatus` enum('healthy','degraded','critical','unknown') NOT NULL,\n  `healthScore` int NOT NULL DEFAULT 100,\n  `subsystemData` json,\n  `createdAt` bigint NOT NULL,\n  PRIMARY KEY (`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute CREATE TABLE IF NOT EXISTS `system_health_logs` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `overallStatus` enum('healthy','degraded','critical','unknown') NOT NULL,\n  `healthScore` int NOT NULL DEFAULT 100,\n  `subsystemData` json,\n  `createdAt` bigint NOT NULL,\n  PRIMARY KEY (`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 400
+}

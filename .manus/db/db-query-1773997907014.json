@@ -1,0 +1,70 @@
+{
+  "query": "SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'activities' AND COLUMN_NAME IN ('created_at', 'createdAt', 'type', 'activityType', 'contact_id', 'contactId') ORDER BY TABLE_NAME, COLUMN_NAME;\n\nSELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'contacts' AND COLUMN_NAME IN ('created_at', 'createdAt', 'updated_at', 'updatedAt', 'email') ORDER BY TABLE_NAME, COLUMN_NAME;\n\nSELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'deals' AND COLUMN_NAME IN ('created_at', 'createdAt', 'updated_at', 'updatedAt', 'stage', 'assigned_to', 'assignedTo', 'value') ORDER BY TABLE_NAME, COLUMN_NAME;\n\nSELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'prospects' AND COLUMN_NAME IN ('created_at', 'createdAt', 'updated_at', 'updatedAt', 'engagement_stage', 'engagementStage', 'psychographic_profile', 'psychographicProfile') ORDER BY TABLE_NAME, COLUMN_NAME;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'activities' AND COLUMN_NAME IN ('created_at', 'createdAt', 'type', 'activityType', 'contact_id', 'contactId') ORDER BY TABLE_NAME, COLUMN_NAME;\n\nSELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'contacts' AND COLUMN_NAME IN ('created_at', 'createdAt', 'updated_at', 'updatedAt', 'email') ORDER BY TABLE_NAME, COLUMN_NAME;\n\nSELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'deals' AND COLUMN_NAME IN ('created_at', 'createdAt', 'updated_at', 'updatedAt', 'stage', 'assigned_to', 'assignedTo', 'value') ORDER BY TABLE_NAME, COLUMN_NAME;\n\nSELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'prospects' AND COLUMN_NAME IN ('created_at', 'createdAt', 'updated_at', 'updatedAt', 'engagement_stage', 'engagementStage', 'psychographic_profile', 'psychographicProfile') ORDER BY TABLE_NAME, COLUMN_NAME;",
+  "rows": [
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "activityType"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "contactId"
+    },
+    {
+      "TABLE_NAME": "activities",
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "TABLE_NAME": "TABLE_NAME",
+      "COLUMN_NAME": "COLUMN_NAME"
+    },
+    {
+      "TABLE_NAME": "contacts",
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "TABLE_NAME": "contacts",
+      "COLUMN_NAME": "email"
+    },
+    {
+      "TABLE_NAME": "contacts",
+      "COLUMN_NAME": "updatedAt"
+    },
+    {
+      "TABLE_NAME": "TABLE_NAME",
+      "COLUMN_NAME": "COLUMN_NAME"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "TABLE_NAME": "deals",
+      "COLUMN_NAME": "updatedAt"
+    },
+    {
+      "TABLE_NAME": "TABLE_NAME",
+      "COLUMN_NAME": "COLUMN_NAME"
+    },
+    {
+      "TABLE_NAME": "prospects",
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "TABLE_NAME": "prospects",
+      "COLUMN_NAME": "engagementStage"
+    },
+    {
+      "TABLE_NAME": "prospects",
+      "COLUMN_NAME": "psychographicProfile"
+    },
+    {
+      "TABLE_NAME": "prospects",
+      "COLUMN_NAME": "updatedAt"
+    }
+  ],
+  "messages": [],
+  "stdout": "TABLE_NAME\tCOLUMN_NAME\nactivities\tactivityType\nactivities\tcontactId\nactivities\tcreatedAt\nTABLE_NAME\tCOLUMN_NAME\ncontacts\tcreatedAt\ncontacts\temail\ncontacts\tupdatedAt\nTABLE_NAME\tCOLUMN_NAME\ndeals\tcreatedAt\ndeals\tupdatedAt\nTABLE_NAME\tCOLUMN_NAME\nprospects\tcreatedAt\nprospects\tengagementStage\nprospects\tpsychographicProfile\nprospects\tupdatedAt\n",
+  "stderr": "",
+  "execution_time_ms": 547
+}

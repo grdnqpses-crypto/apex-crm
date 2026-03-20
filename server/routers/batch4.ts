@@ -157,7 +157,7 @@ const emailSequencesRouter = router({
     }));
     await dbConn.insert(emailSequenceEnrollments).values(enrollments);
     await dbConn.update(emailSequences)
-      .set({ enrolledCount: sql`enrolled_count + ${input.contactIds.length}`, updatedAt: now })
+      .set({ enrolledCount: sql`enrolledCount + ${input.contactIds.length}`, updatedAt: now })
       .where(eq(emailSequences.id, input.sequenceId));
     return { enrolled: input.contactIds.length };
   }),
@@ -310,7 +310,7 @@ const journeysRouter = router({
     }));
     await dbConn.insert(journeyEnrollments).values(enrollments);
     await dbConn.update(journeys)
-      .set({ enrolledCount: sql`enrolled_count + ${input.contactIds.length}`, updatedAt: now })
+      .set({ enrolledCount: sql`enrolledCount + ${input.contactIds.length}`, updatedAt: now })
       .where(eq(journeys.id, input.journeyId));
     return { enrolled: input.contactIds.length };
   }),
@@ -391,6 +391,7 @@ const whatsappRouter = router({
           WHERE wm2.phone = wm.phone AND wm2.tenant_company_id = wm.tenant_company_id
         )
       ORDER BY wm.created_at DESC
+
       LIMIT 100
     `);
     return (rows[0] as unknown) as unknown[];
@@ -786,8 +787,8 @@ const anomalyDetectionRouter = router({
     const newAlerts: typeof anomalyAlerts.$inferInsert[] = [];
 
     // Check pipeline value drop
-    const recentDealsRaw = await dbConn.execute(sql`SELECT COALESCE(SUM(value), 0) as total FROM deals WHERE tenant_id = ${tenantId} AND created_at >= ${sevenDaysAgo}`);
-    const prevDealsRaw = await dbConn.execute(sql`SELECT COALESCE(SUM(value), 0) as total FROM deals WHERE tenant_id = ${tenantId} AND created_at >= ${thirtyDaysAgo} AND created_at < ${sevenDaysAgo}`);
+    const recentDealsRaw = await dbConn.execute(sql`SELECT COALESCE(SUM(dealValue), 0) as total FROM deals WHERE tenantId = ${tenantId} AND createdAt >= ${sevenDaysAgo}`);
+    const prevDealsRaw = await dbConn.execute(sql`SELECT COALESCE(SUM(dealValue), 0) as total FROM deals WHERE tenantId = ${tenantId} AND createdAt >= ${thirtyDaysAgo} AND createdAt < ${sevenDaysAgo}`);
     const recentDealsRows = (recentDealsRaw[0] as unknown) as any[];
     const prevDealsRows = (prevDealsRaw[0] as unknown) as any[];
 
@@ -889,7 +890,7 @@ const pipelineInspectionRouter = router({
 
     // Get all open deals in this pipeline
     const openDeals = await dbConn.select().from(deals as never)
-      .where(sql`pipeline_id = ${input.pipelineId} AND tenant_id = ${tenantId} AND stage NOT IN ('won','lost')` as never);
+      .where(sql`pipelineId = ${input.pipelineId} AND tenantId = ${tenantId} AND status NOT IN ('won','lost')` as never);
 
     const stuckDeals = (openDeals as any[]).filter((d: any) => d.updatedAt < stuckThreshold);
     const stuckCount = stuckDeals.length;

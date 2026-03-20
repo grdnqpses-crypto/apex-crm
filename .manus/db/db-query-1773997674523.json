@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `system_health_events` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `eventType` enum('error','auto_correction','warning','info') NOT NULL,\n  `severity` enum('info','warning','error','critical') NOT NULL,\n  `subsystem` varchar(64) NOT NULL DEFAULT 'server',\n  `message` text NOT NULL,\n  `details` json,\n  `autoCorrectAttempted` tinyint(1) NOT NULL DEFAULT 0,\n  `autoCorrectSuccess` tinyint(1),\n  `createdAt` bigint NOT NULL,\n  PRIMARY KEY (`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute CREATE TABLE IF NOT EXISTS `system_health_events` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `eventType` enum('error','auto_correction','warning','info') NOT NULL,\n  `severity` enum('info','warning','error','critical') NOT NULL,\n  `subsystem` varchar(64) NOT NULL DEFAULT 'server',\n  `message` text NOT NULL,\n  `details` json,\n  `autoCorrectAttempted` tinyint(1) NOT NULL DEFAULT 0,\n  `autoCorrectSuccess` tinyint(1),\n  `createdAt` bigint NOT NULL,\n  PRIMARY KEY (`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 424
+}

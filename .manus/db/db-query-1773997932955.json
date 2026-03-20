@@ -1,0 +1,90 @@
+{
+  "query": "SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('ghost_sequences', 'ghost_sequence_steps', 'migration_jobs', 'smtp_accounts', 'battle_cards') ORDER BY TABLE_NAME, ORDINAL_POSITION LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('ghost_sequences', 'ghost_sequence_steps', 'migration_jobs', 'smtp_accounts', 'battle_cards') ORDER BY TABLE_NAME, ORDINAL_POSITION LIMIT 20;",
+  "rows": [
+    {
+      "TABLE_NAME": "battle_cards",
+      "COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "battle_cards",
+      "COLUMN_NAME": "userId"
+    },
+    {
+      "TABLE_NAME": "battle_cards",
+      "COLUMN_NAME": "prospectId"
+    },
+    {
+      "TABLE_NAME": "battle_cards",
+      "COLUMN_NAME": "title"
+    },
+    {
+      "TABLE_NAME": "battle_cards",
+      "COLUMN_NAME": "companyOverview"
+    },
+    {
+      "TABLE_NAME": "battle_cards",
+      "COLUMN_NAME": "personInsights"
+    },
+    {
+      "TABLE_NAME": "battle_cards",
+      "COLUMN_NAME": "painPoints"
+    },
+    {
+      "TABLE_NAME": "battle_cards",
+      "COLUMN_NAME": "talkingPoints"
+    },
+    {
+      "TABLE_NAME": "battle_cards",
+      "COLUMN_NAME": "competitorIntel"
+    },
+    {
+      "TABLE_NAME": "battle_cards",
+      "COLUMN_NAME": "recommendedApproach"
+    },
+    {
+      "TABLE_NAME": "battle_cards",
+      "COLUMN_NAME": "objectionHandlers"
+    },
+    {
+      "TABLE_NAME": "battle_cards",
+      "COLUMN_NAME": "triggerContext"
+    },
+    {
+      "TABLE_NAME": "battle_cards",
+      "COLUMN_NAME": "urgencyLevel"
+    },
+    {
+      "TABLE_NAME": "battle_cards",
+      "COLUMN_NAME": "isRead"
+    },
+    {
+      "TABLE_NAME": "battle_cards",
+      "COLUMN_NAME": "isArchived"
+    },
+    {
+      "TABLE_NAME": "battle_cards",
+      "COLUMN_NAME": "generatedAt"
+    },
+    {
+      "TABLE_NAME": "battle_cards",
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "TABLE_NAME": "ghost_sequence_steps",
+      "COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "ghost_sequence_steps",
+      "COLUMN_NAME": "sequenceId"
+    },
+    {
+      "TABLE_NAME": "ghost_sequence_steps",
+      "COLUMN_NAME": "stepOrder"
+    }
+  ],
+  "messages": [],
+  "stdout": "TABLE_NAME\tCOLUMN_NAME\nbattle_cards\tid\nbattle_cards\tuserId\nbattle_cards\tprospectId\nbattle_cards\ttitle\nbattle_cards\tcompanyOverview\nbattle_cards\tpersonInsights\nbattle_cards\tpainPoints\nbattle_cards\ttalkingPoints\nbattle_cards\tcompetitorIntel\nbattle_cards\trecommendedApproach\nbattle_cards\tobjectionHandlers\nbattle_cards\ttriggerContext\nbattle_cards\turgencyLevel\nbattle_cards\tisRead\nbattle_cards\tisArchived\nbattle_cards\tgeneratedAt\nbattle_cards\tcreatedAt\nghost_sequence_steps\tid\nghost_sequence_steps\tsequenceId\nghost_sequence_steps\tstepOrder\n",
+  "stderr": "",
+  "execution_time_ms": 389
+}

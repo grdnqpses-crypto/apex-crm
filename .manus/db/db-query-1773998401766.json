@@ -1,0 +1,97 @@
+{
+  "query": "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ai_engine_logs' ORDER BY ORDINAL_POSITION;\nSELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'trigger_signals' ORDER BY ORDINAL_POSITION LIMIT 15;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ai_engine_logs' ORDER BY ORDINAL_POSITION;\nSELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'trigger_signals' ORDER BY ORDINAL_POSITION LIMIT 15;",
+  "rows": [
+    {
+      "COLUMN_NAME": "id"
+    },
+    {
+      "COLUMN_NAME": "task_key"
+    },
+    {
+      "COLUMN_NAME": "run_id"
+    },
+    {
+      "COLUMN_NAME": "status"
+    },
+    {
+      "COLUMN_NAME": "input_summary"
+    },
+    {
+      "COLUMN_NAME": "output_summary"
+    },
+    {
+      "COLUMN_NAME": "ai_reasoning"
+    },
+    {
+      "COLUMN_NAME": "actions_taken"
+    },
+    {
+      "COLUMN_NAME": "duration_ms"
+    },
+    {
+      "COLUMN_NAME": "error_message"
+    },
+    {
+      "COLUMN_NAME": "triggered_by"
+    },
+    {
+      "COLUMN_NAME": "triggered_by_user_id"
+    },
+    {
+      "COLUMN_NAME": "created_at"
+    },
+    {
+      "COLUMN_NAME": "COLUMN_NAME"
+    },
+    {
+      "COLUMN_NAME": "id"
+    },
+    {
+      "COLUMN_NAME": "userId"
+    },
+    {
+      "COLUMN_NAME": "signalType"
+    },
+    {
+      "COLUMN_NAME": "title"
+    },
+    {
+      "COLUMN_NAME": "description"
+    },
+    {
+      "COLUMN_NAME": "sourceUrl"
+    },
+    {
+      "COLUMN_NAME": "sourcePlatform"
+    },
+    {
+      "COLUMN_NAME": "prospectId"
+    },
+    {
+      "COLUMN_NAME": "companyName"
+    },
+    {
+      "COLUMN_NAME": "personName"
+    },
+    {
+      "COLUMN_NAME": "signalStatus"
+    },
+    {
+      "COLUMN_NAME": "priority"
+    },
+    {
+      "COLUMN_NAME": "actionTaken"
+    },
+    {
+      "COLUMN_NAME": "processedAt"
+    },
+    {
+      "COLUMN_NAME": "expiresAt"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\nid\ntask_key\nrun_id\nstatus\ninput_summary\noutput_summary\nai_reasoning\nactions_taken\nduration_ms\nerror_message\ntriggered_by\ntriggered_by_user_id\ncreated_at\nCOLUMN_NAME\nid\nuserId\nsignalType\ntitle\ndescription\nsourceUrl\nsourcePlatform\nprospectId\ncompanyName\npersonName\nsignalStatus\npriority\nactionTaken\nprocessedAt\nexpiresAt\n",
+  "stderr": "",
+  "execution_time_ms": 437
+}
