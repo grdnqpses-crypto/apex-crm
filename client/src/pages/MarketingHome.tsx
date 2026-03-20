@@ -612,7 +612,7 @@ export default function MarketingHome({
                 <X className="h-4 w-4" />
               </button>
               <video
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/realm-hero-v2_62e65a16.mp4"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/realm-promo-final_10e5790e.mp4"
                 autoPlay
                 controls
                 playsInline
@@ -634,7 +634,7 @@ export default function MarketingHome({
           className="absolute inset-0 w-full h-full object-cover pointer-events-none"
           style={{ filter: "brightness(0.45) saturate(1.4) contrast(1.1)" }}
         >
-          <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/realm-hero-v2_62e65a16.mp4" type="video/mp4" />
+          <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/realm-promo-final_10e5790e.mp4" type="video/mp4" />
         </video>
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#04080f]/50 via-transparent to-[#04080f] pointer-events-none" />
@@ -872,7 +872,7 @@ export default function MarketingHome({
             <div className="text-center mb-12">
               <p className="text-xs font-bold text-orange-400 uppercase tracking-widest mb-3">Full Promo Video</p>
               <h2 className="text-4xl md:text-5xl font-black mb-4">
-                The Full Story. <GradText>96 Seconds.</GradText>
+                The Full Story. <GradText>48 Seconds.</GradText>
               </h2>
               <p className="text-white/40 text-lg max-w-2xl mx-auto">
                 15 features. 5 competitors. 1 winner. Every module, every advantage, every reason to switch — in under 2 minutes.
@@ -885,7 +885,7 @@ export default function MarketingHome({
               {/* Gradient border glow */}
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-orange-500/10 via-transparent to-orange-500/10 pointer-events-none z-10" />
               <video
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/realm-hero-v2_62e65a16.mp4"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/realm-promo-final_10e5790e.mp4"
                 className="w-full aspect-video object-contain bg-black"
                 controls
                 playsInline
