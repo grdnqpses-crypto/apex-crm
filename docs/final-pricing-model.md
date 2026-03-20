@@ -1,4 +1,4 @@
-# Apex CRM — Final Simplified Pricing Model
+# REALM CRM — Final Simplified Pricing Model
 
 ## The Golden Rule
 > **Simple prices. Generous features. Premium only where it costs us real money.**
@@ -58,7 +58,7 @@ The only things we charge premium for are features with **real operational cost*
 | Users | 3 included (+$35/user/month) |
 | Support | Email, 48hr response |
 
-**Saves vs. competitors:** Replaces HubSpot Starter ($100) + Instantly Basic ($37) = $137/month. Apex: $97. **Save $40/month, get 10× more features.**
+**Saves vs. competitors:** Replaces HubSpot Starter ($100) + Instantly Basic ($37) = $137/month. REALM: $97. **Save $40/month, get 10× more features.**
 
 ---
 
@@ -84,7 +84,7 @@ The only things we charge premium for are features with **real operational cost*
 | Users | 10 included (+$35/user/month) |
 | Support | Email + Chat, 24hr response |
 
-**Saves vs. competitors:** Replaces GoHighLevel Unlimited ($297) + Instantly Hypergrowth ($358) = $655/month. Apex: $297. **Save $358/month.**
+**Saves vs. competitors:** Replaces GoHighLevel Unlimited ($297) + Instantly Hypergrowth ($358) = $655/month. REALM: $297. **Save $358/month.**
 
 ---
 
@@ -108,9 +108,9 @@ The only things we charge premium for are features with **real operational cost*
 | Users | 20 included (+$35/user/month) |
 | Support | Priority, 12hr response |
 
-**⚡ = High operational cost to Apex. These are the features that justify the price jump from $297 → $497. The 260 SMTP rotation engine requires real server infrastructure. This is where our moat lives.**
+**⚡ = High operational cost to REALM. These are the features that justify the price jump from $297 → $497. The 260 SMTP rotation engine requires real server infrastructure. This is where our moat lives.**
 
-**Saves vs. competitors:** Replaces GHL Pro ($497) + Instantly Hypergrowth ($358) + OneTrust Compliance ($300) = $1,155/month. Apex: $497. **Save $658/month.**
+**Saves vs. competitors:** Replaces GHL Pro ($497) + Instantly Hypergrowth ($358) + OneTrust Compliance ($300) = $1,155/month. REALM: $497. **Save $658/month.**
 
 ---
 
@@ -122,7 +122,7 @@ The only things we charge premium for are features with **real operational cost*
 | Everything in Fortune Foundation, plus: | |
 | Email Sends | 2,000,000/month |
 | **Revenue Autopilot™** ⚡ | Autonomous deal progression |
-| **Apex Autopilot™** ⚡ | Fully autonomous sales engine |
+| **REALM Autopilot™** ⚡ | Fully autonomous sales engine |
 | **White-Labeling** ⚡ | Your brand, your domain ($299 setup) |
 | Voice Agent | 5,000 minutes/month |
 | BNB Prospects | 100,000/month |
@@ -130,9 +130,9 @@ The only things we charge premium for are features with **real operational cost*
 | Users | 30 included (+$35/user/month) |
 | Support | Dedicated account manager |
 
-**⚡ = Revenue Autopilot and Apex Autopilot are our highest-value proprietary engines. No competitor has them at any price. White-labeling requires per-customer engineering work.**
+**⚡ = Revenue Autopilot and REALM Autopilot are our highest-value proprietary engines. No competitor has them at any price. White-labeling requires per-customer engineering work.**
 
-**Saves vs. competitors:** Replaces GHL Pro ($497) + Salesloft Advanced ($1,800 for 10 users) + Instantly ($358) = $2,655/month. Apex: $797. **Save $1,858/month.**
+**Saves vs. competitors:** Replaces GHL Pro ($497) + Salesloft Advanced ($1,800 for 10 users) + Instantly ($358) = $2,655/month. REALM: $797. **Save $1,858/month.**
 
 ---
 
@@ -142,9 +142,9 @@ The only things we charge premium for are features with **real operational cost*
 | What's Included | Limit |
 |---|---|
 | Everything in Fortune, plus: | |
-| **Dedicated SMTP Infrastructure** ⚡ | Your own IP blocks, managed by Apex |
+| **Dedicated SMTP Infrastructure** ⚡ | Your own IP blocks, managed by REALM |
 | **Custom AI Training** ⚡ | Train AI on your company's data |
-| **SaaS Mode** ⚡ | Resell Apex as your own product |
+| **SaaS Mode** ⚡ | Resell REALM as your own product |
 | Email Sends | Unlimited |
 | Voice Agent | Unlimited |
 | BNB Prospects | Unlimited |
@@ -154,7 +154,7 @@ The only things we charge premium for are features with **real operational cost*
 
 **⚡ = Dedicated IPs require us to purchase and manage IP blocks per customer. Custom AI training requires GPU compute. SaaS Mode requires platform engineering. These are our highest-cost services — priced accordingly.**
 
-**Saves vs. competitors:** Replaces full enterprise stack ($3,405/month). Apex: $1,497. **Save $1,908/month.**
+**Saves vs. competitors:** Replaces full enterprise stack ($3,405/month). REALM: $1,497. **Save $1,908/month.**
 
 ---
 
@@ -218,7 +218,7 @@ These are **never gated, never limited, never charged:**
 | Compliance Fortress™ | Legal maintenance + liability | ~75% |
 | Voice Agent minutes | Telephony (Twilio) cost | ~50% |
 | Revenue Autopilot™ | Proprietary engine, no competitor | ~85% |
-| Apex Autopilot™ | Crown jewel, no competitor | ~90% |
+| REALM Autopilot™ | Crown jewel, no competitor | ~90% |
 | Dedicated SMTP IPs | IP block purchase + management | ~65% |
 | White-Label setup fee | Per-customer engineering | ~80% |
 | Extra user seats ($35) | Minimal marginal cost | ~91% |

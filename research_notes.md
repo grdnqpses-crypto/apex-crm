@@ -1,4 +1,4 @@
-# Research Notes: Ultimate Killer Feature for Apex CRM
+# Research Notes: Ultimate Killer Feature for REALM CRM
 
 ## Key Industry Insights (Feb 2026)
 
@@ -36,7 +36,7 @@
 
 The ultimate wrapper that ties everything together:
 
-### Concept: APEX AUTOPILOT - The Self-Running Brokerage
+### Concept: REALM AUTOPILOT - The Self-Running Brokerage
 A single AI brain that orchestrates ALL features simultaneously to:
 1. **Find loads automatically** (Load Board Integration + AI)
 2. **Find carriers automatically** (Carrier Vetting + B2B Database)

@@ -3,7 +3,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { bibleShares } from "../drizzle/schema";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, adminProcedure, managerProcedure, companyAdminProcedure, apexOwnerProcedure, developerProcedure, router, getRoleLevel } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, adminProcedure, managerProcedure, companyAdminProcedure, realmOwnerProcedure, developerProcedure, router, getRoleLevel } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { invokeLLM } from "./_core/llm";
 import { notifyOwner } from "./_core/notification";
@@ -105,18 +105,18 @@ export const appRouter = router({
           } : undefined,
         });
         await transporter.sendMail({
-          from: process.env.SMTP_FROM || '"Apex CRM" <noreply@apexcrm.com>',
+          from: process.env.SMTP_FROM || '"REALM CRM" <noreply@apexcrm.com>',
           to: user.email,
-          subject: 'Reset your Apex CRM password',
+          subject: 'Reset your REALM CRM password',
           html: `
             <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px">
               <h2 style="color:#f97316;margin-bottom:8px">Reset your password</h2>
               <p style="color:#333">Hi ${user.name || 'there'},</p>
-              <p style="color:#555">We received a request to reset your Apex CRM password. Click the button below to set a new password. This link expires in 1 hour.</p>
+              <p style="color:#555">We received a request to reset your REALM CRM password. Click the button below to set a new password. This link expires in 1 hour.</p>
               <a href="${resetUrl}" style="display:inline-block;margin:24px 0;padding:14px 28px;background:#f97316;color:#fff;font-weight:700;border-radius:8px;text-decoration:none">Reset Password</a>
               <p style="color:#999;font-size:13px">If you didn't request this, you can safely ignore this email. Your password won't change.</p>
               <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
-              <p style="color:#bbb;font-size:12px">&copy; Apex CRM</p>
+              <p style="color:#bbb;font-size:12px">&copy; REALM CRM</p>
             </div>
           `,
         });
@@ -991,7 +991,7 @@ export const appRouter = router({
       permissions: z.array(z.string()).optional(),
       expiresAt: z.number().optional(),
     })).mutation(async ({ ctx, input }) => {
-      const rawKey = `apex_${nanoid(32)}`;
+      const rawKey = `realm_${nanoid(32)}`;
       const keyHash = createHash("sha256").update(rawKey).digest("hex");
       const keyPrefix = rawKey.substring(0, 12);
       const id = await db.createApiKey({ ...input, userId: ctx.user.id, keyHash, keyPrefix });
@@ -1925,8 +1925,8 @@ export const appRouter = router({
   // ═══════════════════════════════════════════════════════════════
 
   tenants: router({
-    // Apex Owner+: list all companies
-    list: apexOwnerProcedure.query(async () => {
+    // REALM Owner+: list all companies
+    list: realmOwnerProcedure.query(async () => {
       const companies = await db.getTenantCompanies();
       const withCounts = await Promise.all(companies.map(async (c: any) => ({
         ...c,
@@ -1935,16 +1935,16 @@ export const appRouter = router({
       return withCounts;
     }),
 
-    // Apex Owner+: get single company
-    get: apexOwnerProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+    // REALM Owner+: get single company
+    get: realmOwnerProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
       const company = await db.getTenantCompanyById(input.id);
       if (!company) throw new TRPCError({ code: "NOT_FOUND", message: "Company not found" });
       const userCount = await db.getTenantCompanyUserCount(company.id);
       return { ...company, userCount };
     }),
 
-    // Apex Owner+: create company
-    create: apexOwnerProcedure.input(z.object({
+    // REALM Owner+: create company
+    create: realmOwnerProcedure.input(z.object({
       name: z.string().min(1),
       slug: z.string().min(1).regex(/^[a-z0-9-]+$/),
       industry: z.string().optional(),
@@ -1969,8 +1969,8 @@ export const appRouter = router({
       return { id };
     }),
 
-    // Apex Owner+: update company
-    update: apexOwnerProcedure.input(z.object({
+    // REALM Owner+: update company
+    update: realmOwnerProcedure.input(z.object({
       id: z.number(),
       name: z.string().optional(),
       industry: z.string().optional(),
@@ -1994,9 +1994,9 @@ export const appRouter = router({
       return { success: true };
     }),
 
-    // Get company users (apex_owner+, or admin of that company)
+    // Get company users (realm_owner+, or admin of that company)
     users: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
-      const canViewAny = ["developer", "apex_owner"].includes(ctx.user.systemRole);
+      const canViewAny = ["developer", "realm_owner"].includes(ctx.user.systemRole);
       if (!canViewAny && ctx.user.tenantCompanyId !== input.companyId) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
@@ -2005,7 +2005,7 @@ export const appRouter = router({
 
     // Get users under a manager
     managerUsers: protectedProcedure.input(z.object({ managerId: z.number() })).query(async ({ ctx, input }) => {
-      const canViewAny = ["developer", "apex_owner"].includes(ctx.user.systemRole);
+      const canViewAny = ["developer", "realm_owner"].includes(ctx.user.systemRole);
       if (!canViewAny && ctx.user.id !== input.managerId && ctx.user.systemRole !== "company_admin") {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
@@ -2029,7 +2029,7 @@ export const appRouter = router({
       name: z.string().min(1).optional(),
       logoUrl: z.string().url().nullable().optional(),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "realm_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN", message: "Only company admins can update branding" });
       if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST", message: "No company associated" });
       await db.updateTenantCompany(ctx.user.tenantCompanyId, { ...input, updatedAt: Date.now() } as any);
@@ -2041,7 +2041,7 @@ export const appRouter = router({
       companyName: z.string().min(1),
       industry: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "realm_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
       const { generateImage } = await import("./_core/imageGeneration.js");
       const prompt = `Professional business logo for a company called "${input.companyName}"${
@@ -2090,7 +2090,7 @@ export const appRouter = router({
     restoreLogo: protectedProcedure.input(z.object({
       logoUrl: z.string().url(),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "realm_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
       if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST" });
       await db.updateTenantCompany(ctx.user.tenantCompanyId, { logoUrl: input.logoUrl, updatedAt: Date.now() } as any);
@@ -2101,7 +2101,7 @@ export const appRouter = router({
     createLogoCustomizationCheckout: protectedProcedure.input(z.object({
       origin: z.string(),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "realm_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
       const { stripe } = await import("./stripe.js");
       if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe is not configured. Please add your Stripe keys in Settings → Payment." });
@@ -2189,7 +2189,7 @@ export const appRouter = router({
     setFavicon: protectedProcedure.input(z.object({
       faviconUrl: z.string().url(),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "realm_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
       if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST" });
       await db.updateTenantCompany(ctx.user.tenantCompanyId, { faviconUrl: input.faviconUrl, updatedAt: Date.now() } as any);
@@ -2238,7 +2238,7 @@ export const appRouter = router({
       dataUrl: z.string().min(1),
       mimeType: z.string().default("image/png"),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "realm_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
       if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST" });
       const { storagePut } = await import("./storage.js");
@@ -2264,7 +2264,7 @@ export const appRouter = router({
       password: z.string().min(8).max(128),
       name: z.string().min(1),
       email: z.string().email().optional(),
-      systemRole: z.enum(["apex_owner", "company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"]),
+      systemRole: z.enum(["realm_owner", "company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"]),
       tenantCompanyId: z.number(),
       managerId: z.number().optional(),
       jobTitle: z.string().optional(),
@@ -2295,9 +2295,9 @@ export const appRouter = router({
       if (callerRole === "company_admin" && !["sales_manager", "office_manager", "account_manager", "coordinator"].includes(input.systemRole)) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Company admins can only create managers and their sub-roles" });
       }
-      // Apex owners can create company_admins and below
-      if (callerRole === "apex_owner" && !["company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"].includes(input.systemRole)) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Apex owners can create company admins and below" });
+      // REALM owners can create company_admins and below
+      if (callerRole === "realm_owner" && !["company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"].includes(input.systemRole)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "REALM owners can create company admins and below" });
       }
       // Check company exists
       const company = await db.getTenantCompanyById(input.tenantCompanyId);
@@ -2332,7 +2332,7 @@ export const appRouter = router({
       return { id: userId, username: input.username };
     }),
 
-    // Reset user password (apex_owner+ or company_admin)
+    // Reset user password (realm_owner+ or company_admin)
     resetPassword: protectedProcedure.input(z.object({
       userId: z.number(),
       newPassword: z.string().min(8).max(128),
@@ -2362,7 +2362,7 @@ export const appRouter = router({
     // Update user role (each level can only set roles below them)
     setRole: protectedProcedure.input(z.object({
       userId: z.number(),
-      systemRole: z.enum(["developer", "apex_owner", "company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"]),
+      systemRole: z.enum(["developer", "realm_owner", "company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"]),
     })).mutation(async ({ ctx, input }) => {
       const callerLevel = getRoleLevel(ctx.user.systemRole);
       const targetLevel = getRoleLevel(input.systemRole);
@@ -3600,13 +3600,13 @@ export const appRouter = router({
       shopifyToken: z.string().optional(),
       webflowToken: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
-      const trackingId = `apex-${Math.random().toString(36).slice(2, 10)}-${ctx.user.id}`;
+      const trackingId = `realm-${Math.random().toString(36).slice(2, 10)}-${ctx.user.id}`;
       const rawUrl = input.url.trim();
       const cleanDomain = rawUrl.replace(/^https?:\/\//, '').replace(/\/$/, '').split('/')[0];
       const siteUrl = `https://${cleanDomain}`;
       const siteName = cleanDomain.replace(/^www\./, '');
 
-      const trackingScript = `<!-- Apex CRM Visitor Tracking -->\n<script>\n(function(a,p,e,x,c,r){a[x]=a[x]||function(){(a[x].q=a[x].q||[]).push(arguments)};c=p.createElement(e);c.async=1;c.src='https://track.apexcrm.io/v1/t.js?id='+r;var m=p.getElementsByTagName(e)[0];m.parentNode.insertBefore(c,m)})(window,document,'script','apexTrack','${trackingId}');apexTrack('init','${trackingId}');apexTrack('pageview');\n</script>`;
+      const trackingScript = `<!-- REALM CRM Visitor Tracking -->\n<script>\n(function(a,p,e,x,c,r){a[x]=a[x]||function(){(a[x].q=a[x].q||[]).push(arguments)};c=p.createElement(e);c.async=1;c.src='https://track.realmcrm.io/v1/t.js?id='+r;var m=p.getElementsByTagName(e)[0];m.parentNode.insertBefore(c,m)})(window,document,'script','realmTrack','${trackingId}');realmTrack('init','${trackingId}');realmTrack('pageview');\n</script>`;
 
       // ── 1. Fetch homepage HTML to detect platform ──────────────
       let html = '';
@@ -3614,7 +3614,7 @@ export const appRouter = router({
       try {
         const ctrl = new AbortController();
         const t = setTimeout(() => ctrl.abort(), 8000);
-        const res = await fetch(siteUrl, { signal: ctrl.signal, headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ApexCRM/1.0)' } });
+        const res = await fetch(siteUrl, { signal: ctrl.signal, headers: { 'User-Agent': 'Mozilla/5.0 (compatible; REALMCRM/1.0)' } });
         clearTimeout(t);
         html = (await res.text()).slice(0, 60000);
       } catch { /* unreachable or timeout — proceed with unknown */ }
@@ -3647,7 +3647,7 @@ export const appRouter = router({
               body: JSON.stringify({
                 id_base: 'custom_html',
                 sidebar: 'wp_inactive_widgets',
-                instance: { raw: { title: 'Apex Tracking', content: trackingScript } },
+                instance: { raw: { title: 'REALM Tracking', content: trackingScript } },
               }),
             });
             if (createRes.ok) {
@@ -3812,7 +3812,7 @@ export const appRouter = router({
     addWebsite: protectedProcedure.input(z.object({
       url: z.string().min(1),
     })).mutation(async ({ ctx, input }) => {
-      const trackingId = `apex-${Math.random().toString(36).slice(2, 10)}-${ctx.user.id}`;
+      const trackingId = `realm-${Math.random().toString(36).slice(2, 10)}-${ctx.user.id}`;
       const cleanDomain = input.url.replace(/^https?:\/\//, '').replace(/\/$/, '').split('/')[0];
       const siteName = cleanDomain.replace(/^www\./, '');
       await db.addTrackedWebsite(ctx.user.id, { name: siteName, domain: cleanDomain, trackingId });
@@ -3831,10 +3831,10 @@ export const appRouter = router({
         const url = `https://${site.domain}`;
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 8000);
-        const res = await fetch(url, { signal: controller.signal, headers: { 'User-Agent': 'ApexCRM-Verifier/1.0' } });
+        const res = await fetch(url, { signal: controller.signal, headers: { 'User-Agent': 'REALMCRM-Verifier/1.0' } });
         clearTimeout(timeout);
         const html = await res.text();
-        const found = html.includes(site.trackingId) || html.includes('apex-tracker');
+        const found = html.includes(site.trackingId) || html.includes('realm-tracker');
         return { verified: found, statusCode: res.status, checkedAt: new Date().toISOString() };
       } catch (err: any) {
         return { verified: false, statusCode: 0, error: err.message || 'Could not reach domain', checkedAt: new Date().toISOString() };
@@ -3885,14 +3885,14 @@ export const appRouter = router({
         if (!creds) continue;
 
         const siteUrl = `https://${site.twDomain}`;
-        const trackingScript = `<!-- Apex CRM Visitor Tracking -->\n<script>\n(function(a,p,e,x,c,r){a[x]=a[x]||function(){(a[x].q=a[x].q||[]).push(arguments)};c=p.createElement(e);c.async=1;c.src='https://track.apexcrm.io/v1/t.js?id='+r;var m=p.getElementsByTagName(e)[0];m.parentNode.insertBefore(c,m)})(window,document,'script','apexTrack','${site.twTrackingId}');apexTrack('init','${site.twTrackingId}');apexTrack('pageview');\n</script>`;
+        const trackingScript = `<!-- REALM CRM Visitor Tracking -->\n<script>\n(function(a,p,e,x,c,r){a[x]=a[x]||function(){(a[x].q=a[x].q||[]).push(arguments)};c=p.createElement(e);c.async=1;c.src='https://track.realmcrm.io/v1/t.js?id='+r;var m=p.getElementsByTagName(e)[0];m.parentNode.insertBefore(c,m)})(window,document,'script','realmTrack','${site.twTrackingId}');realmTrack('init','${site.twTrackingId}');realmTrack('pageview');\n</script>`;
 
         if (platform === 'wordpress' && creds.wpUser && creds.wpAppPassword) {
           try {
             const b64 = Buffer.from(`${creds.wpUser}:${creds.wpAppPassword}`).toString('base64');
             const widgetsRes = await fetch(`${siteUrl}/wp-json/wp/v2/widgets?sidebar=wp_inactive_widgets`, { headers: { Authorization: `Basic ${b64}` } });
             if (widgetsRes.ok) {
-              const createRes = await fetch(`${siteUrl}/wp-json/wp/v2/widgets`, { method: 'POST', headers: { Authorization: `Basic ${b64}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ id_base: 'custom_html', sidebar: 'wp_inactive_widgets', instance: { raw: { title: 'Apex Tracking', content: trackingScript } } }) });
+              const createRes = await fetch(`${siteUrl}/wp-json/wp/v2/widgets`, { method: 'POST', headers: { Authorization: `Basic ${b64}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ id_base: 'custom_html', sidebar: 'wp_inactive_widgets', instance: { raw: { title: 'REALM Tracking', content: trackingScript } } }) });
               if (createRes.ok) return { success: true, platform, method: 'auto' };
             }
           } catch { /* continue */ }
@@ -3955,8 +3955,8 @@ export const appRouter = router({
         notifyOwner({
           title: `🏢 ${fresh.length === 1 ? fresh[0].identifiedCompany : `${fresh.length} new companies`} on your website`,
           content: fresh.length === 1
-            ? `${fresh[0].identifiedCompany}${fresh[0].identifiedIndustry ? ` (${fresh[0].identifiedIndustry})` : ''} just visited your website — ${fresh[0].totalPageViews || 1} page${(fresh[0].totalPageViews || 1) > 1 ? 's' : ''} viewed. Open Apex CRM → Visitor Tracking to convert them to a prospect.`
-            : `New identified visitors: ${companies}. Open Apex CRM → Visitor Tracking to follow up.`,
+            ? `${fresh[0].identifiedCompany}${fresh[0].identifiedIndustry ? ` (${fresh[0].identifiedIndustry})` : ''} just visited your website — ${fresh[0].totalPageViews || 1} page${(fresh[0].totalPageViews || 1) > 1 ? 's' : ''} viewed. Open REALM CRM → Visitor Tracking to convert them to a prospect.`
+            : `New identified visitors: ${companies}. Open REALM CRM → Visitor Tracking to follow up.`,
         }).catch(() => { /* non-critical */ });
       }
       return fresh.map((s: any) => ({
@@ -4331,7 +4331,7 @@ export const appRouter = router({
       if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const share = await dbConn.select().from(bibleShares).where(eq(bibleShares.id, input.shareId)).limit(1);
       if (!share.length) throw new TRPCError({ code: "NOT_FOUND" });
-      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "realm_owner", "company_admin"].includes(ctx.user.systemRole);
       if (share[0].sharedByUserId !== ctx.user.id && !isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
       await dbConn.update(bibleShares).set({ revokedAt: Date.now(), revokedByUserId: ctx.user.id }).where(eq(bibleShares.id, input.shareId));
       return { success: true };
@@ -4408,7 +4408,7 @@ export const appRouter = router({
       // Required when billing=annual: user must acknowledge non-refundable policy
       annualAcknowledged: z.boolean().optional(),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "realm_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN", message: "Only company admins can manage billing" });
       if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST", message: "No company associated" });
 
@@ -4466,7 +4466,7 @@ export const appRouter = router({
       quantity: z.number().int().min(1).max(50),
       origin: z.string().url(),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "realm_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN", message: "Only company admins can add user seats" });
       if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST", message: "No company associated" });
       const { stripe } = await import("./stripe.js");
@@ -4500,7 +4500,7 @@ export const appRouter = router({
     createPortal: protectedProcedure.input(z.object({
       origin: z.string().url(),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "realm_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
       if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST" });
 
@@ -4519,7 +4519,7 @@ export const appRouter = router({
 
     invoices: protectedProcedure.query(async ({ ctx }) => {
       if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: 'BAD_REQUEST' });
-      const allowedRoles = ['company_admin', 'apex_owner', 'developer'];
+      const allowedRoles = ['company_admin', 'realm_owner', 'developer'];
       if (!allowedRoles.includes(ctx.user.systemRole)) throw new TRPCError({ code: 'FORBIDDEN' });
       const { default: Stripe } = await import('stripe');
       const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' as any }) : null;
@@ -4554,7 +4554,7 @@ export const appRouter = router({
 
     paymentStatus: protectedProcedure.query(async ({ ctx }) => {
       if (!ctx.user.tenantCompanyId) return { isPastDue: false, status: null };
-      const allowedRoles = ['company_admin', 'apex_owner', 'developer'];
+      const allowedRoles = ['company_admin', 'realm_owner', 'developer'];
       if (!allowedRoles.includes(ctx.user.systemRole)) return { isPastDue: false, status: null };
       const { default: Stripe } = await import('stripe');
       const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' as any }) : null;
@@ -4659,7 +4659,7 @@ export const appRouter = router({
   //   - CRM AI features are FREE (included in subscription)
   //   - Non-CRM AI usage requires purchased credits at 25% markup on Manus pricing
   //   - Billed directly to tenant company's Stripe card on file
-  //   - Only Apex Owner manages packages and sells credits
+  //   - Only REALM Owner manages packages and sells credits
   //   - Company Admins view their balance and history (read-only)
   aiCredits: router({
 
@@ -4683,13 +4683,13 @@ export const appRouter = router({
       return db.getAiCreditTransactions(tenantId, 100);
     }),
 
-    // ── Apex Owner: list all credit packages ──
-    listPackages: apexOwnerProcedure.query(async () => {
+    // ── REALM Owner: list all credit packages ──
+    listPackages: realmOwnerProcedure.query(async () => {
       return db.getAiCreditPackages();
     }),
 
-    // ── Apex Owner: create a new credit package ──
-    createPackage: apexOwnerProcedure.input(z.object({
+    // ── REALM Owner: create a new credit package ──
+    createPackage: realmOwnerProcedure.input(z.object({
       name: z.string().min(1),
       description: z.string().optional(),
       credits: z.number().min(1),
@@ -4714,8 +4714,8 @@ export const appRouter = router({
       return { success: true };
     }),
 
-    // ── Apex Owner: update a credit package ──
-    updatePackage: apexOwnerProcedure.input(z.object({
+    // ── REALM Owner: update a credit package ──
+    updatePackage: realmOwnerProcedure.input(z.object({
       id: z.number(),
       name: z.string().optional(),
       description: z.string().optional(),
@@ -4737,8 +4737,8 @@ export const appRouter = router({
       return { success: true };
     }),
 
-    // ── Apex Owner: create a Stripe checkout session for a tenant to purchase credits ──
-    createCheckout: apexOwnerProcedure.input(z.object({
+    // ── REALM Owner: create a Stripe checkout session for a tenant to purchase credits ──
+    createCheckout: realmOwnerProcedure.input(z.object({
       tenantCompanyId: z.number(),
       packageId: z.number(),
     })).mutation(async ({ ctx, input }) => {
@@ -4749,7 +4749,7 @@ export const appRouter = router({
       if (!pkg) throw new TRPCError({ code: 'NOT_FOUND', message: 'Package not found' });
       const stripe = (await import('stripe')).default;
       const stripeClient = new stripe(process.env.STRIPE_SECRET_KEY || '');
-      const origin = ctx.req.headers.origin || 'https://apex-crm.manus.space';
+      const origin = ctx.req.headers.origin || 'https://realm-crm.manus.space';
       const session = await stripeClient.checkout.sessions.create({
         mode: 'payment',
         line_items: [{
@@ -4778,11 +4778,11 @@ export const appRouter = router({
       return { checkoutUrl: session.url };
     }),
 
-    // ── Apex Owner: manually grant credits to a tenant (no Stripe) ──
-    grantCredits: apexOwnerProcedure.input(z.object({
+    // ── REALM Owner: manually grant credits to a tenant (no Stripe) ──
+    grantCredits: realmOwnerProcedure.input(z.object({
       tenantCompanyId: z.number(),
       credits: z.number().min(1),
-      description: z.string().default('Credits granted by Apex Owner'),
+      description: z.string().default('Credits granted by REALM Owner'),
     })).mutation(async ({ ctx, input }) => {
       const tenant = await db.getTenantCompanyById(input.tenantCompanyId);
       if (!tenant) throw new TRPCError({ code: 'NOT_FOUND', message: 'Tenant company not found' });
@@ -4790,8 +4790,8 @@ export const appRouter = router({
       return { success: true };
     }),
 
-    // ── Apex Owner: view all tenant credit balances ──
-    allTenantBalances: apexOwnerProcedure.query(async () => {
+    // ── REALM Owner: view all tenant credit balances ──
+    allTenantBalances: realmOwnerProcedure.query(async () => {
       const dbConn = await db.getDb();
       if (!dbConn) return [];
       const { tenantAiCredits: tac, tenantCompanies: tc } = await import('../drizzle/schema');
@@ -4809,8 +4809,8 @@ export const appRouter = router({
         .leftJoin(tc, eqOp(tac.tenantCompanyId, tc.id));
     }),
 
-    // ── Apex Owner: view transaction history for any tenant ──
-    tenantTransactions: apexOwnerProcedure.input(z.object({
+    // ── REALM Owner: view transaction history for any tenant ──
+    tenantTransactions: realmOwnerProcedure.input(z.object({
       tenantCompanyId: z.number(),
     })).query(async ({ input }) => {
       return db.getAiCreditTransactions(input.tenantCompanyId, 200);
@@ -4858,7 +4858,7 @@ export const appRouter = router({
     })).mutation(async ({ ctx, input }) => {
       const dbConn = await db.getDb();
       if (!dbConn || !ctx.user.tenantCompanyId) throw new TRPCError({ code: 'FORBIDDEN' });
-      if (!['company_admin', 'super_admin', 'apex_owner', 'developer'].includes(ctx.user.systemRole)) {
+      if (!['company_admin', 'super_admin', 'realm_owner', 'developer'].includes(ctx.user.systemRole)) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Only Company Admin or above can update business category' });
       }
       const { tenantCompanies } = await import('../drizzle/schema');
@@ -5116,7 +5116,7 @@ export const appRouter = router({
   }),
 
   // ═══════════════════════════════════════════════════════════════════════
-  // SUBSCRIPTION BILLING (Tenant self-service + Apex Owner management)
+  // SUBSCRIPTION BILLING (Tenant self-service + REALM Owner management)
   // ═══════════════════════════════════════════════════════════════════════
   billingMgmt: router({
     mySubscription: protectedProcedure.query(async ({ ctx }) => {
@@ -5137,13 +5137,13 @@ export const appRouter = router({
     createPortalSession: protectedProcedure.mutation(async ({ ctx }) => {
       const dbConn = await db.getDb();
       if (!dbConn || !ctx.user.tenantCompanyId) throw new TRPCError({ code: 'FORBIDDEN' });
-      if (!['company_admin', 'super_admin', 'apex_owner', 'developer'].includes(ctx.user.systemRole)) {
+      if (!['company_admin', 'super_admin', 'realm_owner', 'developer'].includes(ctx.user.systemRole)) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Only Company Admin can manage billing' });
       }
       const { tenantCompanies } = await import('../drizzle/schema');
       const { eq } = await import('drizzle-orm');
       const [company] = await dbConn.select().from(tenantCompanies).where(eq(tenantCompanies.id, ctx.user.tenantCompanyId));
-      if (!company?.stripeCustomerId) throw new TRPCError({ code: 'BAD_REQUEST', message: 'No payment method on file. Please contact Apex support to set up billing.' });
+      if (!company?.stripeCustomerId) throw new TRPCError({ code: 'BAD_REQUEST', message: 'No payment method on file. Please contact REALM support to set up billing.' });
       const { stripe } = await import('./stripe.js');
       if (!stripe) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Payment system unavailable' });
       const session = await stripe.billingPortal.sessions.create({
@@ -5152,7 +5152,7 @@ export const appRouter = router({
       });
       return { url: session.url };
     }),
-    allTenantPayments: apexOwnerProcedure.input(z.object({
+    allTenantPayments: realmOwnerProcedure.input(z.object({
       page: z.number().default(1),
       limit: z.number().default(50),
     })).query(async () => {
@@ -5179,7 +5179,7 @@ export const appRouter = router({
       }));
       return { items, stats: { mrr, arr: mrr * 12, overdueTotal, collectedThisMonth } };
     }),
-    createManualInvoice: apexOwnerProcedure.input(z.object({
+    createManualInvoice: realmOwnerProcedure.input(z.object({
       tenantCompanyId: z.number(),
       amountDueCents: z.number(),
       description: z.string(),
@@ -5203,7 +5203,7 @@ export const appRouter = router({
       });
       return { id: (result as { insertId: number }).insertId };
     }),
-    markInvoicePaid: apexOwnerProcedure.input(z.object({
+    markInvoicePaid: realmOwnerProcedure.input(z.object({
       invoiceId: z.number(),
       amountPaidCents: z.number().optional(),
     })).mutation(async ({ input }) => {
@@ -5221,7 +5221,7 @@ export const appRouter = router({
       }).where(eq(subscriptionInvoices.id, input.invoiceId));
       return { success: true };
     }),
-    setTenantStatus: apexOwnerProcedure.input(z.object({
+    setTenantStatus: realmOwnerProcedure.input(z.object({
       tenantCompanyId: z.number(),
       status: z.enum(['active','suspended','cancelled']),
     })).mutation(async ({ input }) => {
@@ -5265,7 +5265,7 @@ export const appRouter = router({
       const { eq } = await import('drizzle-orm');
       return dbConn.select().from(featureUsageTracking).where(eq(featureUsageTracking.tenantCompanyId, ctx.user.tenantCompanyId));
     }),
-    allHealthScores: apexOwnerProcedure.query(async () => {
+    allHealthScores: realmOwnerProcedure.query(async () => {
       const dbConn = await db.getDb();
       if (!dbConn) return [];
       const { tenantCompanies, featureUsageTracking } = await import('../drizzle/schema');
@@ -5290,7 +5290,7 @@ export const appRouter = router({
         return a.healthScore - b.healthScore;
       });
     }),
-    battleCard: apexOwnerProcedure.input(z.object({
+    battleCard: realmOwnerProcedure.input(z.object({
       tenantCompanyId: z.number(),
     })).query(async ({ input }) => {
       const dbConn = await db.getDb();
@@ -5329,7 +5329,7 @@ export const appRouter = router({
       try {
         const response = await invokeLLM({
           messages: [
-            { role: 'system', content: 'You are an expert sales coach for Apex CRM. Generate a concise, personalized call script for an account manager.' },
+            { role: 'system', content: 'You are an expert sales coach for REALM CRM. Generate a concise, personalized call script for an account manager.' },
             { role: 'user', content: `Company: ${company.name}\nIndustry: ${category.label}\nTrial days remaining: ${company.trialEndsAt ? Math.max(0, Math.floor((company.trialEndsAt - Date.now()) / 86400000)) : 'N/A'}\nFeatures used (${featuresUsed.length}): ${featuresUsed.map(f => f.label).join(', ')}\nFeatures NOT used (${featuresUnused.length}): ${featuresUnused.slice(0, 5).map(f => f.label).join(', ')}\n\nGenerate a 3-paragraph call script: (1) Opening/rapport, (2) Value discussion around unused features, (3) Close/next steps. Keep it conversational and under 200 words.` },
           ],
         });
@@ -5344,7 +5344,7 @@ export const appRouter = router({
         featureUsageDetails: usage,
       };
     }),
-    logCallOutcome: apexOwnerProcedure.input(z.object({
+    logCallOutcome: realmOwnerProcedure.input(z.object({
       tenantCompanyId: z.number(),
       outcome: z.string(),
       notes: z.string().optional(),

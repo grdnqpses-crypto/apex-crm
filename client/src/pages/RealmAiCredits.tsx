@@ -1,11 +1,11 @@
 /**
- * ApexAiCredits.tsx
- * Apex Owner only — manage AI credit packages and tenant balances.
+ * RealmAiCredits.tsx
+ * REALM Owner only — manage AI credit packages and tenant balances.
  *
  * Model:
  *   - CRM AI features are FREE (included in subscription)
  *   - Non-CRM AI usage requires purchased credits at 25% markup on Manus pricing
- *   - Apex Owner defines packages and can grant credits to tenants
+ *   - REALM Owner defines packages and can grant credits to tenants
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -46,13 +46,13 @@ import {
   Coins,
 } from "lucide-react";
 
-export default function ApexAiCredits() {
+export default function RealmAiCredits() {
   const { t } = useSkin();
   const { user } = useAuth();
   const [, navigate] = useLocation();
 
-  // Guard: only Apex Owner
-  if (user && (user as any).systemRole !== "apex_owner") {
+  // Guard: only REALM Owner
+  if (user && (user as any).systemRole !== "realm_owner") {
     navigate("/dashboard");
     return null;
   }
@@ -334,7 +334,7 @@ function TenantsTab() {
     grantMutation.mutate({
       tenantCompanyId: grantDialog.tenantId,
       credits: parseInt(grantForm.credits),
-      description: grantForm.description || "Credits granted by Apex Owner",
+      description: grantForm.description || "Credits granted by REALM Owner",
     });
   };
 

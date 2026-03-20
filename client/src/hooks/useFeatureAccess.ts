@@ -66,7 +66,7 @@ export const SIDEBAR_FEATURE_MAP: Record<string, string> = {
 };
 
 // ─── Role-Based Access Control ───
-// Role hierarchy: developer > apex_owner > company_admin > manager > user
+// Role hierarchy: developer > realm_owner > company_admin > manager > user
 
 // Developer-only routes
 const DEVELOPER_ROUTES = [
@@ -74,17 +74,17 @@ const DEVELOPER_ROUTES = [
   "/fmcsa-scanner", "/api-keys", "/webhooks",
 ];
 
-// Apex Owner+ routes (apex_owner, developer)
-const APEX_OWNER_ROUTES = [
-  "/apex",
+// REALM Owner+ routes (realm_owner, developer)
+const REALM_OWNER_ROUTES = [
+  "/realm",
 ];
 
-// Manager+ routes (manager, company_admin, apex_owner, developer)
+// Manager+ routes (manager, company_admin, realm_owner, developer)
 const MANAGER_ROUTES = [
   "/team-performance",
 ];
 
-// Admin+ routes (company_admin, apex_owner, developer)
+// Admin+ routes (company_admin, realm_owner, developer)
 const ADMIN_ROUTES = [
   "/team", "/white-label", "/subscription", "/migration",
   "/settings", "/import/hubspot",
@@ -97,13 +97,13 @@ export function useFeatureAccess() {
   const { user } = useAuth();
   const role = user?.systemRole;
   const isDeveloper = role === "developer";
-  const isApexOwner = role === "apex_owner";
+  const isRealmOwner = role === "realm_owner";
   const isAdmin = role === "company_admin";
   const isManager = ["manager", "sales_manager", "office_manager"].includes(role || "");
   const isUser = ["user", "account_manager", "coordinator"].includes(role || "");
   
-  // Developers, apex owners, and company admins get full feature access
-  const shouldFetchFeatures = !!user && !isDeveloper && !isApexOwner && !isAdmin;
+  // Developers, realm owners, and company admins get full feature access
+  const shouldFetchFeatures = !!user && !isDeveloper && !isRealmOwner && !isAdmin;
   
   const { data: features } = trpc.userManagement.myFeatures.useQuery(
     undefined,
@@ -111,8 +111,8 @@ export function useFeatureAccess() {
   );
 
   const hasFeature = (featureKey: string): boolean => {
-    // Developers, apex owners, and admins have all features
-    if (isDeveloper || isApexOwner || isAdmin) return true;
+    // Developers, realm owners, and admins have all features
+    if (isDeveloper || isRealmOwner || isAdmin) return true;
     // If features haven't loaded yet, show everything to avoid flash
     if (!features) return true;
     return features.includes(featureKey);
@@ -127,19 +127,19 @@ export function useFeatureAccess() {
       return isDeveloper;
     }
     
-    // Apex Owner+ routes
-    if (APEX_OWNER_ROUTES.includes(path)) {
-      return isDeveloper || isApexOwner;
+    // REALM Owner+ routes
+    if (REALM_OWNER_ROUTES.includes(path)) {
+      return isDeveloper || isRealmOwner;
     }
     
     // Admin+ routes
     if (ADMIN_ROUTES.includes(path)) {
-      return isDeveloper || isApexOwner || isAdmin;
+      return isDeveloper || isRealmOwner || isAdmin;
     }
     
     // Manager+ routes
     if (MANAGER_ROUTES.includes(path)) {
-      return isDeveloper || isApexOwner || isAdmin || isManager;
+      return isDeveloper || isRealmOwner || isAdmin || isManager;
     }
     
     // All other routes: accessible to all roles (feature-gated separately)
@@ -172,12 +172,12 @@ export function useFeatureAccess() {
     canAccessRoute,
     canAccessSidebarItem,
     isDeveloper,
-    isApexOwner,
+    isRealmOwner,
     isAdmin,
     isManager,
     isUser,
     role,
-    features: isDeveloper || isApexOwner || isAdmin ? null : features,
+    features: isDeveloper || isRealmOwner || isAdmin ? null : features,
     loading: shouldFetchFeatures && !features,
   };
 }

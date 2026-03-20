@@ -87,7 +87,7 @@ export default function VoiceAgent() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Bot className="h-7 w-7 text-primary" />
-            Apex Caller — AI Voice Agent
+            REALM Caller — AI Voice Agent
           </h1>
           <p className="text-muted-foreground mt-1">Autonomous AI-powered calling that qualifies leads, books appointments, and gathers intelligence</p>
         </div>

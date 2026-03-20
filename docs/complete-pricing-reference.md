@@ -1,4 +1,4 @@
-# Apex CRM — Complete Pricing Reference
+# REALM CRM — Complete Pricing Reference
 
 > All prices are 25%+ below true market competitors. High-maintenance services are marked up at premium tiers where operational cost is justified. Data entry is always free across all tiers.
 
@@ -113,7 +113,7 @@
 - Voice Agent — unlimited calls
 - DocScan — unlimited scans
 - **Revenue Autopilot™** ("Money Machine") *(premium)*
-- **Apex Autopilot™** (freight consolidation + lane prediction) *(premium)*
+- **REALM Autopilot™** (freight consolidation + lane prediction) *(premium)*
 - Visitor Tracking — unlimited
 - **White-labeling — full platform branding** + $299 one-time setup *(MEDIUM MAINTENANCE — premium)*
 - Custom AI training (basic)
@@ -177,7 +177,7 @@
 
 ## Competitor Savings Summary
 
-| Apex Tier | Apex Price | Competitor | Competitor Price | Savings |
+| REALM Tier | REALM Price | Competitor | Competitor Price | Savings |
 |---|---|---|---|---|
 | Success Starter | $74/mo | HubSpot Starter | $100/mo | **26% less** |
 | Growth Foundation | $149/mo | HubSpot Pro (5 users) | $500/mo | **70% less** |
@@ -205,7 +205,7 @@ The following modules show a locked overlay with upgrade CTA when a user's tier 
 | Compliance Fortress™ (GDPR/CCPA) | Fortune Foundation |
 | Voice Agent | Fortune Foundation |
 | Revenue Autopilot™ | Fortune |
-| Apex Autopilot™ | Fortune |
+| REALM Autopilot™ | Fortune |
 | White-Labeling | Fortune |
 | Dedicated SMTP Infrastructure | Fortune Plus |
 | Custom AI Training (full) | Fortune Plus |

@@ -4,35 +4,35 @@ import { describe, it, expect } from "vitest";
 describe("HubSpot Property Mappings", () => {
   // Simulate the mapping arrays from the frontend
   const HUBSPOT_CONTACT_MAPPINGS = [
-    { hubspot: "firstname", apex: "firstName", label: "First Name", group: "Contact Information", auto: true },
-    { hubspot: "lastname", apex: "lastName", label: "Last Name", group: "Contact Information", auto: true },
-    { hubspot: "email", apex: "email", label: "Email", group: "Contact Information", auto: true },
-    { hubspot: "jobtitle", apex: "jobTitle", label: "Job Title", group: "Contact Information", auto: true },
-    { hubspot: "phone", apex: "companyPhone", label: "Phone", group: "Communication", auto: true },
-    { hubspot: "mobilephone", apex: "mobilePhone", label: "Mobile Phone", group: "Communication", auto: true },
-    { hubspot: "address", apex: "streetAddress", label: "Street Address", group: "Address", auto: true },
-    { hubspot: "city", apex: "city", label: "City", group: "Address", auto: true },
-    { hubspot: "state", apex: "stateRegion", label: "State/Region", group: "Address", auto: true },
-    { hubspot: "lifecyclestage", apex: "lifecycleStage", label: "Lifecycle Stage", group: "Lifecycle", auto: true },
-    { hubspot: "freight_details", apex: "freightDetails", label: "Freight Details", group: "Freight/Logistics", auto: true },
-    { hubspot: "shipment_length__inches_", apex: "shipmentLength", label: "Shipment Length (inches)", group: "Freight/Logistics", auto: true },
-    { hubspot: "shipment_width__inches_", apex: "shipmentWidth", label: "Shipment Width (inches)", group: "Freight/Logistics", auto: true },
-    { hubspot: "shipment_height__inches_", apex: "shipmentHeight", label: "Shipment Height (inches)", group: "Freight/Logistics", auto: true },
-    { hubspot: "shipment_weight__pounds_", apex: "shipmentWeight", label: "Shipment Weight (pounds)", group: "Freight/Logistics", auto: true },
-    { hubspot: "destination_zip_code", apex: "destinationZipCode", label: "Destination Zip Code", group: "Freight/Logistics", auto: true },
-    { hubspot: "shipping_origination", apex: "shippingOrigination", label: "Shipping Origination", group: "Freight/Logistics", auto: true },
-    { hubspot: "destination", apex: "destination", label: "Destination", group: "Freight/Logistics", auto: true },
-    { hubspot: "freight_volume", apex: "freightVolume", label: "Freight Volume", group: "Freight/Logistics", auto: true },
-    { hubspot: "customer_type", apex: "customerType", label: "Customer Type", group: "Freight/Logistics", auto: true },
+    { hubspot: "firstname", realm: "firstName", label: "First Name", group: "Contact Information", auto: true },
+    { hubspot: "lastname", realm: "lastName", label: "Last Name", group: "Contact Information", auto: true },
+    { hubspot: "email", realm: "email", label: "Email", group: "Contact Information", auto: true },
+    { hubspot: "jobtitle", realm: "jobTitle", label: "Job Title", group: "Contact Information", auto: true },
+    { hubspot: "phone", realm: "companyPhone", label: "Phone", group: "Communication", auto: true },
+    { hubspot: "mobilephone", realm: "mobilePhone", label: "Mobile Phone", group: "Communication", auto: true },
+    { hubspot: "address", realm: "streetAddress", label: "Street Address", group: "Address", auto: true },
+    { hubspot: "city", realm: "city", label: "City", group: "Address", auto: true },
+    { hubspot: "state", realm: "stateRegion", label: "State/Region", group: "Address", auto: true },
+    { hubspot: "lifecyclestage", realm: "lifecycleStage", label: "Lifecycle Stage", group: "Lifecycle", auto: true },
+    { hubspot: "freight_details", realm: "freightDetails", label: "Freight Details", group: "Freight/Logistics", auto: true },
+    { hubspot: "shipment_length__inches_", realm: "shipmentLength", label: "Shipment Length (inches)", group: "Freight/Logistics", auto: true },
+    { hubspot: "shipment_width__inches_", realm: "shipmentWidth", label: "Shipment Width (inches)", group: "Freight/Logistics", auto: true },
+    { hubspot: "shipment_height__inches_", realm: "shipmentHeight", label: "Shipment Height (inches)", group: "Freight/Logistics", auto: true },
+    { hubspot: "shipment_weight__pounds_", realm: "shipmentWeight", label: "Shipment Weight (pounds)", group: "Freight/Logistics", auto: true },
+    { hubspot: "destination_zip_code", realm: "destinationZipCode", label: "Destination Zip Code", group: "Freight/Logistics", auto: true },
+    { hubspot: "shipping_origination", realm: "shippingOrigination", label: "Shipping Origination", group: "Freight/Logistics", auto: true },
+    { hubspot: "destination", realm: "destination", label: "Destination", group: "Freight/Logistics", auto: true },
+    { hubspot: "freight_volume", realm: "freightVolume", label: "Freight Volume", group: "Freight/Logistics", auto: true },
+    { hubspot: "customer_type", realm: "customerType", label: "Customer Type", group: "Freight/Logistics", auto: true },
   ];
 
   const HUBSPOT_COMPANY_MAPPINGS = [
-    { hubspot: "name", apex: "name", label: "Company Name", group: "Company Info", auto: true },
-    { hubspot: "domain", apex: "domain", label: "Domain", group: "Company Info", auto: true },
-    { hubspot: "phone", apex: "phone", label: "Phone", group: "Company Info", auto: true },
-    { hubspot: "industry", apex: "industry", label: "Industry", group: "Company Info", auto: true },
-    { hubspot: "annual_freight_spend", apex: "annualFreightSpend", label: "Annual Freight Spend", group: "Freight", auto: true },
-    { hubspot: "commodity", apex: "commodity", label: "Commodity", group: "Freight", auto: true },
+    { hubspot: "name", realm: "name", label: "Company Name", group: "Company Info", auto: true },
+    { hubspot: "domain", realm: "domain", label: "Domain", group: "Company Info", auto: true },
+    { hubspot: "phone", realm: "phone", label: "Phone", group: "Company Info", auto: true },
+    { hubspot: "industry", realm: "industry", label: "Industry", group: "Company Info", auto: true },
+    { hubspot: "annual_freight_spend", realm: "annualFreightSpend", label: "Annual Freight Spend", group: "Freight", auto: true },
+    { hubspot: "commodity", realm: "commodity", label: "Commodity", group: "Freight", auto: true },
   ];
 
   it("should have unique HubSpot property names for contacts", () => {
@@ -41,8 +41,8 @@ describe("HubSpot Property Mappings", () => {
     expect(unique.size).toBe(names.length);
   });
 
-  it("should have unique Apex field names for contacts", () => {
-    const names = HUBSPOT_CONTACT_MAPPINGS.map((m) => m.apex);
+  it("should have unique REALM field names for contacts", () => {
+    const names = HUBSPOT_CONTACT_MAPPINGS.map((m) => m.realm);
     const unique = new Set(names);
     expect(unique.size).toBe(names.length);
   });
@@ -53,38 +53,38 @@ describe("HubSpot Property Mappings", () => {
     expect(unique.size).toBe(names.length);
   });
 
-  it("should have unique Apex field names for companies", () => {
-    const names = HUBSPOT_COMPANY_MAPPINGS.map((m) => m.apex);
+  it("should have unique REALM field names for companies", () => {
+    const names = HUBSPOT_COMPANY_MAPPINGS.map((m) => m.realm);
     const unique = new Set(names);
     expect(unique.size).toBe(names.length);
   });
 
   it("should include all core contact fields", () => {
-    const apexFields = HUBSPOT_CONTACT_MAPPINGS.map((m) => m.apex);
-    expect(apexFields).toContain("firstName");
-    expect(apexFields).toContain("lastName");
-    expect(apexFields).toContain("email");
-    expect(apexFields).toContain("companyPhone");
+    const realmFields = HUBSPOT_CONTACT_MAPPINGS.map((m) => m.realm);
+    expect(realmFields).toContain("firstName");
+    expect(realmFields).toContain("lastName");
+    expect(realmFields).toContain("email");
+    expect(realmFields).toContain("companyPhone");
   });
 
   it("should include all freight-specific contact fields", () => {
-    const apexFields = HUBSPOT_CONTACT_MAPPINGS.map((m) => m.apex);
-    expect(apexFields).toContain("freightDetails");
-    expect(apexFields).toContain("shipmentLength");
-    expect(apexFields).toContain("shipmentWidth");
-    expect(apexFields).toContain("shipmentHeight");
-    expect(apexFields).toContain("shipmentWeight");
-    expect(apexFields).toContain("destinationZipCode");
-    expect(apexFields).toContain("shippingOrigination");
-    expect(apexFields).toContain("destination");
-    expect(apexFields).toContain("freightVolume");
-    expect(apexFields).toContain("customerType");
+    const realmFields = HUBSPOT_CONTACT_MAPPINGS.map((m) => m.realm);
+    expect(realmFields).toContain("freightDetails");
+    expect(realmFields).toContain("shipmentLength");
+    expect(realmFields).toContain("shipmentWidth");
+    expect(realmFields).toContain("shipmentHeight");
+    expect(realmFields).toContain("shipmentWeight");
+    expect(realmFields).toContain("destinationZipCode");
+    expect(realmFields).toContain("shippingOrigination");
+    expect(realmFields).toContain("destination");
+    expect(realmFields).toContain("freightVolume");
+    expect(realmFields).toContain("customerType");
   });
 
   it("should include freight-specific company fields", () => {
-    const apexFields = HUBSPOT_COMPANY_MAPPINGS.map((m) => m.apex);
-    expect(apexFields).toContain("annualFreightSpend");
-    expect(apexFields).toContain("commodity");
+    const realmFields = HUBSPOT_COMPANY_MAPPINGS.map((m) => m.realm);
+    expect(realmFields).toContain("annualFreightSpend");
+    expect(realmFields).toContain("commodity");
   });
 
   it("should group contact mappings correctly", () => {

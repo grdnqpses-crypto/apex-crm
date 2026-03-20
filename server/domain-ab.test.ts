@@ -173,7 +173,7 @@ describe("Domain Health Optimizer", () => {
 describe("Continuous A/B Testing Engine", () => {
   describe("Variant Generation", () => {
     it("should generate subject line variants with different strategies", () => {
-      const original = "Grow Your Brokerage with Apex CRM";
+      const original = "Grow Your Brokerage with REALM CRM";
       const strategies = ["urgency", "curiosity", "personalization", "benefit", "social_proof"];
       
       // Each strategy should produce a different variant

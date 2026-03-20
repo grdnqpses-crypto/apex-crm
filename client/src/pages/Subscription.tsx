@@ -167,14 +167,14 @@ const PLANS = [
       { text: "Email warmup (50 accounts)", type: "included" },
       { text: "Priority support", type: "included" },
       { text: "Revenue Autopilot™", type: "excluded" },
-      { text: "Apex Autopilot™", type: "excluded" },
+      { text: "REALM Autopilot™", type: "excluded" },
       { text: "White-labeling", type: "excluded" },
     ],
   },
   {
     id: "fortune_plus",
     name: "Fortune Plus",
-    tagline: "Dedicated infrastructure. Custom AI. Resell Apex as your own.",
+    tagline: "Dedicated infrastructure. Custom AI. Resell REALM as your own.",
     price: 1497,
     annualPrice: 1347,
     baseUsers: 100,
@@ -196,10 +196,10 @@ const PLANS = [
       { text: "Everything in Fortune Foundation", type: "included" },
       { text: "200,000 AI credits/month", type: "freemium" },
       { text: "Revenue Autopilot™", type: "premium", highlight: true },
-      { text: "Apex Autopilot™ (fully autonomous sales)", type: "premium", highlight: true },
+      { text: "REALM Autopilot™ (fully autonomous sales)", type: "premium", highlight: true },
       { text: "White-labeling (your brand, FREE setup)", type: "premium", highlight: true },
       { text: "Dedicated SMTP infrastructure (your own IPs)", type: "premium", highlight: true },
-      { text: "SaaS Mode — resell Apex as your own product", type: "premium", highlight: true },
+      { text: "SaaS Mode — resell REALM as your own product", type: "premium", highlight: true },
       { text: "Custom AI model training (unlimited)", type: "premium" },
       { text: "99.9% uptime SLA", type: "included" },
       { text: "24/7 white-glove support", type: "included" },
@@ -446,7 +446,7 @@ export default function Subscription() {
         <CardContent className="p-5">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
             <TrendingDown className="w-4 h-4 text-green-600" />
-            How Apex Compares — Same Team, More Features, Fraction of the Cost
+            How REALM Compares — Same Team, More Features, Fraction of the Cost
           </h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -455,7 +455,7 @@ export default function Subscription() {
                   <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Team Size</th>
                   <th className="text-right py-2 px-4 font-medium text-muted-foreground">HubSpot Pro</th>
                   <th className="text-right py-2 px-4 font-medium text-muted-foreground">GoHighLevel</th>
-                  <th className="text-right py-2 px-4 font-medium text-green-700 font-bold">Apex CRM</th>
+                  <th className="text-right py-2 px-4 font-medium text-green-700 font-bold">REALM CRM</th>
                   <th className="text-right py-2 pl-4 font-medium text-green-700">You Save</th>
                 </tr>
               </thead>
@@ -499,7 +499,7 @@ export default function Subscription() {
             </table>
           </div>
           <p className="text-xs text-muted-foreground mt-3">
-            * GHL + Instantly combined. Apex includes features competitors charge extra for or don't offer at all: 260 SMTP Rotation Engine, Compliance Fortress™, BNB Paradigm Engine™, AR/AP module, Shipping & Receiving, Voice Agent, Revenue Autopilot™, Apex Autopilot™, and one-click migration — all included at qualifying tiers.
+            * GHL + Instantly combined. REALM includes features competitors charge extra for or don't offer at all: 260 SMTP Rotation Engine, Compliance Fortress™, BNB Paradigm Engine™, AR/AP module, Shipping & Receiving, Voice Agent, Revenue Autopilot™, REALM Autopilot™, and one-click migration — all included at qualifying tiers.
           </p>
         </CardContent>
       </Card>

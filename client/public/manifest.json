@@ -1,11 +1,11 @@
 {
-  "name": "Apex CRM",
-  "short_name": "Apex CRM",
+  "name": "REALM CRM",
+  "short_name": "REALM CRM",
   "description": "The AI-powered CRM that migrates, adapts, and evolves with your team",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#f97316",
+  "background_color": "#f5f0e8",
+  "theme_color": "#1a3a6b",
   "orientation": "portrait-primary",
   "icons": [
     {

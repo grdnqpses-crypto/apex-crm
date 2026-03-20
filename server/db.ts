@@ -109,7 +109,7 @@ export async function createCredentialUser(data: {
   passwordHash: string;
   name: string;
   email?: string;
-  systemRole: "apex_owner" | "company_admin" | "sales_manager" | "office_manager" | "manager" | "account_manager" | "coordinator" | "user";
+  systemRole: "realm_owner" | "company_admin" | "sales_manager" | "office_manager" | "manager" | "account_manager" | "coordinator" | "user";
   tenantCompanyId: number;
   managerId?: number;
   jobTitle?: string;
@@ -1755,7 +1755,7 @@ export async function getAllUsersWithCompany() {
     .orderBy(desc(users.lastSignedIn));
 }
 
-export async function updateUserRole(userId: number, systemRole: "developer" | "apex_owner" | "company_admin" | "sales_manager" | "office_manager" | "manager" | "account_manager" | "coordinator" | "user") {
+export async function updateUserRole(userId: number, systemRole: "developer" | "realm_owner" | "company_admin" | "sales_manager" | "office_manager" | "manager" | "account_manager" | "coordinator" | "user") {
   const db = await getDb();
   if (!db) return null as any;
   await db.update(users).set({ systemRole }).where(eq(users.id, userId));

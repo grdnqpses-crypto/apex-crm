@@ -11,12 +11,12 @@ export const router = t.router;
 export const publicProcedure = t.procedure;
 
 // ─── Role hierarchy (highest to lowest) ───
-// developer > apex_owner > company_admin > sales_manager / office_manager > account_manager / coordinator
+// developer > realm_owner > company_admin > sales_manager / office_manager > account_manager / coordinator
 // super_admin and manager are legacy aliases; user is legacy alias for account_manager
 
 const ROLE_LEVELS: Record<string, number> = {
   developer: 5,
-  apex_owner: 4,
+  realm_owner: 4,
   super_admin: 3, // legacy alias for company_admin
   company_admin: 3,
   sales_manager: 2,
@@ -53,7 +53,7 @@ export const adminProcedure = t.procedure.use(
   }),
 );
 
-// ─── Role: Manager or above (manager, company_admin, apex_owner, developer) ───
+// ─── Role: Manager or above (manager, company_admin, realm_owner, developer) ───
 export const managerProcedure = t.procedure.use(
   t.middleware(async opts => {
     const { ctx, next } = opts;
@@ -67,7 +67,7 @@ export const managerProcedure = t.procedure.use(
   }),
 );
 
-// ─── Role: Company Admin or above (company_admin, apex_owner, developer) ───
+// ─── Role: Company Admin or above (company_admin, realm_owner, developer) ───
 export const companyAdminProcedure = t.procedure.use(
   t.middleware(async opts => {
     const { ctx, next } = opts;
@@ -81,15 +81,15 @@ export const companyAdminProcedure = t.procedure.use(
   }),
 );
 
-// ─── Role: Apex Owner or above (apex_owner, developer) ───
-export const apexOwnerProcedure = t.procedure.use(
+// ─── Role: REALM Owner or above (realm_owner, developer) ───
+export const realmOwnerProcedure = t.procedure.use(
   t.middleware(async opts => {
     const { ctx, next } = opts;
     if (!ctx.user) {
       throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
     }
-    if (getRoleLevel(ctx.user.systemRole) < ROLE_LEVELS.apex_owner) {
-      throw new TRPCError({ code: "FORBIDDEN", message: "Apex Owner access or above required." });
+    if (getRoleLevel(ctx.user.systemRole) < ROLE_LEVELS.realm_owner) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "REALM Owner access or above required." });
     }
     return next({ ctx: { ...ctx, user: ctx.user } });
   }),

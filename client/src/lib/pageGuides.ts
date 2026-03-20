@@ -1,4 +1,4 @@
-// Centralized contextual help content for every page in Apex CRM
+// Centralized contextual help content for every page in REALM CRM
 
 export interface GuideSection {
   icon: "purpose" | "expect" | "actions" | "outcomes" | "tips";
@@ -185,7 +185,7 @@ export const pageGuides: Record<string, PageGuideData> = {
     title: "API Keys Guide",
     description: "Click to learn about API access and integrations",
     sections: [
-      { icon: "purpose", title: "What This Page Does", content: "API Keys let you connect external systems to your CRM programmatically. Any software that needs to read or write CRM data — your website, custom tools, third-party integrations — uses an API key to authenticate. This is how you extend Apex CRM's capabilities." },
+      { icon: "purpose", title: "What This Page Does", content: "API Keys let you connect external systems to your CRM programmatically. Any software that needs to read or write CRM data — your website, custom tools, third-party integrations — uses an API key to authenticate. This is how you extend REALM CRM's capabilities." },
       { icon: "expect", title: "What You'll See", content: "A list of your API keys with their name, key prefix (the full key is shown only once at creation), creation date, last used date, and status (Active/Revoked). Each key can have specific permission scopes." },
       { icon: "actions", title: "What You Can Do", content: "Generate new API keys with a descriptive name and permission scopes. Copy the key immediately after creation (it won't be shown again). Revoke keys that are no longer needed or may have been compromised." },
       { icon: "outcomes", title: "Expected Outcomes", content: "Secure, auditable API access to your CRM data. Every API call is logged with the key that made it, so you always know which integration is doing what. This is essential for enterprise-grade security." },

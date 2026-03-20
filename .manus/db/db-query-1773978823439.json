@@ -40,9 +40,9 @@
     {
       "id": "4410042",
       "username": "apexowner",
-      "name": "Apex Platform Owner",
+      "name": "REALM Platform Owner",
       "role": "admin",
-      "systemRole": "apex_owner"
+      "systemRole": "realm_owner"
     },
     {
       "id": "4590001",
@@ -53,7 +53,7 @@
     }
   ],
   "messages": [],
-  "stdout": "id\tusername\tname\trole\tsystemRole\n2610017\tjlavallee\tJames Lavallee\tadmin\tdeveloper\n2610020\tmrodriguez\tMike Rodriguez\tuser\tsales_manager\n2610023\tschen\tSarah Chen\tuser\taccount_manager\n2610026\tdthompson\tDavid Thompson\tuser\taccount_manager\n2640083\tLavallee\tJerry\tadmin\tcompany_admin\n4410042\tapexowner\tApex Platform Owner\tadmin\tapex_owner\n4590001\tJoeLavallee\tJoseph Lavallee\tadmin\tcompany_admin\n",
+  "stdout": "id\tusername\tname\trole\tsystemRole\n2610017\tjlavallee\tJames Lavallee\tadmin\tdeveloper\n2610020\tmrodriguez\tMike Rodriguez\tuser\tsales_manager\n2610023\tschen\tSarah Chen\tuser\taccount_manager\n2610026\tdthompson\tDavid Thompson\tuser\taccount_manager\n2640083\tLavallee\tJerry\tadmin\tcompany_admin\n4410042\tapexowner\tREALM Platform Owner\tadmin\trealm_owner\n4590001\tJoeLavallee\tJoseph Lavallee\tadmin\tcompany_admin\n",
   "stderr": "",
   "execution_time_ms": 70
 }

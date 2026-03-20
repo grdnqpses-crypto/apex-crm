@@ -1,14 +1,14 @@
-# Apex CRM — Development Progress Recap
+# REALM CRM — Development Progress Recap
 **To:** [Boss Name]
 **From:** [Your Name]
 **Date:** March 17, 2026
-**Subject:** Apex CRM — Last 18 Hours: Major Platform Milestones
+**Subject:** REALM CRM — Last 18 Hours: Major Platform Milestones
 
 ---
 
 Team,
 
-Here is a full summary of everything shipped on Apex CRM in the last 18 hours. This has been one of the most productive sessions to date. The platform has moved from a functional CRM to a fully branded, role-governed, payment-enabled SaaS product.
+Here is a full summary of everything shipped on REALM CRM in the last 18 hours. This has been one of the most productive sessions to date. The platform has moved from a functional CRM to a fully branded, role-governed, payment-enabled SaaS product.
 
 ---
 
@@ -25,8 +25,8 @@ The generic "user" and "manager" roles have been replaced with a precise six-tie
 | Role | Reports To | Primary Function |
 |------|-----------|-----------------|
 | Developer | — | Platform infrastructure |
-| Apex Owner | Developer | Business oversight, company onboarding |
-| Company Admin | Apex Owner | Full company management |
+| REALM Owner | Developer | Business oversight, company onboarding |
+| Company Admin | REALM Owner | Full company management |
 | Sales Manager | Company Admin | Team oversight, Account Managers |
 | Office Manager | Company Admin | Operations oversight, Coordinators |
 | Account Manager | Sales Manager | Individual selling |
@@ -38,7 +38,7 @@ All existing database records have been migrated to the new role names. All back
 
 ## Company Branding
 
-Every company using Apex CRM now has a fully branded experience. The sidebar header and top navigation bar display the company's logo and name on every page. Company Admins can upload a logo via drag-and-drop, or click **AI Generate** to have the system create a professional logo from the company name automatically. Logos are stored in S3 and served via CDN with no performance impact.
+Every company using REALM CRM now has a fully branded experience. The sidebar header and top navigation bar display the company's logo and name on every page. Company Admins can upload a logo via drag-and-drop, or click **AI Generate** to have the system create a professional logo from the company name automatically. Logos are stored in S3 and served via CDN with no performance impact.
 
 ---
 
@@ -56,7 +56,7 @@ Full Stripe subscription billing is now live end-to-end:
 
 ## CRM Bible — Role-Gated Knowledge Base
 
-The CRM Bible (a comprehensive operator's guide covering 60+ features) is now role-gated. Each user sees only the sections relevant to their access level — Account Managers see CRM Core and Operations; Sales Managers add Marketing, Automation, Analytics, and AI Tools; Company Admins see Settings and Billing History; Apex Owners and Developers see everything.
+The CRM Bible (a comprehensive operator's guide covering 60+ features) is now role-gated. Each user sees only the sections relevant to their access level — Account Managers see CRM Core and Operations; Sales Managers add Marketing, Automation, Analytics, and AI Tools; Company Admins see Settings and Billing History; REALM Owners and Developers see everything.
 
 A **Share system** was added so any user with access to a section can invite a colleague to view it regardless of role — for cross-functional projects. Shares can be **View Only** or **Collaborate**, and are revocable at any time. This enables knowledge sharing without permanently changing anyone's role.
 
@@ -125,5 +125,5 @@ The platform is checkpoint-saved and ready to publish. The next priorities are t
 
 ---
 
-*Apex CRM Development Team*
+*REALM CRM Development Team*
 *March 17, 2026*

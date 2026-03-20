@@ -81,7 +81,7 @@ function AIDemo({ command, response, delay = 0 }: { command: string; response: s
         <div className="h-3 w-3 rounded-full bg-red-400" />
         <div className="h-3 w-3 rounded-full bg-yellow-400" />
         <div className="h-3 w-3 rounded-full bg-green-400" />
-        <span className="text-[10px] text-gray-500 ml-2 font-mono">Apex AI Assistant</span>
+        <span className="text-[10px] text-gray-500 ml-2 font-mono">REALM AI Assistant</span>
       </div>
       <div className="space-y-3">
         <div className="flex items-start gap-2">
@@ -150,7 +150,7 @@ export default function Commercial() {
             <span className="text-xs font-semibold text-white/90 tracking-wide uppercase">The Future of Freight CRM</span>
           </div>
           <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1] mb-6">
-            Meet <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-amber-100">Apex CRM</span>
+            Meet <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-amber-100">REALM CRM</span>
           </h1>
           <p className="text-xl md:text-2xl text-white/85 font-light max-w-2xl mx-auto leading-relaxed mb-4">
             The most powerful freight broker CRM ever built.
@@ -212,7 +212,7 @@ export default function Commercial() {
               Just Tell It What You Want.
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              The Apex AI Assistant understands natural language and executes CRM actions instantly. 
+              The REALM AI Assistant understands natural language and executes CRM actions instantly. 
               No menus. No forms. No friction. Just results.
             </p>
           </div>
@@ -264,7 +264,7 @@ export default function Commercial() {
               One Platform. Infinite Power.
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              From first contact to closed deal to delivered load — Apex CRM handles the entire lifecycle.
+              From first contact to closed deal to delivered load — REALM CRM handles the entire lifecycle.
             </p>
           </div>
 
@@ -293,7 +293,7 @@ export default function Commercial() {
       <section className="bg-gradient-to-br from-amber-50 to-orange-50 py-20">
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-12">
-            <Badge text="WHY APEX" />
+            <Badge text="WHY REALM" />
             <h2 className="text-3xl md:text-4xl font-black text-foreground mt-4 mb-3">
               Built Different. Built Better.
             </h2>
@@ -354,14 +354,14 @@ export default function Commercial() {
           <blockquote className="text-2xl md:text-3xl font-light leading-relaxed text-white/90 italic mb-6">
             "Imagine a CRM that knows your business as well as you do. That anticipates your next move. 
             That handles the busywork while you focus on relationships. That's not the future — 
-            that's Apex CRM, right now."
+            that's REALM CRM, right now."
           </blockquote>
           <div className="flex items-center justify-center gap-3">
             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
               <Award className="h-5 w-5 text-white" />
             </div>
             <div className="text-left">
-              <p className="text-sm font-semibold text-white">The Apex Vision</p>
+              <p className="text-sm font-semibold text-white">The REALM Vision</p>
               <p className="text-xs text-gray-400">Where AI Meets Human Ambition</p>
             </div>
           </div>
@@ -436,7 +436,7 @@ export default function Commercial() {
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
               <Sparkles className="h-4 w-4 text-white" />
             </div>
-            <span className="text-lg font-bold">Apex CRM</span>
+            <span className="text-lg font-bold">REALM CRM</span>
           </div>
           <p className="text-xs text-gray-500">
             Built with AI. Designed for humans. Engineered for freight.

@@ -13,7 +13,7 @@ const CHECKLIST_STEPS = [
   { key: "import_contacts", title: "Import your contacts", description: "Migrate from your old CRM or upload a CSV", actionUrl: "/migration" },
   { key: "connect_email", title: "Connect your email", description: "Sync Gmail or Outlook to log conversations", actionUrl: "/email-sync" },
   { key: "setup_pipeline", title: "Set up your pipeline", description: "Customize your deal stages", actionUrl: "/deals" },
-  { key: "invite_team", title: "Invite your team", description: "Add your colleagues to Apex CRM", actionUrl: "/settings" },
+  { key: "invite_team", title: "Invite your team", description: "Add your colleagues to REALM CRM", actionUrl: "/settings" },
   { key: "create_sequence", title: "Create your first sequence", description: "Set up an automated email sequence", actionUrl: "/workflows" },
   { key: "connect_calendar", title: "Connect your calendar", description: "Sync meetings with Google or Outlook", actionUrl: "/calendar-sync" },
   { key: "setup_dialer", title: "Set up click-to-call", description: "Enable the built-in dialer", actionUrl: "/voice-agent" },
@@ -73,7 +73,7 @@ export default function OnboardingConcierge() {
       <div className="p-6 max-w-6xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Onboarding Concierge</h1>
-          <p className="text-muted-foreground mt-1">Your personal guide to getting the most out of Apex CRM</p>
+          <p className="text-muted-foreground mt-1">Your personal guide to getting the most out of REALM CRM</p>
         </div>
 
         {/* Progress */}
@@ -134,7 +134,7 @@ export default function OnboardingConcierge() {
               <CardHeader className="pb-2 border-b">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
-                  Ask anything about Apex CRM
+                  Ask anything about REALM CRM
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-1 overflow-y-auto p-4 space-y-3">

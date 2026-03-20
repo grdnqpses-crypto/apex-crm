@@ -88,7 +88,7 @@ function makeUser(overrides: Partial<any> = {}): any {
   return {
     id: 1,
     openId: "test-open-id",
-    email: "test@apex.com",
+    email: "test@realm.com",
     name: "Test User",
     loginMethod: "manus",
     role: "admin",
@@ -300,8 +300,8 @@ describe("systemHealth.getLatest", () => {
     expect(result).toBeDefined();
   });
 
-  it("returns health data for apex_owner users", async () => {
-    const caller = appRouter.createCaller(makeCtx({ systemRole: "apex_owner" }));
+  it("returns health data for realm_owner users", async () => {
+    const caller = appRouter.createCaller(makeCtx({ systemRole: "realm_owner" }));
     const result = await caller.systemHealth.getLatest();
     expect(result).toBeDefined();
   });

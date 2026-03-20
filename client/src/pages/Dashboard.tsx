@@ -549,7 +549,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard title="Active Loads" value={0} icon={Truck} gradient="bg-gradient-to-r from-blue-500 to-blue-400" iconBg="bg-blue-50 text-blue-600" href="/loads" />
               <StatCard title="Marketplace" value={0} icon={Package} subtitle="Posted loads" gradient="bg-gradient-to-r from-emerald-500 to-emerald-400" iconBg="bg-emerald-50 text-emerald-600" href="/freight-marketplace" />
-              <StatCard title="Autopilot" value="Active" icon={Brain} gradient="bg-gradient-to-r from-purple-500 to-purple-400" iconBg="bg-purple-50 text-purple-600" href="/apex-autopilot" />
+              <StatCard title="Autopilot" value="Active" icon={Brain} gradient="bg-gradient-to-r from-purple-500 to-purple-400" iconBg="bg-purple-50 text-purple-600" href="/realm-autopilot" />
               <StatCard title="Voice Agent" value={0} icon={Phone} subtitle="Campaigns" gradient="bg-gradient-to-r from-purple-500 to-purple-400" iconBg="bg-purple-50 text-purple-600" href="/voice-agent" />
             </div>
           </div>
@@ -588,7 +588,7 @@ export default function Dashboard() {
               { module: "Email Pipeline", status: "active", desc: "Campaigns, Templates, SMTP, Compliance" },
               { module: "Paradigm Engine", status: "active", desc: "Prospects, Signals, Sequences, Battle Cards" },
               { module: "Freight Marketplace", status: "active", desc: "Load Posting, Carrier Match, Tracking, Payment" },
-              { module: "Apex Autopilot", status: "active", desc: "Consolidation, Lane Prediction, Optimization" },
+              { module: "REALM Autopilot", status: "active", desc: "Consolidation, Lane Prediction, Optimization" },
             ].map((item) => (
               <div key={item.module} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-accent/30 transition-colors">
                 <div className="h-2 w-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
@@ -673,7 +673,7 @@ export default function Dashboard() {
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement('a');
                       a.href = url;
-                      a.download = `${company?.name?.replace(/\s+/g, '-').toLowerCase() || 'logo'}-apex.png`;
+                      a.download = `${company?.name?.replace(/\s+/g, '-').toLowerCase() || 'logo'}-realm.png`;
                       document.body.appendChild(a);
                       a.click();
                       document.body.removeChild(a);

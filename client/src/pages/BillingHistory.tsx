@@ -36,7 +36,7 @@ export default function BillingHistory() {
     retry: false,
   });
 
-  const allowedRoles = ["company_admin", "apex_owner", "developer"];
+  const allowedRoles = ["company_admin", "realm_owner", "developer"];
   if (user && !allowedRoles.includes(user.systemRole || user.role)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
@@ -116,7 +116,7 @@ export default function BillingHistory() {
             {sub.cancelAtPeriodEnd && (
               <div className="mt-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                Your subscription is set to cancel at the end of the billing period. Contact your Apex Owner to reactivate.
+                Your subscription is set to cancel at the end of the billing period. Contact your REALM Owner to reactivate.
               </div>
             )}
           </CardContent>
@@ -128,7 +128,7 @@ export default function BillingHistory() {
             <div>
               <p className="font-medium text-stone-800">No active subscription found</p>
               <p className="text-sm text-stone-500 mt-0.5">
-                Subscribe to a plan to unlock all Apex CRM features.{" "}
+                Subscribe to a plan to unlock all REALM CRM features.{" "}
                 <button onClick={() => navigate("/billing")} className="text-amber-600 hover:underline font-medium">
                   View Plans →
                 </button>
@@ -223,7 +223,7 @@ export default function BillingHistory() {
       </Card>
 
       <p className="text-xs text-stone-400 text-center pb-4">
-        Billing is managed securely by Stripe. Apex CRM never stores your payment card details.
+        Billing is managed securely by Stripe. REALM CRM never stores your payment card details.
       </p>
     </div>
   );

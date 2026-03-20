@@ -28,7 +28,7 @@ export default function MigrationEngine() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold">One-Touch Migration</h1><p className="text-muted-foreground">Switch to Apex CRM in 60 seconds — bring everything with you from any platform</p></div>
+      <div><h1 className="text-2xl font-bold">One-Touch Migration</h1><p className="text-muted-foreground">Switch to REALM CRM in 60 seconds — bring everything with you from any platform</p></div>
 
       <div className="grid grid-cols-3 gap-4">
         {PLATFORMS.map(p => (

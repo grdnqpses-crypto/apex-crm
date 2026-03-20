@@ -588,7 +588,7 @@ function UsersTeamsPanel() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">User Hierarchy</CardTitle>
-          <CardDescription>Apex CRM uses a multi-level hierarchy for access control.</CardDescription>
+          <CardDescription>REALM CRM uses a multi-level hierarchy for access control.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -1139,7 +1139,7 @@ function ImportExportPanel() {
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold">Import & Export</h3>
-        <p className="text-sm text-muted-foreground">Import data from files or other CRMs, or export your Apex CRM data.</p>
+        <p className="text-sm text-muted-foreground">Import data from files or other CRMs, or export your REALM CRM data.</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="hover:border-primary/50 transition-colors cursor-pointer" onClick={() => toast.info("Navigate to the HubSpot Import tool in Developer section")}>

@@ -1,9 +1,9 @@
-# Apex CRM Bible
+# REALM CRM Bible
 ### The Complete Operator's Guide — From First Contact to Closed Deal
 
 ---
 
-> This guide is your single source of truth for every feature inside Apex CRM. For each feature you will find: **What it is**, **Why it exists**, **How to use it step by step**, **How it connects to automation**, and **What sales outcome it drives**. Read it once. Refer to it always.
+> This guide is your single source of truth for every feature inside REALM CRM. For each feature you will find: **What it is**, **Why it exists**, **How to use it step by step**, **How it connects to automation**, and **What sales outcome it drives**. Read it once. Refer to it always.
 
 ---
 
@@ -53,12 +53,12 @@ A CRM is only as good as the people using it correctly. The Team module ensures 
 
 ### How to Use It — Team Setup
 
-The role hierarchy in Apex CRM is as follows:
+The role hierarchy in REALM CRM is as follows:
 
 | Role | Access Level | Can Create |
 |------|-------------|------------|
 | Developer | Full system access | Everything |
-| Apex Owner | Platform-wide | Company Admins |
+| REALM Owner | Platform-wide | Company Admins |
 | Company Admin | Full company access | Sales Managers, Office Managers |
 | Sales Manager | Team-level | Account Managers |
 | Office Manager | Operations-level | Coordinators |
@@ -220,7 +220,7 @@ A library of proven templates means your team's best ideas scale to every rep. T
 The Deliverability module is your email health command center. It monitors your sending reputation, checks authentication records (SPF, DKIM, DMARC), tracks bounce and complaint rates, and provides AI-powered pre-send spam scoring.
 
 #### Why It Exists
-An email that lands in spam is worth zero. Deliverability is the invisible foundation of every email campaign. Most CRMs ignore it. Apex CRM treats it as a first-class feature because a 98.7% inbox placement rate is a competitive weapon.
+An email that lands in spam is worth zero. Deliverability is the invisible foundation of every email campaign. Most CRMs ignore it. REALM CRM treats it as a first-class feature because a 98.7% inbox placement rate is a competitive weapon.
 
 #### How to Use It
 The main Deliverability dashboard shows four health indicators: **Authentication Status** (green = SPF + DKIM + DMARC all passing), **Bounce Rate** (target: under 2%), **Complaint Rate** (target: under 0.1%), and **Blacklist Status** (monitored across 50+ lists). Click any indicator for the detailed view.
@@ -316,7 +316,7 @@ Higher open rates because recipients recognize and trust your primary domain. Hi
 ### 5.1 Workflows
 
 #### What It Is
-Workflows are the automation engine of Apex CRM. A Workflow is a set of rules: **When [trigger event] happens, and [conditions] are met, then [actions] execute**. Workflows run 24/7 without human intervention.
+Workflows are the automation engine of REALM CRM. A Workflow is a set of rules: **When [trigger event] happens, and [conditions] are met, then [actions] execute**. Workflows run 24/7 without human intervention.
 
 #### Why It Exists
 The best sales teams in the world are not the ones who work the hardest — they are the ones who have automated everything that can be automated, freeing human attention for the conversations that actually require it. Workflows are how you build a sales machine that runs while you sleep.
@@ -327,7 +327,7 @@ Navigate to **Workflows → New Workflow**. Step 1: Name the workflow and set it
 **Example Workflow — New Lead Nurture:**
 1. Trigger: Contact created with Lifecycle Stage = Lead
 2. Wait: 1 hour
-3. Action: Send email — "Welcome to Apex CRM / Introduction email"
+3. Action: Send email — "Welcome to REALM CRM / Introduction email"
 4. Wait: 3 days
 5. Condition: Did they open the email?
    - Yes → Send follow-up email with case study
@@ -365,7 +365,7 @@ Segmented campaigns consistently outperform broadcast campaigns by 3–5x on ope
 
 ## 6. Paradigm Engine™
 
-The Paradigm Engine™ is Apex CRM's proprietary AI prospecting system. It operates as five interconnected layers that work together to discover, verify, profile, engage, and convert prospects — largely without human intervention.
+The Paradigm Engine™ is REALM CRM's proprietary AI prospecting system. It operates as five interconnected layers that work together to discover, verify, profile, engage, and convert prospects — largely without human intervention.
 
 ### 6.1 Pulse Dashboard
 
@@ -413,7 +413,7 @@ Timing is everything in sales. A prospect who just got promoted to VP of Logisti
 Navigate to **Paradigm → Signals** to see the live signal feed. Each signal shows: the company, the event type, the date, the confidence score, and the recommended action. Click any signal to see the full context and the prospect it is associated with. Use the filters to focus on specific signal types (Job Changes, Funding, Social Complaints, News).
 
 #### Automation Connection
-When a high-confidence signal is detected for a prospect already in a Ghost Sequence, the sequence automatically adapts — inserting a signal-specific email: "Congratulations on your new role — here is how Apex CRM can help you hit your Q1 targets."
+When a high-confidence signal is detected for a prospect already in a Ghost Sequence, the sequence automatically adapts — inserting a signal-specific email: "Congratulations on your new role — here is how REALM CRM can help you hit your Q1 targets."
 
 #### Sales Outcome
 Signal-triggered outreach converts at 3–5x the rate of cold outreach because you are reaching the right person at the right time with the right message. Signals are the intelligence layer that makes this possible at scale.
@@ -480,7 +480,7 @@ Teams that prioritize by Quantum Score consistently outperform teams that work l
 ### 7.1 Compliance Center
 
 #### What It Is
-The Compliance Center is your legal protection layer. It enforces CAN-SPAM, GDPR, and CCPA requirements on every email sent through Apex CRM, blocking non-compliant sends before they happen and maintaining a full audit log of every action.
+The Compliance Center is your legal protection layer. It enforces CAN-SPAM, GDPR, and CCPA requirements on every email sent through REALM CRM, blocking non-compliant sends before they happen and maintaining a full audit log of every action.
 
 #### Why It Exists
 A single CAN-SPAM violation can result in a fine of up to $51,744 per email. GDPR violations can reach €20 million or 4% of global annual revenue. Compliance is not optional — it is existential. The Compliance Center makes it automatic.
@@ -599,7 +599,7 @@ Navigate to **Voice Agent** and connect your phone system. When a call begins, t
 ### 9.2 DocScan
 
 #### What It Is
-DocScan uses AI to extract structured data from uploaded documents — rate confirmations, bills of lading, carrier packets, insurance certificates — and automatically populate the relevant fields in Apex CRM.
+DocScan uses AI to extract structured data from uploaded documents — rate confirmations, bills of lading, carrier packets, insurance certificates — and automatically populate the relevant fields in REALM CRM.
 
 #### How to Use It
 Navigate to **DocScan → Upload Document**. Select the document type and upload the file. The AI extracts all relevant data fields and presents them for review. Confirm the extraction and the data is written to the appropriate records automatically.
@@ -721,16 +721,16 @@ Navigate to **Settings** to configure all account-level preferences: Company Pro
 Navigate to **Paradigm → Integrations** to connect external services: Apollo.io (lead sourcing), NeverBounce (email verification), SendGrid (additional sending capacity), PhantomBuster (LinkedIn automation), and Google AI Studio (enhanced AI features). Each integration has a connection test button to verify the API key is working.
 
 ### HubSpot Import
-Navigate to **HubSpot Import** to migrate your existing HubSpot data into Apex CRM. The import engine maps HubSpot fields to Apex CRM fields automatically and imports contacts, companies, deals, and activity history in a single operation.
+Navigate to **HubSpot Import** to migrate your existing HubSpot data into REALM CRM. The import engine maps HubSpot fields to REALM CRM fields automatically and imports contacts, companies, deals, and activity history in a single operation.
 
 ### Migration Engine
 Navigate to **Migration** for imports from Salesforce, Pipedrive, Close, and other CRMs. The Migration Engine handles field mapping, deduplication, and data validation automatically.
 
 ### API Keys & Webhooks
-Navigate to **API Keys** (Developer section) to generate API keys for connecting Apex CRM to external systems. Navigate to **Webhooks** to configure outbound webhooks that fire when specific events occur — deal closed, contact created, campaign sent — enabling real-time integration with your TMS, ERP, or custom systems.
+Navigate to **API Keys** (Developer section) to generate API keys for connecting REALM CRM to external systems. Navigate to **Webhooks** to configure outbound webhooks that fire when specific events occur — deal closed, contact created, campaign sent — enabling real-time integration with your TMS, ERP, or custom systems.
 
 ### White Label
-Navigate to **White Label** to configure custom branding for the customer-facing portal: custom domain, custom colors, custom logo, and custom email footer. This makes the portal appear as your own product, not Apex CRM.
+Navigate to **White Label** to configure custom branding for the customer-facing portal: custom domain, custom colors, custom logo, and custom email footer. This makes the portal appear as your own product, not REALM CRM.
 
 ### Company Branding
 Navigate to **Settings → Company** to upload your company logo and manage your company name as it appears throughout the CRM.
@@ -752,7 +752,7 @@ Navigate to **Settings → Company** to upload your company logo and manage your
 
 **Access matrix:**
 
-| Section | Acct Mgr | Coordinator | Sales Mgr | Office Mgr | Company Admin | Apex Owner | Developer |
+| Section | Acct Mgr | Coordinator | Sales Mgr | Office Mgr | Company Admin | REALM Owner | Developer |
 |---------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | Dashboard | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | CRM Core | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -791,9 +791,9 @@ Navigate to **Settings → Company** to upload your company logo and manage your
 **Sales outcome:** Knowledge sharing accelerates team performance. When a Sales Manager can share a specific workflow guide with an Account Manager preparing for a complex deal, that rep closes faster.
 
 ### Billing & Plans
-Navigate to **Billing** to manage your subscription, upgrade or downgrade your plan, and access the Stripe billing portal for payment method management. This section is visible to **Company Admins, Apex Owners, and Developers** only.
+Navigate to **Billing** to manage your subscription, upgrade or downgrade your plan, and access the Stripe billing portal for payment method management. This section is visible to **Company Admins, REALM Owners, and Developers** only.
 
-**What it is:** The Billing page displays your current subscription tier, your next billing date, and a direct link to the Stripe portal for payment method management. Apex CRM offers five subscription tiers:
+**What it is:** The Billing page displays your current subscription tier, your next billing date, and a direct link to the Stripe portal for payment method management. REALM CRM offers five subscription tiers:
 
 | Tier | Monthly Price | Users Included | Add-On Users | Max Users |
 |------|--------------|----------------|--------------|----------|
@@ -816,7 +816,7 @@ All tiers allow additional user seats at **$30/user/month** up to the next tier'
 **Sales outcome:** Uninterrupted service means uninterrupted selling. Keeping billing current ensures your team never loses access to the tools they depend on to close deals.
 
 ### Billing History
-Navigate to **Billing History** (visible to Company Admin, Apex Owner, Developer) to view a complete record of all invoices issued to your account.
+Navigate to **Billing History** (visible to Company Admin, REALM Owner, Developer) to view a complete record of all invoices issued to your account.
 
 **What it is:** A read-only page showing every invoice: date, amount, status (Paid / Open / Void), and a direct PDF download link for each invoice.
 
@@ -877,7 +877,7 @@ Navigate to **Resources → Email Infrastructure** to configure your company's e
 
 ## 12. The Sales Machine — How Everything Connects
 
-The true power of Apex CRM is not any single feature — it is the way every feature connects into a single, self-reinforcing sales machine. Here is how a complete sales motion flows through the system from first signal to closed deal:
+The true power of REALM CRM is not any single feature — it is the way every feature connects into a single, self-reinforcing sales machine. Here is how a complete sales motion flows through the system from first signal to closed deal:
 
 **Step 1 — Discovery (Paradigm Engine / Sentinel Layer)**
 The AI monitors thousands of companies for trigger signals: a VP of Logistics changes jobs, a freight company raises funding, a shipper complains about their current broker on LinkedIn. A prospect record is created automatically.
@@ -911,8 +911,8 @@ A customer onboarding workflow fires. The customer is added to the "Active Custo
 
 ---
 
-> **The bottom line:** Every feature in Apex CRM exists to answer one question — *what is the next best action to take, for this specific person, right now?* The system answers that question automatically, at scale, for every prospect and customer in your database, simultaneously. Your job is to execute the actions the system surfaces. The machine does the thinking. You do the talking. Together, you close more deals.
+> **The bottom line:** Every feature in REALM CRM exists to answer one question — *what is the next best action to take, for this specific person, right now?* The system answers that question automatically, at scale, for every prospect and customer in your database, simultaneously. Your job is to execute the actions the system surfaces. The machine does the thinking. You do the talking. Together, you close more deals.
 
 ---
 
-*Apex CRM Bible — Version 1.0 | Updated March 2026*
+*REALM CRM Bible — Version 1.0 | Updated March 2026*

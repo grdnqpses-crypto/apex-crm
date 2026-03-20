@@ -19,83 +19,83 @@ import {
   MapPin, X, Loader2, Info
 } from "lucide-react";
 
-// ─── HubSpot to Apex CRM Property Mapping ───
+// ─── HubSpot to REALM CRM Property Mapping ───
 const HUBSPOT_CONTACT_MAPPINGS: PropertyMapping[] = [
   // Core Identity
-  { hubspot: "firstname", apex: "firstName", label: "First Name", group: "Contact Information", auto: true },
-  { hubspot: "lastname", apex: "lastName", label: "Last Name", group: "Contact Information", auto: true },
-  { hubspot: "email", apex: "email", label: "Email", group: "Contact Information", auto: true },
-  { hubspot: "jobtitle", apex: "jobTitle", label: "Job Title", group: "Contact Information", auto: true },
-  { hubspot: "company", apex: "companyName", label: "Company (text)", group: "Contact Information", auto: true },
+  { hubspot: "firstname", realm: "firstName", label: "First Name", group: "Contact Information", auto: true },
+  { hubspot: "lastname", realm: "lastName", label: "Last Name", group: "Contact Information", auto: true },
+  { hubspot: "email", realm: "email", label: "Email", group: "Contact Information", auto: true },
+  { hubspot: "jobtitle", realm: "jobTitle", label: "Job Title", group: "Contact Information", auto: true },
+  { hubspot: "company", realm: "companyName", label: "Company (text)", group: "Contact Information", auto: true },
   // Communication
-  { hubspot: "phone", apex: "companyPhone", label: "Phone", group: "Communication", auto: true },
-  { hubspot: "mobilephone", apex: "mobilePhone", label: "Mobile Phone", group: "Communication", auto: true },
-  { hubspot: "fax", apex: "faxNumber", label: "Fax", group: "Communication", auto: true },
-  { hubspot: "hs_linkedinurl", apex: "linkedinUrl", label: "LinkedIn URL", group: "Communication", auto: true },
-  { hubspot: "website", apex: "websiteUrl", label: "Website", group: "Communication", auto: true },
+  { hubspot: "phone", realm: "companyPhone", label: "Phone", group: "Communication", auto: true },
+  { hubspot: "mobilephone", realm: "mobilePhone", label: "Mobile Phone", group: "Communication", auto: true },
+  { hubspot: "fax", realm: "faxNumber", label: "Fax", group: "Communication", auto: true },
+  { hubspot: "hs_linkedinurl", realm: "linkedinUrl", label: "LinkedIn URL", group: "Communication", auto: true },
+  { hubspot: "website", realm: "websiteUrl", label: "Website", group: "Communication", auto: true },
   // Address
-  { hubspot: "address", apex: "streetAddress", label: "Street Address", group: "Address", auto: true },
-  { hubspot: "city", apex: "city", label: "City", group: "Address", auto: true },
-  { hubspot: "state", apex: "stateRegion", label: "State/Region", group: "Address", auto: true },
-  { hubspot: "zip", apex: "postalCode", label: "Postal Code", group: "Address", auto: true },
-  { hubspot: "country", apex: "country", label: "Country", group: "Address", auto: true },
-  { hubspot: "hs_timezone", apex: "timezone", label: "Timezone", group: "Address", auto: true },
+  { hubspot: "address", realm: "streetAddress", label: "Street Address", group: "Address", auto: true },
+  { hubspot: "city", realm: "city", label: "City", group: "Address", auto: true },
+  { hubspot: "state", realm: "stateRegion", label: "State/Region", group: "Address", auto: true },
+  { hubspot: "zip", realm: "postalCode", label: "Postal Code", group: "Address", auto: true },
+  { hubspot: "country", realm: "country", label: "Country", group: "Address", auto: true },
+  { hubspot: "hs_timezone", realm: "timezone", label: "Timezone", group: "Address", auto: true },
   // Lifecycle
-  { hubspot: "lifecyclestage", apex: "lifecycleStage", label: "Lifecycle Stage", group: "Lifecycle", auto: true },
-  { hubspot: "hs_lead_status", apex: "leadStatus", label: "Lead Status", group: "Lifecycle", auto: true },
-  { hubspot: "hs_analytics_source", apex: "leadSource", label: "Lead Source", group: "Lifecycle", auto: true },
-  { hubspot: "hubspotscore", apex: "leadScore", label: "Lead Score", group: "Lifecycle", auto: true },
+  { hubspot: "lifecyclestage", realm: "lifecycleStage", label: "Lifecycle Stage", group: "Lifecycle", auto: true },
+  { hubspot: "hs_lead_status", realm: "leadStatus", label: "Lead Status", group: "Lifecycle", auto: true },
+  { hubspot: "hs_analytics_source", realm: "leadSource", label: "Lead Source", group: "Lifecycle", auto: true },
+  { hubspot: "hubspotscore", realm: "leadScore", label: "Lead Score", group: "Lifecycle", auto: true },
   // Marketing Attribution
-  { hubspot: "hs_analytics_source", apex: "originalSource", label: "Original Source", group: "Marketing", auto: true },
-  { hubspot: "hs_analytics_source_data_1", apex: "originalSourceDrill1", label: "Source Drill-Down 1", group: "Marketing", auto: true },
-  { hubspot: "hs_analytics_source_data_2", apex: "originalSourceDrill2", label: "Source Drill-Down 2", group: "Marketing", auto: true },
+  { hubspot: "hs_analytics_source", realm: "originalSource", label: "Original Source", group: "Marketing", auto: true },
+  { hubspot: "hs_analytics_source_data_1", realm: "originalSourceDrill1", label: "Source Drill-Down 1", group: "Marketing", auto: true },
+  { hubspot: "hs_analytics_source_data_2", realm: "originalSourceDrill2", label: "Source Drill-Down 2", group: "Marketing", auto: true },
   // Social
-  { hubspot: "twitterhandle", apex: "twitterHandle", label: "Twitter Handle", group: "Social Media", auto: true },
-  { hubspot: "facebookprofileurl", apex: "facebookProfile", label: "Facebook Profile", group: "Social Media", auto: true },
+  { hubspot: "twitterhandle", realm: "twitterHandle", label: "Twitter Handle", group: "Social Media", auto: true },
+  { hubspot: "facebookprofileurl", realm: "facebookProfile", label: "Facebook Profile", group: "Social Media", auto: true },
   // Custom Freight Fields
-  { hubspot: "freight_details", apex: "freightDetails", label: "Freight Details", group: "Freight/Logistics", auto: true },
-  { hubspot: "shipment_length__inches_", apex: "shipmentLength", label: "Shipment Length (inches)", group: "Freight/Logistics", auto: true },
-  { hubspot: "shipment_width__inches_", apex: "shipmentWidth", label: "Shipment Width (inches)", group: "Freight/Logistics", auto: true },
-  { hubspot: "shipment_height__inches_", apex: "shipmentHeight", label: "Shipment Height (inches)", group: "Freight/Logistics", auto: true },
-  { hubspot: "shipment_weight__pounds_", apex: "shipmentWeight", label: "Shipment Weight (pounds)", group: "Freight/Logistics", auto: true },
-  { hubspot: "destination_zip_code", apex: "destinationZipCode", label: "Destination Zip Code", group: "Freight/Logistics", auto: true },
-  { hubspot: "shipping_origination", apex: "shippingOrigination", label: "Shipping Origination", group: "Freight/Logistics", auto: true },
-  { hubspot: "destination", apex: "destination", label: "Destination", group: "Freight/Logistics", auto: true },
-  { hubspot: "additional_information", apex: "additionalInformation", label: "Additional Information", group: "Freight/Logistics", auto: true },
-  { hubspot: "freight_volume", apex: "freightVolume", label: "Freight Volume", group: "Freight/Logistics", auto: true },
-  { hubspot: "customer_type", apex: "customerType", label: "Customer Type", group: "Freight/Logistics", auto: true },
-  { hubspot: "decision_maker_role", apex: "decisionMakerRole", label: "Decision Maker Role", group: "Freight/Logistics", auto: true },
-  { hubspot: "payment_responsibility", apex: "paymentResponsibility", label: "Payment Responsibility", group: "Freight/Logistics", auto: true },
-  { hubspot: "preferred_contact_method", apex: "preferredContactMethod", label: "Preferred Contact Method", group: "Freight/Logistics", auto: true },
+  { hubspot: "freight_details", realm: "freightDetails", label: "Freight Details", group: "Freight/Logistics", auto: true },
+  { hubspot: "shipment_length__inches_", realm: "shipmentLength", label: "Shipment Length (inches)", group: "Freight/Logistics", auto: true },
+  { hubspot: "shipment_width__inches_", realm: "shipmentWidth", label: "Shipment Width (inches)", group: "Freight/Logistics", auto: true },
+  { hubspot: "shipment_height__inches_", realm: "shipmentHeight", label: "Shipment Height (inches)", group: "Freight/Logistics", auto: true },
+  { hubspot: "shipment_weight__pounds_", realm: "shipmentWeight", label: "Shipment Weight (pounds)", group: "Freight/Logistics", auto: true },
+  { hubspot: "destination_zip_code", realm: "destinationZipCode", label: "Destination Zip Code", group: "Freight/Logistics", auto: true },
+  { hubspot: "shipping_origination", realm: "shippingOrigination", label: "Shipping Origination", group: "Freight/Logistics", auto: true },
+  { hubspot: "destination", realm: "destination", label: "Destination", group: "Freight/Logistics", auto: true },
+  { hubspot: "additional_information", realm: "additionalInformation", label: "Additional Information", group: "Freight/Logistics", auto: true },
+  { hubspot: "freight_volume", realm: "freightVolume", label: "Freight Volume", group: "Freight/Logistics", auto: true },
+  { hubspot: "customer_type", realm: "customerType", label: "Customer Type", group: "Freight/Logistics", auto: true },
+  { hubspot: "decision_maker_role", realm: "decisionMakerRole", label: "Decision Maker Role", group: "Freight/Logistics", auto: true },
+  { hubspot: "payment_responsibility", realm: "paymentResponsibility", label: "Payment Responsibility", group: "Freight/Logistics", auto: true },
+  { hubspot: "preferred_contact_method", realm: "preferredContactMethod", label: "Preferred Contact Method", group: "Freight/Logistics", auto: true },
 ];
 
 const HUBSPOT_COMPANY_MAPPINGS: PropertyMapping[] = [
-  { hubspot: "name", apex: "name", label: "Company Name", group: "Company Info", auto: true },
-  { hubspot: "domain", apex: "domain", label: "Domain", group: "Company Info", auto: true },
-  { hubspot: "phone", apex: "phone", label: "Phone", group: "Company Info", auto: true },
-  { hubspot: "industry", apex: "industry", label: "Industry", group: "Company Info", auto: true },
-  { hubspot: "numberofemployees", apex: "numberOfEmployees", label: "Employees", group: "Company Info", auto: true },
-  { hubspot: "annualrevenue", apex: "annualRevenue", label: "Annual Revenue", group: "Company Info", auto: true },
-  { hubspot: "description", apex: "description", label: "Description", group: "Company Info", auto: true },
-  { hubspot: "address", apex: "streetAddress", label: "Address", group: "Location", auto: true },
-  { hubspot: "city", apex: "city", label: "City", group: "Location", auto: true },
-  { hubspot: "state", apex: "stateRegion", label: "State", group: "Location", auto: true },
-  { hubspot: "zip", apex: "postalCode", label: "Zip", group: "Location", auto: true },
-  { hubspot: "country", apex: "country", label: "Country", group: "Location", auto: true },
-  { hubspot: "website", apex: "website", label: "Website", group: "Company Info", auto: true },
-  { hubspot: "linkedincompanypage", apex: "linkedinUrl", label: "LinkedIn", group: "Social", auto: true },
-  { hubspot: "twitterhandle", apex: "twitterHandle", label: "Twitter", group: "Social", auto: true },
-  { hubspot: "facebook_company_page", apex: "facebookPage", label: "Facebook", group: "Social", auto: true },
-  { hubspot: "annual_freight_spend", apex: "annualFreightSpend", label: "Annual Freight Spend", group: "Freight", auto: true },
-  { hubspot: "commodity", apex: "commodity", label: "Commodity", group: "Freight", auto: true },
-  { hubspot: "credit_terms", apex: "creditTerms", label: "Credit Terms", group: "Freight", auto: true },
-  { hubspot: "lane_preferences", apex: "lanePreferences", label: "Lane Preferences", group: "Freight", auto: true },
-  { hubspot: "tms_integration_status", apex: "tmsIntegrationStatus", label: "TMS Integration", group: "Freight", auto: true },
+  { hubspot: "name", realm: "name", label: "Company Name", group: "Company Info", auto: true },
+  { hubspot: "domain", realm: "domain", label: "Domain", group: "Company Info", auto: true },
+  { hubspot: "phone", realm: "phone", label: "Phone", group: "Company Info", auto: true },
+  { hubspot: "industry", realm: "industry", label: "Industry", group: "Company Info", auto: true },
+  { hubspot: "numberofemployees", realm: "numberOfEmployees", label: "Employees", group: "Company Info", auto: true },
+  { hubspot: "annualrevenue", realm: "annualRevenue", label: "Annual Revenue", group: "Company Info", auto: true },
+  { hubspot: "description", realm: "description", label: "Description", group: "Company Info", auto: true },
+  { hubspot: "address", realm: "streetAddress", label: "Address", group: "Location", auto: true },
+  { hubspot: "city", realm: "city", label: "City", group: "Location", auto: true },
+  { hubspot: "state", realm: "stateRegion", label: "State", group: "Location", auto: true },
+  { hubspot: "zip", realm: "postalCode", label: "Zip", group: "Location", auto: true },
+  { hubspot: "country", realm: "country", label: "Country", group: "Location", auto: true },
+  { hubspot: "website", realm: "website", label: "Website", group: "Company Info", auto: true },
+  { hubspot: "linkedincompanypage", realm: "linkedinUrl", label: "LinkedIn", group: "Social", auto: true },
+  { hubspot: "twitterhandle", realm: "twitterHandle", label: "Twitter", group: "Social", auto: true },
+  { hubspot: "facebook_company_page", realm: "facebookPage", label: "Facebook", group: "Social", auto: true },
+  { hubspot: "annual_freight_spend", realm: "annualFreightSpend", label: "Annual Freight Spend", group: "Freight", auto: true },
+  { hubspot: "commodity", realm: "commodity", label: "Commodity", group: "Freight", auto: true },
+  { hubspot: "credit_terms", realm: "creditTerms", label: "Credit Terms", group: "Freight", auto: true },
+  { hubspot: "lane_preferences", realm: "lanePreferences", label: "Lane Preferences", group: "Freight", auto: true },
+  { hubspot: "tms_integration_status", realm: "tmsIntegrationStatus", label: "TMS Integration", group: "Freight", auto: true },
 ];
 
 interface PropertyMapping {
   hubspot: string;
-  apex: string;
+  realm: string;
   label: string;
   group: string;
   auto: boolean;
@@ -355,7 +355,7 @@ function MapStep({ files, onMappingConfirmed }: {
                         <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
                         <div className="flex-1 flex items-center gap-2">
                           <span className="text-sm">{m.label}</span>
-                          <span className="font-mono text-xs text-muted-foreground">({m.apex})</span>
+                          <span className="font-mono text-xs text-muted-foreground">({m.realm})</span>
                         </div>
                         {m.matched ? (
                           <Check className="h-4 w-4 text-green-400 shrink-0" />
@@ -428,12 +428,12 @@ function ImportStep({ files, onComplete }: {
             if (!hasData) { fileStat.skipped++; processed++; setProgress(Math.round((processed / totalRecords) * 100)); continue; }
           }
 
-          // Map HubSpot fields to Apex fields
+          // Map HubSpot fields to REALM fields
           const mapped: Record<string, string> = {};
           for (const m of mappings) {
             const value = row[m.hubspot];
             if (value && value.trim()) {
-              mapped[m.apex] = value.trim();
+              mapped[m.realm] = value.trim();
             }
           }
 
@@ -551,7 +551,7 @@ function ImportStep({ files, onComplete }: {
       <Card>
         <CardHeader>
           <CardTitle>Import Settings</CardTitle>
-          <CardDescription>Configure how records are imported into Apex CRM.</CardDescription>
+          <CardDescription>Configure how records are imported into REALM CRM.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
@@ -630,7 +630,7 @@ export default function HubSpotImport() {
     <div className="space-y-6">
       <PageGuide
         title="HubSpot Import"
-        description="Import your HubSpot data into Apex CRM with automatic property mapping and one-click migration."
+        description="Import your HubSpot data into REALM CRM with automatic property mapping and one-click migration."
         sections={[
           { title: "Upload", content: "Upload your HubSpot CSV export files. We support all 18 object types.", icon: "purpose" as const },
           { title: "Map", content: "Review auto-mapped properties including custom freight/logistics fields.", icon: "actions" as const },
@@ -688,7 +688,7 @@ export default function HubSpotImport() {
           <CardContent className="pt-6 text-center py-12">
             <Check className="h-16 w-16 text-green-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold">Import Complete!</h2>
-            <p className="text-muted-foreground mt-2">Your HubSpot data has been successfully imported into Apex CRM.</p>
+            <p className="text-muted-foreground mt-2">Your HubSpot data has been successfully imported into REALM CRM.</p>
             <div className="flex gap-3 justify-center mt-6">
               <Button onClick={() => window.location.href = "/contacts"}>
                 <Users className="h-4 w-4 mr-2" /> View Contacts

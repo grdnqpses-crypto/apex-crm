@@ -139,26 +139,26 @@ const FEATURES = [
     glow: "shadow-cyan-500/20",
     title: "AI Visitor Tracking",
     headline: "Installs itself in 30 seconds. No developer needed.",
-    body: "Paste your URL and Apex detects your platform (WordPress, Shopify, Webflow, Wix, Squarespace, and more) and installs the tracking script automatically via API. Every competitor requires manual copy-paste. Apex does it for you.",
+    body: "Paste your URL and REALM detects your platform (WordPress, Shopify, Webflow, Wix, Squarespace, and more) and installs the tracking script automatically via API. Every competitor requires manual copy-paste. REALM does it for you.",
     stats: [{ label: "Install time", value: "< 30s" }, { label: "Platforms supported", value: "8+" }],
   },
 ];
 
 const COMPARISON = [
-  { feature: "AI Visitor Tracking (Auto-Install)", apex: true, hubspot: false, salesforce: false, close: false },
-  { feature: "AI Prospect Research", apex: true, hubspot: false, salesforce: false, close: false },
-  { feature: "Autonomous Email Sequences", apex: true, hubspot: "Add-on ($500+/mo)", salesforce: "Add-on ($125+/user)", close: "Partial" },
-  { feature: "98%+ Inbox Placement", apex: true, hubspot: false, salesforce: false, close: false },
-  { feature: "260 SMTP Rotation Engine", apex: true, hubspot: false, salesforce: false, close: false },
-  { feature: "Compliance Fortress™ (GDPR/CCPA)", apex: true, hubspot: "Partial", salesforce: "Partial", close: false },
-  { feature: "60-Day Free Trial", apex: true, hubspot: false, salesforce: false, close: false },
-  { feature: "One-Click Migration — FREE", apex: true, hubspot: false, salesforce: false, close: false },
-  { feature: "AI Battle Cards", apex: true, hubspot: false, salesforce: false, close: false },
-  { feature: "AR/AP Module", apex: true, hubspot: false, salesforce: false, close: false },
-  { feature: "Shipping & Receiving Module", apex: true, hubspot: false, salesforce: false, close: false },
-  { feature: "Business Category Intelligence", apex: true, hubspot: false, salesforce: false, close: false },
-  { feature: "White-Labeling", apex: true, hubspot: false, salesforce: "Enterprise only", close: false },
-  { feature: "Price for 10 users/month", apex: "$297", hubspot: "$1,000", salesforce: "$1,750", close: "$1,090" },
+  { feature: "AI Visitor Tracking (Auto-Install)", realm: true, hubspot: false, salesforce: false, close: false },
+  { feature: "AI Prospect Research", realm: true, hubspot: false, salesforce: false, close: false },
+  { feature: "Autonomous Email Sequences", realm: true, hubspot: "Add-on ($500+/mo)", salesforce: "Add-on ($125+/user)", close: "Partial" },
+  { feature: "98%+ Inbox Placement", realm: true, hubspot: false, salesforce: false, close: false },
+  { feature: "260 SMTP Rotation Engine", realm: true, hubspot: false, salesforce: false, close: false },
+  { feature: "Compliance Fortress™ (GDPR/CCPA)", realm: true, hubspot: "Partial", salesforce: "Partial", close: false },
+  { feature: "60-Day Free Trial", realm: true, hubspot: false, salesforce: false, close: false },
+  { feature: "One-Click Migration — FREE", realm: true, hubspot: false, salesforce: false, close: false },
+  { feature: "AI Battle Cards", realm: true, hubspot: false, salesforce: false, close: false },
+  { feature: "AR/AP Module", realm: true, hubspot: false, salesforce: false, close: false },
+  { feature: "Shipping & Receiving Module", realm: true, hubspot: false, salesforce: false, close: false },
+  { feature: "Business Category Intelligence", realm: true, hubspot: false, salesforce: false, close: false },
+  { feature: "White-Labeling", realm: true, hubspot: false, salesforce: "Enterprise only", close: false },
+  { feature: "Price for 10 users/month", realm: "$297", hubspot: "$1,000", salesforce: "$1,750", close: "$1,090" },
 ];
 
 const TESTIMONIALS = [
@@ -212,9 +212,9 @@ const PLANS = [
   {
     id: "fortune_plus",
     name: "Fortune Plus", price: 1497, annualPrice: 1347,
-    desc: "Dedicated infrastructure. Custom AI. Resell Apex as your own.",
+    desc: "Dedicated infrastructure. Custom AI. Resell REALM as your own.",
     savings: "85% less than HubSpot Enterprise",
-    features: ["100 users included (+$30/user/mo)", "Unlimited everything", "200,000 AI credits/month", "Revenue Autopilot™ + Apex Autopilot™", "White-labeling (your brand, FREE setup)", "Dedicated SMTP infrastructure", "SaaS Mode — resell Apex as your product", "99.9% SLA + 24/7 white-glove support"],
+    features: ["100 users included (+$30/user/mo)", "Unlimited everything", "200,000 AI credits/month", "Revenue Autopilot™ + REALM Autopilot™", "White-labeling (your brand, FREE setup)", "Dedicated SMTP infrastructure", "SaaS Mode — resell REALM as your product", "99.9% SLA + 24/7 white-glove support"],
     cta: "Start Free Trial", highlight: false, addOnNote: "Add seats at $30/user/mo",
   },
 ];
@@ -222,7 +222,7 @@ const PLANS = [
 const FAQS = [
   { q: "How does the 60-day free trial work?", a: "You get full access to the entire platform for 60 days. A credit card is required to start — this ensures we can provision your dedicated SMTP infrastructure and AI resources from day one. You won't be charged until day 61, and you can cancel anytime before that." },
   { q: "How long does migration from my current CRM take?", a: "Most customers complete their full migration in under 30 minutes. Our one-touch migration engine connects directly to HubSpot, Salesforce, Pipedrive, and Close via API, automatically maps all your custom fields, and imports contacts, deals, emails, and activity history with zero data loss." },
-  { q: "Can Apex CRM be customized for my industry?", a: "Absolutely. Apex CRM is built for any B2B sales team. Custom fields, workflows, pipeline stages, email templates, and AI prompts can all be tailored to your specific industry and sales process. Our onboarding team will configure everything for you." },
+  { q: "Can REALM CRM be customized for my industry?", a: "Absolutely. REALM CRM is built for any B2B sales team. Custom fields, workflows, pipeline stages, email templates, and AI prompts can all be tailored to your specific industry and sales process. Our onboarding team will configure everything for you." },
   { q: "Why is your inbox placement rate so much higher?", a: "We operate 260 dedicated SMTP addresses across 52 domains with real-time rotation. Every domain is warmed up, monitored against 50+ blacklists, and configured with SPF, DKIM, and DMARC. Competitors use shared sending infrastructure — your emails compete with thousands of other senders. Ours don't." },
   { q: "What is the Paradigm Engine™?", a: "It's our 5-layer AI prospecting system: (1) Sentinel Layer monitors job changes and social signals 24/7, (2) Nutrition Gate verifies every email via NeverBounce, (3) Digital Twin builds a psychographic profile of each prospect, (4) Ghost Mode deploys personalized sequences, (5) Battle Cards generate AI tactical summaries when a prospect shows buying intent." },
 ];
@@ -351,7 +351,7 @@ export default function MarketingHome({
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:shadow-orange-500/50 transition-shadow">
                 <Zap className="h-4 w-4 text-white fill-white" />
               </div>
-              <span className="font-black text-lg tracking-tight">Apex CRM</span>
+              <span className="font-black text-lg tracking-tight">REALM CRM</span>
             </div>
           </Link>
 
@@ -435,7 +435,7 @@ export default function MarketingHome({
                   </div>
                   <div>
                     <h2 className="text-xl font-black">Welcome back</h2>
-                    <p className="text-sm text-white/40">Sign in to your Apex CRM account</p>
+                    <p className="text-sm text-white/40">Sign in to your REALM CRM account</p>
                   </div>
                 </div>
 
@@ -612,7 +612,7 @@ export default function MarketingHome({
                 <X className="h-4 w-4" />
               </button>
               <video
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/apex-crm-promo-v4-final_4a1ea102.mp4"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/realm-hero-v2_62e65a16.mp4"
                 autoPlay
                 controls
                 playsInline
@@ -625,17 +625,20 @@ export default function MarketingHome({
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section ref={heroRef} className="relative min-h-screen flex flex-col items-center justify-center pt-16 pb-0 overflow-hidden">
-        {/* Background mesh */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full bg-orange-500/5 blur-[120px]" />
-          <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] rounded-full bg-purple-500/5 blur-[100px]" />
-          <div className="absolute top-1/3 right-1/4 w-[400px] h-[400px] rounded-full bg-blue-500/5 blur-[100px]" />
-          {/* Grid overlay */}
-          <div className="absolute inset-0 opacity-[0.03]" style={{
-            backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
-            backgroundSize: "60px 60px"
-          }} />
-        </div>
+        {/* Cinematic video background */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          style={{ filter: "brightness(0.45) saturate(1.4) contrast(1.1)" }}
+        >
+          <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/realm-hero-v2_62e65a16.mp4" type="video/mp4" />
+        </video>
+        {/* Gradient overlays */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#04080f]/50 via-transparent to-[#04080f] pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#04080f]/40 via-transparent to-[#04080f]/40 pointer-events-none" />
 
         <motion.div style={{ y: heroY, opacity: heroOpacity }} className="relative z-10 w-full max-w-6xl mx-auto px-6 text-center">
           {/* Badge */}
@@ -643,10 +646,10 @@ export default function MarketingHome({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 border border-orange-500/20 bg-orange-500/5 text-orange-400 text-xs font-bold px-4 py-1.5 rounded-full mb-10 tracking-wider uppercase"
+            className="inline-flex items-center gap-2 border border-[#c9a84c]/30 bg-[#c9a84c]/10 text-[#c9a84c] text-xs font-bold px-4 py-1.5 rounded-full mb-10 tracking-[0.3em] uppercase"
           >
-            <Sparkles className="h-3 w-3" />
-            The AI-Powered CRM for Every Business
+            <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] animate-pulse" />
+            THE FUTURE OF CRM IS HERE
           </motion.div>
 
           {/* Headline */}
@@ -655,18 +658,19 @@ export default function MarketingHome({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-6xl md:text-8xl font-black tracking-tight leading-[0.95] mb-8"
+            style={{ textShadow: "0 0 80px rgba(201,168,76,0.3), 0 0 160px rgba(30,100,255,0.2)" }}
           >
-            Close More Deals.<br />
-            <GradText>Automatically.</GradText>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#c9a84c] to-[#f0d080]">REALM</span><br />
+            <span className="text-white text-4xl md:text-5xl font-light tracking-[0.3em]">COMMAND YOUR MARKET</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-lg md:text-xl text-white/50 max-w-2xl mx-auto mb-10 leading-relaxed"
+            className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto mb-10 leading-relaxed font-light tracking-wide"
           >
-            Apex CRM combines autonomous AI prospecting, 98.7% email deliverability, and one-touch migration — in a platform that adapts to any business, any industry, any team.
+            The only CRM that sees every deal, every connection, every opportunity — before anyone else. Built for those who refuse to be second.
           </motion.p>
 
           {/* CTAs */}
@@ -677,17 +681,17 @@ export default function MarketingHome({
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4"
           >
             <Link href="/signup">
-              <button className="group flex items-center gap-2 bg-white text-black font-bold text-base px-8 py-4 rounded-2xl hover:bg-white/90 transition-all hover:shadow-2xl hover:shadow-white/10 hover:-translate-y-0.5">
-                Start 60-Day Free Trial
+              <button className="group flex items-center gap-2 bg-gradient-to-r from-[#c9a84c] to-[#f0d080] text-[#04080f] font-black text-sm tracking-[0.2em] px-10 py-4 rounded hover:shadow-[0_0_40px_rgba(201,168,76,0.5)] transition-all hover:-translate-y-0.5">
+                START FREE TRIAL
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>
             <button
               onClick={() => setVideoOpen(true)}
-              className="group flex items-center gap-2 text-white/70 font-semibold text-base px-6 py-4 rounded-2xl border border-white/10 hover:border-orange-500/40 hover:text-white transition-all"
+              className="group flex items-center gap-2 text-white/70 font-bold text-sm tracking-[0.2em] px-6 py-4 rounded border border-white/20 hover:border-[#c9a84c]/50 hover:text-[#c9a84c] transition-all"
             >
-              <div className="w-8 h-8 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center justify-center group-hover:bg-orange-500/30 transition-all">
-                <Play className="h-3.5 w-3.5 fill-orange-400 text-orange-400 ml-0.5" />
+              <div className="w-8 h-8 rounded-full bg-[#c9a84c]/10 border border-[#c9a84c]/30 flex items-center justify-center group-hover:bg-[#c9a84c]/20 transition-all">
+                <Play className="h-3.5 w-3.5 fill-[#c9a84c] text-[#c9a84c] ml-0.5" />
               </div>
               Watch Demo
             </button>
@@ -881,7 +885,7 @@ export default function MarketingHome({
               {/* Gradient border glow */}
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-orange-500/10 via-transparent to-orange-500/10 pointer-events-none z-10" />
               <video
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/apex-crm-promo-v4-final_4a1ea102.mp4"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/realm-hero-v2_62e65a16.mp4"
                 className="w-full aspect-video object-contain bg-black"
                 controls
                 playsInline
@@ -891,7 +895,7 @@ export default function MarketingHome({
             <div className="mt-6 grid grid-cols-3 md:grid-cols-5 gap-3">
               {[
                 { label: "The Problem", time: "0:00" },
-                { label: "Apex Intro", time: "0:06" },
+                { label: "REALM Intro", time: "0:06" },
                 { label: "vs Competitors", time: "0:12" },
                 { label: "One-Touch Migration", time: "0:20" },
                 { label: "BNB AI Engine", time: "0:26" },
@@ -1009,7 +1013,7 @@ export default function MarketingHome({
                 <thead>
                   <tr className="border-b border-white/5">
                     <th className="text-left p-4 font-semibold text-white/30 w-2/5">Feature</th>
-                    <th className="p-4 font-black text-orange-400 bg-orange-500/5">Apex CRM</th>
+                    <th className="p-4 font-black text-orange-400 bg-orange-500/5">REALM CRM</th>
                     <th className="p-4 font-semibold text-white/30">HubSpot</th>
                     <th className="p-4 font-semibold text-white/30">Salesforce</th>
                     <th className="p-4 font-semibold text-white/30">Close CRM</th>
@@ -1019,7 +1023,7 @@ export default function MarketingHome({
                   {COMPARISON.map((row, i) => (
                     <tr key={i} className={`border-b border-white/[0.04] ${i % 2 === 0 ? "" : "bg-white/[0.02]"}`}>
                       <td className="p-4 text-white/60 font-medium">{row.feature}</td>
-                      {[row.apex, row.hubspot, row.salesforce, row.close].map((val, j) => (
+                      {[row.realm, row.hubspot, row.salesforce, row.close].map((val, j) => (
                         <td key={j} className={`p-4 text-center ${j === 0 ? "bg-orange-500/5" : ""}`}>
                           {val === true ? (
                             <CheckCircle className="h-4 w-4 text-green-400 mx-auto" />
@@ -1209,7 +1213,7 @@ export default function MarketingHome({
                   <GradText>your sales?</GradText>
                 </h2>
                 <p className="text-white/40 text-lg mb-10 max-w-xl mx-auto">
-                  Join thousands of teams who switched to Apex CRM and never looked back. Any business. Any industry. Any size.
+                  Join thousands of teams who switched to REALM CRM and never looked back. Any business. Any industry. Any size.
                 </p>
                 <Link href="/signup">
                   <button className="group inline-flex items-center gap-2 bg-white text-black font-black text-base px-10 py-5 rounded-2xl hover:bg-white/90 transition-all hover:shadow-2xl hover:shadow-white/10 hover:-translate-y-0.5">
@@ -1234,14 +1238,14 @@ export default function MarketingHome({
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center">
               <Zap className="h-3.5 w-3.5 text-white fill-white" />
             </div>
-            <span className="font-black text-white">Apex CRM</span>
+            <span className="font-black text-white">REALM CRM</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-white/25">
             {["Privacy Policy", "Terms of Service", "Contact"].map(l => (
               <a key={l} href="#" className="hover:text-white/60 transition-colors">{l}</a>
             ))}
           </div>
-          <p className="text-sm text-white/20">© 2026 Apex CRM. All rights reserved.</p>
+          <p className="text-sm text-white/20">© 2026 REALM CRM. All rights reserved.</p>
         </div>
       </footer>
     </div>

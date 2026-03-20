@@ -1,15 +1,15 @@
 /**
  * SkinContext — Adaptive Competitor Skin System
  *
- * Allows Apex CRM to mirror the look, feel, terminology, and navigation
+ * Allows REALM CRM to mirror the look, feel, terminology, and navigation
  * of any competitor CRM so migrating users feel instantly at home.
  *
- * Supported skins: apex (native), hubspot, salesforce, pipedrive, zoho, gohighlevel, close
+ * Supported skins: realm (native), hubspot, salesforce, pipedrive, zoho, gohighlevel, close
  */
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { trpc } from "@/lib/trpc";
 
-export type SkinId = "apex" | "hubspot" | "salesforce" | "pipedrive" | "zoho" | "gohighlevel" | "close";
+export type SkinId = "realm" | "hubspot" | "salesforce" | "pipedrive" | "zoho" | "gohighlevel" | "close";
 
 export interface NavItem {
   label: string;
@@ -54,7 +54,7 @@ export interface SkinConfig {
 
 // Google Fonts URL for each skin (null = use system font, no load needed)
 const SKIN_FONTS: Record<SkinId, string | null> = {
-  apex: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
+  realm: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
   hubspot: "https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@400;500;600;700;800&display=swap",
   salesforce: null, // Salesforce Sans is proprietary; Arial fallback is fine
   pipedrive: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
@@ -64,9 +64,9 @@ const SKIN_FONTS: Record<SkinId, string | null> = {
 };
 
 const SKINS: Record<SkinId, SkinConfig> = {
-  apex: {
-    id: "apex",
-    name: "Apex CRM",
+  realm: {
+    id: "realm",
+    name: "REALM CRM",
     tagline: "See the Light",
     primaryColor: "#f97316",
     accentColor: "#fb923c",
@@ -100,7 +100,7 @@ const SKINS: Record<SkinId, SkinConfig> = {
   hubspot: {
     id: "hubspot",
     name: "HubSpot Mode",
-    tagline: "Familiar HubSpot layout — powered by Apex",
+    tagline: "Familiar HubSpot layout — powered by REALM",
     primaryColor: "#ff7a59",
     accentColor: "#ff8f73",
     bgColor: "#f5f8fa",
@@ -135,7 +135,7 @@ const SKINS: Record<SkinId, SkinConfig> = {
   salesforce: {
     id: "salesforce",
     name: "Salesforce Mode",
-    tagline: "Familiar Salesforce layout — powered by Apex",
+    tagline: "Familiar Salesforce layout — powered by REALM",
     primaryColor: "#0070d2",
     accentColor: "#1589ee",
     bgColor: "#f3f3f3",
@@ -170,7 +170,7 @@ const SKINS: Record<SkinId, SkinConfig> = {
   pipedrive: {
     id: "pipedrive",
     name: "Pipedrive Mode",
-    tagline: "Familiar Pipedrive layout — powered by Apex",
+    tagline: "Familiar Pipedrive layout — powered by REALM",
     primaryColor: "#217a4b",
     accentColor: "#2da65e",
     bgColor: "#f5f5f5",
@@ -205,7 +205,7 @@ const SKINS: Record<SkinId, SkinConfig> = {
   zoho: {
     id: "zoho",
     name: "Zoho Mode",
-    tagline: "Familiar Zoho CRM layout — powered by Apex",
+    tagline: "Familiar Zoho CRM layout — powered by REALM",
     primaryColor: "#e42527",
     accentColor: "#f04e50",
     bgColor: "#f8f8f8",
@@ -240,7 +240,7 @@ const SKINS: Record<SkinId, SkinConfig> = {
   gohighlevel: {
     id: "gohighlevel",
     name: "GoHighLevel Mode",
-    tagline: "Familiar GHL layout — powered by Apex",
+    tagline: "Familiar GHL layout — powered by REALM",
     primaryColor: "#2563eb",
     accentColor: "#3b82f6",
     bgColor: "#0f172a",
@@ -274,7 +274,7 @@ const SKINS: Record<SkinId, SkinConfig> = {
   close: {
     id: "close",
     name: "Close Mode",
-    tagline: "Familiar Close CRM layout — powered by Apex",
+    tagline: "Familiar Close CRM layout — powered by REALM",
     primaryColor: "#4c5fd5",
     accentColor: "#6475e0",
     bgColor: "#ffffff",
@@ -311,7 +311,7 @@ interface SkinContextValue {
   skin: SkinConfig;
   skinId: SkinId;
   setSkin: (id: SkinId) => void;
-  graduateToApex: () => void;
+  graduateToRealm: () => void;
   allSkins: SkinConfig[];
   t: (key: keyof SkinConfig["terms"]) => string;
   migratedFrom: string | null;
@@ -320,8 +320,8 @@ interface SkinContextValue {
 const SkinContext = createContext<SkinContextValue | null>(null);
 
 export function SkinProvider({ children }: { children: ReactNode }) {
-  // Start with apex skin, will be overridden by DB preference on load
-  const [skinId, setSkinId] = useState<SkinId>("apex");
+  // Start with realm skin, will be overridden by DB preference on load
+  const [skinId, setSkinId] = useState<SkinId>("realm");
   const [migratedFrom, setMigratedFrom] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -345,7 +345,7 @@ export function SkinProvider({ children }: { children: ReactNode }) {
   }, [prefError]);
 
   const setSkinMutation = trpc.migration.setSkin.useMutation();
-  const graduateMutation = trpc.migration.graduateToApex.useMutation();
+  const graduateMutation = trpc.migration.graduateToRealm.useMutation();
 
   const skin = SKINS[skinId];
 
@@ -354,8 +354,8 @@ export function SkinProvider({ children }: { children: ReactNode }) {
     setSkinMutation.mutate({ skin: id });
   };
 
-  const graduateToApex = () => {
-    setSkinId("apex");
+  const graduateToRealm = () => {
+    setSkinId("realm");
     setMigratedFrom(null);
     graduateMutation.mutate();
   };
@@ -363,7 +363,7 @@ export function SkinProvider({ children }: { children: ReactNode }) {
   // Dynamically load the correct Google Font for the active skin
   useEffect(() => {
     const fontUrl = SKIN_FONTS[skinId];
-    const linkId = "apex-skin-font";
+    const linkId = "realm-skin-font";
     // Remove any previously injected skin font
     const existing = document.getElementById(linkId);
     if (existing) existing.remove();
@@ -428,7 +428,7 @@ export function SkinProvider({ children }: { children: ReactNode }) {
   const t = (key: keyof SkinConfig["terms"]) => skin.terms[key];
 
   return (
-    <SkinContext.Provider value={{ skin, skinId, setSkin, graduateToApex, allSkins: Object.values(SKINS), t, migratedFrom }}>
+    <SkinContext.Provider value={{ skin, skinId, setSkin, graduateToRealm, allSkins: Object.values(SKINS), t, migratedFrom }}>
       {children}
     </SkinContext.Provider>
   );

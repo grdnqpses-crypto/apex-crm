@@ -30,7 +30,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   // Getting Started
   {
     id: "welcome",
-    title: "Welcome to Apex CRM",
+    title: "Welcome to REALM CRM",
     description: "Your all-in-one CRM platform is ready. Let's take a quick tour to help you get the most out of every feature.",
     tip: "This onboarding takes about 5 minutes and will save you hours of exploration.",
     icon: Rocket,
@@ -117,22 +117,22 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     icon: Users,
     route: "/team",
     category: "admin",
-    requiredRole: ["company_admin", "manager", "apex_owner", "developer"],
+    requiredRole: ["company_admin", "manager", "realm_owner", "developer"],
   },
   {
     id: "settings",
     title: "Customize Your CRM",
-    description: "Configure your company settings, branding, SMTP accounts, and integrations to make Apex CRM truly yours.",
+    description: "Configure your company settings, branding, SMTP accounts, and integrations to make REALM CRM truly yours.",
     tip: "White-label branding lets you customize the logo, colors, and domain for your team.",
     icon: Settings,
     route: "/settings",
     category: "admin",
-    requiredRole: ["company_admin", "apex_owner", "developer"],
+    requiredRole: ["company_admin", "realm_owner", "developer"],
   },
   {
     id: "complete",
     title: "You're All Set!",
-    description: "Congratulations! You've completed the Apex CRM onboarding. You're ready to start closing deals and growing your business.",
+    description: "Congratulations! You've completed the REALM CRM onboarding. You're ready to start closing deals and growing your business.",
     tip: "Need help anytime? Click the Help Center in the sidebar or use the AI Assistant (bottom-left sparkle button).",
     icon: Trophy,
     route: "/dashboard",
@@ -141,7 +141,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
 ];
 
 // ─── Onboarding Context ───
-const STORAGE_KEY = "apex-onboarding";
+const STORAGE_KEY = "realm-onboarding";
 
 interface OnboardingState {
   isActive: boolean;
@@ -180,7 +180,7 @@ export default function OnboardingTutorial() {
   const [animateIn, setAnimateIn] = useState(false);
 
   const { data: myCompany } = trpc.tenants.myCompany.useQuery(undefined, { enabled: !!user });
-  const isAdminOrAbove = ["company_admin", "apex_owner", "developer"].includes(user?.systemRole || "");
+  const isAdminOrAbove = ["company_admin", "realm_owner", "developer"].includes(user?.systemRole || "");
 
   // Filter steps based on user role
   const availableSteps = useMemo(() => {
@@ -357,9 +357,9 @@ export default function OnboardingTutorial() {
 
             {/* Content */}
             <h3 className="text-lg font-semibold text-slate-900 mb-2">
-              {/* White-label: replace "Apex CRM" with company name for non-admin roles */}
+              {/* White-label: replace "REALM CRM" with company name for non-admin roles */}
               {currentStepData.id === "welcome" && !isAdminOrAbove && myCompany?.name
-                ? currentStepData.title.replace("Apex CRM", myCompany.name)
+                ? currentStepData.title.replace("REALM CRM", myCompany.name)
                 : currentStepData.title}
             </h3>
             <p className="text-sm text-slate-600 mb-3 leading-relaxed">{currentStepData.description}</p>

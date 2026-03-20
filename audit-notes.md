@@ -32,7 +32,7 @@
 
 ## AI Assistant - PASS
 - Floating panel opens on button click
-- Shows "Hi! I'm Apex AI" welcome message
+- Shows "Hi! I'm REALM AI" welcome message
 - 6 suggested action buttons visible
 - Input field ready for commands
 

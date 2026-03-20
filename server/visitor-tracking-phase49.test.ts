@@ -186,7 +186,7 @@ describe("reinstallTracking — no credentials", () => {
 
   it("returns no_credentials when no stored creds for any platform", async () => {
     vi.mocked(db.listTrackedWebsites).mockResolvedValue([
-      { id: 10, twDomain: "example.com", twTrackingId: "apex-abc123-1", twName: "Example", twIsActive: true, twCreatedAt: Date.now(), userId: 1 } as any,
+      { id: 10, twDomain: "example.com", twTrackingId: "realm-abc123-1", twName: "Example", twIsActive: true, twCreatedAt: Date.now(), userId: 1 } as any,
     ]);
     vi.mocked(db.getPlatformCredentials).mockResolvedValue(null);
 

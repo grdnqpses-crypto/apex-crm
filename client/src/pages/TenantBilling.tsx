@@ -123,7 +123,7 @@ export default function TenantBilling() {
               {trialDaysLeft === 0 ? "Trial expires today!" : `${trialDaysLeft} days left in your trial`}
             </p>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Add a payment method to continue using Apex CRM after your trial ends.
+              Add a payment method to continue using REALM CRM after your trial ends.
             </p>
           </div>
         </div>

@@ -1,6 +1,6 @@
 # Competitive Analysis Key Findings
 
-## Features Competitors Have That Apex CRM Currently Lacks
+## Features Competitors Have That REALM CRM Currently Lacks
 
 ### TMS/Operations Features (from Tai TMS, DAT, McLeod, EZ Loader, Rose Rocket, Alchemy)
 - Load management (create, track, dispatch loads)
@@ -40,13 +40,13 @@
 - Unified inbox across channels (Apollo)
 - Conversation intelligence with call recording & AI insights (Outreach)
 
-## What Apex CRM Already Does Better Than Most Competitors
+## What REALM CRM Already Does Better Than Most Competitors
 
 1. **AI Voice Agent** - No competitor has a built-in AI calling agent
-2. **Document Intelligence (DocScan)** - Most TMS platforms have basic doc parsing, Apex has AI-powered extraction
-3. **Win Probability Engine** - Only Outreach has deal health scores; Apex has full AI scoring
+2. **Document Intelligence (DocScan)** - Most TMS platforms have basic doc parsing, REALM has AI-powered extraction
+3. **Win Probability Engine** - Only Outreach has deal health scores; REALM has full AI scoring
 4. **Revenue Autopilot** - Unique daily AI briefings with prioritized actions
-5. **AI Ghostwriter** - Only Apollo has AI writing; Apex has context-aware freight-specific drafting
+5. **AI Ghostwriter** - Only Apollo has AI writing; REALM has context-aware freight-specific drafting
 6. **Paradigm Engine (BNB Prospecting)** - No competitor has autonomous AI prospecting with psychographic profiling
 7. **Ghost Mode (Autonomous Sequences)** - More advanced than Apollo/Outreach sequences with AI personalization
 8. **Compliance Fortress** - Most comprehensive CAN-SPAM/GDPR/CCPA compliance engine

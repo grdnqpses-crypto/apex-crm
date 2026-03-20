@@ -1,0 +1,73 @@
+{
+  "query": "SELECT id, username, email, role, IF(passwordHash IS NOT NULL, 'SET', 'NULL') as passwordStatus FROM users ORDER BY id ASC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, username, email, role, IF(passwordHash IS NOT NULL, 'SET', 'NULL') as passwordStatus FROM users ORDER BY id ASC;",
+  "rows": [
+    {
+      "id": "1",
+      "username": "NULL",
+      "email": "crm@shiplw.com",
+      "role": "admin",
+      "passwordStatus": "SET"
+    },
+    {
+      "id": "12",
+      "username": "NULL",
+      "email": "grdn.qpses@gmail.com",
+      "role": "admin",
+      "passwordStatus": "SET"
+    },
+    {
+      "id": "2610017",
+      "username": "jlavallee",
+      "email": "jlavallee@shiplw.com",
+      "role": "admin",
+      "passwordStatus": "SET"
+    },
+    {
+      "id": "2610020",
+      "username": "mrodriguez",
+      "email": "mrodriguez@shiplw.com",
+      "role": "user",
+      "passwordStatus": "SET"
+    },
+    {
+      "id": "2610023",
+      "username": "schen",
+      "email": "schen@shiplw.com",
+      "role": "user",
+      "passwordStatus": "SET"
+    },
+    {
+      "id": "2610026",
+      "username": "dthompson",
+      "email": "dthompson@shiplw.com",
+      "role": "user",
+      "passwordStatus": "SET"
+    },
+    {
+      "id": "2640083",
+      "username": "Lavallee",
+      "email": "glavallee@shiplw.com",
+      "role": "admin",
+      "passwordStatus": "SET"
+    },
+    {
+      "id": "4410042",
+      "username": "apexowner",
+      "email": "owner@apexcrm.com",
+      "role": "admin",
+      "passwordStatus": "SET"
+    },
+    {
+      "id": "4590001",
+      "username": "JoeLavallee",
+      "email": "grdn.qpses@gmail.com",
+      "role": "admin",
+      "passwordStatus": "SET"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tusername\temail\trole\tpasswordStatus\n1\tNULL\tcrm@shiplw.com\tadmin\tSET\n12\tNULL\tgrdn.qpses@gmail.com\tadmin\tSET\n2610017\tjlavallee\tjlavallee@shiplw.com\tadmin\tSET\n2610020\tmrodriguez\tmrodriguez@shiplw.com\tuser\tSET\n2610023\tschen\tschen@shiplw.com\tuser\tSET\n2610026\tdthompson\tdthompson@shiplw.com\tuser\tSET\n2640083\tLavallee\tglavallee@shiplw.com\tadmin\tSET\n4410042\tapexowner\towner@apexcrm.com\tadmin\tSET\n4590001\tJoeLavallee\tgrdn.qpses@gmail.com\tadmin\tSET\n",
+  "stderr": "",
+  "execution_time_ms": 378
+}

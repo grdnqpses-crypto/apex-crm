@@ -49,7 +49,7 @@ export default function ResetPassword() {
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center shadow-lg shadow-orange-500/30">
             <Zap className="h-5 w-5 text-white fill-white" />
           </div>
-          <span className="text-xl font-black text-white tracking-tight">APEX CRM</span>
+          <span className="text-xl font-black text-white tracking-tight">REALM CRM</span>
         </div>
 
         <div className="bg-[#111] border border-white/10 rounded-2xl p-8 shadow-2xl">
@@ -71,7 +71,7 @@ export default function ResetPassword() {
             <>
               <div className="mb-6">
                 <h2 className="text-xl font-black text-white mb-1">Set new password</h2>
-                <p className="text-sm text-white/40">Choose a strong password for your Apex CRM account.</p>
+                <p className="text-sm text-white/40">Choose a strong password for your REALM CRM account.</p>
               </div>
 
               {error && (
@@ -150,7 +150,7 @@ export default function ResetPassword() {
         </div>
 
         <p className="text-center text-xs text-white/20 mt-6">
-          &copy; {new Date().getFullYear()} Apex CRM. All rights reserved.
+          &copy; {new Date().getFullYear()} REALM CRM. All rights reserved.
         </p>
       </div>
     </div>

@@ -10770,7 +10770,7 @@
         },
         "systemRole": {
           "name": "systemRole",
-          "type": "enum('developer','apex_owner','super_admin','company_admin','manager','user')",
+          "type": "enum('developer','realm_owner','super_admin','company_admin','manager','user')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,

@@ -156,7 +156,7 @@ function PipelineScreen({ accent }: { accent: string }) {
   const stages = [
     { name: "New Lead", count: 23, value: "$890K", deals: ["Global Transit Inc.", "Midwest Logistics", "FastFreight Co."] },
     { name: "Qualified", count: 15, value: "$1.2M", deals: ["Velocity Freight", "CrossCountry Bkg.", "Premier Partners"] },
-    { name: "Demo Sched.", count: 8, value: "$780K", deals: ["National Transport", "Apex Consulting", "Swift Logistics"] },
+    { name: "Demo Sched.", count: 8, value: "$780K", deals: ["National Transport", "REALM Consulting", "Swift Logistics"] },
     { name: "Closed Won", count: 12, value: "$1.3M", deals: ["Quantum Haulage", "Orion Logistics", "StarRoute Inc."] },
   ];
   return (
@@ -289,7 +289,7 @@ function GhostScreen({ accent }: { accent: string }) {
 
 function DeliverabilityScreen({ accent }: { accent: string }) {
   const bars = [
-    { label: "Apex CRM", pct: 98.7, color: accent },
+    { label: "REALM CRM", pct: 98.7, color: accent },
     { label: "HubSpot", pct: 71, color: "#6b7280" },
     { label: "Salesforce", pct: 68, color: "#6b7280" },
     { label: "Pipedrive", pct: 73, color: "#6b7280" },
@@ -534,7 +534,7 @@ export default function InteractiveDemoTour() {
             transition={{ delay: 0.2 }}
             className="text-lg text-white/50 max-w-2xl mx-auto"
           >
-            Click any feature below to explore Apex CRM interactively — no signup required.
+            Click any feature below to explore REALM CRM interactively — no signup required.
           </motion.p>
         </div>
 

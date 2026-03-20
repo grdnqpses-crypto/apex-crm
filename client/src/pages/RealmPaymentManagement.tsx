@@ -55,7 +55,7 @@ const INV_STATUS_COLORS: Record<string, string> = {
   void:    "bg-gray-500/10 text-gray-400 border-gray-500/20",
 };
 
-export default function ApexPaymentManagement() {
+export default function RealmPaymentManagement() {
   const { t } = useSkin();
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("overview");

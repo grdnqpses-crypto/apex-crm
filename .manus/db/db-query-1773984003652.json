@@ -69,7 +69,7 @@
       "id": "4410042",
       "username": "apexowner",
       "email": "owner@apexcrm.com",
-      "systemRole": "apex_owner",
+      "systemRole": "realm_owner",
       "isActive": "1",
       "tenantCompanyId": "30001",
       "hasPassword": "1"
@@ -85,7 +85,7 @@
     }
   ],
   "messages": [],
-  "stdout": "id\tusername\temail\tsystemRole\tisActive\ttenantCompanyId\thasPassword\n1\tNULL\tcrm@shiplw.com\tdeveloper\t1\t2\t0\n12\tNULL\tgrdn.qpses@gmail.com\tdeveloper\t1\tNULL\t0\n2610017\tjlavallee\tjlavallee@shiplw.com\tdeveloper\t1\t2\t1\n2610020\tmrodriguez\tmrodriguez@shiplw.com\tsales_manager\t1\t2\t1\n2610023\tschen\tschen@shiplw.com\taccount_manager\t1\t2\t1\n2610026\tdthompson\tdthompson@shiplw.com\taccount_manager\t1\t2\t1\n2640083\tLavallee\tglavallee@shiplw.com\tcompany_admin\t1\t2\t1\n4410042\tapexowner\towner@apexcrm.com\tapex_owner\t1\t30001\t1\n4590001\tJoeLavallee\tgrdn.qpses@gmail.com\tcompany_admin\t1\t60001\t1\n",
+  "stdout": "id\tusername\temail\tsystemRole\tisActive\ttenantCompanyId\thasPassword\n1\tNULL\tcrm@shiplw.com\tdeveloper\t1\t2\t0\n12\tNULL\tgrdn.qpses@gmail.com\tdeveloper\t1\tNULL\t0\n2610017\tjlavallee\tjlavallee@shiplw.com\tdeveloper\t1\t2\t1\n2610020\tmrodriguez\tmrodriguez@shiplw.com\tsales_manager\t1\t2\t1\n2610023\tschen\tschen@shiplw.com\taccount_manager\t1\t2\t1\n2610026\tdthompson\tdthompson@shiplw.com\taccount_manager\t1\t2\t1\n2640083\tLavallee\tglavallee@shiplw.com\tcompany_admin\t1\t2\t1\n4410042\tapexowner\towner@apexcrm.com\trealm_owner\t1\t30001\t1\n4590001\tJoeLavallee\tgrdn.qpses@gmail.com\tcompany_admin\t1\t60001\t1\n",
   "stderr": "",
   "execution_time_ms": 110
 }

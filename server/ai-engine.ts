@@ -1,7 +1,7 @@
 /**
- * Apex AI Autonomous Engine
+ * REALM AI Autonomous Engine
  *
- * The central nervous system of Apex CRM. Runs continuously in the background,
+ * The central nervous system of REALM CRM. Runs continuously in the background,
  * owning all scheduled AI tasks: self-healing, migration mapping, prospect enrichment,
  * email optimization, duplicate detection, lead scoring, domain health, and more.
  *
@@ -93,7 +93,7 @@ const TASKS: AITask[] = [
         messages: [
           {
             role: "system",
-            content: `You are the Apex CRM self-healing AI. Analyze error patterns and recommend specific auto-corrections. 
+            content: `You are the REALM CRM self-healing AI. Analyze error patterns and recommend specific auto-corrections. 
             Respond with JSON: { "severity": "low|medium|high|critical", "corrections": [{"action": string, "reason": string}], "summary": string }`
           },
           {
@@ -235,7 +235,7 @@ const TASKS: AITask[] = [
         messages: [
           {
             role: "system",
-            content: `You are the Apex CRM lead scoring AI. Score each prospect 0-100 based on engagement stage, profile completeness, and recency. 
+            content: `You are the REALM CRM lead scoring AI. Score each prospect 0-100 based on engagement stage, profile completeness, and recency. 
             Return JSON: { "scores": [{ "id": number, "score": number, "reasoning": string }] }`
           },
           {
@@ -487,7 +487,7 @@ const TASKS: AITask[] = [
         messages: [
           {
             role: "system",
-            content: `You are the Apex CRM sequence optimization AI. Analyze sequence data and provide optimization recommendations.
+            content: `You are the REALM CRM sequence optimization AI. Analyze sequence data and provide optimization recommendations.
             Return JSON: { "recommendations": [{ "sequence_id": number, "recommendation": string, "priority": string }] }`
           },
           {
@@ -696,7 +696,7 @@ const TASKS: AITask[] = [
   {
     key: "migration_field_mapper",
     name: "Migration Field Mapper",
-    description: "Processes pending migration jobs, using AI to map source fields to Apex fields automatically.",
+    description: "Processes pending migration jobs, using AI to map source fields to REALM fields automatically.",
     category: "migration",
     priority: "high",
     intervalMinutes: 10,

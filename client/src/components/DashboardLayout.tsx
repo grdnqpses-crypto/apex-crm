@@ -186,7 +186,7 @@ const standardSections = [
     label: "Marketplace",
     items: [
       { icon: Package, label: "Freight Marketplace", path: "/freight-marketplace" },
-      { icon: Brain, label: "Apex Autopilot", path: "/apex-autopilot" },
+      { icon: Brain, label: "REALM Autopilot", path: "/realm-autopilot" },
     ],
   },
   {
@@ -230,12 +230,12 @@ const standardSections = [
   },
 ];
 
-const apexPlatformSection = {
-  label: "Apex Platform",
+const realmPlatformSection = {
+  label: "REALM Platform",
   items: [
-    { icon: Crown, label: "Platform Dashboard", path: "/apex" },
-    { icon: Zap, label: "AI Credits", path: "/apex/ai-credits" },
-    { icon: DollarSign, label: "Payment Management", path: "/apex/payments" },
+    { icon: Crown, label: "Platform Dashboard", path: "/realm" },
+    { icon: Zap, label: "AI Credits", path: "/realm/ai-credits" },
+    { icon: DollarSign, label: "Payment Management", path: "/realm/payments" },
   ],
 };
 
@@ -255,7 +255,7 @@ const developerSection = {
   ],
 };
 
-const DEV_MODE_KEY = "apex-dev-mode";
+const DEV_MODE_KEY = "realm-dev-mode";
 const TAP_TARGET = 11;
 const TAP_TIMEOUT = 4000;
 
@@ -302,13 +302,13 @@ function useDevMode() {
 function getMenuSections(devMode: boolean, userRole?: string) {
   const sections = [...standardSections];
 
-  // Add Apex Platform section for apex_owner and developer roles
-  if (userRole === "apex_owner" || userRole === "developer") {
+  // Add REALM Platform section for realm_owner and developer roles
+  if (userRole === "realm_owner" || userRole === "developer") {
     const overviewIdx = sections.findIndex(s => s.label === "Overview");
     if (overviewIdx >= 0) {
-      sections.splice(overviewIdx + 1, 0, apexPlatformSection);
+      sections.splice(overviewIdx + 1, 0, realmPlatformSection);
     } else {
-      sections.unshift(apexPlatformSection);
+      sections.unshift(realmPlatformSection);
     }
   }
 
@@ -383,15 +383,15 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const { devMode, handleLogoTap, disableDevMode } = useDevMode();
-  const { canAccessSidebarItem, isAdmin, isApexOwner, isDeveloper } = useFeatureAccess();
+  const { canAccessSidebarItem, isAdmin, isRealmOwner, isDeveloper } = useFeatureAccess();
   const [aiOpen, setAiOpen] = useState(false);
   const { data: myCompany } = trpc.tenants.myCompany.useQuery(undefined, { enabled: !!user });
-  // White-label: only Company Admin and above see "powered by Apex"
-  const showApexBranding = isDeveloper || isApexOwner || isAdmin;
+  // White-label: only Company Admin and above see "powered by REALM"
+  const showRealmBranding = isDeveloper || isRealmOwner || isAdmin;
 
   // ─── Skin system ───
-  const { skin, skinId, graduateToApex, migratedFrom } = useSkin();
-  const isCompetitorSkin = skinId !== "apex";
+  const { skin, skinId, graduateToRealm, migratedFrom } = useSkin();
+  const isCompetitorSkin = skinId !== "realm";
 
   // Build nav sections: competitor skin overrides standard sections
   let displaySections: Array<{ label: string; items: Array<{ icon: LucideIcon; label: string; path: string }> }>;
@@ -497,12 +497,12 @@ function DashboardLayoutContent({
                   )}
                   <div className="min-w-0">
                     <span className="font-bold tracking-tight text-foreground text-[15px] block truncate">
-                      {myCompany?.name || "Apex CRM"}
+                      {myCompany?.name || "REALM CRM"}
                     </span>
                     {isCompetitorSkin ? (
-                      <span className="text-[10px] text-muted-foreground/60 block -mt-0.5">powered by Apex</span>
+                      <span className="text-[10px] text-muted-foreground/60 block -mt-0.5">powered by REALM</span>
                     ) : (
-                      myCompany?.name && showApexBranding && <span className="text-[10px] text-muted-foreground/60 block -mt-0.5">powered by Apex</span>
+                      myCompany?.name && showRealmBranding && <span className="text-[10px] text-muted-foreground/60 block -mt-0.5">powered by REALM</span>
                     )}
                   </div>
                   {devMode && (
@@ -610,16 +610,16 @@ function DashboardLayoutContent({
                   <>
                     <DropdownMenuItem
                       onClick={() => {
-                        graduateToApex();
-                        toast.success("Welcome to native Apex CRM!", {
-                          description: "You've graduated to the full Apex experience.",
+                        graduateToRealm();
+                        toast.success("Welcome to native REALM CRM!", {
+                          description: "You've graduated to the full REALM experience.",
                           duration: 4000,
                         });
                       }}
                       className="cursor-pointer rounded-lg"
                     >
                       <Sparkles className="mr-2 h-4 w-4 text-amber-500" />
-                      <span className="text-sm">Graduate to Apex Native</span>
+                      <span className="text-sm">Graduate to REALM Native</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>
@@ -659,7 +659,7 @@ function DashboardLayoutContent({
                   <Zap className="h-4 w-4" style={{ color: skin.primaryColor }} />
                 </div>
               )}
-              <span className="font-bold text-foreground text-sm tracking-tight">{myCompany?.name || "Apex CRM"}</span>
+              <span className="font-bold text-foreground text-sm tracking-tight">{myCompany?.name || "REALM CRM"}</span>
             </button>
             <span className="text-muted-foreground/40 text-sm">/</span>
             <span className="text-sm font-medium text-foreground">

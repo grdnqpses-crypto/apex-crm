@@ -43,10 +43,10 @@ export const NEW_BROKER_TEMPLATE_HTML = `<!DOCTYPE html>
     <p>We noticed your recent FMCSA broker authority filing, and we wanted to be the first to congratulate you on taking this exciting step. Starting a freight brokerage is one of the most rewarding ventures in the transportation industry, and we're here to help you succeed from day one.</p>
 
     <div class="highlight">
-      <p><strong>Did you know?</strong> The average new freight broker spends 60% of their first year on administrative tasks instead of building relationships and moving loads. Apex CRM was built specifically to flip that ratio.</p>
+      <p><strong>Did you know?</strong> The average new freight broker spends 60% of their first year on administrative tasks instead of building relationships and moving loads. REALM CRM was built specifically to flip that ratio.</p>
     </div>
 
-    <h2>How Apex CRM Helps New Brokers Grow</h2>
+    <h2>How REALM CRM Helps New Brokers Grow</h2>
     <div class="features">
       <div class="feature">
         <div class="feature-icon">📊</div>
@@ -88,13 +88,13 @@ export const NEW_BROKER_TEMPLATE_HTML = `<!DOCTYPE html>
     <div class="cta-section">
       <div class="trial-badge">✨ 2 MONTHS FREE — No Credit Card Required</div>
       <br/><br/>
-      <p style="color: #cbd5e1; margin-bottom: 24px;">We're so confident Apex CRM will transform your brokerage that we're offering you a full 2-month trial with zero obligation. Get access to every feature, every tool, every advantage.</p>
+      <p style="color: #cbd5e1; margin-bottom: 24px;">We're so confident REALM CRM will transform your brokerage that we're offering you a full 2-month trial with zero obligation. Get access to every feature, every tool, every advantage.</p>
       <a href="#" class="cta-btn">Start Your Free Trial →</a>
       <p style="color: #64748b; font-size: 13px; margin-top: 16px;">No credit card required. Cancel anytime. Full access to all features.</p>
     </div>
   </div>
   <div class="footer">
-    <p>Apex CRM — Built for Transportation Brokers</p>
+    <p>REALM CRM — Built for Transportation Brokers</p>
     <p>Questions? Reply to this email or visit our <a href="#">Help Center</a></p>
     <p style="margin-top: 16px;"><a href="#">Unsubscribe</a> · <a href="#">Privacy Policy</a></p>
   </div>
@@ -205,7 +205,7 @@ export const RENEWING_BROKER_TEMPLATE_HTML = `<!DOCTYPE html>
           <td>Setup: $3,000+</td>
         </tr>
         <tr>
-          <td style="color: #34d399; font-weight: 700;">Apex CRM</td>
+          <td style="color: #34d399; font-weight: 700;">REALM CRM</td>
           <td class="price-low">$0 for 2 months</td>
           <td class="price-low">Included</td>
           <td style="color: #34d399;">None. Ever.</td>
@@ -219,7 +219,7 @@ export const RENEWING_BROKER_TEMPLATE_HTML = `<!DOCTYPE html>
     </div>
 
     <h3>What We're Doing Differently</h3>
-    <p>Apex CRM was built by people who understand the freight brokerage business. We're not a generic CRM with a "transportation add-on" — every feature was designed for how brokers actually work.</p>
+    <p>REALM CRM was built by people who understand the freight brokerage business. We're not a generic CRM with a "transportation add-on" — every feature was designed for how brokers actually work.</p>
 
     <div class="solutions">
       <div class="solution">
@@ -275,7 +275,7 @@ export const RENEWING_BROKER_TEMPLATE_HTML = `<!DOCTYPE html>
     </div>
 
     <h3>Get Rolling in Minutes, Not Months</h3>
-    <p>Unlike enterprise CRMs that take weeks to set up and require expensive consultants, Apex CRM is ready to go the moment you sign up:</p>
+    <p>Unlike enterprise CRMs that take weeks to set up and require expensive consultants, REALM CRM is ready to go the moment you sign up:</p>
     <div class="solutions">
       <div class="solution">
         <div class="solution-icon">1️⃣</div>
@@ -301,13 +301,13 @@ export const RENEWING_BROKER_TEMPLATE_HTML = `<!DOCTYPE html>
     </div>
 
     <div class="cta-section">
-      <a href="#" class="cta-btn">Join Apex CRM Free →</a>
+      <a href="#" class="cta-btn">Join REALM CRM Free →</a>
       <br/><br/>
       <a href="#" class="cta-secondary">Schedule a Quick Demo Instead</a>
     </div>
   </div>
   <div class="footer">
-    <p>Apex CRM — Built by Brokers, for Brokers</p>
+    <p>REALM CRM — Built by Brokers, for Brokers</p>
     <p>Questions? Reply to this email or visit our <a href="#">Help Center</a></p>
     <p style="margin-top: 16px;"><a href="#">Unsubscribe</a> · <a href="#">Privacy Policy</a></p>
   </div>

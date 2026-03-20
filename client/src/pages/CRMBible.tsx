@@ -13,11 +13,11 @@ import { useSkin } from "@/contexts/SkinContext";
 
 // ─── Role Access Matrix ───────────────────────────────────────────────────────
 // minRoles: array of roles that can see this section by default (and all higher roles)
-// Role hierarchy: developer > apex_owner > company_admin > sales_manager/office_manager > account_manager/coordinator
+// Role hierarchy: developer > realm_owner > company_admin > sales_manager/office_manager > account_manager/coordinator
 
 const ROLE_LEVEL: Record<string, number> = {
   developer: 100,
-  apex_owner: 90,
+  realm_owner: 90,
   super_admin: 85,
   company_admin: 80,
   sales_manager: 60,
@@ -43,7 +43,7 @@ const SECTION_MIN_LEVEL: Record<string, number> = {
   analytics: 60,      // Sales Manager, Office Manager, and above (team-scoped)
   settings: 80,     // Company Admin and above (general settings)
   billing: 80,       // Company Admin and above (payment history/schedule - read-only)
-  billingManage: 90, // Apex Owner and Developer only (change plan, update payment method)
+  billingManage: 90, // REALM Owner and Developer only (change plan, update payment method)
 };
 
 // ─── Data ────────────────────────────────────────────────────────────────────
@@ -81,7 +81,7 @@ const SECTIONS = [
       {
         id: "team-setup",
         title: "Team Setup & Roles",
-        what: "Team is your user management panel — where you create, edit, and assign roles to every person in your organization. The role hierarchy is: Developer → Apex Owner → Company Admin → Sales Manager / Office Manager → Account Manager / Coordinator.",
+        what: "Team is your user management panel — where you create, edit, and assign roles to every person in your organization. The role hierarchy is: Developer → REALM Owner → Company Admin → Sales Manager / Office Manager → Account Manager / Coordinator.",
         why: "A CRM is only as good as the people using it correctly. The Team module ensures every rep has the right access level, is assigned to the right manager, and is accountable to measurable performance targets.",
         how: "Navigate to Team → Invite User. Enter their email, select their role (Account Manager, Coordinator, Sales Manager, Office Manager, or Company Admin), and assign them to a manager. They receive an email invitation with a one-click setup link. Role assignments control what each user can see throughout the entire CRM — a Sales Manager automatically sees all deals assigned to their Account Managers.",
         automation: "Role assignments cascade visibility automatically. An Account Manager only sees their own contacts and deals. A Sales Manager sees everything under their team. A Company Admin sees the entire organization. No manual filtering required.",
@@ -204,7 +204,7 @@ const SECTIONS = [
       {
         id: "workflows",
         title: "Workflows",
-        what: "The automation engine of Apex CRM. A Workflow is a set of rules: When [trigger event] happens, and [conditions] are met, then [actions] execute. Workflows run 24/7 without human intervention.",
+        what: "The automation engine of REALM CRM. A Workflow is a set of rules: When [trigger event] happens, and [conditions] are met, then [actions] execute. Workflows run 24/7 without human intervention.",
         why: "The best sales teams are not the ones who work the hardest — they are the ones who have automated everything that can be automated, freeing human attention for the conversations that actually require it.",
         how: "Navigate to Workflows → New Workflow. Step 1: Choose a trigger (Contact Created, Deal Stage Changed, Email Opened, Date-Based, etc.). Step 2: Add conditions. Step 3: Add actions (Send Email, Create Task, Update Field, Add to Segment, Wait X Days, Branch with If/Then logic).",
         automation: "Workflows ARE the automation layer. They connect every other module: a campaign open triggers a task, a deal stage change triggers an email, a date triggers a renewal reminder.",
@@ -338,7 +338,7 @@ const SECTIONS = [
       {
         id: "ai-assistant",
         title: "AI CRM Assistant",
-        what: "A conversational AI assistant fully versed in every aspect of Apex CRM. Ask it anything — 'How do I set up a workflow?', 'Add a contact named John Smith at Acme Corp', 'Show me my hot leads', 'Create a campaign for my top 50 prospects'. It answers questions and executes CRM tasks directly.",
+        what: "A conversational AI assistant fully versed in every aspect of REALM CRM. Ask it anything — 'How do I set up a workflow?', 'Add a contact named John Smith at Acme Corp', 'Show me my hot leads', 'Create a campaign for my top 50 prospects'. It answers questions and executes CRM tasks directly.",
         why: "The best CRM is one that gets out of your way. The AI Assistant removes friction from every task — instead of navigating menus, you describe what you want and it happens.",
         how: "Click the AI button (bottom-right of any screen). Type your request in natural language. The assistant responds with information or executes the action directly. Examples: 'What is my pipeline value this month?', 'Mark the Johnson deal as closed won', 'Schedule a follow-up call with Sarah at Freight Co for next Tuesday'.",
         automation: "The AI Assistant is connected to every module. It can create contacts, update deals, send campaigns, generate reports, and trigger workflows — all from a single conversation.",
@@ -387,7 +387,7 @@ const SECTIONS = [
       {
         id: "role-access",
         title: "Role-Based Access Control",
-        what: "Every user in Apex CRM is assigned a role that determines which sections of the CRM they can access by default. The hierarchy is: Developer → Apex Owner → Company Admin → Sales Manager / Office Manager → Account Manager / Coordinator.",
+        what: "Every user in REALM CRM is assigned a role that determines which sections of the CRM they can access by default. The hierarchy is: Developer → REALM Owner → Company Admin → Sales Manager / Office Manager → Account Manager / Coordinator.",
         why: "Not every team member needs access to every feature. Role-based access protects sensitive data, reduces cognitive overload for front-line users, and ensures that advanced features are only used by people trained to use them correctly.",
         how: "Default access is assigned automatically based on role. Company Admins can extend access to specific users via the Share system (see CRM Bible Sharing below). To change a user's role, navigate to Team → click the user → Edit Role.",
         automation: "Role changes take effect immediately. When a user is promoted from Account Manager to Sales Manager, their access expands automatically — no manual permission updates required.",
@@ -405,46 +405,46 @@ const SECTIONS = [
       {
         id: "integrations-settings",
         title: "Integrations",
-        what: "Connect external services to Apex CRM: Apollo.io (lead sourcing), NeverBounce (email verification), SendGrid (additional sending capacity), PhantomBuster (LinkedIn automation), and Google AI Studio (enhanced AI features).",
-        why: "No single tool does everything. Integrations let Apex CRM serve as the hub that connects your entire sales technology stack.",
+        what: "Connect external services to REALM CRM: Apollo.io (lead sourcing), NeverBounce (email verification), SendGrid (additional sending capacity), PhantomBuster (LinkedIn automation), and Google AI Studio (enhanced AI features).",
+        why: "No single tool does everything. Integrations let REALM CRM serve as the hub that connects your entire sales technology stack.",
         how: "Navigate to Paradigm → Integrations. Each integration card shows the connection status and required credentials. Click Connect, enter your API key, and click Test Connection to verify.",
-        automation: "Connected integrations feed data automatically into Apex CRM. Apollo.io sends new prospects to the Paradigm Engine. NeverBounce verifies emails before they are added to the system.",
+        automation: "Connected integrations feed data automatically into REALM CRM. Apollo.io sends new prospects to the Paradigm Engine. NeverBounce verifies emails before they are added to the system.",
         outcome: "A connected tech stack where data flows automatically between tools, eliminating manual imports, exports, and copy-paste workflows.",
       },
       {
         id: "billing-history",
         title: "Billing History",
-        what: "The Billing History page is a read-only ledger of every payment your company has made to Apex CRM. It shows each invoice with its date, amount, plan name, payment status (Paid, Open, or Void), and a direct link to download the PDF invoice from Stripe. The page also displays your current subscription plan and the total amount paid to date.",
-        why: "Finance teams, accountants, and Company Admins need a reliable record of subscription payments for budgeting, expense reporting, and audit purposes. Rather than emailing the Apex Owner every time an invoice is needed, the Billing History page gives authorized users instant self-service access to the complete payment record.",
-        how: "Navigate to Resources → Billing History. The page loads your Stripe invoice history automatically. Each row shows the invoice date, description (e.g., 'Apex CRM Professional — March 2026'), amount, and status. Click the PDF icon on any row to open the Stripe-hosted invoice in a new tab for download or printing. The summary card at the top shows your current plan and total lifetime spend.",
+        what: "The Billing History page is a read-only ledger of every payment your company has made to REALM CRM. It shows each invoice with its date, amount, plan name, payment status (Paid, Open, or Void), and a direct link to download the PDF invoice from Stripe. The page also displays your current subscription plan and the total amount paid to date.",
+        why: "Finance teams, accountants, and Company Admins need a reliable record of subscription payments for budgeting, expense reporting, and audit purposes. Rather than emailing the REALM Owner every time an invoice is needed, the Billing History page gives authorized users instant self-service access to the complete payment record.",
+        how: "Navigate to Resources → Billing History. The page loads your Stripe invoice history automatically. Each row shows the invoice date, description (e.g., 'REALM CRM Professional — March 2026'), amount, and status. Click the PDF icon on any row to open the Stripe-hosted invoice in a new tab for download or printing. The summary card at the top shows your current plan and total lifetime spend.",
         automation: "Billing History is updated automatically by Stripe webhooks. Every time a payment succeeds or fails, the invoice record is updated in real time. No manual refresh or sync is required. If a payment fails, the status changes to 'Open' and the Payment Failed Banner appears on the dashboard.",
-        outcome: "Company Admins have instant, self-service access to the full payment history without needing to contact the Apex Owner or log into Stripe. This eliminates a recurring administrative bottleneck and ensures accounting teams always have the records they need.",
+        outcome: "Company Admins have instant, self-service access to the full payment history without needing to contact the REALM Owner or log into Stripe. This eliminates a recurring administrative bottleneck and ensures accounting teams always have the records they need.",
       },
       {
         id: "payment-failed-banner",
         title: "Payment Failed Banner",
         what: "The Payment Failed Banner is a high-visibility alert that appears at the top of every CRM page when your company's Stripe subscription is past-due or has an unpaid invoice. It displays a clear message — 'Payment issue detected' — with a direct 'Resolve Payment' button that takes the authorized user to the Billing & Plans page.",
         why: "A failed payment can result in service interruption for your entire team. The banner ensures that the right people (Company Admins and above) are immediately aware of a payment issue the moment they log in, so it can be resolved before it affects the team's access.",
-        how: "The banner appears automatically — no configuration needed. When Stripe reports a subscription status of 'past_due' or 'unpaid', the banner renders above the main content area on every page. Click 'Resolve Payment' to go directly to Billing & Plans, where an Apex Owner can update the payment method via the Stripe portal. The banner disappears automatically once the payment is resolved and the subscription status returns to 'active'.",
-        automation: "Stripe webhooks update the subscription status in real time. The banner checks the status on every page load for Company Admin, Apex Owner, and Developer roles. When the payment is resolved, the webhook fires, the status updates, and the banner is removed without any manual action.",
+        how: "The banner appears automatically — no configuration needed. When Stripe reports a subscription status of 'past_due' or 'unpaid', the banner renders above the main content area on every page. Click 'Resolve Payment' to go directly to Billing & Plans, where an REALM Owner can update the payment method via the Stripe portal. The banner disappears automatically once the payment is resolved and the subscription status returns to 'active'.",
+        automation: "Stripe webhooks update the subscription status in real time. The banner checks the status on every page load for Company Admin, REALM Owner, and Developer roles. When the payment is resolved, the webhook fires, the status updates, and the banner is removed without any manual action.",
         outcome: "Zero service interruptions due to missed payments. The banner creates an unavoidable, immediate call-to-action for the people who can resolve the issue, reducing the window between a failed payment and resolution from days to minutes.",
       },
       {
         id: "email-infrastructure",
         title: "Email Infrastructure Setup",
         what: "The Email Infrastructure Setup wizard is a guided, three-path tool that helps any company — from a brand-new startup to an established enterprise — configure professional email sending infrastructure. It covers domain verification, DNS record setup (SPF, DKIM, DMARC, MX), and email hosting configuration for Google Workspace and Microsoft 365.",
-        why: "Email deliverability is the foundation of every campaign, sequence, and outreach in Apex CRM. Without properly configured DNS records, your emails land in spam — or worse, get your domain blacklisted. Most CRMs leave users to figure this out alone. Apex CRM guides you through the entire process, regardless of your technical background.",
+        why: "Email deliverability is the foundation of every campaign, sequence, and outreach in REALM CRM. Without properly configured DNS records, your emails land in spam — or worse, get your domain blacklisted. Most CRMs leave users to figure this out alone. REALM CRM guides you through the entire process, regardless of your technical background.",
         how: "Navigate to Resources → Email Infrastructure. Choose one of three paths: (1) Connect Existing Domain — enter your domain and run a live DNS check. The wizard shows the exact status of your SPF, DKIM, DMARC, and MX records with color-coded pass/fail indicators and copy-paste fix values for any failing records. (2) Connect Google Workspace or Microsoft 365 — select your provider and the wizard generates the exact DNS records you need to add to your registrar, pre-filled with your domain. (3) Start Fresh — search for domain availability, get registrar recommendations with direct purchase links (Namecheap, GoDaddy, Cloudflare), then follow the step-by-step DNS setup guide. After any path, click Verify to confirm all records are live.",
-        automation: "Once your domain passes verification, Apex CRM automatically enrolls it in the Email Warmup module — a graduated sending schedule that builds your domain's sender reputation over 30 days. The warmup schedule runs in the background without any manual intervention. DNS record status is re-checked automatically every 24 hours and you are notified if any records degrade.",
+        automation: "Once your domain passes verification, REALM CRM automatically enrolls it in the Email Warmup module — a graduated sending schedule that builds your domain's sender reputation over 30 days. The warmup schedule runs in the background without any manual intervention. DNS record status is re-checked automatically every 24 hours and you are notified if any records degrade.",
         outcome: "A fully configured email sending infrastructure that achieves 98%+ inbox placement rates. New companies go from zero to professional email in under 30 minutes. Established companies identify and fix hidden deliverability issues that may have been silently hurting their campaigns for months.",
       },
       {
         id: "billing",
         title: "Billing & Plans",
-        what: "The Billing section gives your company visibility into its Apex CRM subscription — the plan your company is on, the next billing date, and a full payment history. Access is split into two tiers: Company Admins can view payment history and the upcoming billing schedule (read-only). Apex Owners and Developers have full management access — they can change plans, update the payment method, download invoices, and cancel through the Stripe billing portal.",
+        what: "The Billing section gives your company visibility into its REALM CRM subscription — the plan your company is on, the next billing date, and a full payment history. Access is split into two tiers: Company Admins can view payment history and the upcoming billing schedule (read-only). REALM Owners and Developers have full management access — they can change plans, update the payment method, download invoices, and cancel through the Stripe billing portal.",
         why: "Company Admins need to see what the company is paying and when, for budgeting and accounting purposes. However, the ability to change or cancel the subscription is a financial decision that belongs at the ownership level only. This split ensures transparency without risk.",
-        how: "Company Admins: Navigate to Billing to view the current plan, next billing date, and payment history. All controls are read-only. Apex Owners and Developers: All of the above, plus the ability to click Upgrade to compare plans and initiate a Stripe checkout, or click Manage Billing to open the Stripe portal for payment method updates, invoice downloads, or cancellation.",
-        automation: "Subscription status is checked automatically on every login. If a payment fails, the system sends automated reminder emails to the Apex Owner with a direct link to update the payment method. Subscription changes take effect immediately and are reflected in the billing history for all authorized viewers.",
+        how: "Company Admins: Navigate to Billing to view the current plan, next billing date, and payment history. All controls are read-only. REALM Owners and Developers: All of the above, plus the ability to click Upgrade to compare plans and initiate a Stripe checkout, or click Manage Billing to open the Stripe portal for payment method updates, invoice downloads, or cancellation.",
+        automation: "Subscription status is checked automatically on every login. If a payment fails, the system sends automated reminder emails to the REALM Owner with a direct link to update the payment method. Subscription changes take effect immediately and are reflected in the billing history for all authorized viewers.",
         outcome: "Full financial transparency for Company Admins without the risk of accidental plan changes or cancellations. Ownership retains complete control over the subscription while the admin team stays informed.",
       },
     ],
@@ -745,7 +745,7 @@ function SharedWithMePanel() {
 
 const ROLE_DISPLAY: Record<string, { label: string; color: string }> = {
   developer: { label: "Developer", color: "bg-red-500/10 text-red-500 border-red-500/20" },
-  apex_owner: { label: "Apex Owner", color: "bg-orange-500/10 text-orange-500 border-orange-500/20" },
+  realm_owner: { label: "REALM Owner", color: "bg-orange-500/10 text-orange-500 border-orange-500/20" },
   super_admin: { label: "Super Admin", color: "bg-orange-500/10 text-orange-500 border-orange-500/20" },
   company_admin: { label: "Company Admin", color: "bg-violet-500/10 text-violet-500 border-violet-500/20" },
   sales_manager: { label: "Sales Manager", color: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
@@ -844,7 +844,7 @@ export default function CRMBible() {
               <BookOpen className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-black tracking-tight">Apex CRM Bible</h1>
+              <h1 className="text-2xl font-black tracking-tight">REALM CRM Bible</h1>
               <p className="text-sm text-muted-foreground">The complete operator's guide — from first contact to closed deal</p>
             </div>
           </div>
@@ -1010,7 +1010,7 @@ export default function CRMBible() {
               </div>
 
               <blockquote className="mt-6 border-l-4 border-primary pl-4 text-sm text-muted-foreground italic">
-                "Every feature in Apex CRM exists to answer one question — <strong className="text-foreground not-italic">what is the next best action to take, for this specific person, right now?</strong> The system answers that question automatically, at scale, for every prospect and customer in your database, simultaneously. Your job is to execute the actions the system surfaces. The machine does the thinking. You do the talking. Together, you close more deals."
+                "Every feature in REALM CRM exists to answer one question — <strong className="text-foreground not-italic">what is the next best action to take, for this specific person, right now?</strong> The system answers that question automatically, at scale, for every prospect and customer in your database, simultaneously. Your job is to execute the actions the system surfaces. The machine does the thinking. You do the talking. Together, you close more deals."
               </blockquote>
             </section>
           )}

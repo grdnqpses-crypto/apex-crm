@@ -91,17 +91,17 @@ const PRICING_TIERS = [
     slug: "fortune_plus",
     price: 1497,
     period: "month",
-    description: "Dedicated infrastructure. Custom AI. Resell Apex as your own.",
+    description: "Dedicated infrastructure. Custom AI. Resell REALM as your own.",
     highlight: false,
     badge: "Enterprise",
     savings: "85% less than HubSpot Enterprise",
     features: [
       "100 users included (add seats @ $30/user/mo)",
       "Unlimited everything",
-      "Revenue Autopilot™ + Apex Autopilot™",
+      "Revenue Autopilot™ + REALM Autopilot™",
       "White-labeling (your brand, FREE setup)",
       "Dedicated SMTP infrastructure (your own IPs)",
-      "SaaS Mode — resell Apex as your product",
+      "SaaS Mode — resell REALM as your product",
       "99.9% SLA + 24/7 white-glove support",
     ],
     limits: "100 users · Unlimited contacts",
@@ -118,7 +118,7 @@ const FEATURES_SHOWCASE = [
 ];
 
 const TESTIMONIALS = [
-  { name: "Sarah Chen", role: "Sales Manager, TechCorp", quote: "Apex CRM increased our close rate by 34% in the first quarter. The AI prospecting alone is worth the investment." },
+  { name: "Sarah Chen", role: "Sales Manager, TechCorp", quote: "REALM CRM increased our close rate by 34% in the first quarter. The AI prospecting alone is worth the investment." },
   { name: "Mike Rodriguez", role: "VP Sales, LogiFreight", quote: "We migrated from Salesforce and saved $12,000/year. The freight features are a game-changer for our industry." },
   { name: "Lisa Park", role: "Director, FastShip Inc.", quote: "The onboarding was seamless. Our team was productive within hours, not weeks." },
 ];
@@ -194,7 +194,7 @@ export default function Signup() {
               <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center">
                 <Zap className="w-5 h-5 text-white" />
               </div>
-              Apex CRM
+              REALM CRM
             </button>
             <Button variant="outline" onClick={() => window.location.href = "/login"}>
               Already have an account? Sign In
@@ -321,7 +321,7 @@ export default function Signup() {
             <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center">
               <Zap className="w-5 h-5 text-white" />
             </div>
-            Apex CRM
+            REALM CRM
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}>
@@ -384,7 +384,7 @@ export default function Signup() {
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-amber-400">$49–$1,497/mo</div>
-              <div className="text-amber-300">Apex CRM</div>
+              <div className="text-amber-300">REALM CRM</div>
             </div>
           </div>
         </div>
@@ -497,7 +497,7 @@ export default function Signup() {
         <div className="max-w-3xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">Ready to Transform Your Sales?</h2>
           <p className="text-lg text-slate-300 mb-8">
-            Join hundreds of companies already using Apex CRM to close more deals, faster.
+            Join hundreds of companies already using REALM CRM to close more deals, faster.
           </p>
           <Button size="lg" className="h-14 px-8 text-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
             onClick={() => { setStep("register"); window.scrollTo(0, 0); }}>
@@ -510,7 +510,7 @@ export default function Signup() {
       {/* Footer */}
       <footer className="bg-slate-900 border-t border-slate-800 py-8">
         <div className="max-w-6xl mx-auto px-6 text-center text-sm text-slate-500">
-          <p>&copy; {new Date().getFullYear()} Apex CRM. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} REALM CRM. All rights reserved.</p>
         </div>
       </footer>
     </div>

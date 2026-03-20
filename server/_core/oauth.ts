@@ -141,7 +141,7 @@ export function registerOAuthRoutes(app: Express) {
         success: true,
         companyId,
         userId,
-        message: "Account created successfully! Welcome to Apex CRM.",
+        message: "Account created successfully! Welcome to REALM CRM.",
       });
     } catch (error) {
       console.error("[Auth] Registration failed", error);

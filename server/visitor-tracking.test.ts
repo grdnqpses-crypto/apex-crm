@@ -57,8 +57,8 @@ describe("visitorTracking.setupTracking", () => {
     expect(result.installMethod).toBe("mailto");
     expect(result.mailtoLink).toContain("mailto:");
     expect(result.mailtoLink).toContain("myblog.com");
-    expect(result.trackingScript).toContain("apexTrack");
-    expect(result.trackingId).toMatch(/^apex-/);
+    expect(result.trackingScript).toContain("realmTrack");
+    expect(result.trackingId).toMatch(/^realm-/);
     expect(result.manualSteps.length).toBeGreaterThan(0);
   });
 
@@ -102,7 +102,7 @@ describe("visitorTracking.setupTracking", () => {
 
     expect(result.platform).toBe("custom");
     expect(result.installMethod).toBe("mailto");
-    expect(result.trackingScript).toContain("apexTrack");
+    expect(result.trackingScript).toContain("realmTrack");
   });
 
   it("handles unreachable website gracefully (network error)", async () => {
@@ -114,7 +114,7 @@ describe("visitorTracking.setupTracking", () => {
     // Should still return a result with unknown platform and mailto fallback
     expect(result.platform).toBe("unknown");
     expect(result.installMethod).toBe("mailto");
-    expect(result.trackingId).toMatch(/^apex-/);
+    expect(result.trackingId).toMatch(/^realm-/);
   });
 
   it("strips protocol and trailing slash from URL", async () => {
@@ -175,7 +175,7 @@ describe("visitorTracking.listWebsites", () => {
   it("returns websites for the authenticated user", async () => {
     const { listTrackedWebsites } = await import("./db");
     vi.mocked(listTrackedWebsites).mockResolvedValueOnce([
-      { id: 1, twName: "My Site", twDomain: "mysite.com", twTrackingId: "apex-abc123-99", twIsActive: true } as any,
+      { id: 1, twName: "My Site", twDomain: "mysite.com", twTrackingId: "realm-abc123-99", twIsActive: true } as any,
     ]);
 
     const caller = appRouter.createCaller(createCtx());

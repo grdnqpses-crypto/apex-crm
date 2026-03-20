@@ -56,7 +56,7 @@ export default function Login() {
               <Zap className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-bold bg-gradient-to-r from-white to-indigo-200 bg-clip-text text-transparent">
-              Apex CRM
+              REALM CRM
             </span>
           </div>
           <CardTitle className="text-xl text-white">Welcome Back</CardTitle>

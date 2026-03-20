@@ -24,7 +24,7 @@ export default function CalendarSync() {
   const [showConnect, setShowConnect] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState("google");
   const [calendarUrl, setCalendarUrl] = useState("");
-  const [syncDirection, setSyncDirection] = useState<"two_way" | "apex_to_calendar" | "calendar_to_apex">("two_way");
+  const [syncDirection, setSyncDirection] = useState<"two_way" | "realm_to_calendar" | "calendar_to_realm">("two_way");
 
   const { data: connections = [], refetch } = trpc.calendar.listConnections.useQuery();
   const { data: events = [] } = trpc.calendar.listEvents.useQuery({ limit: 20 });
@@ -201,8 +201,8 @@ export default function CalendarSync() {
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="two_way">Two-way (recommended)</SelectItem>
-                  <SelectItem value="apex_to_calendar">Apex → Calendar only</SelectItem>
-                  <SelectItem value="calendar_to_apex">Calendar → Apex only</SelectItem>
+                  <SelectItem value="realm_to_calendar">REALM → Calendar only</SelectItem>
+                  <SelectItem value="calendar_to_realm">Calendar → REALM only</SelectItem>
                 </SelectContent>
               </Select>
             </div>
