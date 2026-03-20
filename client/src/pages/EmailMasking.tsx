@@ -12,6 +12,7 @@ import { Mail, Shield, Eye, Trash2, Plus, CheckCircle, AlertTriangle, Info } fro
 import { useSkin } from "@/contexts/SkinContext";
 
 export default function EmailMasking() {
+  const { t } = useSkin();
   const { skin } = useSkin();
   const masks = trpc.emailMask.list.useQuery();
   const preview = trpc.emailMask.preview.useQuery({});

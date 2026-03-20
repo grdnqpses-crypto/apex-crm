@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   Briefcase, Sparkles, Clock, User, Building2, Target,
   MessageSquare, AlertTriangle, CheckCircle2, TrendingUp, Calendar
 } from "lucide-react";
 
 export default function MeetingPrep() {
+  const { t } = useSkin();
   const [contactId, setContactId] = useState<number>(0);
   const [dealId, setDealId] = useState<number>(0);
   const [meetingDate, setMeetingDate] = useState("");

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   CheckCircle2, ArrowRight, Upload, Zap, Users, Building2,
   Briefcase, Activity, Star, ChevronRight, RefreshCw, Sparkles,
@@ -36,6 +37,7 @@ const STATUS_PROGRESS: Record<string, number> = {
 };
 
 export default function MigrationWizard() {
+  const { t } = useSkin();
 
   const [step, setStep] = useState<Step>("select");
   const [selectedCRM, setSelectedCRM] = useState<string | null>(null);

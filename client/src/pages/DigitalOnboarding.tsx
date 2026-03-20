@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { UserPlus, CheckCircle, Clock, FileSignature, ChevronRight } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 const ONBOARDING_STEPS = [
   { id: "profile_setup", label: "Profile Setup", description: "Complete your company profile and branding" },
@@ -17,6 +18,7 @@ const ONBOARDING_STEPS = [
 ];
 
 export default function DigitalOnboarding() {
+  const { t } = useSkin();
   const [askQuestion, setAskQuestion] = useState("");
   const [aiAnswer, setAiAnswer] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);

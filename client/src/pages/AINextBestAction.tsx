@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Brain, Zap, AlertTriangle, CheckCircle2, ChevronRight } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 const URGENCY_COLOR: Record<string, string> = {
   critical: "text-red-600",
@@ -25,6 +26,7 @@ const CHANNEL_ICON: Record<string, string> = {
 };
 
 export default function AINextBestAction() {
+  const { t } = useSkin();
   const [selectedDealId, setSelectedDealId] = useState<number | null>(null);
   const [enabled, setEnabled] = useState(false);
 

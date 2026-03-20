@@ -7,8 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { TrendingUp, DollarSign, Calendar, Target } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function SalesForecasting() {
+  const { t } = useSkin();
   const [pipelineId, setPipelineId] = useState<string>("all");
 
   const { data: forecast, isLoading } = trpc.salesForecasting.getSummary.useQuery({

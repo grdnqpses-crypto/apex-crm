@@ -14,6 +14,7 @@ import {
   MessageSquare, Layers, Database, Clock, RefreshCw, UserCheck,
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useSkin } from "@/contexts/SkinContext";
 
 /* ─────────────────────── Types ─────────────────────── */
 interface GuideSection {
@@ -475,6 +476,7 @@ function GuideCard({ guide, expanded, onToggle }: { guide: GuideSection; expande
 
 /* ─────────────────────── Main Component ─────────────────────── */
 export default function HelpCenter() {
+  const { t } = useSkin();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);

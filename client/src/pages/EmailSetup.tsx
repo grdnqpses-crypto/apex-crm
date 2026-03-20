@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   Mail, Globe, CheckCircle2, XCircle, AlertCircle, Copy, RefreshCw,
   ArrowLeft, ArrowRight, Wifi, Building2, Sparkles, ExternalLink,
@@ -34,6 +35,7 @@ const REGISTRAR_LINKS: Record<string, { name: string; url: string; logo: string 
 };
 
 export default function EmailSetup() {
+  const { t } = useSkin();
   const [, navigate] = useLocation();
   const [path, setPath] = useState<Path>(null);
   const [domain, setDomain] = useState("");

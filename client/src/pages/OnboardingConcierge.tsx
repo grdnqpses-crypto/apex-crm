@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { CheckCircle, Circle, ChevronRight, Sparkles, MessageSquare, Send, Loader2, Trophy, BookOpen, Video, HelpCircle } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useSkin } from "@/contexts/SkinContext";
 
 const CHECKLIST_STEPS = [
   { key: "import_contacts", title: "Import your contacts", description: "Migrate from your old CRM or upload a CSV", actionUrl: "/migration" },
@@ -29,6 +30,7 @@ const HELP_SUGGESTIONS = [
 ];
 
 export default function OnboardingConcierge() {
+  const { t } = useSkin();
   const [aiQuestion, setAiQuestion] = useState("");
   const [chatHistory, setChatHistory] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
   const [isAsking, setIsAsking] = useState(false);

@@ -13,6 +13,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { useSkin } from "@/contexts/SkinContext";
 
 
 const SEGMENT_TYPES: Record<string, string> = {
@@ -21,6 +22,7 @@ const SEGMENT_TYPES: Record<string, string> = {
 };
 
 export default function Segments() {
+  const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
   const utils = trpc.useUtils();
 

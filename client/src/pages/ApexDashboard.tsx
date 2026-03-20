@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Users, DollarSign, TrendingUp, Plus, Shield, Crown, Search, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 
 // ─── New 5-Tier Structure ───────────────────────────────────────────────────
 const TIER_COLORS: Record<string, string> = {
@@ -59,6 +60,7 @@ const STATUS_COLORS: Record<string, string> = {
 const ALL_TIERS = ["trial", "success_starter", "growth_foundation", "fortune_foundation", "fortune", "fortune_plus"] as const;
 
 export default function ApexDashboard() {
+  const { t } = useSkin();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateDialog, setShowCreateDialog] = useState(false);

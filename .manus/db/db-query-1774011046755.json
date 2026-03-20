@@ -1,0 +1,82 @@
+{
+  "query": "SELECT id, email, name, role, passwordHash IS NOT NULL as hasPassword, createdAt FROM users LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, email, name, role, passwordHash IS NOT NULL as hasPassword, createdAt FROM users LIMIT 20;",
+  "rows": [
+    {
+      "id": "1",
+      "email": "crm@shiplw.com",
+      "name": "crm",
+      "role": "admin",
+      "hasPassword": "0",
+      "createdAt": "2026-02-13 04:23:15"
+    },
+    {
+      "id": "12",
+      "email": "grdn.qpses@gmail.com",
+      "name": "Crypto- GRDN",
+      "role": "admin",
+      "hasPassword": "0",
+      "createdAt": "2026-02-13 04:31:56"
+    },
+    {
+      "id": "2610017",
+      "email": "jlavallee@shiplw.com",
+      "name": "James Lavallee",
+      "role": "admin",
+      "hasPassword": "1",
+      "createdAt": "2026-02-27 18:04:38"
+    },
+    {
+      "id": "2610020",
+      "email": "mrodriguez@shiplw.com",
+      "name": "Mike Rodriguez",
+      "role": "user",
+      "hasPassword": "1",
+      "createdAt": "2026-02-27 18:05:58"
+    },
+    {
+      "id": "2610023",
+      "email": "schen@shiplw.com",
+      "name": "Sarah Chen",
+      "role": "user",
+      "hasPassword": "1",
+      "createdAt": "2026-02-27 18:06:52"
+    },
+    {
+      "id": "2610026",
+      "email": "dthompson@shiplw.com",
+      "name": "David Thompson",
+      "role": "user",
+      "hasPassword": "1",
+      "createdAt": "2026-02-27 18:07:43"
+    },
+    {
+      "id": "2640083",
+      "email": "glavallee@shiplw.com",
+      "name": "Jerry",
+      "role": "admin",
+      "hasPassword": "1",
+      "createdAt": "2026-02-27 19:36:11"
+    },
+    {
+      "id": "4410042",
+      "email": "owner@apexcrm.com",
+      "name": "Apex Platform Owner",
+      "role": "admin",
+      "hasPassword": "1",
+      "createdAt": "2026-03-16 20:35:49"
+    },
+    {
+      "id": "4590001",
+      "email": "grdn.qpses@gmail.com",
+      "name": "Joseph Lavallee",
+      "role": "admin",
+      "hasPassword": "1",
+      "createdAt": "2026-03-17 20:42:55"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\trole\thasPassword\tcreatedAt\n1\tcrm@shiplw.com\tcrm\tadmin\t0\t2026-02-13 04:23:15\n12\tgrdn.qpses@gmail.com\tCrypto- GRDN\tadmin\t0\t2026-02-13 04:31:56\n2610017\tjlavallee@shiplw.com\tJames Lavallee\tadmin\t1\t2026-02-27 18:04:38\n2610020\tmrodriguez@shiplw.com\tMike Rodriguez\tuser\t1\t2026-02-27 18:05:58\n2610023\tschen@shiplw.com\tSarah Chen\tuser\t1\t2026-02-27 18:06:52\n2610026\tdthompson@shiplw.com\tDavid Thompson\tuser\t1\t2026-02-27 18:07:43\n2640083\tglavallee@shiplw.com\tJerry\tadmin\t1\t2026-02-27 19:36:11\n4410042\towner@apexcrm.com\tApex Platform Owner\tadmin\t1\t2026-03-16 20:35:49\n4590001\tgrdn.qpses@gmail.com\tJoseph Lavallee\tadmin\t1\t2026-03-17 20:42:55\n",
+  "stderr": "",
+  "execution_time_ms": 428
+}

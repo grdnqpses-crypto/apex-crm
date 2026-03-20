@@ -12,9 +12,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { useSkin } from "@/contexts/SkinContext";
 
 
 export default function ApiKeys() {
+  const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
   const [newKey, setNewKey] = useState<string | null>(null);
   const utils = trpc.useUtils();

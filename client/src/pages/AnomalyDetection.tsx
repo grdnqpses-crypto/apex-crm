@@ -6,8 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Activity, CheckCircle2, RefreshCw, Shield, TrendingDown, TrendingUp, Zap } from "lucide-react";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function AnomalyDetection() {
+  const { t } = useSkin();
   const utils = trpc.useUtils();
   const { data: alerts, isLoading } = trpc.anomalyDetection.getAlerts.useQuery({ resolved: false, severity: 'all' });
   const [running, setRunning] = useState(false);

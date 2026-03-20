@@ -11,6 +11,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { useSkin } from "@/contexts/SkinContext";
 
 
 const AUTH_STATUS_ICONS: Record<string, any> = {
@@ -27,6 +28,7 @@ const AUTH_STATUS_COLORS: Record<string, string> = {
 };
 
 export default function Deliverability() {
+  const { t } = useSkin();
   const [showAdd, setShowAdd] = useState(false);
   const [checkDomain, setCheckDomain] = useState("");
   const [authResult, setAuthResult] = useState<any>(null);

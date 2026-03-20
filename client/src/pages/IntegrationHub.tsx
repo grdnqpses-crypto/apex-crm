@@ -10,10 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { CheckCircle, XCircle, Loader2, Plug, ExternalLink, Trash2, TestTube } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useSkin } from "@/contexts/SkinContext";
 
 const CATEGORIES = ["all", "communication", "automation", "finance", "meetings", "ecommerce", "forms", "scheduling", "prospecting", "telephony", "email", "migration"];
 
 export default function IntegrationHub() {
+  const { t } = useSkin();
   const [activeCategory, setActiveCategory] = useState("all");
   const [search, setSearch] = useState("");
   const [connectingKey, setConnectingKey] = useState<string | null>(null);

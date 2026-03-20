@@ -11,8 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Plus, GitBranch, Play, Pause, Trash2, Users, Clock, Sparkles, CheckCircle2, Circle } from "lucide-react";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function JourneyOrchestration() {
+  const { t } = useSkin();
   const utils = trpc.useUtils();
   const { data: journeys, isLoading } = trpc.journeyOrchestration.list.useQuery();
   const [showCreate, setShowCreate] = useState(false);

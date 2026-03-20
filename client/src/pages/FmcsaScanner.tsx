@@ -18,6 +18,7 @@ import {
   ChevronDown, ChevronUp, ExternalLink, FileText,
 } from "lucide-react";
 import PageGuide from "@/components/PageGuide";
+import { useSkin } from "@/contexts/SkinContext";
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
@@ -27,6 +28,7 @@ const US_STATES = [
 ];
 
 export default function FmcsaScanner() {
+  const { t } = useSkin();
   const { user } = useAuth();
   const utils = trpc.useUtils();
 

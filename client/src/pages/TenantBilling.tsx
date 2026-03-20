@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CreditCard, CheckCircle2, Clock, AlertTriangle, ExternalLink, DollarSign, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSkin } from "@/contexts/SkinContext";
 
 const fmt = (cents: number) => `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
 
@@ -40,6 +41,7 @@ const INV_STATUS_COLORS: Record<string, string> = {
 };
 
 export default function TenantBilling() {
+  const { t } = useSkin();
   const { data, isLoading } = trpc.billingMgmt.mySubscription.useQuery();
   const createPortal = trpc.billingMgmt.createPortalSession.useMutation({
     onSuccess: ({ url }) => {

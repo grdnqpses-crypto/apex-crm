@@ -172,8 +172,10 @@ import {
 import { useState } from "react";
 import { toast as sonnerToast } from "sonner";
 import { AIChatBox, type Message } from "@/components/AIChatBox";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function ComponentsShowcase() {
+  const { t } = useSkin();
   const { theme, toggleTheme } = useTheme();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [datePickerDate, setDatePickerDate] = useState<Date>();

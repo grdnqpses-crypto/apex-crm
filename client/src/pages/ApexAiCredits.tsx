@@ -33,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   Zap,
   Package,
@@ -46,6 +47,7 @@ import {
 } from "lucide-react";
 
 export default function ApexAiCredits() {
+  const { t } = useSkin();
   const { user } = useAuth();
   const [, navigate] = useLocation();
 

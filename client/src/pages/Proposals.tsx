@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { toast } from "sonner";
 import { Plus, FileText, Send, CheckCircle, Eye, Clock, XCircle, MoreHorizontal, Trash2, Sparkles, Loader2 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useSkin } from "@/contexts/SkinContext";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   draft: { label: "Draft", color: "bg-muted text-muted-foreground", icon: FileText },
@@ -23,6 +24,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 };
 
 export default function Proposals() {
+  const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [form, setForm] = useState({ title: "", notes: "", totalAmount: "", currency: "USD", serviceDescription: "" });
@@ -224,7 +226,7 @@ export default function Proposals() {
               </div>
             </div>
             <div>
-              <Label>Notes</Label>
+              <Label>{t("notes")}</Label>
               <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Internal notes..." className="mt-1" rows={2} />
             </div>
           </div>

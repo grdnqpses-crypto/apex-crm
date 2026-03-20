@@ -47,6 +47,7 @@ const roleIcons: Record<string, any> = {
 };
 
 export default function DevImpersonate() {
+  const { t } = useSkin();
   const { data: allUsers } = trpc.userManagement.allUsers.useQuery();
   const { data: allFeatures } = trpc.tenants.allFeatures.useQuery();
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);

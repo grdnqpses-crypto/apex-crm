@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import PageGuide from "@/components/PageGuide";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   FlaskConical, Sparkles, BarChart3, Target, Trophy,
   Copy, RefreshCw, ArrowRight, CheckCircle2, XCircle,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 
 export default function ABEngine() {
+  const { t } = useSkin();
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [targetAudience, setTargetAudience] = useState("B2B freight brokers");

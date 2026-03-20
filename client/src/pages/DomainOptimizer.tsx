@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageGuide from "@/components/PageGuide";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   Shield, ShieldCheck, ShieldAlert, ShieldX,
   Activity, Zap, Play, Pause, RotateCcw,
@@ -41,6 +42,7 @@ function WarmupProgress({ phase }: { phase: number }) {
 }
 
 export default function DomainOptimizer() {
+  const { t } = useSkin();
   const [selectedDomain, setSelectedDomain] = useState<number | null>(null);
   const summary = trpc.domainOptimizer.summary.useQuery();
   const trend = trpc.domainOptimizer.trend.useQuery(

@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { getLoginUrl } from "@/const";
 import { Zap, Eye, EyeOff, LogIn } from "lucide-react";
 
 export default function Login() {
@@ -25,6 +24,7 @@ export default function Login() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ username, password, rememberMe }),
       });
       const data = await res.json();
@@ -35,7 +35,7 @@ export default function Login() {
       }
       // Session cookie is set by the server — redirect to dashboard
       window.location.href = "/dashboard";
-    } catch (err) {
+    } catch {
       setError("Network error. Please try again.");
       setLoading(false);
     }
@@ -172,19 +172,6 @@ export default function Login() {
                 Sign up for free
               </button>
             </p>
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-slate-700/50">
-            <p className="text-xs text-center text-slate-500 mb-3">
-              Platform administrators can also sign in with
-            </p>
-            <Button
-              variant="outline"
-              className="w-full border-slate-600/50 text-slate-300 hover:bg-slate-800/50 hover:text-white"
-              onClick={() => { window.location.href = getLoginUrl(); }}
-            >
-              Sign in with Manus OAuth
-            </Button>
           </div>
         </CardContent>
       </Card>

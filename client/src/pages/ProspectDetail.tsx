@@ -17,8 +17,10 @@ import { useState } from "react";
 import { useLocation, useParams } from "wouter";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function ProspectDetail() {
+  const { t } = useSkin();
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
   const [, navigate] = useLocation();
@@ -231,7 +233,7 @@ export default function ProspectDetail() {
 
           {p.notes && (
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Notes</CardTitle></CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-sm">{t("notes")}</CardTitle></CardHeader>
               <CardContent><p className="text-sm text-muted-foreground whitespace-pre-wrap">{p.notes}</p></CardContent>
             </Card>
           )}

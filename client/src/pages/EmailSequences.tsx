@@ -11,8 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Plus, Mail, Play, Pause, Trash2, Edit, Users, Clock, Sparkles, ChevronDown, ChevronRight, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function EmailSequences() {
+  const { t } = useSkin();
   const utils = trpc.useUtils();
   const { data: sequences, isLoading } = trpc.emailSequences.list.useQuery();
   const [selected, setSelected] = useState<any>(null);

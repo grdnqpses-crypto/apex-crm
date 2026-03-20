@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   Package, Plus, Search, Shield, ShieldCheck, ShieldAlert, FileCheck,
   Truck, MapPin, Clock, DollarSign, AlertTriangle, CheckCircle2,
@@ -27,6 +28,7 @@ const statusColors: Record<string, string> = {
 const complianceColor = (score: number) => score >= 80 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-red-400";
 
 export default function CarrierPackets() {
+  const { t } = useSkin();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [showCreate, setShowCreate] = useState(false);

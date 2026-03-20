@@ -4,8 +4,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Mail, Truck, Brain, CheckCircle, Clock, ArrowRight } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function OrderEntry() {
+  const { t } = useSkin();
   const emails = trpc.orderEntry.list.useQuery();
   const convertToLoad = trpc.orderEntry.convertToLoad.useMutation({ onSuccess: () => { emails.refetch(); toast.success("Load created from email"); } });
 

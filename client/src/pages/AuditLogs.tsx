@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Shield, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSkin } from "@/contexts/SkinContext";
 
 const ACTION_COLORS: Record<string, string> = {
   create: "bg-green-100 text-green-800",
@@ -18,6 +19,7 @@ const ACTION_COLORS: Record<string, string> = {
 };
 
 export default function AuditLogs() {
+  const { t } = useSkin();
   const [entityType, setEntityType] = useState<string>("");
   const [action, setAction] = useState<string>("");
   const [offset, setOffset] = useState(0);
@@ -49,9 +51,9 @@ export default function AuditLogs() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All entities</SelectItem>
-              <SelectItem value="contacts">Contacts</SelectItem>
-              <SelectItem value="deals">Deals</SelectItem>
-              <SelectItem value="companies">Companies</SelectItem>
+              <SelectItem value="contacts">{t("contacts")}</SelectItem>
+              <SelectItem value="deals">{t("deals")}</SelectItem>
+              <SelectItem value="companies">{t("companies")}</SelectItem>
               <SelectItem value="company">Company</SelectItem>
             </SelectContent>
           </Select>

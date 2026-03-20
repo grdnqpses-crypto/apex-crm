@@ -8,8 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skull, AlertTriangle, Clock, DollarSign, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function RottenDeals() {
+  const { t } = useSkin();
   const [thresholdDays, setThresholdDays] = useState(14);
 
   const { data: rottenDeals, isLoading, refetch } = trpc.rottenDeals.list.useQuery({

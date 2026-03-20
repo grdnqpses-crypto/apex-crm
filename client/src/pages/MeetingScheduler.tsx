@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Calendar, Clock, Link, Plus, Copy, Users, Video, Phone, MapPin, Trash2, CheckCircle } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useSkin } from "@/contexts/SkinContext";
 
 const MEETING_ICONS: Record<string, React.ElementType> = {
   video: Video,
@@ -20,6 +21,7 @@ const MEETING_ICONS: Record<string, React.ElementType> = {
 };
 
 export default function MeetingScheduler() {
+  const { t } = useSkin();
   const [showCreateType, setShowCreateType] = useState(false);
   const [form, setForm] = useState({
     name: "",

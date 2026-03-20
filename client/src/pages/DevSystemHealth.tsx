@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Activity, Database, Server, Clock, Cpu, HardDrive, RefreshCw, Users, Building2, Mail, Target, Zap } from "lucide-react";
 import PageGuide from "@/components/PageGuide";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function DevSystemHealth() {
+  const { t } = useSkin();
   const { data: stats, isLoading: statsLoading, refetch: refetchStats } = trpc.devTools.systemStats.useQuery();
   const { data: serverInfo, isLoading: serverLoading, refetch: refetchServer } = trpc.devTools.serverInfo.useQuery();
   const { data: tableCounts, isLoading: tablesLoading, refetch: refetchTables } = trpc.devTools.tableRowCounts.useQuery();

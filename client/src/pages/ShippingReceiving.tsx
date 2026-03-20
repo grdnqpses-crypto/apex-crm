@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, PackageOpen, Plus, Search, Truck, CheckCircle2, Clock, AlertTriangle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSkin } from "@/contexts/SkinContext";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   pending:            { label: "Pending",           color: "bg-gray-500/10 text-gray-500 border-gray-500/20",       icon: Clock },
@@ -60,6 +61,7 @@ const emptyForm: NewShipment = {
 };
 
 export default function ShippingReceiving() {
+  const { t } = useSkin();
   const [activeTab, setActiveTab] = useState<"all" | "inbound" | "outbound">("all");
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
@@ -323,7 +325,7 @@ export default function ShippingReceiving() {
               />
             </div>
             <div className="col-span-2">
-              <Label>Notes</Label>
+              <Label>{t("notes")}</Label>
               <Input
                 placeholder="Special handling instructions, notes..."
                 value={form.shipNotes}

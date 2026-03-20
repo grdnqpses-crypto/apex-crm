@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Filter, Plus, Trash2, Share2, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,7 @@ import {
 const ENTITY_TYPES = ["contacts", "deals", "companies", "leads"];
 
 export default function SmartViews() {
+  const { t } = useSkin();
   const [entityType, setEntityType] = useState("contacts");
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");

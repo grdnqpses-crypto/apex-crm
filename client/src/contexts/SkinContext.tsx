@@ -52,6 +52,17 @@ export interface SkinConfig {
   navItems: NavItem[];
 }
 
+// Google Fonts URL for each skin (null = use system font, no load needed)
+const SKIN_FONTS: Record<SkinId, string | null> = {
+  apex: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
+  hubspot: "https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@400;500;600;700;800&display=swap",
+  salesforce: null, // Salesforce Sans is proprietary; Arial fallback is fine
+  pipedrive: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
+  zoho: "https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap",
+  gohighlevel: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
+  close: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
+};
+
 const SKINS: Record<SkinId, SkinConfig> = {
   apex: {
     id: "apex",
@@ -348,6 +359,22 @@ export function SkinProvider({ children }: { children: ReactNode }) {
     setMigratedFrom(null);
     graduateMutation.mutate();
   };
+
+  // Dynamically load the correct Google Font for the active skin
+  useEffect(() => {
+    const fontUrl = SKIN_FONTS[skinId];
+    const linkId = "apex-skin-font";
+    // Remove any previously injected skin font
+    const existing = document.getElementById(linkId);
+    if (existing) existing.remove();
+    if (fontUrl) {
+      const link = document.createElement("link");
+      link.id = linkId;
+      link.rel = "stylesheet";
+      link.href = fontUrl;
+      document.head.appendChild(link);
+    }
+  }, [skinId]);
 
   // Apply CSS variables — bridge skin config to Tailwind 4 tokens so every
   // bg-primary, text-foreground, bg-background, font-sans, rounded-* class

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   Zap, TrendingUp, Phone, Mail, Truck, DollarSign, AlertTriangle,
   CheckCircle, Clock, Brain, Target, ArrowRight, Rocket, Shield,
@@ -50,6 +51,7 @@ function ActionCard({ title, description, icon: Icon, color, priority, action, a
 }
 
 export default function CommandCenter() {
+  const { t } = useSkin();
   const [, navigate] = useLocation();
   const deals = trpc.deals.list.useQuery();
   const contacts = trpc.contacts.list.useQuery({ limit: 5 });

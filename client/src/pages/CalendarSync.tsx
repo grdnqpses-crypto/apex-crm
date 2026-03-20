@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Calendar, CheckCircle, XCircle, Plug, Trash2, RefreshCw, Plus, Clock } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useSkin } from "@/contexts/SkinContext";
 
 const PROVIDERS = [
   { key: "google", label: "Google Calendar", logo: "🗓️", description: "Sync meetings and events from Google Calendar" },
@@ -19,6 +20,7 @@ const PROVIDERS = [
 ];
 
 export default function CalendarSync() {
+  const { t } = useSkin();
   const [showConnect, setShowConnect] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState("google");
   const [calendarUrl, setCalendarUrl] = useState("");

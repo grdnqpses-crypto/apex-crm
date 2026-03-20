@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Paintbrush, Globe, Image, Type, Palette, Save } from "lucide-react";
 import { FeatureGate } from "@/components/FeatureGate";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function WhiteLabel() {
+  const { t } = useSkin();
   const config = trpc.whiteLabel.get.useQuery({ companyId: 1 });
   const updateConfig = trpc.whiteLabel.save.useMutation({ onSuccess: () => { config.refetch(); toast.success("Branding updated"); } });
   const [form, setForm] = useState<any>({});

@@ -14,6 +14,7 @@ import {
 import { useState } from "react";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { useSkin } from "@/contexts/SkinContext";
 
 
 const serviceOptions = [
@@ -34,6 +35,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function Integrations() {
+  const { t } = useSkin();
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ service: "apollo", apiKey: "", apiSecret: "", baseUrl: "" });
 

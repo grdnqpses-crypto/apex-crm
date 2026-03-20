@@ -10,8 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { MessageCircle, Send, Plus, Sparkles, Phone, Clock, CheckCheck } from "lucide-react";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function WhatsAppMessaging() {
+  const { t } = useSkin();
   const utils = trpc.useUtils();
   const { data: conversations, isLoading } = trpc.whatsapp.getConversations.useQuery();
   const { data: templates } = trpc.whatsapp.getTemplates.useQuery();
@@ -82,7 +84,7 @@ export default function WhatsAppMessaging() {
         <div className="grid grid-cols-3 gap-6">
           {/* Conversations List */}
           <div className="col-span-1 space-y-2">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Conversations</h2>
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("inbox")}</h2>
             {isLoading && <div className="text-center py-4 text-muted-foreground text-sm">Loading...</div>}
             {!isLoading && convList.length === 0 && (
               <Card className="border-dashed">

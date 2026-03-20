@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Share2, Plus, Sparkles, Trash2, Send, Calendar, BarChart2, Link, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 
 const PLATFORMS = ["linkedin", "twitter", "facebook", "instagram"] as const;
 type Platform = "linkedin" | "facebook" | "instagram";
@@ -21,6 +22,7 @@ const PLATFORM_COLORS: Record<string, string> = {
 };
 
 export default function SocialScheduler() {
+  const { t } = useSkin();
   const utils = trpc.useUtils();
   const { data: posts, isLoading } = trpc.socialScheduler.getPosts.useQuery({ status: 'all', limit: 50 });
   const { data: accounts } = trpc.socialScheduler.getAccounts.useQuery();

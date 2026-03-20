@@ -13,9 +13,11 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { useSkin } from "@/contexts/SkinContext";
 
 
 export default function BattleCards() {
+  const { t } = useSkin();
   const [, navigate] = useLocation();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showArchived, setShowArchived] = useState(false);

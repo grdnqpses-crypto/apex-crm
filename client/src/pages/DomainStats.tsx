@@ -6,9 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, Globe, Mail, AlertTriangle, CheckCircle2, TrendingUp, TrendingDown, Activity } from "lucide-react";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { useSkin } from "@/contexts/SkinContext";
 
 
 export default function DomainStats() {
+  const { t } = useSkin();
   const [tab, setTab] = useState("domains");
   const domainAgg = trpc.domainStats.aggregated.useQuery();
   const providerBreakdown = trpc.domainStats.providerBreakdown.useQuery({ days: 30 });

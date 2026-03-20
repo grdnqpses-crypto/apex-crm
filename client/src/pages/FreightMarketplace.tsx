@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Package, Truck, MapPin, DollarSign, FileText, Clock, CheckCircle, AlertCircle, Zap, TrendingUp } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 const STATUS_COLORS: Record<string, string> = {
   posted: "bg-crm-workflow/20 text-crm-workflow",
@@ -23,6 +24,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function FreightMarketplace() {
+  const { t } = useSkin();
   const [showPostLoad, setShowPostLoad] = useState(false);
   const [selectedLoad, setSelectedLoad] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("");

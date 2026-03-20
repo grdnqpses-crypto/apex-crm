@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   Bell, BellRing, Check, Clock, AlertTriangle, DollarSign,
   Calendar, Users, Target, Sparkles, Trash2, CheckCircle2,
@@ -32,6 +33,7 @@ const typeIcons: Record<string, typeof Bell> = {
 };
 
 export default function SmartNotifications() {
+  const { t } = useSkin();
   const [filter, setFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
 

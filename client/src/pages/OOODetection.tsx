@@ -9,8 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Search, Calendar, Mail, Clock, CheckCircle, Loader2, Plane, Plus } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function OOODetection() {
+  const { t } = useSkin();
   const utils = trpc.useUtils();
 
   const { data, isLoading } = trpc.oooDetection.list.useQuery({});

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   Activity, AlertTriangle, CheckCircle2, XCircle, RefreshCw,
   Zap, Database, Server, HardDrive, Brain, Shield, Clock,
@@ -43,6 +44,7 @@ const SEVERITY_COLORS: Record<string, string> = {
 };
 
 export default function SystemHealth() {
+  const { t } = useSkin();
   const [expandedEvent, setExpandedEvent] = useState<number | null>(null);
   const [isRunningCheck, setIsRunningCheck] = useState(false);
 

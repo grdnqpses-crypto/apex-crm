@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSkin } from "@/contexts/SkinContext";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   paid: { label: "Paid", color: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
@@ -28,6 +29,7 @@ const SUB_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 export default function BillingHistory() {
+  const { t } = useSkin();
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const { data, isLoading, refetch } = trpc.billing.invoices.useQuery(undefined, {

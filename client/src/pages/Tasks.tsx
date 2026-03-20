@@ -17,6 +17,7 @@ import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { useSkin } from "@/contexts/SkinContext";
 
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -32,6 +33,7 @@ const TYPE_ICONS: Record<string, any> = {
 const QUEUES = ["Prospecting Calls", "Customer Renewals", "Carrier Setup", "Follow-ups", "Onboarding", "General"];
 
 export default function Tasks() {
+  const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -105,7 +107,7 @@ export default function Tasks() {
       <PageGuide {...pageGuides.tasks} />
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Tasks</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t("tasks")}</h1>
           <p className="text-xs text-muted-foreground/70 mt-0.5 mb-1">Stay on top of follow-ups, calls, and to-dos. Link tasks to contacts or companies to keep everything connected.</p>
           <p className="text-sm text-muted-foreground">
             {pendingCount} pending · {completedCount} completed · {data?.total ?? 0} total

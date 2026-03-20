@@ -14,6 +14,7 @@ import {
   AlertCircle, CheckCircle2, Clock
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useSkin } from "@/contexts/SkinContext";
 
 function formatPrice(cents: number) {
   return `$${(cents / 100).toFixed(0)}`;
@@ -43,6 +44,7 @@ function SubscriptionBadge({ status, tier }: { status: string; tier: string }) {
 }
 
 export default function Billing() {
+  const { t } = useSkin();
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");

@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 import { motion, useScroll, useTransform, AnimatePresence, useInView } from "framer-motion";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   ArrowRight, Check, ChevronDown, Zap, Shield, Brain, Mail,
   BarChart3, Users, Target, Globe, Lock, Rocket, Star,
@@ -227,7 +228,9 @@ const FAQS = [
 ];
 
 // ─── Main component ───────────────────────────────────────────────────────
-export default function MarketingHome({ loginOpen: initialLoginOpen = false }: { loginOpen?: boolean } = {}) {
+export default function MarketingHome({
+  loginOpen: initialLoginOpen = false }: { loginOpen?: boolean } = {}) {
+  const { t } = useSkin();
   const [annual, setAnnual] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [scrolled, setScrolled] = useState(false);

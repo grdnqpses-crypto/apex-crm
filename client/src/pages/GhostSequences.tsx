@@ -17,6 +17,7 @@ import { Link } from "wouter";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
 import { FeatureGate } from "@/components/FeatureGate";
+import { useSkin } from "@/contexts/SkinContext";
 
 
 const statusBadge: Record<string, string> = {
@@ -27,6 +28,7 @@ const statusBadge: Record<string, string> = {
 };
 
 export default function GhostSequences() {
+  const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ name: "", description: "" });
   const [expandedId, setExpandedId] = useState<number | null>(null);

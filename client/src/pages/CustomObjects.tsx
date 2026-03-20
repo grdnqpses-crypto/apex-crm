@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Plus, Database, Trash2, Edit, Layers, ChevronRight } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useSkin } from "@/contexts/SkinContext";
 
 const FIELD_TYPES = [
   { value: "text", label: "Text" },
@@ -27,6 +28,7 @@ const FIELD_TYPES = [
 ];
 
 export default function CustomObjects() {
+  const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
   const [showAddField, setShowAddField] = useState(false);
   const [selectedObjectId, setSelectedObjectId] = useState<number | null>(null);

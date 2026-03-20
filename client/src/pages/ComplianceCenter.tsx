@@ -12,9 +12,11 @@ import { Shield, ShieldCheck, ShieldAlert, AlertTriangle, CheckCircle2, XCircle,
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
 import { FeatureGate } from "@/components/FeatureGate";
+import { useSkin } from "@/contexts/SkinContext";
 
 
 export default function ComplianceCenter() {
+  const { t } = useSkin();
   const [tab, setTab] = useState("overview");
   const stats = trpc.compliance.stats.useQuery();
   const audits = trpc.compliance.audits.useQuery({ limit: 20 });

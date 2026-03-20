@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, RefreshCw, TrendingUp, AlertTriangle, DollarSign, Clock, BarChart2, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function PipelineInspection() {
+  const { t } = useSkin();
   const utils = trpc.useUtils();
   const [selectedPipeline, setSelectedPipeline] = useState<string>("");
   const [running, setRunning] = useState(false);

@@ -17,6 +17,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { useSkin } from "@/contexts/SkinContext";
 
 const signalTypeConfig: Record<string, { label: string; color: string }> = {
   job_change: { label: "Job Change", color: "text-blue-400" },
@@ -50,6 +51,7 @@ const emptyForm = {
 };
 
 export default function Signals() {
+  const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [statusFilter, setStatusFilter] = useState("all");

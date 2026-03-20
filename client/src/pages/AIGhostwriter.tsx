@@ -7,11 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   PenTool, Sparkles, Send, Reply, Copy, RefreshCw, Mail, MessageSquare
 } from "lucide-react";
 
 export default function AIGhostwriter() {
+  const { t } = useSkin();
   const [draftForm, setDraftForm] = useState({ contactId: 0, dealId: 0, purpose: "follow_up", tone: "professional", context: "" });
   const [replyForm, setReplyForm] = useState({ originalEmail: "", contactId: 0, tone: "professional", intent: "continue" });
   const [generatedDraft, setGeneratedDraft] = useState<any>(null);

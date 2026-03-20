@@ -8,9 +8,11 @@ import { toast } from "sonner";
 import { Settings, Save, Building2, Mail, Gauge, Shield, Loader2 } from "lucide-react";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { useSkin } from "@/contexts/SkinContext";
 
 
 export default function SenderSettings() {
+  const { t } = useSkin();
   const settings = trpc.senderSettings.get.useQuery();
   const upsert = trpc.senderSettings.upsert.useMutation({ onSuccess: () => toast.success("Sender settings saved") });
 

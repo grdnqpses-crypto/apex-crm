@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   Crown, Zap, CheckCircle, XCircle, Star, Rocket, BarChart3, Brain,
   Shield, Users, Plus, Lock, Gift, TrendingDown, AlertCircle, Sparkles, Mic
@@ -218,6 +219,7 @@ const featureTypeConfig = {
 };
 
 export default function Subscription() {
+  const { t } = useSkin();
   const sub = trpc.subscriptions.current.useQuery({ companyId: 1 });
   const selectPlan = trpc.subscriptions.activate.useMutation({
     onSuccess: () => {

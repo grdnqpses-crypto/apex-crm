@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { toast } from "sonner";
 import { Plus, BarChart2, Download, Share2, Trash2, MoreHorizontal, Play, Table, PieChart, TrendingUp } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useSkin } from "@/contexts/SkinContext";
 
 const REPORT_TYPES = [
   { value: "contacts", label: "Contacts", icon: "👥" },
@@ -32,6 +33,7 @@ const COLUMNS_BY_TYPE: Record<string, string[]> = {
 };
 
 export default function ReportBuilder() {
+  const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({
     name: "",

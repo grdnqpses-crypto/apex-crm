@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, Star, MessageSquare, TrendingUp, Wand2, Loader2, CheckCircle, AlertCircle, Minus } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 const PLATFORMS = ["Google", "Yelp", "Trustpilot", "G2", "Capterra", "Facebook", "Apple App Store", "Google Play", "Other"];
 
@@ -34,6 +35,7 @@ function StarRating({ rating }: { rating: number | null }) {
 }
 
 export default function ReputationManagement() {
+  const { t } = useSkin();
   const utils = trpc.useUtils();
 
   const { data, isLoading } = trpc.reputation.list.useQuery({});

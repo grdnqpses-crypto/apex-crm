@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ShieldCheck, Plus, AlertTriangle, CheckCircle, XCircle, Loader2, Search, Truck } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 const VET_COLORS: Record<string, string> = {
   pending: "bg-gray-500/20 text-gray-400", approved: "bg-green-500/20 text-green-400",
@@ -14,6 +15,7 @@ const VET_COLORS: Record<string, string> = {
 };
 
 export default function CarrierVetting() {
+  const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState<any>({});
   const carriers = trpc.carrierVetting.list.useQuery();

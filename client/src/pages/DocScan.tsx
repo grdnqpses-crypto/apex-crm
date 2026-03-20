@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   FileSearch, Upload, FileText, FileCheck, AlertCircle, Clock,
   CheckCircle2, XCircle, Eye, Sparkles, Download, Filter
@@ -33,6 +34,7 @@ const extractionStatusColors: Record<string, string> = {
 };
 
 export default function DocScan() {
+  const { t } = useSkin();
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [selectedDoc, setSelectedDoc] = useState<number | null>(null);

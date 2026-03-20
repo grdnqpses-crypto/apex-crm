@@ -9,6 +9,7 @@ import {
   HardHat, Building2, DollarSign, Code2, Building, CheckCircle2, ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSkin } from "@/contexts/SkinContext";
 
 const ICON_MAP: Record<string, React.ElementType> = {
   Truck, Factory, Warehouse, ShoppingCart, Briefcase, HeartPulse,
@@ -16,7 +17,9 @@ const ICON_MAP: Record<string, React.ElementType> = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function BusinessCategorySelector({ onComplete }: { onComplete?: () => void } & Record<string, any>) {
+export default function BusinessCategorySelector({
+  onComplete }: { onComplete?: () => void } & Record<string, any>) {
+  const { t } = useSkin();
   const { data: categories, isLoading } = trpc.businessCategory.list.useQuery();
   const { data: myCategory } = trpc.businessCategory.myCategory.useQuery();
   const updateCategory = trpc.businessCategory.update.useMutation({

@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Plus, Package, Pencil, Trash2, Search } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 type Product = {
   id: number;
@@ -24,6 +25,7 @@ type Product = {
 };
 
 export default function ProductCatalog() {
+  const { t } = useSkin();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);

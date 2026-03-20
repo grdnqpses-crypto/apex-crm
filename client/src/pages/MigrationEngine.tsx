@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ArrowRightLeft, Upload, CheckCircle, Clock, AlertCircle, Zap } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 const PLATFORMS = [
   { id: "hubspot", name: "HubSpot", desc: "Contacts, companies, deals, emails", color: "bg-orange-500/10 text-orange-400" },
@@ -21,6 +22,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function MigrationEngine() {
+  const { t } = useSkin();
   const jobs = trpc.migration.listJobs.useQuery();
   const startMigration = trpc.migration.startMigration.useMutation({ onSuccess: () => { jobs.refetch(); toast.success("Migration started!"); } });
 

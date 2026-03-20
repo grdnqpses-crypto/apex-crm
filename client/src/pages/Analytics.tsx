@@ -5,11 +5,13 @@ import { BarChart3, TrendingUp, TrendingDown, Mail, Users, DollarSign, Target, A
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area } from "recharts";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { useSkin } from "@/contexts/SkinContext";
 
 
 const CHART_COLORS = ["#6366f1", "#8b5cf6", "#a855f7", "#d946ef", "#22c55e", "#f59e0b", "#ef4444", "#06b6d4"];
 
 export default function Analytics() {
+  const { t } = useSkin();
   // Core CRM stats
   const { data: stats } = trpc.dashboard.stats.useQuery();
   // Paradigm Engine stats

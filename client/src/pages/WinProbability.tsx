@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   Target, TrendingUp, TrendingDown, Minus, AlertTriangle,
   CheckCircle2, BarChart3, Sparkles, RefreshCw, DollarSign,
@@ -19,6 +20,7 @@ const trendIcon = (t: string) => t === 'up' ? TrendingUp : t === 'down' ? Trendi
 const trendColor = (t: string) => t === 'up' ? "text-emerald-400" : t === 'down' ? "text-red-400" : "text-muted-foreground";
 
 export default function WinProbability() {
+  const { t } = useSkin();
   const [selectedDeal, setSelectedDeal] = useState<number | null>(null);
 
   const atRisk = trpc.dealScores.atRisk.useQuery();

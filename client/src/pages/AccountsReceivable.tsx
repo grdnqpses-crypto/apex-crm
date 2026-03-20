@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { DollarSign, Plus, FileText, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSkin } from "@/contexts/SkinContext";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   draft:   { label: "Draft",   color: "bg-gray-500/10 text-gray-500 border-gray-500/20" },
@@ -24,6 +25,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 const fmt = (cents: number) => `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
 
 export default function AccountsReceivable() {
+  const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({
     arInvoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
@@ -228,7 +230,7 @@ export default function AccountsReceivable() {
                 </Select>
               </div>
               <div className="col-span-2">
-                <Label>Notes</Label>
+                <Label>{t("notes")}</Label>
                 <Input placeholder="Payment instructions, notes..." value={form.arNotes} onChange={e => setForm(f => ({ ...f, arNotes: e.target.value }))} className="mt-1" />
               </div>
             </div>

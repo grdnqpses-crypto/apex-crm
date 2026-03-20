@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   Upload, FileText, ArrowRight, Check, AlertTriangle,
   Download, Database, Users, Building2, Kanban,
@@ -621,6 +622,7 @@ function ImportStep({ files, onComplete }: {
 
 // ─── Main HubSpot Import Page ───
 export default function HubSpotImport() {
+  const { t } = useSkin();
   const [step, setStep] = useState<"upload" | "map" | "import" | "done">("upload");
   const [files, setFiles] = useState<{ name: string; headers: string[]; rows: ParsedRecord[]; type: string }[]>([]);
 

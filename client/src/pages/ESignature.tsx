@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Plus, Send, XCircle, FileSignature, Loader2, Wand2, Users, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: React.ReactNode }> = {
   draft: { label: "Draft", variant: "secondary", icon: <Clock className="h-3 w-3" /> },
@@ -21,6 +22,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
 };
 
 export default function ESignature() {
+  const { t } = useSkin();
   const utils = trpc.useUtils();
 
   const { data, isLoading } = trpc.eSignature.listDocuments.useQuery({});

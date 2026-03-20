@@ -10,8 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Phone, Plus, Play, Pause, SkipForward, PhoneCall, PhoneOff, Clock, Users, Sparkles, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function PowerDialer() {
+  const { t } = useSkin();
   const utils = trpc.useUtils();
   const { data: sessions, isLoading } = trpc.powerDialer.getSessions.useQuery();
   const [showCreate, setShowCreate] = useState(false);

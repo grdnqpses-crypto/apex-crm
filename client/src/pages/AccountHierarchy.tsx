@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Building2, ChevronRight, ChevronDown, Users, Link2 } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 function CompanyNode({ company, depth = 0 }: { company: { id: number; name: string | null; industry?: string | null; [key: string]: unknown }; depth?: number }) {
   const [expanded, setExpanded] = useState(false);
@@ -43,6 +44,7 @@ function CompanyNode({ company, depth = 0 }: { company: { id: number; name: stri
 }
 
 export default function AccountHierarchy() {
+  const { t } = useSkin();
   const { data: rootCompanies, isLoading } = trpc.accountHierarchy.getRoots.useQuery();
 
   return (

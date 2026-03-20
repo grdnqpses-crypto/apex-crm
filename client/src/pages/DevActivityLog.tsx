@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollText, RefreshCw, Mail, Phone, FileText, MessageSquare, Calendar } from "lucide-react";
 import PageGuide from "@/components/PageGuide";
+import { useSkin } from "@/contexts/SkinContext";
 
 const typeIcons: Record<string, any> = {
   email: Mail,
@@ -23,6 +24,7 @@ const typeColors: Record<string, string> = {
 };
 
 export default function DevActivityLog() {
+  const { t } = useSkin();
   const { data: activities, isLoading, refetch } = trpc.devTools.activityLog.useQuery({ limit: 100 });
 
   return (

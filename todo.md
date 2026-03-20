@@ -2006,3 +2006,11 @@
 - [x] GoHighLevel live API migration — contacts, opportunities, activities
 - [x] Close CRM live API migration — contacts, leads, opportunities, activities
 - [x] Write vitest tests for all live migration paths (13/13 passing)
+
+## Phase 66: Single Login Entry Point (Mar 20, 2026)
+- [ ] Implement email+password signup/login/forgot-password on MarketingHome public page
+- [ ] Wire new auth endpoints in server (register, login, forgot-password, reset-password)
+- [ ] Remove all Manus OAuth redirect links from the app (getLoginUrl calls)
+- [ ] Ensure all "Login" / "Sign Up" buttons throughout the app point to MarketingHome
+- [ ] Protect all dashboard routes — redirect unauthenticated users to MarketingHome
+- [ ] Test full auth flow end-to-end

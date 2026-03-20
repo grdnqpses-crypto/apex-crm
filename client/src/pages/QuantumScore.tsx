@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Brain, Zap, Target, TrendingUp, Clock, MessageSquare, Star, ChevronRight, Loader2, Sparkles } from "lucide-react";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { useSkin } from "@/contexts/SkinContext";
 
 
 const GRADE_COLORS: Record<string, string> = {
@@ -15,6 +16,7 @@ const GRADE_COLORS: Record<string, string> = {
 };
 
 export default function QuantumScore() {
+  const { t } = useSkin();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const prospects = trpc.prospects.list.useQuery({ limit: 50 });
   const selectedScore = trpc.quantumScore.get.useQuery({ prospectId: selectedId! }, { enabled: !!selectedId });

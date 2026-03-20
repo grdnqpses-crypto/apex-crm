@@ -13,6 +13,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { useSkin } from "@/contexts/SkinContext";
 
 
 const STATUS_COLORS: Record<string, string> = {
@@ -22,6 +23,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function ABTests() {
+  const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
   const utils = trpc.useUtils();
 

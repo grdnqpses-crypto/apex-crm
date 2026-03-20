@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   Database, Search, UserPlus, Building2, Mail, Phone, Globe,
   MapPin, ChevronLeft, ChevronRight, SlidersHorizontal,
@@ -40,6 +41,7 @@ const RESULT_COUNTS = [5, 10, 15, 20, 25, 50];
 const PAGE_SIZES = [5, 10, 20, 25];
 
 export default function B2BDatabase() {
+  const { t } = useSkin();
   const [query, setQuery] = useState("");
   const [state, setState] = useState("All States");
   const [industry, setIndustry] = useState("All Industries");

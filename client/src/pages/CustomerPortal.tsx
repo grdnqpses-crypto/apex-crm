@@ -7,8 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Globe, Plus, Users, FileText, Eye, Shield } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function CustomerPortal() {
+  const { t } = useSkin();
   const [showGrant, setShowGrant] = useState(false);
   const [form, setForm] = useState<any>({});
   const access = trpc.portal.listAccess.useQuery();

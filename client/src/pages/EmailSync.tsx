@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Mail, CheckCircle, XCircle, Plug, Trash2, Plus, Inbox, Send, Copy } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useSkin } from "@/contexts/SkinContext";
 
 const PROVIDERS = [
   { key: "gmail", label: "Gmail", logo: "📧", description: "Two-way sync with Gmail inbox" },
@@ -17,6 +18,7 @@ const PROVIDERS = [
 ];
 
 export default function EmailSync() {
+  const { t } = useSkin();
   const [showConnect, setShowConnect] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<"gmail" | "outlook">("gmail");
   const [emailAddress, setEmailAddress] = useState("");

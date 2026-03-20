@@ -11,11 +11,13 @@ import { toast } from "sonner";
 import { Ban, Plus, Trash2, Search, ShieldAlert, Mail, AlertTriangle, Loader2 } from "lucide-react";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { useSkin } from "@/contexts/SkinContext";
 
 
 const REASONS = ["bounce_hard", "bounce_soft", "complaint", "unsubscribe", "manual", "invalid_email", "role_account", "spam_trap"];
 
 export default function SuppressionList() {
+  const { t } = useSkin();
   const [search, setSearch] = useState("");
   const [filterReason, setFilterReason] = useState("all");
   const [open, setOpen] = useState(false);

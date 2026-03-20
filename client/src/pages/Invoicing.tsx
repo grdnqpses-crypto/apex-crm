@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Receipt, Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Send } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-gray-500/20 text-gray-400", sent: "bg-blue-500/20 text-blue-400",
@@ -16,6 +17,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function Invoicing() {
+  const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState<any>({});
   const invoices = trpc.invoicing.list.useQuery();
@@ -40,7 +42,7 @@ export default function Invoicing() {
                 <div><label className="text-sm font-medium">Total ($)</label><Input type="number" value={form.totalAmount || ""} onChange={e => setForm({ ...form, totalAmount: e.target.value })} /></div>
               </div>
               <div><label className="text-sm font-medium">Due Date</label><Input type="date" value={form.dueDate || ""} onChange={e => setForm({ ...form, dueDate: e.target.value })} /></div>
-              <div><label className="text-sm font-medium">Notes</label><Input value={form.notes || ""} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
+              <div><label className="text-sm font-medium">{t("notes")}</label><Input value={form.notes || ""} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
             </div>
             <Button className="w-full mt-4" onClick={() => createInvoice.mutate({ totalAmount: Number(form.totalAmount || 0), notes: form.notes })} disabled={createInvoice.isPending}>{createInvoice.isPending ? "Creating..." : "Create Invoice"}</Button>
           </DialogContent>

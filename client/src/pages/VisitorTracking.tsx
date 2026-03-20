@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   Eye, Building2, Globe, UserPlus, Clock, Code, Copy, Trash2,
   CheckCircle, AlertCircle, MonitorSmartphone, Sparkles, Loader2,
@@ -186,6 +187,7 @@ function CredentialsDialog({
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 export default function VisitorTracking() {
+  const { t } = useSkin();
   const [url, setUrl] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [activeStep, setActiveStep] = useState(-1);

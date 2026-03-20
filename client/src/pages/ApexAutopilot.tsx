@@ -4,8 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { Brain, TrendingUp, Layers, Zap, ArrowRight, DollarSign, Truck, BarChart3, Target } from "lucide-react";
 import { FeatureGate } from "@/components/FeatureGate";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function ApexAutopilot() {
+  const { t } = useSkin();
   const { data: lanes, isLoading: lanesLoading } = trpc.autopilot.lanes.useQuery();
   const { data: consolidations, isLoading: consLoading } = trpc.autopilot.consolidations.useQuery();
   const { data: stats } = trpc.marketplace.stats.useQuery();

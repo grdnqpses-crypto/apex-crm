@@ -9,6 +9,7 @@ import {
   RefreshCw, ArrowUpRight, Clock, CheckCircle2, Zap, BarChart3
 } from "lucide-react";
 import { FeatureGate } from "@/components/FeatureGate";
+import { useSkin } from "@/contexts/SkinContext";
 
 const priorityColors: Record<string, string> = {
   critical: "bg-red-500/20 text-red-400 border-red-500/30",
@@ -26,6 +27,7 @@ const actionTypeIcons: Record<string, typeof Zap> = {
 };
 
 export default function RevenueAutopilot() {
+  const { t } = useSkin();
   const [isGenerating, setIsGenerating] = useState(false);
 
   const briefings = trpc.revenueBriefings.list.useQuery();

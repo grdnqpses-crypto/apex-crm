@@ -21,6 +21,7 @@ import {
   Search, Check, AlertTriangle, Info, Monitor
 } from "lucide-react";
 import { SkinQAPanel } from "@/components/SkinQAPanel";
+import { useSkin } from "@/contexts/SkinContext";
 
 // ─── Settings Navigation Structure (from SettingsPage.docx) ───
 const SETTINGS_SECTIONS = [
@@ -1254,6 +1255,7 @@ function ComingSoonPanel({ title, description }: { title: string; description: s
 
 // ─── Main Settings Page ───
 export default function SettingsPage() {
+  const { t } = useSkin();
   const [activeSection, setActiveSection] = useState("preferences");
   const [activeSubsection, setActiveSubsection] = useState("profile");
   const [searchQuery, setSearchQuery] = useState("");
@@ -1345,7 +1347,7 @@ export default function SettingsPage() {
         ]}
       />
 
-      <h1 className="text-3xl font-bold">Settings</h1>
+      <h1 className="text-3xl font-bold">{t("settings")}</h1>
 
       <div className="flex gap-6 min-h-[calc(100vh-220px)]">
         {/* Left Navigation */}

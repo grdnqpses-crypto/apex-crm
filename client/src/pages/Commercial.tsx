@@ -9,6 +9,7 @@ import {
   MessageSquare, TrendingUp, Clock, Heart,
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useSkin } from "@/contexts/SkinContext";
 
 /* ─────────────────────── Animated Counter ─────────────────────── */
 function AnimatedNumber({ target, duration = 2000, suffix = "" }: { target: number; duration?: number; suffix?: string }) {
@@ -130,6 +131,7 @@ function FeatureCard({ icon: Icon, title, desc, color }: { icon: React.ElementTy
 
 /* ─────────────────────── Main Commercial Page ─────────────────────── */
 export default function Commercial() {
+  const { t } = useSkin();
   const [, setLocation] = useLocation();
 
   return (

@@ -11,6 +11,7 @@ import {
 import { useLocation } from "wouter";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { useSkin } from "@/contexts/SkinContext";
 
 
 const stageConfig: Record<string, { color: string; bg: string }> = {
@@ -25,6 +26,7 @@ const stageConfig: Record<string, { color: string; bg: string }> = {
 };
 
 export default function ParadigmPulse() {
+  const { t } = useSkin();
   const [, navigate] = useLocation();
   const { data: stats, isLoading } = trpc.paradigm.stats.useQuery();
   const { data: hotLeads } = trpc.paradigm.hotLeads.useQuery();

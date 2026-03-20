@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Building2, Plus, Users, Globe, Mail, Phone, Trash2, Edit, Search } from "lucide-react";
 import PageGuide from "@/components/PageGuide";
+import { useSkin } from "@/contexts/SkinContext";
 
 const tierColors: Record<string, string> = {
   trial: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
@@ -26,6 +27,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function DevCompanies() {
+  const { t } = useSkin();
   const { data: companies, isLoading } = trpc.tenants.list.useQuery();
   const utils = trpc.useUtils();
   const [search, setSearch] = useState("");

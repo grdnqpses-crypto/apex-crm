@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, Star, Trash2, TrendingUp } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 const FIELDS = [
   { value: "jobTitle", label: "Job Title" },
@@ -32,6 +33,7 @@ const OPERATORS = [
 ];
 
 export default function LeadScoring() {
+  const { t } = useSkin();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ name: "", field: "", operator: "equals", value: "", points: "10", entityType: "contact" });
 

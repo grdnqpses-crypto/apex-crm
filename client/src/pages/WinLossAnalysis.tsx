@@ -4,8 +4,10 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, TrendingDown, BarChart3, DollarSign } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function WinLossAnalysis() {
+  const { t } = useSkin();
   const [days, setDays] = useState(90);
   const startDate = Date.now() - days * 86400000;
 

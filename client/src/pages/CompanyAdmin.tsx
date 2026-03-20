@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Users, UserPlus, Shield, ShieldCheck, UserCog, User, Mail, Settings, ToggleLeft, ToggleRight, CheckCircle, KeyRound, Eye, EyeOff } from "lucide-react";
 import PageGuide from "@/components/PageGuide";
+import { useSkin } from "@/contexts/SkinContext";
 
 const roleColors: Record<string, string> = {
   developer: "bg-red-500/10 text-red-400 border-red-500/20",
@@ -52,6 +53,7 @@ const roleIcons: Record<string, any> = {
 };
 
 export default function CompanyAdmin() {
+  const { t } = useSkin();
   const { user } = useAuth();
   const companyId = user?.tenantCompanyId;
   const isAdmin = user?.systemRole === "company_admin" || user?.systemRole === "developer";

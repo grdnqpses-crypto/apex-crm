@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Users, Search, Shield, ShieldCheck, UserCog, User, Building2, ToggleLeft, ToggleRight, Eye } from "lucide-react";
 import PageGuide from "@/components/PageGuide";
+import { useSkin } from "@/contexts/SkinContext";
 
 const roleIcons: Record<string, any> = {
   developer: Shield,
@@ -26,6 +27,7 @@ const roleColors: Record<string, string> = {
 };
 
 export default function DevUsers() {
+  const { t } = useSkin();
   const { data: allUsers, isLoading } = trpc.userManagement.allUsers.useQuery();
   const { data: companies } = trpc.tenants.list.useQuery();
   const utils = trpc.useUtils();

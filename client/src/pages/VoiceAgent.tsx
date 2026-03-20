@@ -17,6 +17,7 @@ import {
   MessageSquare, Calendar, TrendingUp, Mic, Bot, Settings
 } from "lucide-react";
 import { FeatureGate } from "@/components/FeatureGate";
+import { useSkin } from "@/contexts/SkinContext";
 
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -46,6 +47,7 @@ const sentimentIcons: Record<string, { icon: typeof TrendingUp; color: string }>
 };
 
 export default function VoiceAgent() {
+  const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<number | null>(null);
   const [newCampaign, setNewCampaign] = useState({ name: "", description: "", objective: "qualify_lead", voicePersona: "professional" });
@@ -164,7 +166,7 @@ export default function VoiceAgent() {
 
       <Tabs defaultValue="campaigns" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+          <TabsTrigger value="campaigns">{t("campaigns")}</TabsTrigger>
           <TabsTrigger value="calls">Call Log</TabsTrigger>
           <TabsTrigger value="scripts">Script Builder</TabsTrigger>
         </TabsList>

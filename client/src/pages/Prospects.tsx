@@ -19,6 +19,7 @@ import { useLocation } from "wouter";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
 import { FeatureGate } from "@/components/FeatureGate";
+import { useSkin } from "@/contexts/SkinContext";
 
 
 const stages = [
@@ -63,6 +64,7 @@ const emptyForm = {
 };
 
 export default function Prospects() {
+  const { t } = useSkin();
   const [, navigate] = useLocation();
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("all");
@@ -171,7 +173,7 @@ export default function Prospects() {
                 </Select>
               </div>
               <div className="col-span-2">
-                <Label className="text-xs">Notes</Label>
+                <Label className="text-xs">{t("notes")}</Label>
                 <Textarea value={form.notes} onChange={(e) => setForm(prev => ({ ...prev, notes: e.target.value }))} className="mt-1" rows={2} />
               </div>
             </div>

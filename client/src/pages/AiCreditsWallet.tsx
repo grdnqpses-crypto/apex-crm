@@ -18,8 +18,10 @@ import {
 } from "@/components/ui/table";
 import { trpc } from "@/lib/trpc";
 import { Zap, Coins, TrendingUp, Info, CheckCircle2, XCircle } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function AiCreditsWallet() {
+  const { t } = useSkin();
   const { data: balance, isLoading: balanceLoading } = trpc.aiCredits.myBalance.useQuery();
   const { data: transactions = [], isLoading: txLoading } = trpc.aiCredits.myTransactions.useQuery();
 

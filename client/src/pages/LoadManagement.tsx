@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Truck, Plus, MapPin, DollarSign, Clock, Package, ArrowRight, Filter, BarChart3 } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-gray-500/20 text-gray-400", posted: "bg-blue-500/20 text-blue-400",
@@ -18,6 +19,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function LoadManagement() {
+  const { t } = useSkin();
 
   const [showCreate, setShowCreate] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");

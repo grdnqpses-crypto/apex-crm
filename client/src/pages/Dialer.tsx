@@ -8,10 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Phone, PhoneCall, PhoneOff, PhoneMissed, Mic, MicOff, Volume2, VolumeX, Clock, User, Search, Settings, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { useSkin } from "@/contexts/SkinContext";
 
 const DIAL_KEYS = ["1","2","3","4","5","6","7","8","9","*","0","#"];
 
 export default function Dialer() {
+  const { t } = useSkin();
   const [dialNumber, setDialNumber] = useState("");
   const [callStatus, setCallStatus] = useState<"idle"|"calling"|"connected"|"ended">("idle");
   const [callDuration, setCallDuration] = useState(0);
@@ -89,9 +91,7 @@ export default function Dialer() {
             {twilioNumber ? `Twilio: ${twilioNumber}` : "Not configured"}
           </Badge>
           <Button variant="outline" size="sm" onClick={() => setShowSettings(!showSettings)}>
-            <Settings className="h-4 w-4 mr-1" />
-            Settings
-          </Button>
+            <Settings className="h-4 w-4 mr-1" />{t("settings")}</Button>
         </div>
       </div>
 
@@ -223,7 +223,7 @@ export default function Dialer() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Quick Dial</CardTitle>
                 <TabsList>
-                  <TabsTrigger value="contacts">Contacts</TabsTrigger>
+                  <TabsTrigger value="contacts">{t("contacts")}</TabsTrigger>
                   <TabsTrigger value="recent">Recent</TabsTrigger>
                 </TabsList>
               </div>

@@ -2,8 +2,10 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Headphones, Brain, TrendingUp, Clock, MessageSquare } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function ConversationIntel() {
+  const { t } = useSkin();
   const recordings = trpc.conversationIntel.list.useQuery();
 
   return (

@@ -10,10 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Layers, Trash2, Edit2, CheckSquare, XSquare } from "lucide-react";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 
 type EntityType = "contacts" | "deals" | "companies";
 
 export default function BulkActions() {
+  const { t } = useSkin();
   const [entityType, setEntityType] = useState<EntityType>("contacts");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [updateField, setUpdateField] = useState("");

@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ArrowLeft, Save, Play, Pause, Plus, Zap, Mail, Clock, Users, GitBranch, MessageSquare, Bell, Tag, Star, Trash2 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useSkin } from "@/contexts/SkinContext";
 
 // ─── Node Types ───────────────────────────────────────────────────────────────
 const NODE_TYPES_CONFIG = [
@@ -60,7 +61,9 @@ const TRIGGER_TYPES = [
   { value: "time_based", label: "Time-Based" },
 ];
 
-export default function WorkflowBuilder({ params }: { params?: { id?: string } }) {
+export default function WorkflowBuilder({
+  params }: { params?: { id?: string } }) {
+  const { t } = useSkin();
   const [, navigate] = useLocation();
   const workflowId = params?.id ? parseInt(params.id) : null;
   const [name, setName] = useState("New Workflow");

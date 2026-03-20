@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useSkin } from "@/contexts/SkinContext";
 
 // ─── Role Access Matrix ───────────────────────────────────────────────────────
 // minRoles: array of roles that can see this section by default (and all higher roles)
@@ -759,6 +760,7 @@ const ROLE_DISPLAY: Record<string, { label: string; color: string }> = {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function CRMBible() {
+  const { t } = useSkin();
   const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [activeSection, setActiveSection] = useState<string | null>(null);

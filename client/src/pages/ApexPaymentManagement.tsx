@@ -14,6 +14,7 @@ import {
   Plus, FileText, Ban, RefreshCw, ExternalLink, Search
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSkin } from "@/contexts/SkinContext";
 
 const fmt = (cents: number) => `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
 const fmtK = (cents: number) => {
@@ -55,6 +56,7 @@ const INV_STATUS_COLORS: Record<string, string> = {
 };
 
 export default function ApexPaymentManagement() {
+  const { t } = useSkin();
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);

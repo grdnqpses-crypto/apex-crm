@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
 import { FeatureGate } from "@/components/FeatureGate";
+import { useSkin } from "@/contexts/SkinContext";
 
 
 const emptyForm = {
@@ -24,6 +25,7 @@ const emptyForm = {
 };
 
 export default function SmtpAccounts() {
+  const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
   const utils = trpc.useUtils();

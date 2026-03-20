@@ -10,8 +10,10 @@ import {
   Activity, Target, Clock
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useSkin } from "@/contexts/SkinContext";
 
 export default function TeamPerformance() {
+  const { t } = useSkin();
   const { user } = useAuth();
   const { data: teamData, isLoading } = trpc.teamOversight.performance.useQuery();
 
@@ -143,12 +145,12 @@ export default function TeamPerformance() {
                   <tr className="border-b text-muted-foreground">
                     <th className="text-left py-3 px-2 font-medium">Team Member</th>
                     <th className="text-left py-3 px-2 font-medium">Role</th>
-                    <th className="text-center py-3 px-2 font-medium">Companies</th>
-                    <th className="text-center py-3 px-2 font-medium">Contacts</th>
-                    <th className="text-center py-3 px-2 font-medium">Deals</th>
+                    <th className="text-center py-3 px-2 font-medium">{t("companies")}</th>
+                    <th className="text-center py-3 px-2 font-medium">{t("contacts")}</th>
+                    <th className="text-center py-3 px-2 font-medium">{t("deals")}</th>
                     <th className="text-center py-3 px-2 font-medium">Won</th>
-                    <th className="text-right py-3 px-2 font-medium">Pipeline</th>
-                    <th className="text-center py-3 px-2 font-medium">Tasks</th>
+                    <th className="text-right py-3 px-2 font-medium">{t("pipeline")}</th>
+                    <th className="text-center py-3 px-2 font-medium">{t("tasks")}</th>
                     <th className="text-center py-3 px-2 font-medium">Status</th>
                   </tr>
                 </thead>

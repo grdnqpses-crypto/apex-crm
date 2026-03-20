@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useSkin } from "@/contexts/SkinContext";
 import {
   Flame, TrendingUp, Pause, Play, Plus, Mail, Server, Zap,
   ChevronRight, ChevronLeft, CheckCircle, Info, Shield, Clock,
@@ -34,6 +35,7 @@ interface WizardData {
 }
 
 export default function EmailWarmup() {
+  const { t } = useSkin();
   const [showWizard, setShowWizard] = useState(false);
   const [wizardStep, setWizardStep] = useState<WizardStep>(1);
   const [wizardData, setWizardData] = useState<WizardData>({});

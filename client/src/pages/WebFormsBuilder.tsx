@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Plus, Trash2, Copy, Eye, Code, Settings, GripVertical, FileText, CheckCircle } from "lucide-react";
+import { useSkin } from "@/contexts/SkinContext";
 
 type FieldType = "text" | "email" | "phone" | "textarea" | "select" | "checkbox" | "date" | "number";
 
@@ -36,6 +37,7 @@ const FIELD_TYPES: { value: FieldType; label: string }[] = [
 ];
 
 export default function WebFormsBuilder() {
+  const { t } = useSkin();
   const utils = trpc.useUtils();
 
   const { data: forms, isLoading } = trpc.webForms.list.useQuery();
