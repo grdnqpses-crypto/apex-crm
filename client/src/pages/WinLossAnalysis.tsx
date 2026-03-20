@@ -9,7 +9,7 @@ export default function WinLossAnalysis() {
   const [days, setDays] = useState(90);
   const startDate = Date.now() - days * 86400000;
 
-  const { data: stats, isLoading } = trpc.batch1.winLoss.stats.useQuery({ startDate });
+  const { data: stats, isLoading } = trpc.winLoss.stats.useQuery({ startDate });
 
   return (
     <DashboardLayout>

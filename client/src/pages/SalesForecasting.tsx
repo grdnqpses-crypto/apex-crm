@@ -11,10 +11,10 @@ import { TrendingUp, DollarSign, Calendar, Target } from "lucide-react";
 export default function SalesForecasting() {
   const [pipelineId, setPipelineId] = useState<string>("all");
 
-  const { data: forecast, isLoading } = trpc.batch2.salesForecasting.getSummary.useQuery({
+  const { data: forecast, isLoading } = trpc.salesForecasting.getSummary.useQuery({
     pipelineId: pipelineId !== "all" ? parseInt(pipelineId) : undefined,
   });
-  const { data: closingDeals } = trpc.batch2.salesForecasting.getClosingThisMonth.useQuery();
+  const { data: closingDeals } = trpc.salesForecasting.getClosingThisMonth.useQuery();
   // pipelines query removed — filter by pipeline not yet supported in UI
   const pipelines: { id: number; name: string }[] = [];
 

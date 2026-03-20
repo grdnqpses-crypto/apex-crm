@@ -50,17 +50,17 @@ const salesForecastingRouter = router({
 
     // Monthly trend: last 6 months of closed-won
     const sixMonthsAgo = Date.now() - 6 * 30 * 24 * 60 * 60 * 1000;
-    const trend = await dbConn.select({
-      month: sql<string>`DATE_FORMAT(FROM_UNIXTIME(${deals.closedAt} / 1000), '%Y-%m')`,
-      revenue: sql<number>`COALESCE(SUM(${deals.value}), 0)`,
-      count: sql<number>`COUNT(*)`,
-    }).from(deals).where(
-      and(
-        eq(deals.tenantId, tenantId),
-        eq(deals.status, "won"),
-        gte(deals.closedAt, sixMonthsAgo),
-      )
-    ).groupBy(sql`DATE_FORMAT(FROM_UNIXTIME(${deals.closedAt} / 1000), '%Y-%m')`);
+    const trend = await dbConn.execute(sql`
+      SELECT DATE_FORMAT(FROM_UNIXTIME(closedAt / 1000), '%Y-%m') as month,
+             COALESCE(SUM(dealValue), 0) as revenue,
+             COUNT(*) as count
+      FROM deals
+      WHERE tenantId = ${tenantId}
+        AND status = 'won'
+        AND closedAt >= ${sixMonthsAgo}
+      GROUP BY DATE_FORMAT(FROM_UNIXTIME(closedAt / 1000), '%Y-%m')
+      ORDER BY month ASC
+    `).then(([rows]) => rows as unknown as { month: string; revenue: number; count: number }[]);
 
     return { byStage: rows, weightedTotal, trend };
   }),
@@ -367,3 +367,6 @@ export const batch2Router = router({
   leadScoring: leadScoringRouter,
   nextBestAction: nextBestActionRouter,
 });
+
+// Export individual sub-routers for flat registration in appRouter
+export { salesForecastingRouter, productCatalogRouter, leadScoringRouter, nextBestActionRouter };

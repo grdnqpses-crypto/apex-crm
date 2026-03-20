@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 export default function EmailSequences() {
   const utils = trpc.useUtils();
-  const { data: sequences, isLoading } = trpc.batch4.emailSequences.list.useQuery();
+  const { data: sequences, isLoading } = trpc.emailSequences.list.useQuery();
   const [selected, setSelected] = useState<any>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showAddStep, setShowAddStep] = useState(false);
@@ -24,27 +24,27 @@ export default function EmailSequences() {
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
 
-  const createMutation = trpc.batch4.emailSequences.create.useMutation({
-    onSuccess: () => { utils.batch4.emailSequences.list.invalidate(); setShowCreate(false); setForm({ name: "", description: "", triggerType: "manual" }); toast.success("Sequence created"); },
+  const createMutation = trpc.emailSequences.create.useMutation({
+    onSuccess: () => { utils.emailSequences.list.invalidate(); setShowCreate(false); setForm({ name: "", description: "", triggerType: "manual" }); toast.success("Sequence created"); },
     onError: (e) => toast.error(e.message),
   });
-  const deleteMutation = trpc.batch4.emailSequences.delete.useMutation({
-    onSuccess: () => { utils.batch4.emailSequences.list.invalidate(); toast.success("Sequence deleted"); },
+  const deleteMutation = trpc.emailSequences.delete.useMutation({
+    onSuccess: () => { utils.emailSequences.list.invalidate(); toast.success("Sequence deleted"); },
     onError: (e) => toast.error(e.message),
   });
-  const updateMutation = trpc.batch4.emailSequences.update.useMutation({
-    onSuccess: () => { utils.batch4.emailSequences.list.invalidate(); toast.success("Updated"); },
+  const updateMutation = trpc.emailSequences.update.useMutation({
+    onSuccess: () => { utils.emailSequences.list.invalidate(); toast.success("Updated"); },
     onError: (e) => toast.error(e.message),
   });
-  const addStepMutation = trpc.batch4.emailSequences.addStep.useMutation({
-    onSuccess: () => { utils.batch4.emailSequences.list.invalidate(); setShowAddStep(false); setStepForm({ subject: "", body: "", delayDays: 1, delayHours: 0, stepType: "email" }); toast.success("Step added"); },
+  const addStepMutation = trpc.emailSequences.addStep.useMutation({
+    onSuccess: () => { utils.emailSequences.list.invalidate(); setShowAddStep(false); setStepForm({ subject: "", body: "", delayDays: 1, delayHours: 0, stepType: "email" }); toast.success("Step added"); },
     onError: (e) => toast.error(e.message),
   });
-  const deleteStepMutation = trpc.batch4.emailSequences.deleteStep.useMutation({
-    onSuccess: () => { utils.batch4.emailSequences.list.invalidate(); toast.success("Step removed"); },
+  const deleteStepMutation = trpc.emailSequences.deleteStep.useMutation({
+    onSuccess: () => { utils.emailSequences.list.invalidate(); toast.success("Step removed"); },
     onError: (e) => toast.error(e.message),
   });
-  const generateAIMutation = trpc.batch4.emailSequences.generateStepWithAI.useMutation({
+  const generateAIMutation = trpc.emailSequences.generateStepWithAI.useMutation({
     onSuccess: (data) => {
       setStepForm(prev => ({ ...prev, subject: data.subject || prev.subject, body: data.body || prev.body }));
       toast.success("AI generated step content");

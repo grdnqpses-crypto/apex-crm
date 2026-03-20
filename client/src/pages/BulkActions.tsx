@@ -26,7 +26,7 @@ export default function BulkActions() {
   const { data: deals } = trpc.deals.list.useQuery({ limit: 100, offset: 0 }, { enabled: entityType === "deals" });
   const { data: companies } = trpc.companies.list.useQuery({ limit: 100, offset: 0 }, { enabled: entityType === "companies" });
 
-  const bulkUpdateMutation = trpc.batch1.bulkActions.updateContacts.useMutation({
+  const bulkUpdateMutation = trpc.bulkActions.updateContacts.useMutation({
     onSuccess: (data: { updated: number }) => {
       toast(`Updated ${data.updated} records`);
       setSelectedIds([]);
@@ -37,7 +37,7 @@ export default function BulkActions() {
     onError: (err: { message: string }) => toast.error(`Update failed: ${err.message}`),
   });
 
-  const bulkDeleteMutation = trpc.batch1.bulkActions.deleteContacts.useMutation({
+  const bulkDeleteMutation = trpc.bulkActions.deleteContacts.useMutation({
     onSuccess: (data: { deleted: number }) => {
       toast(`Deleted ${data.deleted} records`);
       setSelectedIds([]);

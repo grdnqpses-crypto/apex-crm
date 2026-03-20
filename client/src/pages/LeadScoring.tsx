@@ -36,14 +36,14 @@ export default function LeadScoring() {
   const [form, setForm] = useState({ name: "", field: "", operator: "equals", value: "", points: "10", entityType: "contact" });
 
   const utils = trpc.useUtils();
-  const { data: rules, isLoading } = trpc.batch2.leadScoring.getRules.useQuery();
+  const { data: rules, isLoading } = trpc.leadScoring.getRules.useQuery();
 
-  const createMutation = trpc.batch2.leadScoring.createRule.useMutation({
-    onSuccess: () => { utils.batch2.leadScoring.getRules.invalidate(); setDialogOpen(false); toast.success("Rule created"); },
+  const createMutation = trpc.leadScoring.createRule.useMutation({
+    onSuccess: () => { utils.leadScoring.getRules.invalidate(); setDialogOpen(false); toast.success("Rule created"); },
     onError: (e: { message: string }) => toast.error(e.message),
   });
-  const deleteMutation = trpc.batch2.leadScoring.deleteRule.useMutation({
-    onSuccess: () => { utils.batch2.leadScoring.getRules.invalidate(); toast.success("Rule deleted"); },
+  const deleteMutation = trpc.leadScoring.deleteRule.useMutation({
+    onSuccess: () => { utils.leadScoring.getRules.invalidate(); toast.success("Rule deleted"); },
     onError: (e: { message: string }) => toast.error(e.message),
   });
 

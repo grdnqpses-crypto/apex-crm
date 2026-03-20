@@ -329,9 +329,16 @@ export async function getCompanyContactCount(companyId: number, userId: number):
 }
 
 // ─── Pipelines & Stages ───
-export async function listPipelines(userId: number) {
+export async function listPipelines(userId: number, tenantCompanyId?: number | null) {
   const db = await getDb();
   if (!db) return [];
+  if (tenantCompanyId) {
+    // Return all pipelines belonging to any user in the same tenant company
+    const tenantUsers = await db.select({ id: users.id }).from(users).where(eq(users.tenantCompanyId, tenantCompanyId));
+    const userIds = tenantUsers.map(u => u.id);
+    if (userIds.length === 0) return db.select().from(pipelines).where(eq(pipelines.userId, userId)).orderBy(asc(pipelines.createdAt));
+    return db.select().from(pipelines).where(inArray(pipelines.userId, userIds)).orderBy(asc(pipelines.createdAt));
+  }
   return db.select().from(pipelines).where(eq(pipelines.userId, userId)).orderBy(asc(pipelines.createdAt));
 }
 
@@ -360,10 +367,16 @@ export async function deletePipeline(id: number, userId: number) {
 }
 
 // ─── Deals ───
-export async function listDeals(userId: number, opts?: { pipelineId?: number; status?: string; limit?: number; offset?: number }) {
+export async function listDeals(userId: number, opts?: { pipelineId?: number; status?: string; limit?: number; offset?: number; tenantCompanyId?: number | null }) {
   const db = await getDb();
   if (!db) return { items: [], total: 0 };
-  const conditions = [eq(deals.userId, userId)];
+  let userIdFilter = [userId];
+  if (opts?.tenantCompanyId) {
+    const tenantUsers = await db.select({ id: users.id }).from(users).where(eq(users.tenantCompanyId, opts.tenantCompanyId));
+    userIdFilter = tenantUsers.map(u => u.id);
+    if (userIdFilter.length === 0) userIdFilter = [userId];
+  }
+  const conditions = [inArray(deals.userId, userIdFilter)];
   if (opts?.pipelineId) conditions.push(eq(deals.pipelineId, opts.pipelineId));
   if (opts?.status) conditions.push(eq(deals.status, opts.status as any));
   const where = and(...conditions);

@@ -14,11 +14,11 @@ export default function PipelineInspection() {
   const [running, setRunning] = useState(false);
   const [latestResult, setLatestResult] = useState<any>(null);
   const { data: pipelines } = trpc.pipelines.list.useQuery();
-  const { data: history, isLoading } = trpc.batch4.pipelineInspection.getHistory.useQuery({ pipelineId: selectedPipeline ? parseInt(selectedPipeline) : 0 });
+  const { data: history, isLoading } = trpc.pipelineInspection.getHistory.useQuery({ pipelineId: selectedPipeline ? parseInt(selectedPipeline) : 0 });
 
-  const runMutation = trpc.batch4.pipelineInspection.run.useMutation({
+  const runMutation = trpc.pipelineInspection.run.useMutation({
     onSuccess: (data) => {
-      utils.batch4.pipelineInspection.getHistory.invalidate();
+      utils.pipelineInspection.getHistory.invalidate();
       setRunning(false);
       setLatestResult(data);
       toast.success("Pipeline inspection complete");

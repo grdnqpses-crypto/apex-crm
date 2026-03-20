@@ -30,18 +30,18 @@ export default function ProductCatalog() {
   const [form, setForm] = useState({ name: "", description: "", price: "", currency: "USD", unit: "", sku: "", category: "" });
 
   const utils = trpc.useUtils();
-  const { data: products, isLoading } = trpc.batch2.productCatalog.list.useQuery({ search: search || undefined });
+  const { data: products, isLoading } = trpc.productCatalog.list.useQuery({ search: search || undefined });
 
-  const createMutation = trpc.batch2.productCatalog.create.useMutation({
-    onSuccess: () => { utils.batch2.productCatalog.list.invalidate(); setDialogOpen(false); toast.success("Product created"); },
+  const createMutation = trpc.productCatalog.create.useMutation({
+    onSuccess: () => { utils.productCatalog.list.invalidate(); setDialogOpen(false); toast.success("Product created"); },
     onError: (e: { message: string }) => toast.error(e.message),
   });
-  const updateMutation = trpc.batch2.productCatalog.update.useMutation({
-    onSuccess: () => { utils.batch2.productCatalog.list.invalidate(); setDialogOpen(false); toast.success("Product updated"); },
+  const updateMutation = trpc.productCatalog.update.useMutation({
+    onSuccess: () => { utils.productCatalog.list.invalidate(); setDialogOpen(false); toast.success("Product updated"); },
     onError: (e: { message: string }) => toast.error(e.message),
   });
-  const deleteMutation = trpc.batch2.productCatalog.delete.useMutation({
-    onSuccess: () => { utils.batch2.productCatalog.list.invalidate(); toast.success("Product deleted"); },
+  const deleteMutation = trpc.productCatalog.delete.useMutation({
+    onSuccess: () => { utils.productCatalog.list.invalidate(); toast.success("Product deleted"); },
     onError: (e: { message: string }) => toast.error(e.message),
   });
 

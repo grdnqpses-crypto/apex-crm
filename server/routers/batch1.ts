@@ -453,3 +453,6 @@ export const batch1Router = router({
   territories: territoriesRouter,
   accountHierarchy: accountHierarchyRouter,
 });
+
+// Export individual sub-routers for flat registration in appRouter
+export { rottenDealsRouter, bulkActionsRouter, winLossRouter, auditLogsRouter, smartViewsRouter, territoriesRouter, accountHierarchyRouter };

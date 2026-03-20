@@ -38,11 +38,11 @@ const FIELD_TYPES: { value: FieldType; label: string }[] = [
 export default function WebFormsBuilder() {
   const utils = trpc.useUtils();
 
-  const { data: forms, isLoading } = trpc.batch3.webForms.list.useQuery();
+  const { data: forms, isLoading } = trpc.webForms.list.useQuery();
 
-  const createMutation = trpc.batch3.webForms.create.useMutation({
+  const createMutation = trpc.webForms.create.useMutation({
     onSuccess: () => {
-      utils.batch3.webForms.list.invalidate();
+      utils.webForms.list.invalidate();
       setCreateOpen(false);
       resetForm();
       toast.success("Form created", { description: "Your web form is ready to embed." });
@@ -50,15 +50,15 @@ export default function WebFormsBuilder() {
     onError: (e) => toast.error("Error", { description: e.message }),
   });
 
-  const deleteMutation = trpc.batch3.webForms.delete.useMutation({
+  const deleteMutation = trpc.webForms.delete.useMutation({
     onSuccess: () => {
-      utils.batch3.webForms.list.invalidate();
+      utils.webForms.list.invalidate();
       toast.success("Form deleted");
     },
   });
 
-  const toggleMutation = trpc.batch3.webForms.update.useMutation({
-    onSuccess: () => utils.batch3.webForms.list.invalidate(),
+  const toggleMutation = trpc.webForms.update.useMutation({
+    onSuccess: () => utils.webForms.list.invalidate(),
   });
 
   const [createOpen, setCreateOpen] = useState(false);

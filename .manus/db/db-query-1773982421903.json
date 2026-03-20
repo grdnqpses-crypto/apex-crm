@@ -1,0 +1,235 @@
+{
+  "query": "\nSELECT 'esignature_documents' as tbl, COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'esignature_documents' AND TABLE_SCHEMA = DATABASE()\nUNION ALL\nSELECT 'reputation_reviews', COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'reputation_reviews' AND TABLE_SCHEMA = DATABASE()\nUNION ALL\nSELECT 'ooo_detections', COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'ooo_detections' AND TABLE_SCHEMA = DATABASE()\nUNION ALL\nSELECT 'web_forms', COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'web_forms' AND TABLE_SCHEMA = DATABASE()\nORDER BY tbl, COLUMN_NAME;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute \nSELECT 'esignature_documents' as tbl, COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'esignature_documents' AND TABLE_SCHEMA = DATABASE()\nUNION ALL\nSELECT 'reputation_reviews', COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'reputation_reviews' AND TABLE_SCHEMA = DATABASE()\nUNION ALL\nSELECT 'ooo_detections', COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'ooo_detections' AND TABLE_SCHEMA = DATABASE()\nUNION ALL\nSELECT 'web_forms', COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'web_forms' AND TABLE_SCHEMA = DATABASE()\nORDER BY tbl, COLUMN_NAME;\n",
+  "rows": [
+    {
+      "tbl": "esignature_documents",
+      "COLUMN_NAME": "completed_at",
+      "DATA_TYPE": "bigint"
+    },
+    {
+      "tbl": "esignature_documents",
+      "COLUMN_NAME": "contact_id",
+      "DATA_TYPE": "int"
+    },
+    {
+      "tbl": "esignature_documents",
+      "COLUMN_NAME": "content",
+      "DATA_TYPE": "text"
+    },
+    {
+      "tbl": "esignature_documents",
+      "COLUMN_NAME": "created_at",
+      "DATA_TYPE": "bigint"
+    },
+    {
+      "tbl": "esignature_documents",
+      "COLUMN_NAME": "created_by",
+      "DATA_TYPE": "int"
+    },
+    {
+      "tbl": "esignature_documents",
+      "COLUMN_NAME": "deal_id",
+      "DATA_TYPE": "int"
+    },
+    {
+      "tbl": "esignature_documents",
+      "COLUMN_NAME": "expires_at",
+      "DATA_TYPE": "bigint"
+    },
+    {
+      "tbl": "esignature_documents",
+      "COLUMN_NAME": "id",
+      "DATA_TYPE": "int"
+    },
+    {
+      "tbl": "esignature_documents",
+      "COLUMN_NAME": "status",
+      "DATA_TYPE": "enum"
+    },
+    {
+      "tbl": "esignature_documents",
+      "COLUMN_NAME": "tenant_company_id",
+      "DATA_TYPE": "int"
+    },
+    {
+      "tbl": "esignature_documents",
+      "COLUMN_NAME": "title",
+      "DATA_TYPE": "varchar"
+    },
+    {
+      "tbl": "esignature_documents",
+      "COLUMN_NAME": "updated_at",
+      "DATA_TYPE": "bigint"
+    },
+    {
+      "tbl": "ooo_detections",
+      "COLUMN_NAME": "contact_id",
+      "DATA_TYPE": "int"
+    },
+    {
+      "tbl": "ooo_detections",
+      "COLUMN_NAME": "created_at",
+      "DATA_TYPE": "bigint"
+    },
+    {
+      "tbl": "ooo_detections",
+      "COLUMN_NAME": "detected_at",
+      "DATA_TYPE": "bigint"
+    },
+    {
+      "tbl": "ooo_detections",
+      "COLUMN_NAME": "email",
+      "DATA_TYPE": "varchar"
+    },
+    {
+      "tbl": "ooo_detections",
+      "COLUMN_NAME": "follow_up_date",
+      "DATA_TYPE": "bigint"
+    },
+    {
+      "tbl": "ooo_detections",
+      "COLUMN_NAME": "follow_up_scheduled",
+      "DATA_TYPE": "tinyint"
+    },
+    {
+      "tbl": "ooo_detections",
+      "COLUMN_NAME": "id",
+      "DATA_TYPE": "int"
+    },
+    {
+      "tbl": "ooo_detections",
+      "COLUMN_NAME": "ooo_message",
+      "DATA_TYPE": "text"
+    },
+    {
+      "tbl": "ooo_detections",
+      "COLUMN_NAME": "return_date",
+      "DATA_TYPE": "bigint"
+    },
+    {
+      "tbl": "ooo_detections",
+      "COLUMN_NAME": "tenant_company_id",
+      "DATA_TYPE": "int"
+    },
+    {
+      "tbl": "reputation_reviews",
+      "COLUMN_NAME": "created_at",
+      "DATA_TYPE": "bigint"
+    },
+    {
+      "tbl": "reputation_reviews",
+      "COLUMN_NAME": "id",
+      "DATA_TYPE": "int"
+    },
+    {
+      "tbl": "reputation_reviews",
+      "COLUMN_NAME": "platform",
+      "DATA_TYPE": "varchar"
+    },
+    {
+      "tbl": "reputation_reviews",
+      "COLUMN_NAME": "rating",
+      "DATA_TYPE": "int"
+    },
+    {
+      "tbl": "reputation_reviews",
+      "COLUMN_NAME": "responded",
+      "DATA_TYPE": "tinyint"
+    },
+    {
+      "tbl": "reputation_reviews",
+      "COLUMN_NAME": "response_text",
+      "DATA_TYPE": "text"
+    },
+    {
+      "tbl": "reputation_reviews",
+      "COLUMN_NAME": "review_date",
+      "DATA_TYPE": "bigint"
+    },
+    {
+      "tbl": "reputation_reviews",
+      "COLUMN_NAME": "review_text",
+      "DATA_TYPE": "text"
+    },
+    {
+      "tbl": "reputation_reviews",
+      "COLUMN_NAME": "review_url",
+      "DATA_TYPE": "varchar"
+    },
+    {
+      "tbl": "reputation_reviews",
+      "COLUMN_NAME": "reviewer_name",
+      "DATA_TYPE": "varchar"
+    },
+    {
+      "tbl": "reputation_reviews",
+      "COLUMN_NAME": "sentiment",
+      "DATA_TYPE": "enum"
+    },
+    {
+      "tbl": "reputation_reviews",
+      "COLUMN_NAME": "tenant_company_id",
+      "DATA_TYPE": "int"
+    },
+    {
+      "tbl": "web_forms",
+      "COLUMN_NAME": "created_at",
+      "DATA_TYPE": "bigint"
+    },
+    {
+      "tbl": "web_forms",
+      "COLUMN_NAME": "description",
+      "DATA_TYPE": "text"
+    },
+    {
+      "tbl": "web_forms",
+      "COLUMN_NAME": "embed_code",
+      "DATA_TYPE": "text"
+    },
+    {
+      "tbl": "web_forms",
+      "COLUMN_NAME": "fields",
+      "DATA_TYPE": "json"
+    },
+    {
+      "tbl": "web_forms",
+      "COLUMN_NAME": "id",
+      "DATA_TYPE": "int"
+    },
+    {
+      "tbl": "web_forms",
+      "COLUMN_NAME": "is_active",
+      "DATA_TYPE": "tinyint"
+    },
+    {
+      "tbl": "web_forms",
+      "COLUMN_NAME": "name",
+      "DATA_TYPE": "varchar"
+    },
+    {
+      "tbl": "web_forms",
+      "COLUMN_NAME": "settings",
+      "DATA_TYPE": "json"
+    },
+    {
+      "tbl": "web_forms",
+      "COLUMN_NAME": "submission_count",
+      "DATA_TYPE": "int"
+    },
+    {
+      "tbl": "web_forms",
+      "COLUMN_NAME": "tenant_company_id",
+      "DATA_TYPE": "int"
+    },
+    {
+      "tbl": "web_forms",
+      "COLUMN_NAME": "updated_at",
+      "DATA_TYPE": "bigint"
+    }
+  ],
+  "messages": [],
+  "stdout": "tbl\tCOLUMN_NAME\tDATA_TYPE\nesignature_documents\tcompleted_at\tbigint\nesignature_documents\tcontact_id\tint\nesignature_documents\tcontent\ttext\nesignature_documents\tcreated_at\tbigint\nesignature_documents\tcreated_by\tint\nesignature_documents\tdeal_id\tint\nesignature_documents\texpires_at\tbigint\nesignature_documents\tid\tint\nesignature_documents\tstatus\tenum\nesignature_documents\ttenant_company_id\tint\nesignature_documents\ttitle\tvarchar\nesignature_documents\tupdated_at\tbigint\nooo_detections\tcontact_id\tint\nooo_detections\tcreated_at\tbigint\nooo_detections\tdetected_at\tbigint\nooo_detections\temail\tvarchar\nooo_detections\tfollow_up_date\tbigint\nooo_detections\tfollow_up_scheduled\ttinyint\nooo_detections\tid\tint\nooo_detections\tooo_message\ttext\nooo_detections\treturn_date\tbigint\nooo_detections\ttenant_company_id\tint\nreputation_reviews\tcreated_at\tbigint\nreputation_reviews\tid\tint\nreputation_reviews\tplatform\tvarchar\nreputation_reviews\trating\tint\nreputation_reviews\tresponded\ttinyint\nreputation_reviews\tresponse_text\ttext\nreputation_reviews\treview_date\tbigint\nreputation_reviews\treview_text\ttext\nreputation_reviews\treview_url\tvarchar\nreputation_reviews\treviewer_name\tvarchar\nreputation_reviews\tsentiment\tenum\nreputation_reviews\ttenant_company_id\tint\nweb_forms\tcreated_at\tbigint\nweb_forms\tdescription\ttext\nweb_forms\tembed_code\ttext\nweb_forms\tfields\tjson\nweb_forms\tid\tint\nweb_forms\tis_active\ttinyint\nweb_forms\tname\tvarchar\nweb_forms\tsettings\tjson\nweb_forms\tsubmission_count\tint\nweb_forms\ttenant_company_id\tint\nweb_forms\tupdated_at\tbigint\n",
+  "stderr": "",
+  "execution_time_ms": 66
+}

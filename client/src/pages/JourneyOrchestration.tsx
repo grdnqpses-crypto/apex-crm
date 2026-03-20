@@ -14,26 +14,26 @@ import { toast } from "sonner";
 
 export default function JourneyOrchestration() {
   const utils = trpc.useUtils();
-  const { data: journeys, isLoading } = trpc.batch4.journeys.list.useQuery();
+  const { data: journeys, isLoading } = trpc.journeyOrchestration.list.useQuery();
   const [showCreate, setShowCreate] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [form, setForm] = useState({ name: "", description: "", triggerType: "manual" as const });
   const [aiGoal, setAiGoal] = useState("");
 
-  const createMutation = trpc.batch4.journeys.create.useMutation({
-    onSuccess: () => { utils.batch4.journeys.list.invalidate(); setShowCreate(false); setForm({ name: "", description: "", triggerType: "manual" }); toast.success("Journey created"); },
+  const createMutation = trpc.journeyOrchestration.create.useMutation({
+    onSuccess: () => { utils.journeyOrchestration.list.invalidate(); setShowCreate(false); setForm({ name: "", description: "", triggerType: "manual" }); toast.success("Journey created"); },
     onError: (e) => toast.error(e.message),
   });
-  const deleteMutation = trpc.batch4.journeys.delete.useMutation({
-    onSuccess: () => { utils.batch4.journeys.list.invalidate(); toast.success("Journey deleted"); },
+  const deleteMutation = trpc.journeyOrchestration.delete.useMutation({
+    onSuccess: () => { utils.journeyOrchestration.list.invalidate(); toast.success("Journey deleted"); },
     onError: (e) => toast.error(e.message),
   });
-  const updateMutation = trpc.batch4.journeys.update.useMutation({
-    onSuccess: () => { utils.batch4.journeys.list.invalidate(); toast.success("Journey updated"); },
+  const updateMutation = trpc.journeyOrchestration.update.useMutation({
+    onSuccess: () => { utils.journeyOrchestration.list.invalidate(); toast.success("Journey updated"); },
     onError: (e) => toast.error(e.message),
   });
-  const generateAIMutation = trpc.batch4.journeys.generateWithAI.useMutation({
-    onSuccess: () => { utils.batch4.journeys.list.invalidate(); setShowAI(false); setAiGoal(""); toast.success("AI journey created"); },
+  const generateAIMutation = trpc.journeyOrchestration.generateWithAI.useMutation({
+    onSuccess: () => { utils.journeyOrchestration.list.invalidate(); setShowAI(false); setAiGoal(""); toast.success("AI journey created"); },
     onError: (e) => toast.error(e.message),
   });
 

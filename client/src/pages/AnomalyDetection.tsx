@@ -9,19 +9,19 @@ import { toast } from "sonner";
 
 export default function AnomalyDetection() {
   const utils = trpc.useUtils();
-  const { data: alerts, isLoading } = trpc.batch4.anomalyDetection.getAlerts.useQuery({ resolved: false, severity: 'all' });
+  const { data: alerts, isLoading } = trpc.anomalyDetection.getAlerts.useQuery({ resolved: false, severity: 'all' });
   const [running, setRunning] = useState(false);
 
-  const runMutation = trpc.batch4.anomalyDetection.runDetection.useMutation({
-    onSuccess: () => { utils.batch4.anomalyDetection.getAlerts.invalidate(); setRunning(false); toast.success("Anomaly scan complete"); },
+  const runMutation = trpc.anomalyDetection.runDetection.useMutation({
+    onSuccess: () => { utils.anomalyDetection.getAlerts.invalidate(); setRunning(false); toast.success("Anomaly scan complete"); },
     onError: (e) => { setRunning(false); toast.error(e.message); },
   });
-  const resolveMutation = trpc.batch4.anomalyDetection.resolve.useMutation({
-    onSuccess: () => { utils.batch4.anomalyDetection.getAlerts.invalidate(); toast.success("Alert resolved"); },
+  const resolveMutation = trpc.anomalyDetection.resolve.useMutation({
+    onSuccess: () => { utils.anomalyDetection.getAlerts.invalidate(); toast.success("Alert resolved"); },
     onError: (e) => toast.error(e.message),
   });
-  const resolveAllMutation = trpc.batch4.anomalyDetection.resolveAll.useMutation({
-    onSuccess: () => { utils.batch4.anomalyDetection.getAlerts.invalidate(); toast.success("All alerts resolved"); },
+  const resolveAllMutation = trpc.anomalyDetection.resolveAll.useMutation({
+    onSuccess: () => { utils.anomalyDetection.getAlerts.invalidate(); toast.success("All alerts resolved"); },
     onError: (e) => toast.error(e.message),
   });
 

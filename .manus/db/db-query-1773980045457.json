@@ -1,0 +1,52 @@
+{
+  "query": "SELECT id, name, username, passwordHash FROM users WHERE loginMethod = 'credentials' AND passwordHash IS NOT NULL ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, name, username, passwordHash FROM users WHERE loginMethod = 'credentials' AND passwordHash IS NOT NULL ORDER BY id;",
+  "rows": [
+    {
+      "id": "2610017",
+      "name": "James Lavallee",
+      "username": "jlavallee",
+      "passwordHash": "$2b$12$jxfA2oi1btClhavzhcd4aegLQx1mjaoYn/o7TfCMgAOo7SLHd4DpO"
+    },
+    {
+      "id": "2610020",
+      "name": "Mike Rodriguez",
+      "username": "mrodriguez",
+      "passwordHash": "$2b$12$I3pR3ZvNKEmbx2trRLsJA.q0Q.jgVuafk3aFgwzQOdtiQODIRDpxG"
+    },
+    {
+      "id": "2610023",
+      "name": "Sarah Chen",
+      "username": "schen",
+      "passwordHash": "$2b$12$phKnsvr7q6rVKZ.uqpGJT.M3Lezc9RTmDfoOVyY/rxQ2yabM4ci16"
+    },
+    {
+      "id": "2610026",
+      "name": "David Thompson",
+      "username": "dthompson",
+      "passwordHash": "$2b$12$onV9lbHZQV.K/ZnUs1qq8OdcmNMUVMl97P9ji3n/DZ1he6vhZ2EvK"
+    },
+    {
+      "id": "2640083",
+      "name": "Jerry",
+      "username": "Lavallee",
+      "passwordHash": "$2b$12$3LTy/hELK/iKqR.nFsNojO.QRutiK8oIsjRi3SzSFA6EG9RyQA06G"
+    },
+    {
+      "id": "4410042",
+      "name": "Apex Platform Owner",
+      "username": "apexowner",
+      "passwordHash": "$2b$12$Iv3NAiP/9u34HJXOnNVO5OoYQ/1uLDJQjhudf6FYV4qH89HtDpkxS"
+    },
+    {
+      "id": "4590001",
+      "name": "Joseph Lavallee",
+      "username": "JoeLavallee",
+      "passwordHash": "$2b$12$UAo3mpQFsNau2xtIf72haOPZTxhF7Soo8Evz1veJFQgNGBT/XGQUm"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tusername\tpasswordHash\n2610017\tJames Lavallee\tjlavallee\t$2b$12$jxfA2oi1btClhavzhcd4aegLQx1mjaoYn/o7TfCMgAOo7SLHd4DpO\n2610020\tMike Rodriguez\tmrodriguez\t$2b$12$I3pR3ZvNKEmbx2trRLsJA.q0Q.jgVuafk3aFgwzQOdtiQODIRDpxG\n2610023\tSarah Chen\tschen\t$2b$12$phKnsvr7q6rVKZ.uqpGJT.M3Lezc9RTmDfoOVyY/rxQ2yabM4ci16\n2610026\tDavid Thompson\tdthompson\t$2b$12$onV9lbHZQV.K/ZnUs1qq8OdcmNMUVMl97P9ji3n/DZ1he6vhZ2EvK\n2640083\tJerry\tLavallee\t$2b$12$3LTy/hELK/iKqR.nFsNojO.QRutiK8oIsjRi3SzSFA6EG9RyQA06G\n4410042\tApex Platform Owner\tapexowner\t$2b$12$Iv3NAiP/9u34HJXOnNVO5OoYQ/1uLDJQjhudf6FYV4qH89HtDpkxS\n4590001\tJoseph Lavallee\tJoeLavallee\t$2b$12$UAo3mpQFsNau2xtIf72haOPZTxhF7Soo8Evz1veJFQgNGBT/XGQUm\n",
+  "stderr": "",
+  "execution_time_ms": 202
+}

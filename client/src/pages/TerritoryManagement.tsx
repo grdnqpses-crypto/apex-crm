@@ -23,22 +23,22 @@ export default function TerritoryManagement() {
   const [description, setDescription] = useState("");
 
   const utils = trpc.useUtils();
-  const { data: territories, isLoading } = trpc.batch1.territories.list.useQuery();
+  const { data: territories, isLoading } = trpc.territories.list.useQuery();
 
-  const createMutation = trpc.batch1.territories.create.useMutation({
+  const createMutation = trpc.territories.create.useMutation({
     onSuccess: () => {
       toast("Territory created");
-      utils.batch1.territories.list.invalidate();
+      utils.territories.list.invalidate();
       setShowCreate(false);
       setName("");
       setDescription("");
     },
   });
 
-  const deleteMutation = trpc.batch1.territories.delete.useMutation({
+  const deleteMutation = trpc.territories.delete.useMutation({
     onSuccess: () => {
       toast("Territory deleted");
-      utils.batch1.territories.list.invalidate();
+      utils.territories.list.invalidate();
     },
   });
 

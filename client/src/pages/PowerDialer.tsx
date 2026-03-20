@@ -13,34 +13,34 @@ import { toast } from "sonner";
 
 export default function PowerDialer() {
   const utils = trpc.useUtils();
-  const { data: sessions, isLoading } = trpc.batch4.powerDialer.getSessions.useQuery();
+  const { data: sessions, isLoading } = trpc.powerDialer.getSessions.useQuery();
   const [showCreate, setShowCreate] = useState(false);
   const [showScript, setShowScript] = useState<any>(null);
   const [form, setForm] = useState({ name: "", contactIds: "", scriptTemplate: "" });
   const [scriptPrompt, setScriptPrompt] = useState("");
 
-  const createMutation = trpc.batch4.powerDialer.createSession.useMutation({
+  const createMutation = trpc.powerDialer.createSession.useMutation({
     onSuccess: () => {
-      utils.batch4.powerDialer.getSessions.invalidate();
+      utils.powerDialer.getSessions.invalidate();
       setShowCreate(false);
       setForm({ name: "", contactIds: "", scriptTemplate: "" });
       toast.success("Dialer session created");
     },
     onError: (e) => toast.error(e.message),
   });
-  const advanceMutation = trpc.batch4.powerDialer.advanceSession.useMutation({
-    onSuccess: () => { utils.batch4.powerDialer.getSessions.invalidate(); toast.success("Advanced to next contact"); },
+  const advanceMutation = trpc.powerDialer.advanceSession.useMutation({
+    onSuccess: () => { utils.powerDialer.getSessions.invalidate(); toast.success("Advanced to next contact"); },
     onError: (e) => toast.error(e.message),
   });
-  const pauseMutation = trpc.batch4.powerDialer.pauseSession.useMutation({
-    onSuccess: () => { utils.batch4.powerDialer.getSessions.invalidate(); toast.success("Session paused"); },
+  const pauseMutation = trpc.powerDialer.pauseSession.useMutation({
+    onSuccess: () => { utils.powerDialer.getSessions.invalidate(); toast.success("Session paused"); },
     onError: (e) => toast.error(e.message),
   });
-  const resumeMutation = trpc.batch4.powerDialer.resumeSession.useMutation({
-    onSuccess: () => { utils.batch4.powerDialer.getSessions.invalidate(); toast.success("Session resumed"); },
+  const resumeMutation = trpc.powerDialer.resumeSession.useMutation({
+    onSuccess: () => { utils.powerDialer.getSessions.invalidate(); toast.success("Session resumed"); },
     onError: (e) => toast.error(e.message),
   });
-  const generateScriptMutation = trpc.batch4.powerDialer.generateScript.useMutation({
+  const generateScriptMutation = trpc.powerDialer.generateScript.useMutation({
     onSuccess: (data) => { setForm(prev => ({ ...prev, scriptTemplate: data.script || prev.scriptTemplate })); toast.success("Script generated"); },
     onError: (e) => toast.error(e.message),
   });

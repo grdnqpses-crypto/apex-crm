@@ -27,21 +27,21 @@ export default function SmartViews() {
   const [newShared, setNewShared] = useState(false);
 
   const utils = trpc.useUtils();
-  const { data: views, isLoading } = trpc.batch1.smartViews.list.useQuery({ entityType });
+  const { data: views, isLoading } = trpc.smartViews.list.useQuery({ entityType });
 
-  const createMutation = trpc.batch1.smartViews.create.useMutation({
+  const createMutation = trpc.smartViews.create.useMutation({
     onSuccess: () => {
       toast("Smart view created");
-      utils.batch1.smartViews.list.invalidate();
+      utils.smartViews.list.invalidate();
       setShowCreate(false);
       setNewName("");
     },
   });
 
-  const deleteMutation = trpc.batch1.smartViews.delete.useMutation({
+  const deleteMutation = trpc.smartViews.delete.useMutation({
     onSuccess: () => {
       toast("View deleted");
-      utils.batch1.smartViews.list.invalidate();
+      utils.smartViews.list.invalidate();
     },
   });
 

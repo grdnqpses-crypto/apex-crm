@@ -1207,3 +1207,6 @@ export const batch4Router = router({
   abTesting: abTestingRouter,
   featureGating: featureGatingRouter,
 });
+
+// Export individual sub-routers for flat registration in appRouter
+export { emailSequencesRouter, journeysRouter, whatsappRouter, socialSchedulerRouter, powerDialerRouter, anomalyDetectionRouter, pipelineInspectionRouter, domainHealthAutopilotRouter, abTestingRouter, featureGatingRouter };

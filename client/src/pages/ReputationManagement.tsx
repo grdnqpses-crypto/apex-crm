@@ -36,11 +36,11 @@ function StarRating({ rating }: { rating: number | null }) {
 export default function ReputationManagement() {
   const utils = trpc.useUtils();
 
-  const { data, isLoading } = trpc.batch3.reputation.list.useQuery({});
+  const { data, isLoading } = trpc.reputation.list.useQuery({});
 
-  const addReviewMutation = trpc.batch3.reputation.addReview.useMutation({
+  const addReviewMutation = trpc.reputation.addReview.useMutation({
     onSuccess: () => {
-      utils.batch3.reputation.list.invalidate();
+      utils.reputation.list.invalidate();
       setAddOpen(false);
       resetForm();
       toast.success("Review added", { description: "Sentiment analyzed automatically." });
@@ -48,16 +48,16 @@ export default function ReputationManagement() {
     onError: (e) => toast.error("Error", { description: e.message }),
   });
 
-  const aiResponseMutation = trpc.batch3.reputation.aiGenerateResponse.useMutation({
+  const aiResponseMutation = trpc.reputation.aiGenerateResponse.useMutation({
     onSuccess: (data) => {
       setResponseText(data.responseText);
     },
     onError: (e) => toast.error("AI Error", { description: e.message }),
   });
 
-  const respondMutation = trpc.batch3.reputation.respondToReview.useMutation({
+  const respondMutation = trpc.reputation.respondToReview.useMutation({
     onSuccess: () => {
-      utils.batch3.reputation.list.invalidate();
+      utils.reputation.list.invalidate();
       setRespondOpen(false);
       setSelectedReview(null);
       setResponseText("");
@@ -65,9 +65,9 @@ export default function ReputationManagement() {
     },
   });
 
-  const deleteMutation = trpc.batch3.reputation.delete.useMutation({
+  const deleteMutation = trpc.reputation.delete.useMutation({
     onSuccess: () => {
-      utils.batch3.reputation.list.invalidate();
+      utils.reputation.list.invalidate();
       toast.success("Review removed");
     },
   });

@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE users SET passwordHash = '$2b$12$2xbiVuKJ6/OKCKeJRgw8XOpBQXz4681bdAW3/RgzWdADnBsXVBe32' WHERE id IN (2610017, 2610020, 2610023, 2610026, 2640083, 4410042, 4590001);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute UPDATE users SET passwordHash = '$2b$12$2xbiVuKJ6/OKCKeJRgw8XOpBQXz4681bdAW3/RgzWdADnBsXVBe32' WHERE id IN (2610017, 2610020, 2610023, 2610026, 2640083, 4410042, 4590001);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 468
+}

@@ -303,7 +303,7 @@ export default function MarketingHome({ loginOpen: initialLoginOpen = false }: {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        navigate("/dashboard");
+        window.location.href = "/dashboard";
       } else {
         setLoginError(data.error || "Invalid username or password");
       }

@@ -8,7 +8,7 @@ import { Building2, ChevronRight, ChevronDown, Users, Link2 } from "lucide-react
 
 function CompanyNode({ company, depth = 0 }: { company: { id: number; name: string | null; industry?: string | null; [key: string]: unknown }; depth?: number }) {
   const [expanded, setExpanded] = useState(false);
-  const { data: children } = trpc.batch1.accountHierarchy.getChildren.useQuery(
+  const { data: children } = trpc.accountHierarchy.getChildren.useQuery(
     { parentId: company.id },
     { enabled: expanded }
   );
@@ -43,7 +43,7 @@ function CompanyNode({ company, depth = 0 }: { company: { id: number; name: stri
 }
 
 export default function AccountHierarchy() {
-  const { data: rootCompanies, isLoading } = trpc.batch1.accountHierarchy.getRoots.useQuery();
+  const { data: rootCompanies, isLoading } = trpc.accountHierarchy.getRoots.useQuery();
 
   return (
     <DashboardLayout>

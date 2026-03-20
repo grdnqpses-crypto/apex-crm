@@ -1,0 +1,73 @@
+{
+  "query": "SELECT id, username, name, email, role FROM users LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, username, name, email, role FROM users LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "username": "NULL",
+      "name": "crm",
+      "email": "crm@shiplw.com",
+      "role": "admin"
+    },
+    {
+      "id": "12",
+      "username": "NULL",
+      "name": "Crypto- GRDN",
+      "email": "grdn.qpses@gmail.com",
+      "role": "admin"
+    },
+    {
+      "id": "2610017",
+      "username": "jlavallee",
+      "name": "James Lavallee",
+      "email": "jlavallee@shiplw.com",
+      "role": "admin"
+    },
+    {
+      "id": "2610020",
+      "username": "mrodriguez",
+      "name": "Mike Rodriguez",
+      "email": "mrodriguez@shiplw.com",
+      "role": "user"
+    },
+    {
+      "id": "2610023",
+      "username": "schen",
+      "name": "Sarah Chen",
+      "email": "schen@shiplw.com",
+      "role": "user"
+    },
+    {
+      "id": "2610026",
+      "username": "dthompson",
+      "name": "David Thompson",
+      "email": "dthompson@shiplw.com",
+      "role": "user"
+    },
+    {
+      "id": "2640083",
+      "username": "Lavallee",
+      "name": "Jerry",
+      "email": "glavallee@shiplw.com",
+      "role": "admin"
+    },
+    {
+      "id": "4410042",
+      "username": "apexowner",
+      "name": "Apex Platform Owner",
+      "email": "owner@apexcrm.com",
+      "role": "admin"
+    },
+    {
+      "id": "4590001",
+      "username": "JoeLavallee",
+      "name": "Joseph Lavallee",
+      "email": "grdn.qpses@gmail.com",
+      "role": "admin"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tusername\tname\temail\trole\n1\tNULL\tcrm\tcrm@shiplw.com\tadmin\n12\tNULL\tCrypto- GRDN\tgrdn.qpses@gmail.com\tadmin\n2610017\tjlavallee\tJames Lavallee\tjlavallee@shiplw.com\tadmin\n2610020\tmrodriguez\tMike Rodriguez\tmrodriguez@shiplw.com\tuser\n2610023\tschen\tSarah Chen\tschen@shiplw.com\tuser\n2610026\tdthompson\tDavid Thompson\tdthompson@shiplw.com\tuser\n2640083\tLavallee\tJerry\tglavallee@shiplw.com\tadmin\n4410042\tapexowner\tApex Platform Owner\towner@apexcrm.com\tadmin\n4590001\tJoeLavallee\tJoseph Lavallee\tgrdn.qpses@gmail.com\tadmin\n",
+  "stderr": "",
+  "execution_time_ms": 73
+}

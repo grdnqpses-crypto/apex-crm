@@ -519,3 +519,6 @@ export const batch3Router = router({
   reputation: reputationRouter,
   oooDetection: oooDetectionRouter,
 });
+
+// Export individual sub-routers for flat registration in appRouter
+export { webFormsRouter, eSignatureRouter, reputationRouter, oooDetectionRouter };

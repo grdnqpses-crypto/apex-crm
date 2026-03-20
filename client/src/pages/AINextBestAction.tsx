@@ -29,7 +29,7 @@ export default function AINextBestAction() {
   const [enabled, setEnabled] = useState(false);
 
   const { data: deals, isLoading: dealsLoading } = trpc.deals.list.useQuery({ limit: 50 });
-  const { data: aiResult, isFetching: analyzing } = trpc.batch2.nextBestAction.getForDeal.useQuery(
+  const { data: aiResult, isFetching: analyzing } = trpc.nextBestAction.getForDeal.useQuery(
     { dealId: selectedDealId! },
     { enabled: enabled && selectedDealId !== null, staleTime: 0 }
   );

@@ -22,32 +22,32 @@ const PLATFORM_COLORS: Record<string, string> = {
 
 export default function SocialScheduler() {
   const utils = trpc.useUtils();
-  const { data: posts, isLoading } = trpc.batch4.socialScheduler.getPosts.useQuery({ status: 'all', limit: 50 });
-  const { data: accounts } = trpc.batch4.socialScheduler.getAccounts.useQuery();
-  const { data: stats } = trpc.batch4.socialScheduler.getStats.useQuery();
+  const { data: posts, isLoading } = trpc.socialScheduler.getPosts.useQuery({ status: 'all', limit: 50 });
+  const { data: accounts } = trpc.socialScheduler.getAccounts.useQuery();
+  const { data: stats } = trpc.socialScheduler.getStats.useQuery();
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ content: "", platforms: [] as Platform[], scheduledAt: "" });
   const [aiPrompt, setAiPrompt] = useState("");
   const [filter, setFilter] = useState<string>("all");
 
-  const createMutation = trpc.batch4.socialScheduler.createPost.useMutation({
-    onSuccess: () => { utils.batch4.socialScheduler.getPosts.invalidate(); utils.batch4.socialScheduler.getStats.invalidate(); setShowCreate(false); setForm({ content: "", platforms: [], scheduledAt: "" }); toast.success("Post scheduled"); },
+  const createMutation = trpc.socialScheduler.createPost.useMutation({
+    onSuccess: () => { utils.socialScheduler.getPosts.invalidate(); utils.socialScheduler.getStats.invalidate(); setShowCreate(false); setForm({ content: "", platforms: [], scheduledAt: "" }); toast.success("Post scheduled"); },
     onError: (e) => toast.error(e.message),
   });
-  const deleteMutation = trpc.batch4.socialScheduler.deletePost.useMutation({
-    onSuccess: () => { utils.batch4.socialScheduler.getPosts.invalidate(); utils.batch4.socialScheduler.getStats.invalidate(); toast.success("Post deleted"); },
+  const deleteMutation = trpc.socialScheduler.deletePost.useMutation({
+    onSuccess: () => { utils.socialScheduler.getPosts.invalidate(); utils.socialScheduler.getStats.invalidate(); toast.success("Post deleted"); },
     onError: (e) => toast.error(e.message),
   });
-  const publishNowMutation = trpc.batch4.socialScheduler.publishNow.useMutation({
-    onSuccess: () => { utils.batch4.socialScheduler.getPosts.invalidate(); toast.success("Published!"); },
+  const publishNowMutation = trpc.socialScheduler.publishNow.useMutation({
+    onSuccess: () => { utils.socialScheduler.getPosts.invalidate(); toast.success("Published!"); },
     onError: (e) => toast.error(e.message),
   });
-  const generateAIMutation = trpc.batch4.socialScheduler.generateContentWithAI.useMutation({
+  const generateAIMutation = trpc.socialScheduler.generateContentWithAI.useMutation({
     onSuccess: (data) => { setForm(prev => ({ ...prev, content: data.content || prev.content })); toast.success("AI content generated"); },
     onError: (e) => toast.error(e.message),
   });
-  const connectMutation = trpc.batch4.socialScheduler.connectAccount.useMutation({
-    onSuccess: () => { utils.batch4.socialScheduler.getAccounts.invalidate(); toast.success("Account connected"); },
+  const connectMutation = trpc.socialScheduler.connectAccount.useMutation({
+    onSuccess: () => { utils.socialScheduler.getAccounts.invalidate(); toast.success("Account connected"); },
     onError: (e) => toast.error(e.message),
   });
 

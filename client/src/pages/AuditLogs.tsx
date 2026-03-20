@@ -23,7 +23,7 @@ export default function AuditLogs() {
   const [offset, setOffset] = useState(0);
   const limit = 50;
 
-  const { data, isLoading } = trpc.batch1.auditLogs.list.useQuery({
+  const { data, isLoading } = trpc.auditLogs.list.useQuery({
     entityType: entityType || undefined,
     action: action || undefined,
     limit,

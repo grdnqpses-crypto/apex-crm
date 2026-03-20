@@ -13,8 +13,8 @@ import { toast } from "sonner";
 
 export default function WhatsAppMessaging() {
   const utils = trpc.useUtils();
-  const { data: conversations, isLoading } = trpc.batch4.whatsapp.getConversations.useQuery();
-  const { data: templates } = trpc.batch4.whatsapp.getTemplates.useQuery();
+  const { data: conversations, isLoading } = trpc.whatsapp.getConversations.useQuery();
+  const { data: templates } = trpc.whatsapp.getTemplates.useQuery();
   const [selectedConv, setSelectedConv] = useState<string | null>(null);
   const [showSend, setShowSend] = useState(false);
   const [showTemplate, setShowTemplate] = useState(false);
@@ -22,24 +22,24 @@ export default function WhatsAppMessaging() {
   const [templateForm, setTemplateForm] = useState({ name: "", body: "", category: "marketing" });
   const [aiPrompt, setAiPrompt] = useState("");
 
-  const { data: messages } = trpc.batch4.whatsapp.getMessages.useQuery(
+  const { data: messages } = trpc.whatsapp.getMessages.useQuery(
     { phone: selectedConv! },
     { enabled: !!selectedConv }
   );
 
-  const sendMutation = trpc.batch4.whatsapp.sendMessage.useMutation({
-    onSuccess: () => { utils.batch4.whatsapp.getConversations.invalidate(); setShowSend(false); setMsgForm({ phone: "", body: "", contactId: undefined }); toast.success("Message sent"); },
+  const sendMutation = trpc.whatsapp.sendMessage.useMutation({
+    onSuccess: () => { utils.whatsapp.getConversations.invalidate(); setShowSend(false); setMsgForm({ phone: "", body: "", contactId: undefined }); toast.success("Message sent"); },
     onError: (e) => toast.error(e.message),
   });
-  const createTemplateMutation = trpc.batch4.whatsapp.createTemplate.useMutation({
-    onSuccess: () => { utils.batch4.whatsapp.getTemplates.invalidate(); setShowTemplate(false); toast.success("Template created"); },
+  const createTemplateMutation = trpc.whatsapp.createTemplate.useMutation({
+    onSuccess: () => { utils.whatsapp.getTemplates.invalidate(); setShowTemplate(false); toast.success("Template created"); },
     onError: (e) => toast.error(e.message),
   });
-  const deleteTemplateMutation = trpc.batch4.whatsapp.deleteTemplate.useMutation({
-    onSuccess: () => { utils.batch4.whatsapp.getTemplates.invalidate(); toast.success("Template deleted"); },
+  const deleteTemplateMutation = trpc.whatsapp.deleteTemplate.useMutation({
+    onSuccess: () => { utils.whatsapp.getTemplates.invalidate(); toast.success("Template deleted"); },
     onError: (e) => toast.error(e.message),
   });
-  const generateAIMutation = trpc.batch4.whatsapp.generateMessageWithAI.useMutation({
+  const generateAIMutation = trpc.whatsapp.generateMessageWithAI.useMutation({
     onSuccess: (data) => { setMsgForm(prev => ({ ...prev, body: data.message || prev.body })); toast.success("AI message generated"); },
     onError: (e) => toast.error(e.message),
   });

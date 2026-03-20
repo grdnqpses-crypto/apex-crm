@@ -23,11 +23,11 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
 export default function ESignature() {
   const utils = trpc.useUtils();
 
-  const { data, isLoading } = trpc.batch3.eSignature.listDocuments.useQuery({});
+  const { data, isLoading } = trpc.eSignature.listDocuments.useQuery({});
 
-  const createMutation = trpc.batch3.eSignature.createDocument.useMutation({
+  const createMutation = trpc.eSignature.createDocument.useMutation({
     onSuccess: () => {
-      utils.batch3.eSignature.listDocuments.invalidate();
+      utils.eSignature.listDocuments.invalidate();
       setCreateOpen(false);
       resetForm();
       toast.success("Document created", { description: "Your document is ready to send for signature." });
@@ -35,21 +35,21 @@ export default function ESignature() {
     onError: (e) => toast.error("Error", { description: e.message }),
   });
 
-  const sendMutation = trpc.batch3.eSignature.sendDocument.useMutation({
+  const sendMutation = trpc.eSignature.sendDocument.useMutation({
     onSuccess: () => {
-      utils.batch3.eSignature.listDocuments.invalidate();
+      utils.eSignature.listDocuments.invalidate();
       toast.success("Document sent", { description: "Signers have been notified." });
     },
   });
 
-  const voidMutation = trpc.batch3.eSignature.voidDocument.useMutation({
+  const voidMutation = trpc.eSignature.voidDocument.useMutation({
     onSuccess: () => {
-      utils.batch3.eSignature.listDocuments.invalidate();
+      utils.eSignature.listDocuments.invalidate();
       toast.success("Document voided");
     },
   });
 
-  const aiDraftMutation = trpc.batch3.eSignature.aiDraftDocument.useMutation({
+  const aiDraftMutation = trpc.eSignature.aiDraftDocument.useMutation({
     onSuccess: (data) => {
       setDocContent(data.content);
       toast.success("AI draft ready", { description: "Review and customize the document before sending." });

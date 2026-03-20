@@ -1,0 +1,109 @@
+{
+  "query": "SELECT id, name, username, email, systemRole, tenantCompanyId, loginMethod, isActive, passwordHash IS NOT NULL as hasPassword FROM users ORDER BY id LIMIT 50;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, name, username, email, systemRole, tenantCompanyId, loginMethod, isActive, passwordHash IS NOT NULL as hasPassword FROM users ORDER BY id LIMIT 50;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "crm",
+      "username": "NULL",
+      "email": "crm@shiplw.com",
+      "systemRole": "developer",
+      "tenantCompanyId": "2",
+      "loginMethod": "email",
+      "isActive": "1",
+      "hasPassword": "0"
+    },
+    {
+      "id": "12",
+      "name": "Crypto- GRDN",
+      "username": "NULL",
+      "email": "grdn.qpses@gmail.com",
+      "systemRole": "developer",
+      "tenantCompanyId": "NULL",
+      "loginMethod": "google",
+      "isActive": "1",
+      "hasPassword": "0"
+    },
+    {
+      "id": "2610017",
+      "name": "James Lavallee",
+      "username": "jlavallee",
+      "email": "jlavallee@shiplw.com",
+      "systemRole": "developer",
+      "tenantCompanyId": "2",
+      "loginMethod": "credentials",
+      "isActive": "1",
+      "hasPassword": "1"
+    },
+    {
+      "id": "2610020",
+      "name": "Mike Rodriguez",
+      "username": "mrodriguez",
+      "email": "mrodriguez@shiplw.com",
+      "systemRole": "sales_manager",
+      "tenantCompanyId": "2",
+      "loginMethod": "credentials",
+      "isActive": "1",
+      "hasPassword": "1"
+    },
+    {
+      "id": "2610023",
+      "name": "Sarah Chen",
+      "username": "schen",
+      "email": "schen@shiplw.com",
+      "systemRole": "account_manager",
+      "tenantCompanyId": "2",
+      "loginMethod": "credentials",
+      "isActive": "1",
+      "hasPassword": "1"
+    },
+    {
+      "id": "2610026",
+      "name": "David Thompson",
+      "username": "dthompson",
+      "email": "dthompson@shiplw.com",
+      "systemRole": "account_manager",
+      "tenantCompanyId": "2",
+      "loginMethod": "credentials",
+      "isActive": "1",
+      "hasPassword": "1"
+    },
+    {
+      "id": "2640083",
+      "name": "Jerry",
+      "username": "Lavallee",
+      "email": "glavallee@shiplw.com",
+      "systemRole": "company_admin",
+      "tenantCompanyId": "2",
+      "loginMethod": "credentials",
+      "isActive": "1",
+      "hasPassword": "1"
+    },
+    {
+      "id": "4410042",
+      "name": "Apex Platform Owner",
+      "username": "apexowner",
+      "email": "owner@apexcrm.com",
+      "systemRole": "apex_owner",
+      "tenantCompanyId": "30001",
+      "loginMethod": "credentials",
+      "isActive": "1",
+      "hasPassword": "1"
+    },
+    {
+      "id": "4590001",
+      "name": "Joseph Lavallee",
+      "username": "JoeLavallee",
+      "email": "grdn.qpses@gmail.com",
+      "systemRole": "company_admin",
+      "tenantCompanyId": "60001",
+      "loginMethod": "credentials",
+      "isActive": "1",
+      "hasPassword": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tusername\temail\tsystemRole\ttenantCompanyId\tloginMethod\tisActive\thasPassword\n1\tcrm\tNULL\tcrm@shiplw.com\tdeveloper\t2\temail\t1\t0\n12\tCrypto- GRDN\tNULL\tgrdn.qpses@gmail.com\tdeveloper\tNULL\tgoogle\t1\t0\n2610017\tJames Lavallee\tjlavallee\tjlavallee@shiplw.com\tdeveloper\t2\tcredentials\t1\t1\n2610020\tMike Rodriguez\tmrodriguez\tmrodriguez@shiplw.com\tsales_manager\t2\tcredentials\t1\t1\n2610023\tSarah Chen\tschen\tschen@shiplw.com\taccount_manager\t2\tcredentials\t1\t1\n2610026\tDavid Thompson\tdthompson\tdthompson@shiplw.com\taccount_manager\t2\tcredentials\t1\t1\n2640083\tJerry\tLavallee\tglavallee@shiplw.com\tcompany_admin\t2\tcredentials\t1\t1\n4410042\tApex Platform Owner\tapexowner\towner@apexcrm.com\tapex_owner\t30001\tcredentials\t1\t1\n4590001\tJoseph Lavallee\tJoeLavallee\tgrdn.qpses@gmail.com\tcompany_admin\t60001\tcredentials\t1\t1\n",
+  "stderr": "",
+  "execution_time_ms": 127
+}

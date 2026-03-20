@@ -1,0 +1,60 @@
+{
+  "query": "SELECT d.pipelineId, COUNT(*) as cnt, p.name as pipeline_name FROM deals d LEFT JOIN pipelines p ON d.pipelineId = p.id GROUP BY d.pipelineId, p.name LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT d.pipelineId, COUNT(*) as cnt, p.name as pipeline_name FROM deals d LEFT JOIN pipelines p ON d.pipelineId = p.id GROUP BY d.pipelineId, p.name LIMIT 10;",
+  "rows": [
+    {
+      "pipelineId": "780016",
+      "cnt": "1",
+      "pipeline_name": "Sales Pipeline"
+    },
+    {
+      "pipelineId": "30005",
+      "cnt": "1",
+      "pipeline_name": "Sales Pipeline"
+    },
+    {
+      "pipelineId": "30017",
+      "cnt": "1",
+      "pipeline_name": "Sales Pipeline"
+    },
+    {
+      "pipelineId": "330001",
+      "cnt": "1",
+      "pipeline_name": "Sales Pipeline"
+    },
+    {
+      "pipelineId": "330004",
+      "cnt": "1",
+      "pipeline_name": "Sales Pipeline"
+    },
+    {
+      "pipelineId": "390003",
+      "cnt": "1",
+      "pipeline_name": "Sales Pipeline"
+    },
+    {
+      "pipelineId": "450001",
+      "cnt": "1",
+      "pipeline_name": "Sales Pipeline"
+    },
+    {
+      "pipelineId": "660001",
+      "cnt": "1",
+      "pipeline_name": "Sales Pipeline"
+    },
+    {
+      "pipelineId": "690001",
+      "cnt": "1",
+      "pipeline_name": "Sales Pipeline"
+    },
+    {
+      "pipelineId": "30023",
+      "cnt": "1",
+      "pipeline_name": "Sales Pipeline"
+    }
+  ],
+  "messages": [],
+  "stdout": "pipelineId\tcnt\tpipeline_name\n780016\t1\tSales Pipeline\n30005\t1\tSales Pipeline\n30017\t1\tSales Pipeline\n330001\t1\tSales Pipeline\n330004\t1\tSales Pipeline\n390003\t1\tSales Pipeline\n450001\t1\tSales Pipeline\n660001\t1\tSales Pipeline\n690001\t1\tSales Pipeline\n30023\t1\tSales Pipeline\n",
+  "stderr": "",
+  "execution_time_ms": 61
+}

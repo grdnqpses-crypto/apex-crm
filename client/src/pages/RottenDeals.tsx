@@ -12,7 +12,7 @@ import { toast } from "sonner";
 export default function RottenDeals() {
   const [thresholdDays, setThresholdDays] = useState(14);
 
-  const { data: rottenDeals, isLoading, refetch } = trpc.batch1.rottenDeals.list.useQuery({
+  const { data: rottenDeals, isLoading, refetch } = trpc.rottenDeals.list.useQuery({
     thresholdDays,
   });
 

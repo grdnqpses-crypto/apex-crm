@@ -1,0 +1,9 @@
+{
+  "query": "SELECT id, name, userId, tenantId, isDefault FROM pipelines WHERE tenantId = 2 OR userId = 2610017 LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, name, userId, tenantId, isDefault FROM pipelines WHERE tenantId = 2 OR userId = 2610017 LIMIT 10;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 56
+}

@@ -1,0 +1,9 @@
+{
+  "query": "SELECT DATE_FORMAT(FROM_UNIXTIME(closedAt / 1000), '%Y-%m') as month, COALESCE(SUM(dealValue), 0) as revenue, COUNT(*) as count FROM deals WHERE tenantId = 2 AND status = 'won' AND closedAt >= 1758431376983 GROUP BY DATE_FORMAT(FROM_UNIXTIME(closedAt / 1000), '%Y-%m');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT DATE_FORMAT(FROM_UNIXTIME(closedAt / 1000), '%Y-%m') as month, COALESCE(SUM(dealValue), 0) as revenue, COUNT(*) as count FROM deals WHERE tenantId = 2 AND status = 'won' AND closedAt >= 1758431376983 GROUP BY DATE_FORMAT(FROM_UNIXTIME(closedAt / 1000), '%Y-%m');",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 59
+}

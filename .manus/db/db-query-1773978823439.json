@@ -1,0 +1,59 @@
+{
+  "query": "SELECT id, username, name, role, systemRole FROM users WHERE passwordHash IS NOT NULL LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, username, name, role, systemRole FROM users WHERE passwordHash IS NOT NULL LIMIT 10;",
+  "rows": [
+    {
+      "id": "2610017",
+      "username": "jlavallee",
+      "name": "James Lavallee",
+      "role": "admin",
+      "systemRole": "developer"
+    },
+    {
+      "id": "2610020",
+      "username": "mrodriguez",
+      "name": "Mike Rodriguez",
+      "role": "user",
+      "systemRole": "sales_manager"
+    },
+    {
+      "id": "2610023",
+      "username": "schen",
+      "name": "Sarah Chen",
+      "role": "user",
+      "systemRole": "account_manager"
+    },
+    {
+      "id": "2610026",
+      "username": "dthompson",
+      "name": "David Thompson",
+      "role": "user",
+      "systemRole": "account_manager"
+    },
+    {
+      "id": "2640083",
+      "username": "Lavallee",
+      "name": "Jerry",
+      "role": "admin",
+      "systemRole": "company_admin"
+    },
+    {
+      "id": "4410042",
+      "username": "apexowner",
+      "name": "Apex Platform Owner",
+      "role": "admin",
+      "systemRole": "apex_owner"
+    },
+    {
+      "id": "4590001",
+      "username": "JoeLavallee",
+      "name": "Joseph Lavallee",
+      "role": "admin",
+      "systemRole": "company_admin"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tusername\tname\trole\tsystemRole\n2610017\tjlavallee\tJames Lavallee\tadmin\tdeveloper\n2610020\tmrodriguez\tMike Rodriguez\tuser\tsales_manager\n2610023\tschen\tSarah Chen\tuser\taccount_manager\n2610026\tdthompson\tDavid Thompson\tuser\taccount_manager\n2640083\tLavallee\tJerry\tadmin\tcompany_admin\n4410042\tapexowner\tApex Platform Owner\tadmin\tapex_owner\n4590001\tJoeLavallee\tJoseph Lavallee\tadmin\tcompany_admin\n",
+  "stderr": "",
+  "execution_time_ms": 70
+}

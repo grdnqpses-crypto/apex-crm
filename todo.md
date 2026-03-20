@@ -1964,3 +1964,7 @@
 - [x] Size preference persisted in localStorage
 - [x] Smooth CSS transitions between size modes
 - [x] Keyboard shortcut to toggle full-screen AI panel
+
+## Bug Fixes (Mar 20 2026)
+- [x] Fix salesForecasting.getSummary: ONLY_FULL_GROUP_BY MySQL error in trend query (raw SQL)
+- [x] Fix reputation.list: schema column mismatch (review_sentiment → sentiment)

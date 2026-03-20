@@ -1,0 +1,52 @@
+{
+  "query": "SELECT id, name, username, tenantCompanyId FROM users WHERE id = 1; SELECT id, name, userId, tenantId FROM pipelines WHERE userId = 1 LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, name, username, tenantCompanyId FROM users WHERE id = 1; SELECT id, name, userId, tenantId FROM pipelines WHERE userId = 1 LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "crm",
+      "username": "NULL",
+      "tenantCompanyId": "2"
+    },
+    {
+      "id": "id",
+      "name": "name",
+      "username": "userId",
+      "tenantCompanyId": "tenantId"
+    },
+    {
+      "id": "1",
+      "name": "Sales Pipeline",
+      "username": "1",
+      "tenantCompanyId": "NULL"
+    },
+    {
+      "id": "2",
+      "name": "Sales Pipeline",
+      "username": "1",
+      "tenantCompanyId": "NULL"
+    },
+    {
+      "id": "3",
+      "name": "Sales Pipeline",
+      "username": "1",
+      "tenantCompanyId": "NULL"
+    },
+    {
+      "id": "30001",
+      "name": "Sales Pipeline",
+      "username": "1",
+      "tenantCompanyId": "NULL"
+    },
+    {
+      "id": "30002",
+      "name": "Sales Pipeline",
+      "username": "1",
+      "tenantCompanyId": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tusername\ttenantCompanyId\n1\tcrm\tNULL\t2\nid\tname\tuserId\ttenantId\n1\tSales Pipeline\t1\tNULL\n2\tSales Pipeline\t1\tNULL\n3\tSales Pipeline\t1\tNULL\n30001\tSales Pipeline\t1\tNULL\n30002\tSales Pipeline\t1\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 69
+}

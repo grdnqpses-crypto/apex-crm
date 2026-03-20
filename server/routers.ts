@@ -29,17 +29,42 @@ import {
   onboardingRouter,
   historyImporterRouter,
 } from "./routers/phase44";
-import { batch1Router } from "./routers/batch1";
-import { batch2Router } from "./routers/batch2";
-import { batch3Router } from "./routers/batch3";
-import { batch4Router } from "./routers/batch4";
+import { rottenDealsRouter, bulkActionsRouter, winLossRouter, auditLogsRouter, smartViewsRouter, territoriesRouter, accountHierarchyRouter } from "./routers/batch1";
+import { salesForecastingRouter, productCatalogRouter, leadScoringRouter, nextBestActionRouter } from "./routers/batch2";
+import { webFormsRouter, eSignatureRouter, reputationRouter, oooDetectionRouter } from "./routers/batch3";
+import { emailSequencesRouter, journeysRouter, whatsappRouter, socialSchedulerRouter, powerDialerRouter, anomalyDetectionRouter, pipelineInspectionRouter, domainHealthAutopilotRouter, abTestingRouter, featureGatingRouter } from "./routers/batch4";
 
 export const appRouter = router({
   system: systemRouter,
-  batch1: batch1Router,
-  batch2: batch2Router,
-  batch3: batch3Router,
-  batch4: batch4Router,
+  // batch1 sub-routers (flattened for direct frontend access)
+  rottenDeals: rottenDealsRouter,
+  bulkActions: bulkActionsRouter,
+  winLoss: winLossRouter,
+  auditLogs: auditLogsRouter,
+  smartViews: smartViewsRouter,
+  territories: territoriesRouter,
+  accountHierarchy: accountHierarchyRouter,
+  // batch2 sub-routers (flattened)
+  salesForecasting: salesForecastingRouter,
+  productCatalog: productCatalogRouter,
+  leadScoring: leadScoringRouter,
+  nextBestAction: nextBestActionRouter,
+  // batch3 sub-routers (flattened)
+  webForms: webFormsRouter,
+  eSignature: eSignatureRouter,
+  reputation: reputationRouter,
+  oooDetection: oooDetectionRouter,
+  // batch4 sub-routers (flattened)
+  emailSequences: emailSequencesRouter,
+  journeyOrchestration: journeysRouter,
+  whatsapp: whatsappRouter,
+  socialScheduler: socialSchedulerRouter,
+  powerDialer: powerDialerRouter,
+  anomalyDetection: anomalyDetectionRouter,
+  pipelineInspection: pipelineInspectionRouter,
+  domainAutopilot: domainHealthAutopilotRouter,
+  abTesting: abTestingRouter,
+  featureGating: featureGatingRouter,
   calendar: calendarRouter,
   emailSync: emailSyncRouter,
   scheduler: schedulerRouter,
@@ -436,7 +461,7 @@ export const appRouter = router({
 
   pipelines: router({
     list: protectedProcedure.query(async ({ ctx }) => {
-      return db.listPipelines(ctx.user.id);
+      return db.listPipelines(ctx.user.id, ctx.user.tenantCompanyId);
     }),
     create: protectedProcedure.input(z.object({
       name: z.string().min(1),

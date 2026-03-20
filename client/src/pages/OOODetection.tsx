@@ -13,12 +13,12 @@ import { Search, Calendar, Mail, Clock, CheckCircle, Loader2, Plane, Plus } from
 export default function OOODetection() {
   const utils = trpc.useUtils();
 
-  const { data, isLoading } = trpc.batch3.oooDetection.list.useQuery({});
+  const { data, isLoading } = trpc.oooDetection.list.useQuery({});
 
-  const detectMutation = trpc.batch3.oooDetection.detectFromEmail.useMutation({
+  const detectMutation = trpc.oooDetection.detectFromEmail.useMutation({
     onSuccess: (result) => {
       if (result.isOOO) {
-        utils.batch3.oooDetection.list.invalidate();
+        utils.oooDetection.list.invalidate();
         toast.success("Out-of-office detected!", { description: `Return date: ${result.returnDate && result.returnDate !== "null" ? result.returnDate : "Unknown"}` });
       } else {
         toast.success("Not an OOO email", { description: "This email does not appear to be an out-of-office reply." });
@@ -30,17 +30,17 @@ export default function OOODetection() {
     onError: (e) => toast.error("Error", { description: e.message }),
   });
 
-  const scheduleFollowUpMutation = trpc.batch3.oooDetection.scheduleFollowUp.useMutation({
+  const scheduleFollowUpMutation = trpc.oooDetection.scheduleFollowUp.useMutation({
     onSuccess: () => {
-      utils.batch3.oooDetection.list.invalidate();
+      utils.oooDetection.list.invalidate();
       toast.success("Follow-up scheduled");
       setFollowUpOpen(false);
     },
   });
 
-  const deleteMutation = trpc.batch3.oooDetection.delete.useMutation({
+  const deleteMutation = trpc.oooDetection.delete.useMutation({
     onSuccess: () => {
-      utils.batch3.oooDetection.list.invalidate();
+      utils.oooDetection.list.invalidate();
       toast.success("Record removed");
     },
   });
