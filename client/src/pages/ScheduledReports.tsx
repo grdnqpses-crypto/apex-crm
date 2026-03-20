@@ -29,6 +29,7 @@ export default function ScheduledReports() {
     reportType: "pipeline_summary",
     frequency: "weekly" as "daily" | "weekly" | "monthly",
     recipients: "",
+    format: "pdf" as "pdf" | "csv" | "both",
     dayOfWeek: 1,
     dayOfMonth: 1,
   });
@@ -38,7 +39,7 @@ export default function ScheduledReports() {
       toast.success("Scheduled report created");
       utils.scheduledReports.list.invalidate();
       setOpen(false);
-      setForm({ reportName: "", reportType: "pipeline_summary", frequency: "weekly", recipients: "", dayOfWeek: 1, dayOfMonth: 1 });
+      setForm({ reportName: "", reportType: "pipeline_summary", frequency: "weekly", recipients: "", format: "pdf", dayOfWeek: 1, dayOfMonth: 1 });
     },
     onError: (e) => toast.error(e.message),
   });
@@ -64,7 +65,7 @@ export default function ScheduledReports() {
       reportConfig: { type: form.reportType },
       frequency: form.frequency,
       recipients: form.recipients.split(",").map((e) => e.trim()).filter(Boolean),
-      format: "pdf" as "pdf" | "csv" | "both",
+      format: form.format,
       dayOfWeek: form.frequency === "weekly" ? form.dayOfWeek : undefined,
       dayOfMonth: form.frequency === "monthly" ? form.dayOfMonth : undefined,
     });
@@ -142,6 +143,18 @@ export default function ScheduledReports() {
                     <Input type="number" min={1} max={28} value={form.dayOfMonth} onChange={(e) => setForm((f) => ({ ...f, dayOfMonth: Number(e.target.value) }))} />
                   </div>
                 )}
+                <div className="space-y-2">
+                  <Label>Delivery Format</Label>
+                  <Select value={form.format} onValueChange={(v) => setForm((f) => ({ ...f, format: v as "pdf" | "csv" | "both" }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pdf">PDF Report</SelectItem>
+                      <SelectItem value="csv">CSV Data Export</SelectItem>
+                      <SelectItem value="both">Both PDF + CSV</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">PDF is formatted for reading; CSV is for data analysis in Excel.</p>
+                </div>
                 <div className="space-y-2">
                   <Label>Recipient Emails</Label>
                   <Input

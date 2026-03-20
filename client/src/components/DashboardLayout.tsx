@@ -35,6 +35,7 @@ import {
   TrendingDown, DollarSign, Tag, Home, Calendar, MessageSquare, Megaphone, BarChart2,
   Inbox, Layers, Star, LucideIcon, FileSignature, ClipboardList, ThumbsUp, Plane,
   MessageCircle, Share2, PhoneCall, AlertTriangle, Search as SearchIcon, Route, ListOrdered,
+  Users2, GitMerge, CalendarClock, Lock, PieChart, MessageSquareDot, SlidersHorizontal,
 } from "lucide-react";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -104,6 +105,10 @@ const standardSections = [
       { icon: Route, label: "Journey Orchestration", path: "/journey-orchestration" },
       { icon: MessageCircle, label: "WhatsApp Messaging", path: "/whatsapp" },
       { icon: Share2, label: "Social Scheduler", path: "/social-scheduler" },
+      { icon: MessageSquareDot, label: "WhatsApp Broadcasts", path: "/whatsapp-broadcasts" },
+      { icon: Sparkles, label: "AI Post Writer", path: "/ai-post-writer" },
+      { icon: GitMerge, label: "Bulk Merge", path: "/bulk-merge" },
+      { icon: PieChart, label: "Proposal Analytics", path: "/proposal-analytics" },
       { icon: PhoneCall, label: "Power Dialer", path: "/power-dialer" },
       { icon: AlertTriangle, label: "Anomaly Detection", path: "/anomaly-detection" },
       { icon: SearchIcon, label: "Pipeline Inspection", path: "/pipeline-inspection" },
@@ -218,6 +223,9 @@ const standardSections = [
       { icon: Zap, label: "AI Credits", path: "/settings/ai-credits" },
       { icon: Mail, label: "Email Infrastructure", path: "/email-setup" },
       { icon: Tag, label: "Business Type", path: "/settings/business-type" },
+      { icon: Bell, label: "Notification Digest", path: "/notification-digest" },
+      { icon: CalendarClock, label: "Scheduled Reports", path: "/scheduled-reports" },
+      { icon: SlidersHorizontal, label: "Conditional Fields", path: "/conditional-fields" },
     ],
   },
   {
@@ -252,6 +260,9 @@ const developerSection = {
     { icon: FileSearch, label: "FMCSA Scanner", path: "/fmcsa-scanner" },
     { icon: Key, label: "API Keys", path: "/api-keys" },
     { icon: Webhook, label: "Webhooks", path: "/webhooks" },
+    { icon: PieChart, label: "AI Credit Usage", path: "/ai-credit-usage" },
+    { icon: Users2, label: "Custom Roles", path: "/custom-roles" },
+    { icon: Lock, label: "SSO Settings", path: "/sso-settings" },
   ],
 };
 

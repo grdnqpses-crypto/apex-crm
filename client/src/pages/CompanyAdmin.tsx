@@ -83,6 +83,8 @@ export default function CompanyAdmin() {
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"company_admin" | "sales_manager" | "office_manager" | "account_manager" | "coordinator">("account_manager");
+  const [inviteCustomRoleId, setInviteCustomRoleId] = useState<number | undefined>(undefined);
+  const { data: customRoles } = trpc.customRoles.list.useQuery(undefined, { enabled: isAdmin });
 
   // Feature editor state
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
@@ -321,6 +323,21 @@ export default function CompanyAdmin() {
                       </SelectContent>
                     </Select>
                   </div>
+                  {customRoles && customRoles.length > 0 && (
+                    <div>
+                      <Label>Custom Role <span className="text-muted-foreground text-xs">(Optional)</span></Label>
+                      <Select value={inviteCustomRoleId?.toString() ?? "none"} onValueChange={(v) => setInviteCustomRoleId(v === "none" ? undefined : Number(v))}>
+                        <SelectTrigger><SelectValue placeholder="No custom role" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No custom role</SelectItem>
+                          {(customRoles as any[]).map((r) => (
+                            <SelectItem key={r.id} value={r.id.toString()}>{r.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground mt-1">Custom roles grant additional permissions on top of the base role.</p>
+                    </div>
+                  )}
                   <Button className="w-full" onClick={() => createInviteMutation.mutate({ companyId: companyId!, email: inviteEmail, role: inviteRole })} disabled={!inviteEmail || createInviteMutation.isPending}>
                     {createInviteMutation.isPending ? "Sending..." : "Send Invite"}
                   </Button>
