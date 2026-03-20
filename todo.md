@@ -1997,3 +1997,12 @@
 - [x] Create system_health_events and system_health_logs tables in database
 - [x] All 26 test files passing (500+ tests, 0 failures)
 - [x] TypeScript: 0 errors
+
+## Phase 64: Live API Migrations (Mar 20, 2026)
+- [x] HubSpot live API migration — contacts, companies, deals, activities (paginated)
+- [x] Salesforce live API migration — OAuth token exchange + SOQL data pull
+- [x] Pipedrive live API migration — persons, organizations, deals, activities
+- [x] Zoho CRM live API migration — contacts, accounts, deals, activities
+- [x] GoHighLevel live API migration — contacts, opportunities, activities
+- [x] Close CRM live API migration — contacts, leads, opportunities, activities
+- [x] Write vitest tests for all live migration paths (13/13 passing)

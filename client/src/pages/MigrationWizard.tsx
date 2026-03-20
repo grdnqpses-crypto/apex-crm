@@ -17,6 +17,7 @@ type Step = "select" | "connect" | "migrating" | "complete";
 
 const STATUS_LABELS: Record<string, string> = {
   validating: "Validating connection...",
+  fetching: "Fetching your data from the API...",
   analyzing: "Analyzing your data structure...",
   mapping: "AI is mapping your fields...",
   importing: "Importing your data...",
@@ -26,9 +27,10 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_PROGRESS: Record<string, number> = {
   validating: 10,
-  analyzing: 25,
-  mapping: 45,
-  importing: 70,
+  fetching: 30,
+  analyzing: 40,
+  mapping: 55,
+  importing: 75,
   completed: 100,
   failed: 0,
 };

@@ -18,6 +18,12 @@ import {
   normalizeStage, updateMigrationProgress,
   type FieldMapping,
 } from "../migration-engine";
+import {
+  fetchHubSpot, fetchSalesforce, fetchPipedrive,
+  fetchZoho, fetchGoHighLevel, fetchClose,
+  type MigrationData, type NormalizedContact, type NormalizedCompany,
+  type NormalizedDeal, type NormalizedActivity,
+} from "../migration-fetchers";
 
 export const migrationRouter = router({
 
@@ -409,30 +415,114 @@ async function runMigrationAsync(
       }
     }
   } else {
-    // API-based import — use sample data to demonstrate the flow
-    // In production, this would call the competitor's API using input.apiKey
-    // For now we create a realistic simulation with the field mapping applied
-    const sampleCount = Math.floor(Math.random() * 200) + 50;
-    await updateMigrationProgress(jobId, { totalRecords: sampleCount * 3 });
+    // ── Live API import ────────────────────────────────────────────────────
+    await updateMigrationProgress(jobId, { status: "fetching" });
 
-    // Simulate realistic import timing
-    for (let i = 0; i < sampleCount; i++) {
-      contactsImported++;
-      if (i % 10 === 0) {
-        await updateMigrationProgress(jobId, {
-          importedRecords: contactsImported + companiesImported + dealsImported,
-          contactsImported,
-        });
-        await sleep(50);
+    let liveData: MigrationData = { contacts: [], companies: [], deals: [], activities: [] };
+
+    const progressCb = async (fetched: { contacts?: number; companies?: number; deals?: number; activities?: number }) => {
+      const total = (fetched.contacts || 0) + (fetched.companies || 0) + (fetched.deals || 0) + (fetched.activities || 0);
+      await updateMigrationProgress(jobId, {
+        totalRecords: total,
+        importedRecords: contactsImported + companiesImported + dealsImported + activitiesImported,
+      });
+    };
+
+    try {
+      switch (input.sourceSystem) {
+        case "hubspot":
+          if (!input.apiKey) throw new Error("HubSpot API key is required");
+          liveData = await fetchHubSpot(input.apiKey, progressCb);
+          break;
+        case "salesforce":
+          if (!input.apiKey || !input.instanceUrl) throw new Error("Salesforce access token and instance URL are required");
+          liveData = await fetchSalesforce(input.apiKey, input.instanceUrl, progressCb);
+          break;
+        case "pipedrive":
+          if (!input.apiKey) throw new Error("Pipedrive API key is required");
+          liveData = await fetchPipedrive(input.apiKey, progressCb);
+          break;
+        case "zoho":
+          if (!input.apiKey) throw new Error("Zoho access token is required");
+          liveData = await fetchZoho(input.apiKey, progressCb);
+          break;
+        case "gohighlevel":
+          if (!input.apiKey) throw new Error("GoHighLevel API key is required");
+          liveData = await fetchGoHighLevel(input.apiKey, progressCb);
+          break;
+        case "close":
+          if (!input.apiKey) throw new Error("Close CRM API key is required");
+          liveData = await fetchClose(input.apiKey, progressCb);
+          break;
+        default:
+          throw new Error(`Live API migration not supported for: ${input.sourceSystem}`);
+      }
+    } catch (fetchErr) {
+      errors.push({ record: "api_fetch", error: String(fetchErr) });
+      await updateMigrationProgress(jobId, { status: "failed", errors });
+      return;
+    }
+
+    const totalRecords = liveData.contacts.length + liveData.companies.length + liveData.deals.length + liveData.activities.length;
+    await updateMigrationProgress(jobId, { status: "importing", totalRecords });
+
+    // Import companies first (contacts/deals may reference them)
+    for (const co of liveData.companies) {
+      try {
+        await importNormalizedCompany(db, tenantCompanyId, userId, co);
+        companiesImported++;
+        if (companiesImported % 50 === 0) {
+          await updateMigrationProgress(jobId, {
+            importedRecords: contactsImported + companiesImported + dealsImported + activitiesImported,
+            companiesImported,
+          });
+        }
+      } catch (err) {
+        errors.push({ record: `company_${co.sourceId}`, error: String(err) });
       }
     }
-    for (let i = 0; i < Math.floor(sampleCount * 0.4); i++) {
-      companiesImported++;
+
+    // Import contacts
+    for (const ct of liveData.contacts) {
+      try {
+        await importNormalizedContact(db, tenantCompanyId, userId, ct);
+        contactsImported++;
+        if (contactsImported % 50 === 0) {
+          await updateMigrationProgress(jobId, {
+            importedRecords: contactsImported + companiesImported + dealsImported + activitiesImported,
+            contactsImported,
+          });
+        }
+      } catch (err) {
+        errors.push({ record: `contact_${ct.sourceId}`, error: String(err) });
+      }
     }
-    for (let i = 0; i < Math.floor(sampleCount * 0.6); i++) {
-      dealsImported++;
+
+    // Import deals
+    for (const dl of liveData.deals) {
+      try {
+        await importNormalizedDeal(db, tenantCompanyId, userId, dl, input.sourceSystem);
+        dealsImported++;
+        if (dealsImported % 50 === 0) {
+          await updateMigrationProgress(jobId, {
+            importedRecords: contactsImported + companiesImported + dealsImported + activitiesImported,
+            dealsImported,
+          });
+        }
+      } catch (err) {
+        errors.push({ record: `deal_${dl.sourceId}`, error: String(err) });
+      }
     }
-    activitiesImported = Math.floor(sampleCount * 3.2);
+
+    // Import activities
+    for (const act of liveData.activities) {
+      try {
+        await importNormalizedActivity(db, tenantCompanyId, userId, act);
+        activitiesImported++;
+      } catch (err) {
+        errors.push({ record: `activity_${act.sourceId}`, error: String(err) });
+      }
+    }
   }
 
   // ── Step 5: Apply the matching skin ──────────────────────────────────────
@@ -479,6 +569,87 @@ async function runMigrationAsync(
     importLog: [{ timestamp: Date.now(), message: cheatSheet, level: "info" }] as any,
     errorDetails: errors as any,
   } as any).where(eq(migrationJobs.id, jobId));
+}
+
+// ─── Helpers: Import normalized records from live API fetchers ───────────────
+
+async function importNormalizedContact(
+  db: any, tenantCompanyId: number, userId: number, ct: NormalizedContact
+) {
+  await db.insert(contacts).values({
+    tenantCompanyId,
+    firstName: ct.firstName || "Unknown",
+    lastName: ct.lastName || "",
+    email: ct.email || null,
+    phone: ct.phone || null,
+    jobTitle: ct.jobTitle || null,
+    address: ct.address || null,
+    city: ct.city || null,
+    state: ct.state || null,
+    zip: ct.zip || null,
+    country: ct.country || null,
+    website: ct.website || null,
+    notes: ct.notes || null,
+    linkedinUrl: ct.linkedinUrl || null,
+    ownerId: userId,
+    status: "active",
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  } as any);
+}
+
+async function importNormalizedCompany(
+  db: any, tenantCompanyId: number, userId: number, co: NormalizedCompany
+) {
+  await db.insert(companies).values({
+    tenantCompanyId,
+    name: co.name || "Unknown Company",
+    domain: co.domain || null,
+    phone: co.phone || null,
+    industry: co.industry || null,
+    address: co.address || null,
+    city: co.city || null,
+    state: co.state || null,
+    zip: co.zip || null,
+    country: co.country || null,
+    website: co.website || null,
+    description: co.description || null,
+    ownerId: userId,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  } as any);
+}
+
+async function importNormalizedDeal(
+  db: any, tenantCompanyId: number, userId: number, dl: NormalizedDeal, sourceSystem: string
+) {
+  await db.insert(deals).values({
+    tenantCompanyId,
+    title: dl.title || "Imported Deal",
+    value: dl.value || null,
+    stage: normalizeStage(sourceSystem, dl.stage || ""),
+    ownerId: userId,
+    description: dl.description || null,
+    closeDate: dl.closeDate || null,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  } as any);
+}
+
+async function importNormalizedActivity(
+  db: any, tenantCompanyId: number, userId: number, act: NormalizedActivity
+) {
+  await db.insert(activityHistory).values({
+    tenantCompanyId,
+    userId,
+    objectType: "contact",
+    recordId: 0,
+    activityType: act.type || "note",
+    subject: act.subject || null,
+    body: act.body || null,
+    occurredAt: act.occurredAt || Date.now(),
+    createdAt: Date.now(),
+  } as any);
 }
 
 // ─── Helper: Apply field mapping to a row ────────────────────────────────────
