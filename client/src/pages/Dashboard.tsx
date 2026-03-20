@@ -626,6 +626,31 @@ export default function Dashboard() {
                   <Wand2 className="h-4 w-4" /> Customize It
                 </Button>
                 <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={async () => {
+                    if (!previewLogoUrl) return;
+                    try {
+                      const response = await fetch(previewLogoUrl);
+                      const blob = await response.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `${company?.name?.replace(/\s+/g, '-').toLowerCase() || 'logo'}-apex.png`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                      toast.success('Logo downloaded!');
+                    } catch {
+                      toast.error('Download failed. Try right-clicking the image to save.');
+                    }
+                  }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Download Logo
+                </Button>
+                <Button
                   variant="ghost"
                   className="w-full text-muted-foreground"
                   onClick={() => {
@@ -810,22 +835,41 @@ export default function Dashboard() {
                   <div className="space-y-3">
                     <p className="text-xs text-muted-foreground">Click any logo to restore it as your current logo.</p>
                     <div className="grid grid-cols-3 gap-3">
-                      {logoHistory.map((entry) => (
-                        <button
-                          key={entry.id}
-                          onClick={() => {
-                            restoreLogoMutation.mutate({ logoUrl: entry.logoUrl });
-                            setShowLogoDialog(false);
-                          }}
-                          className="group relative rounded-xl border border-border/40 bg-muted/30 p-3 hover:border-primary/40 hover:bg-accent/30 transition-all aspect-square flex items-center justify-center"
-                          title="Click to restore this logo"
-                        >
-                          <img src={entry.logoUrl} alt="Logo history" className="h-full w-full object-contain" />
-                          <div className="absolute inset-0 rounded-xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <span className="text-white text-xs font-semibold">Restore</span>
-                          </div>
-                        </button>
-                      ))}
+                      {logoHistory.map((entry, idx) => {
+                        const isActive = company?.logoUrl === entry.logoUrl;
+                        const isMostRecent = idx === 0;
+                        return (
+                          <button
+                            key={entry.id}
+                            onClick={() => {
+                              restoreLogoMutation.mutate({ logoUrl: entry.logoUrl });
+                              setShowLogoDialog(false);
+                            }}
+                            className={`group relative rounded-xl border p-3 transition-all aspect-square flex items-center justify-center ${
+                              isActive
+                                ? 'border-primary bg-primary/10 ring-2 ring-primary/30'
+                                : 'border-border/40 bg-muted/30 hover:border-primary/40 hover:bg-accent/30'
+                            }`}
+                            title={isActive ? 'Currently active logo' : 'Click to restore this logo'}
+                          >
+                            <img src={entry.logoUrl} alt="Logo history" className="h-full w-full object-contain" />
+                            {/* Active badge */}
+                            {isActive && (
+                              <span className="absolute top-1 right-1 text-[9px] font-bold bg-primary text-primary-foreground rounded px-1 py-0.5 leading-none">Active</span>
+                            )}
+                            {/* Most Recent badge (only if not active) */}
+                            {isMostRecent && !isActive && (
+                              <span className="absolute top-1 right-1 text-[9px] font-bold bg-emerald-500 text-white rounded px-1 py-0.5 leading-none">New</span>
+                            )}
+                            {/* Hover overlay */}
+                            {!isActive && (
+                              <div className="absolute inset-0 rounded-xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <span className="text-white text-xs font-semibold">Restore</span>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

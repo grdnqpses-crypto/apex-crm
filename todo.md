@@ -1909,3 +1909,8 @@
 - [x] Frontend: Stripe payment gate in customize flow (redirect to checkout, return to customize-input on success)
 - [x] Frontend: Logo history tab in logo dialog (grid of last 5, click to restore)
 - [x] Frontend: Auto-generate banner on first dashboard load if no logo (non-intrusive, dismissable)
+
+## Phase 54: Logo UX Polish
+- [x] History tab: "Active" badge on the logo that matches company.logoUrl
+- [x] History tab: "Most Recent" badge on the newest entry (index 0)
+- [x] Preview step: "Download Logo" button that downloads the PNG directly
