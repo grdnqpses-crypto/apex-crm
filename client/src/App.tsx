@@ -127,6 +127,16 @@ const SocialScheduler = lazy(() => import("./pages/SocialScheduler"));
 const PowerDialer = lazy(() => import("./pages/PowerDialer"));
 const AnomalyDetection = lazy(() => import("./pages/AnomalyDetection"));
 const PipelineInspection = lazy(() => import("./pages/PipelineInspection"));
+const NotificationDigest = lazy(() => import("./pages/NotificationDigest"));
+const ScheduledReports = lazy(() => import("./pages/ScheduledReports"));
+const SSOSettings = lazy(() => import("./pages/SSOSettings"));
+const CustomRoleBuilder = lazy(() => import("./pages/CustomRoleBuilder"));
+const ProposalAnalytics = lazy(() => import("./pages/ProposalAnalytics"));
+const AICreditUsage = lazy(() => import("./pages/AICreditUsage"));
+const BulkMerge = lazy(() => import("./pages/BulkMerge"));
+const WhatsAppBroadcasts = lazy(() => import("./pages/WhatsAppBroadcasts"));
+const AIPostWriter = lazy(() => import("./pages/AIPostWriter"));
+const ConditionalFields = lazy(() => import("./pages/ConditionalFields"));
 
 function PageLoader() {
   return (
@@ -261,6 +271,16 @@ function Router() {
           <Route path="/power-dialer" component={PowerDialer} />
           <Route path="/anomaly-detection" component={AnomalyDetection} />
           <Route path="/pipeline-inspection" component={PipelineInspection} />
+          <Route path="/notification-digest" component={NotificationDigest} />
+          <Route path="/scheduled-reports" component={ScheduledReports} />
+          <Route path="/sso-settings" component={SSOSettings} />
+          <Route path="/custom-roles" component={CustomRoleBuilder} />
+          <Route path="/proposal-analytics" component={ProposalAnalytics} />
+          <Route path="/ai-credit-usage" component={AICreditUsage} />
+          <Route path="/bulk-merge" component={BulkMerge} />
+          <Route path="/whatsapp-broadcasts" component={WhatsAppBroadcasts} />
+          <Route path="/ai-post-writer" component={AIPostWriter} />
+          <Route path="/conditional-fields" component={ConditionalFields} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>

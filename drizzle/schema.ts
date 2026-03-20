@@ -3337,3 +3337,148 @@ export const featureUsageLogs = mysqlTable("feature_usage_logs", {
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
 });
 export type FeatureUsageLog = typeof featureUsageLogs.$inferSelect;
+
+// ─── Notification Digest Preferences ─────────────────────────────────────────
+export const notificationPreferences = mysqlTable("notification_preferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  digestEnabled: boolean("digest_enabled").notNull().default(false),
+  digestFrequency: mysqlEnum("digest_frequency", ["daily", "weekly"]).notNull().default("daily"),
+  digestTime: varchar("digest_time", { length: 8 }).notNull().default("08:00"),
+  digestDayOfWeek: int("digest_day_of_week").default(1),
+  notifyDealAtRisk: boolean("notify_deal_at_risk").notNull().default(true),
+  notifyFollowUpDue: boolean("notify_follow_up_due").notNull().default(true),
+  notifyNewLead: boolean("notify_new_lead").notNull().default(true),
+  notifyTaskOverdue: boolean("notify_task_overdue").notNull().default(true),
+  notifyDealWon: boolean("notify_deal_won").notNull().default(true),
+  notifyMeetingReminder: boolean("notify_meeting_reminder").notNull().default(true),
+  notifyRevenueAlert: boolean("notify_revenue_alert").notNull().default(false),
+  pushEnabled: boolean("push_enabled").notNull().default(false),
+  emailEnabled: boolean("email_enabled").notNull().default(true),
+  inAppEnabled: boolean("in_app_enabled").notNull().default(true),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+});
+export type NotificationPreference = typeof notificationPreferences.$inferSelect;
+
+// ─── Scheduled Report Delivery ────────────────────────────────────────────────
+export const scheduledReports = mysqlTable("scheduled_reports", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  userId: int("user_id").notNull(),
+  savedReportId: int("saved_report_id"),
+  reportName: varchar("report_name", { length: 255 }).notNull(),
+  reportConfig: json("report_config").$type<Record<string, any>>().notNull(),
+  frequency: mysqlEnum("sr_frequency", ["daily", "weekly", "monthly"]).notNull().default("weekly"),
+  dayOfWeek: int("day_of_week").default(1),
+  dayOfMonth: int("day_of_month").default(1),
+  deliveryTime: varchar("delivery_time", { length: 8 }).notNull().default("08:00"),
+  recipients: json("recipients").$type<string[]>().notNull(),
+  format: mysqlEnum("sr_format", ["pdf", "csv", "both"]).notNull().default("pdf"),
+  isActive: boolean("is_active").notNull().default(true),
+  lastSentAt: bigint("last_sent_at", { mode: "number" }),
+  nextSendAt: bigint("next_send_at", { mode: "number" }),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+});
+export type ScheduledReport = typeof scheduledReports.$inferSelect;
+
+// ─── Proposal Analytics ───────────────────────────────────────────────────────
+export const proposalViews = mysqlTable("proposal_views", {
+  id: int("id").autoincrement().primaryKey(),
+  proposalId: int("proposal_id").notNull(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  viewerEmail: varchar("viewer_email", { length: 255 }),
+  viewerIp: varchar("viewer_ip", { length: 64 }),
+  sessionId: varchar("session_id", { length: 128 }).notNull(),
+  totalTimeSeconds: int("total_time_seconds").notNull().default(0),
+  sectionsViewed: json("sections_viewed").$type<string[]>().notNull(),
+  scrollDepthPct: int("scroll_depth_pct").notNull().default(0),
+  viewedAt: bigint("viewed_at", { mode: "number" }).notNull(),
+  lastActiveAt: bigint("last_active_at", { mode: "number" }).notNull(),
+  completed: boolean("completed").notNull().default(false),
+});
+export type ProposalView = typeof proposalViews.$inferSelect;
+
+// ─── Custom Role Builder ──────────────────────────────────────────────────────
+export const customRoles = mysqlTable("custom_roles", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  name: varchar("name", { length: 128 }).notNull(),
+  description: text("description"),
+  baseRole: mysqlEnum("base_role", ["user", "admin"]).notNull().default("user"),
+  permissions: json("permissions").$type<string[]>().notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  createdBy: int("created_by").notNull(),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+});
+export type CustomRole = typeof customRoles.$inferSelect;
+
+// ─── SSO Configuration ────────────────────────────────────────────────────────
+export const ssoConfigs = mysqlTable("sso_configs", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull().unique(),
+  provider: mysqlEnum("sso_provider", ["saml", "oidc", "google", "microsoft", "okta"]).notNull(),
+  isEnabled: boolean("is_enabled").notNull().default(false),
+  entityId: varchar("entity_id", { length: 512 }),
+  ssoUrl: varchar("sso_url", { length: 512 }),
+  certificate: text("certificate"),
+  attributeMapping: json("attribute_mapping").$type<Record<string, string>>(),
+  autoProvision: boolean("auto_provision").notNull().default(true),
+  defaultRole: mysqlEnum("sso_default_role", ["user", "admin"]).notNull().default("user"),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+});
+export type SsoConfig = typeof ssoConfigs.$inferSelect;
+
+// ─── Conditional Custom Field Rules ──────────────────────────────────────────
+export const customFieldConditions = mysqlTable("custom_field_conditions", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  fieldId: int("field_id").notNull(),
+  conditionFieldId: int("condition_field_id").notNull(),
+  operator: mysqlEnum("cfc_operator", ["equals", "not_equals", "contains", "not_contains", "greater_than", "less_than", "is_empty", "is_not_empty"]).notNull(),
+  conditionValue: varchar("condition_value", { length: 512 }),
+  action: mysqlEnum("cfc_action", ["show", "hide", "require"]).notNull().default("show"),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+export type CustomFieldCondition = typeof customFieldConditions.$inferSelect;
+
+// ─── AI Credit Usage by Feature ──────────────────────────────────────────────
+export const aiCreditUsageByFeature = mysqlTable("ai_credit_usage_by_feature", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  userId: int("user_id"),
+  featureKey: varchar("feature_key", { length: 128 }).notNull(),
+  featureName: varchar("feature_name", { length: 255 }).notNull(),
+  creditsUsed: int("credits_used").notNull().default(0),
+  queryCount: int("query_count").notNull().default(0),
+  periodStart: bigint("period_start", { mode: "number" }).notNull(),
+  periodEnd: bigint("period_end", { mode: "number" }).notNull(),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+export type AiCreditUsageByFeature = typeof aiCreditUsageByFeature.$inferSelect;
+
+// ─── WhatsApp Broadcast Campaigns ────────────────────────────────────────────
+export const whatsappBroadcasts = mysqlTable("whatsapp_broadcasts", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  createdBy: int("created_by").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  templateId: int("template_id"),
+  message: text("message").notNull(),
+  mediaUrl: varchar("media_url", { length: 512 }),
+  recipientFilter: json("recipient_filter").$type<Record<string, any>>(),
+  recipientCount: int("recipient_count").notNull().default(0),
+  sentCount: int("sent_count").notNull().default(0),
+  deliveredCount: int("delivered_count").notNull().default(0),
+  readCount: int("read_count").notNull().default(0),
+  failedCount: int("failed_count").notNull().default(0),
+  status: mysqlEnum("wb_status", ["draft", "scheduled", "sending", "sent", "failed"]).notNull().default("draft"),
+  scheduledAt: bigint("scheduled_at", { mode: "number" }),
+  sentAt: bigint("sent_at", { mode: "number" }),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+});
+export type WhatsappBroadcast = typeof whatsappBroadcasts.$inferSelect;

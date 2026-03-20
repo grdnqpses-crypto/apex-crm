@@ -33,6 +33,7 @@ import { rottenDealsRouter, bulkActionsRouter, winLossRouter, auditLogsRouter, s
 import { salesForecastingRouter, productCatalogRouter, leadScoringRouter, nextBestActionRouter } from "./routers/batch2";
 import { webFormsRouter, eSignatureRouter, reputationRouter, oooDetectionRouter } from "./routers/batch3";
 import { emailSequencesRouter, journeysRouter, whatsappRouter, socialSchedulerRouter, powerDialerRouter, anomalyDetectionRouter, pipelineInspectionRouter, domainHealthAutopilotRouter, abTestingRouter, featureGatingRouter } from "./routers/batch4";
+import { notificationPrefsRouter, scheduledReportsRouter, proposalAnalyticsRouter, customRolesRouter, ssoRouter, customFieldConditionsRouter, aiCreditUsageRouter, whatsappBroadcastsRouter, bulkMergeRouter, aiPostWriterRouter } from "./routers/gap-features";
 
 export const appRouter = router({
   system: systemRouter,
@@ -65,6 +66,17 @@ export const appRouter = router({
   domainAutopilot: domainHealthAutopilotRouter,
   abTesting: abTestingRouter,
   featureGating: featureGatingRouter,
+  // gap-feature routers
+  notificationPrefs: notificationPrefsRouter,
+  scheduledReports: scheduledReportsRouter,
+  proposalAnalytics: proposalAnalyticsRouter,
+  customRoles: customRolesRouter,
+  sso: ssoRouter,
+  customFieldConditions: customFieldConditionsRouter,
+  aiCreditUsage: aiCreditUsageRouter,
+  whatsappBroadcasts: whatsappBroadcastsRouter,
+  bulkMerge: bulkMergeRouter,
+  aiPostWriter: aiPostWriterRouter,
   calendar: calendarRouter,
   emailSync: emailSyncRouter,
   scheduler: schedulerRouter,
