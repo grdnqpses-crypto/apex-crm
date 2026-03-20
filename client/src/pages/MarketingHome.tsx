@@ -905,7 +905,7 @@ export default function MarketingHome({
               </div>
 
               {/* OVERLAY: Scrolling Feature Comparison — floats on top of video */}
-              <div className="absolute top-0 left-0 bottom-0 z-30" style={{width:'260px',background:'linear-gradient(180deg,rgba(5,10,26,0.82) 0%,rgba(2,5,16,0.82) 100%)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',borderRight:'1px solid rgba(26,108,246,0.25)',overflow:'hidden'}}>
+              <div className="absolute top-0 left-0 bottom-0 z-30" style={{width:'320px',background:'linear-gradient(180deg,rgba(5,10,26,0.85) 0%,rgba(2,5,16,0.85) 100%)',backdropFilter:'blur(14px)',WebkitBackdropFilter:'blur(14px)',borderRight:'1px solid rgba(26,108,246,0.25)',overflow:'hidden'}}>
                 {/* Header */}
                 <div className="px-3 py-2 sticky top-0 z-10" style={{background:'rgba(5,10,26,0.95)',borderBottom:'1px solid rgba(26,108,246,0.2)'}}>
                   <div className="flex items-center justify-center mb-2">
@@ -1032,6 +1032,18 @@ export default function MarketingHome({
                   <div className="text-white/40" style={{fontSize:'9px',marginTop:'2px'}}>{s.l}</div>
                 </div>
               ))}
+            </div>
+            {/* 60-Day Free Trial CTA */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 px-6 py-6" style={{background:'linear-gradient(180deg,#050a1a 0%,#060d24 100%)',borderTop:'1px solid rgba(26,108,246,0.15)'}}>
+              <div className="text-center sm:text-left">
+                <p className="text-white font-bold text-lg leading-tight">Ready to command your market?</p>
+                <p className="text-white/40 text-sm mt-0.5">No commitment. Full platform access. Cancel anytime before day 61.</p>
+              </div>
+              <Link href="/signup">
+                <button className="flex-shrink-0 px-8 py-3.5 rounded-2xl font-black text-sm tracking-wide text-black transition-all duration-200 hover:scale-105 hover:shadow-2xl" style={{background:'linear-gradient(135deg,#f59e0b,#f97316)',boxShadow:'0 0 30px rgba(245,158,11,0.4)'}}>
+                  🚀 Start Your 60-Day Free Trial
+                </button>
+              </Link>
             </div>
           </div>
         </div>

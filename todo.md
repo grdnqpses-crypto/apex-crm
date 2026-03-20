@@ -2044,3 +2044,8 @@
 - [x] Update marketing page hero with new diamond crown logo
 - [x] Update favicon in index.html with new crown icon
 - [x] Add AXIOM logo to comparison scroll header in the video
+
+## Video & Marketing Page Improvements (Round 3)
+- [x] Add cinematic music bed to the 3-minute trailer MP4
+- [x] Widen comparison scroll panel from 260px to 320px
+- [x] Add "Start Your 60-Day Free Trial" CTA button below video chapter markers
