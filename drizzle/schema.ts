@@ -2962,3 +2962,38 @@ export const onboardingProgress = mysqlTable("onboarding_progress", {
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
 });
 export type OnboardingProgress = typeof onboardingProgress.$inferSelect;
+
+// ─── Phase 57 Batch 2: Product Catalog ───────────────────────────────────────
+export const products = mysqlTable("products", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id"),
+  userId: int("user_id").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  price: decimal("price", { precision: 15, scale: 2 }).notNull().default("0"),
+  currency: varchar("currency", { length: 10 }).notNull().default("USD"),
+  unit: varchar("unit", { length: 50 }),
+  sku: varchar("sku", { length: 100 }),
+  category: varchar("category", { length: 100 }),
+  isActive: tinyint("is_active").notNull().default(1),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+});
+export type Product = typeof products.$inferSelect;
+
+// ─── Phase 57 Batch 2: Lead Scoring Rules ────────────────────────────────────
+export const leadScoringRules = mysqlTable("lead_scoring_rules", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id"),
+  userId: int("user_id").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  field: varchar("field", { length: 100 }).notNull(),
+  operator: varchar("operator", { length: 50 }).notNull(),
+  value: varchar("value", { length: 500 }),
+  points: int("points").notNull().default(0),
+  entityType: varchar("entity_type", { length: 20 }).notNull().default("contact"),
+  isActive: tinyint("is_active").notNull().default(1),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+});
+export type LeadScoringRule = typeof leadScoringRules.$inferSelect;

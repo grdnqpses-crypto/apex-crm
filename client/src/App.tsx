@@ -112,6 +112,10 @@ const SmartViews = lazy(() => import("./pages/SmartViews"));
 const AccountHierarchy = lazy(() => import("./pages/AccountHierarchy"));
 const TerritoryManagement = lazy(() => import("./pages/TerritoryManagement"));
 const BulkActions = lazy(() => import("./pages/BulkActions"));
+const SalesForecasting = lazy(() => import("./pages/SalesForecasting"));
+const ProductCatalog = lazy(() => import("./pages/ProductCatalog"));
+const LeadScoring = lazy(() => import("./pages/LeadScoring"));
+const AINextBestAction = lazy(() => import("./pages/AINextBestAction"));
 
 function PageLoader() {
   return (
@@ -231,6 +235,10 @@ function Router() {
           <Route path="/account-hierarchy" component={AccountHierarchy} />
           <Route path="/territories" component={TerritoryManagement} />
           <Route path="/bulk-actions" component={BulkActions} />
+          <Route path="/sales-forecasting" component={SalesForecasting} />
+          <Route path="/product-catalog" component={ProductCatalog} />
+          <Route path="/lead-scoring" component={LeadScoring} />
+          <Route path="/ai-next-best-action" component={AINextBestAction} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>

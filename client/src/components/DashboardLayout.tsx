@@ -33,7 +33,7 @@ import {
   Receipt, Globe2, UserPlus, Headphones, Database as DatabaseIcon, Flame as FlameIcon,
   EyeIcon, MailOpen, Paintbrush, ArrowRightLeft, Crown, Command, Package, CreditCard,
   TrendingDown, DollarSign, Tag, Home, Calendar, MessageSquare, Megaphone, BarChart2,
-  Inbox, Layers, LucideIcon,
+  Inbox, Layers, Star, LucideIcon,
 } from "lucide-react";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -58,7 +58,8 @@ const ICON_MAP: Record<string, LucideIcon> = {
   TrendingUp, Rocket, Bell, PenTool, Briefcase, ScanLine, Truck,
   Receipt, UserPlus, Headphones, Paintbrush, ArrowRightLeft, Crown,
   Command, Package, CreditCard, TrendingDown, DollarSign, Tag,
-  Home, Calendar, MessageSquare, Megaphone, BarChart2, Inbox,
+  Home, Calendar, MessageSquare, Megaphone, BarChart2, Inbox, Star,
+  // Star is imported above
 };
 
 function resolveIcon(name: string): LucideIcon {
@@ -91,7 +92,9 @@ const standardSections = [
       { icon: DatabaseIcon, label: "Custom Objects", path: "/custom-objects" },
       { icon: TrendingDown, label: "Rotten Deals", path: "/rotten-deals" },
       { icon: Building2, label: "Account Hierarchy", path: "/account-hierarchy" },
-      { icon: Globe2, label: "Territory Management", path: "/territory-management" },
+      { icon: Globe2, label: "Territory Management", path: "/territories" },
+      { icon: Package, label: "Product Catalog", path: "/product-catalog" },
+      { icon: Brain, label: "AI Next Best Action", path: "/ai-next-best-action" },
     ],
   },
   {
@@ -182,6 +185,8 @@ const standardSections = [
       { icon: TrendingUp, label: "Win/Loss Analysis", path: "/win-loss" },
       { icon: Filter, label: "Smart Views", path: "/smart-views" },
       { icon: Layers, label: "Bulk Actions", path: "/bulk-actions" },
+      { icon: BarChart3, label: "Sales Forecasting", path: "/sales-forecasting" },
+      { icon: Star, label: "Lead Scoring", path: "/lead-scoring" },
     ],
   },
   {
