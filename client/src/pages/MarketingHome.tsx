@@ -347,11 +347,12 @@ export default function MarketingHome({
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/5" : ""}`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/">
-            <div className="flex items-center gap-2.5 cursor-pointer group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:shadow-orange-500/50 transition-shadow">
-                <Zap className="h-4 w-4 text-white fill-white" />
-              </div>
-              <span className="font-black text-lg tracking-tight">AXIOM CRM</span>
+            <div className="flex items-center cursor-pointer group">
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/axiom-logo-horizontal-HHHs82wk3F787GiBnE8hJy.png"
+                alt="AXIOM CRM"
+                className="h-10 w-auto object-contain group-hover:brightness-110 transition-all"
+              />
             </div>
           </Link>
 
@@ -906,8 +907,11 @@ export default function MarketingHome({
               {/* OVERLAY: Scrolling Feature Comparison — floats on top of video */}
               <div className="absolute top-0 left-0 bottom-0 z-30" style={{width:'260px',background:'linear-gradient(180deg,rgba(5,10,26,0.82) 0%,rgba(2,5,16,0.82) 100%)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',borderRight:'1px solid rgba(26,108,246,0.25)',overflow:'hidden'}}>
                 {/* Header */}
-                <div className="px-4 py-3 sticky top-0 z-10" style={{background:'rgba(5,10,26,0.9)',borderBottom:'1px solid rgba(26,108,246,0.2)'}}>
-                  <div className="text-xs font-black tracking-widest mb-2" style={{color:'#1a6cf6'}}>AXIOM VS THE WORLD</div>
+                <div className="px-3 py-2 sticky top-0 z-10" style={{background:'rgba(5,10,26,0.95)',borderBottom:'1px solid rgba(26,108,246,0.2)'}}>
+                  <div className="flex items-center justify-center mb-2">
+                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/axiom-logo-horizontal-HHHs82wk3F787GiBnE8hJy.png" alt="AXIOM" className="h-7 w-auto object-contain" />
+                    <span className="ml-2 text-xs font-black tracking-widest" style={{color:'#c9a84c'}}>VS THE WORLD</span>
+                  </div>
                   <div className="grid grid-cols-4 gap-1 text-center">
                     {['AXIOM','HubSpot','Salesforce','Pipedrive'].map((c,i)=>(
                       <div key={i} className="text-xs font-bold py-1 rounded" style={i===0?{background:'linear-gradient(135deg,#1a6cf6,#0d4db5)',color:'white',borderRadius:'6px'}:{color:'rgba(255,255,255,0.5)'}}>{c}</div>
@@ -959,6 +963,15 @@ export default function MarketingHome({
                 {cat:'',f:'Accounts Payable',a:true,b:false,c:false,d:false},
                 {cat:'',f:'Shipping Module',a:true,b:false,c:false,d:false},
                 {cat:'',f:'Invoice Management',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Stripe Payment Collection',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Proposal E-Signing',a:true,b:false,c:false,d:false},
+                {cat:'BRANDING & CONTENT',f:'AI Logo Generation',a:true,b:false,c:false,d:false},
+                {cat:'',f:'AI Social Post Writer',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Social Media Scheduler',a:true,b:'Add-on',c:'Add-on',d:false},
+                {cat:'',f:'Brand Kit Builder',a:true,b:false,c:false,d:false},
+                {cat:'MESSAGING',f:'WhatsApp Broadcasts',a:true,b:false,c:false,d:false},
+                {cat:'',f:'SMS Campaigns',a:true,b:'Add-on',c:'Add-on',d:'Add-on'},
+                {cat:'',f:'Unified Inbox (All Channels)',a:true,b:'Add-on',c:'Add-on',d:false},
                 {cat:'COMPLIANCE',f:'Compliance Fortress™',a:true,b:'Add-on',c:'Add-on',d:false},
                 {cat:'',f:'GDPR Tools',a:true,b:true,c:true,d:'Limited'},
                 {cat:'',f:'CCPA Compliance',a:true,b:true,c:true,d:false},

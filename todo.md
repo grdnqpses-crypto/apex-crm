@@ -2028,3 +2028,19 @@
 - [x] Fix video end cutoff — add loop with fade-out or extend ending gracefully
 - [x] Change competitor false/missing values in comparison scroll to red ✗ dots (currently faded white)
 - [x] Make competitor false values big bold red X marks (larger, more prominent)
+- [x] Audit ALL AXIOM features and update comparison scroll to include every feature AXIOM has that competitors don't (Logo Generation, AI Post Writer, WhatsApp Broadcasts, etc.)
+- [x] Fix browser tab title from "Apex CRM" to "AXIOM CRM"
+
+## 3-Minute Trailer Video
+- [ ] Generate new cinematic video clips matching original style (empire panic, data stream, empire falls, rebellion, crown rise)
+- [ ] Bake comparison scroll overlay (AXIOM ✓ blue vs competitor ✗ red) into feature showcase segments of the trailer
+- [ ] Stitch all segments with dual voiceover into final 3-minute MP4
+
+## Logo Variations & Branding
+- [x] Generate horizontal lockup logo (crown + AXIOM wordmark side by side)
+- [x] Generate white version of logo (for dark backgrounds)
+- [x] Generate dark version of logo (for light backgrounds)
+- [x] Generate favicon (32x32 and 64x64 crown icon)
+- [x] Update marketing page hero with new diamond crown logo
+- [x] Update favicon in index.html with new crown icon
+- [x] Add AXIOM logo to comparison scroll header in the video
