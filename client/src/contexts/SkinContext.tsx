@@ -8,6 +8,7 @@
  */
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export type SkinId = "axiom" | "hubspot" | "salesforce" | "pipedrive" | "zoho" | "gohighlevel" | "close";
 
@@ -326,8 +327,11 @@ export function SkinProvider({ children }: { children: ReactNode }) {
   const [loaded, setLoaded] = useState(false);
 
   // Load skin preference from DB (authoritative source)
+  // Only query when authenticated — prevents redirect loop on public pages
+  const { user, loading: authLoading } = useAuth();
   const { data: prefData, isError: prefError } = trpc.migration.getSkin.useQuery(undefined, {
     retry: false,
+    enabled: !!user && !authLoading,
   });
 
   useEffect(() => {
@@ -343,6 +347,10 @@ export function SkinProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (prefError) setLoaded(true);
   }, [prefError]);
+  // If auth is resolved and there's no user, mark skin as loaded (use default axiom skin)
+  useEffect(() => {
+    if (!authLoading && !user) setLoaded(true);
+  }, [authLoading, user]);
 
   const setSkinMutation = trpc.migration.setSkin.useMutation();
   const graduateMutation = trpc.migration.graduateToAxiom.useMutation();
