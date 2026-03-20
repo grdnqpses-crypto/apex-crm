@@ -1914,3 +1914,9 @@
 - [x] History tab: "Active" badge on the logo that matches company.logoUrl
 - [x] History tab: "Most Recent" badge on the newest entry (index 0)
 - [x] Preview step: "Download Logo" button that downloads the PNG directly
+
+## Phase 55: Logo UX — Share, Sidebar, Delete History
+- [x] Preview step: "Share Logo" button copies S3 URL to clipboard with toast confirmation
+- [x] DashboardLayout sidebar: show company logo next to company name (already implemented, verified)
+- [x] Server: deleteLogoHistoryEntry procedure (delete by id, only owner can delete)
+- [x] History tab: ✕ delete button on hover for each history entry

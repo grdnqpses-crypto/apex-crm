@@ -2060,6 +2060,27 @@ export const appRouter = router({
       return { logoUrl: s3Url };
     }),
 
+    // Delete a logo history entry by id
+    deleteLogoHistoryEntry: protectedProcedure.input(z.object({
+      id: z.number().int().positive(),
+    })).mutation(async ({ ctx, input }) => {
+      if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST" });
+      const dbConn = await (await import("./db.js")).getDb();
+      if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const { logoGenerations } = await import("../drizzle/schema.js");
+      const { eq, and } = await import("drizzle-orm");
+      // Only allow deleting entries that belong to this tenant
+      await dbConn
+        .delete(logoGenerations)
+        .where(
+          and(
+            eq(logoGenerations.id, input.id),
+            eq(logoGenerations.tenantCompanyId, ctx.user.tenantCompanyId)
+          )
+        );
+      return { success: true };
+    }),
+
     // Upload logo file (accepts base64 data URL)
     uploadLogo: protectedProcedure.input(z.object({
       dataUrl: z.string().min(1),

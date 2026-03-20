@@ -285,6 +285,14 @@ export default function Dashboard() {
     },
   });
 
+  const deleteLogoHistoryMutation = trpc.tenants.deleteLogoHistoryEntry.useMutation({
+    onSuccess: () => {
+      refetchLogoHistory();
+      toast.success('Removed from history.');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   // Auto-generate logo on first load if company has no logo
   useEffect(() => {
     if (company && !company.logoUrl && !autoBannerLogoUrl && !bannerDismissed) {
@@ -651,6 +659,19 @@ export default function Dashboard() {
                   Download Logo
                 </Button>
                 <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => {
+                    if (!previewLogoUrl) return;
+                    navigator.clipboard.writeText(previewLogoUrl)
+                      .then(() => toast.success('Logo URL copied to clipboard!'))
+                      .catch(() => toast.error('Could not copy to clipboard.'));
+                  }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                  Share Logo (Copy Link)
+                </Button>
+                <Button
                   variant="ghost"
                   className="w-full text-muted-foreground"
                   onClick={() => {
@@ -861,6 +882,17 @@ export default function Dashboard() {
                             {isMostRecent && !isActive && (
                               <span className="absolute top-1 right-1 text-[9px] font-bold bg-emerald-500 text-white rounded px-1 py-0.5 leading-none">New</span>
                             )}
+                            {/* Delete button on hover */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteLogoHistoryMutation.mutate({ id: entry.id });
+                              }}
+                              className="absolute top-1 left-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:scale-110"
+                              title="Remove from history"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
                             {/* Hover overlay */}
                             {!isActive && (
                               <div className="absolute inset-0 rounded-xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
