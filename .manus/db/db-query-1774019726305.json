@@ -1,0 +1,26 @@
+{
+  "query": "\n-- Get the first tenant company ID to assign to new users\nSET @tenantId = (SELECT id FROM tenant_companies LIMIT 1);\n\n-- Insert new Developer account\nINSERT INTO users (\n  openId, name, email, username, passwordHash, loginMethod,\n  role, systemRole, tenantCompanyId, isActive, createdAt, updatedAt\n) VALUES (\n  UUID(), 'AXIOM Developer', 'dev@axiomcrm.com', 'axiomdev',\n  '$2b$12$wu6H46df6ecPjjilh/DjB.fwVjrm4fyL2VJuBdDcmxR5Eb0h2YblO',\n  'email', 'admin', 'developer', @tenantId, 1, NOW(), NOW()\n);\n\n-- Insert new CRM Admin account\nINSERT INTO users (\n  openId, name, email, username, passwordHash, loginMethod,\n  role, systemRole, tenantCompanyId, isActive, createdAt, updatedAt\n) VALUES (\n  UUID(), 'AXIOM Admin', 'admin@axiomcrm.com', 'axiomadmin',\n  '$2b$12$uUOixKH0sQWIx9pGfnwFB.8gtcW/FPLuBaRIFYRwBTfpdrzt4VJLm',\n  'email', 'admin', 'user', @tenantId, 1, NOW(), NOW()\n);\n\n-- Verify both were created\nSELECT id, name, email, username, role, systemRole FROM users WHERE email IN ('dev@axiomcrm.com', 'admin@axiomcrm.com');\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute \n-- Get the first tenant company ID to assign to new users\nSET @tenantId = (SELECT id FROM tenant_companies LIMIT 1);\n\n-- Insert new Developer account\nINSERT INTO users (\n  openId, name, email, username, passwordHash, loginMethod,\n  role, systemRole, tenantCompanyId, isActive, createdAt, updatedAt\n) VALUES (\n  UUID(), 'AXIOM Developer', 'dev@axiomcrm.com', 'axiomdev',\n  '$2b$12$wu6H46df6ecPjjilh/DjB.fwVjrm4fyL2VJuBdDcmxR5Eb0h2YblO',\n  'email', 'admin', 'developer', @tenantId, 1, NOW(), NOW()\n);\n\n-- Insert new CRM Admin account\nINSERT INTO users (\n  openId, name, email, username, passwordHash, loginMethod,\n  role, systemRole, tenantCompanyId, isActive, createdAt, updatedAt\n) VALUES (\n  UUID(), 'AXIOM Admin', 'admin@axiomcrm.com', 'axiomadmin',\n  '$2b$12$uUOixKH0sQWIx9pGfnwFB.8gtcW/FPLuBaRIFYRwBTfpdrzt4VJLm',\n  'email', 'admin', 'user', @tenantId, 1, NOW(), NOW()\n);\n\n-- Verify both were created\nSELECT id, name, email, username, role, systemRole FROM users WHERE email IN ('dev@axiomcrm.com', 'admin@axiomcrm.com');\n",
+  "rows": [
+    {
+      "id": "5520068",
+      "name": "AXIOM Developer",
+      "email": "dev@axiomcrm.com",
+      "username": "axiomdev",
+      "role": "admin",
+      "systemRole": "developer"
+    },
+    {
+      "id": "5520069",
+      "name": "AXIOM Admin",
+      "email": "admin@axiomcrm.com",
+      "username": "axiomadmin",
+      "role": "admin",
+      "systemRole": "user"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tusername\trole\tsystemRole\n5520068\tAXIOM Developer\tdev@axiomcrm.com\taxiomdev\tadmin\tdeveloper\n5520069\tAXIOM Admin\tadmin@axiomcrm.com\taxiomadmin\tadmin\tuser\n",
+  "stderr": "",
+  "execution_time_ms": 633
+}

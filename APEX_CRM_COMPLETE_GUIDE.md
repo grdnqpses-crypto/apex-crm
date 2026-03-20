@@ -1,4 +1,4 @@
-# REALM CRM: The Complete Platform Guide
+# AXIOM CRM: The Complete Platform Guide
 
 **The Autonomous Freight Brokerage Operating System**
 
@@ -8,7 +8,7 @@
 
 ## Table of Contents
 
-1. [What Is REALM CRM?](#what-is-realm-crm)
+1. [What Is AXIOM CRM?](#what-is-axiom-crm)
 2. [The 60-Second Setup](#the-60-second-setup)
 3. [Platform Architecture: How Everything Works Together](#platform-architecture)
 4. [Core CRM Module](#core-crm-module)
@@ -26,18 +26,18 @@
 16. [Pricing & 2-Month Free Trial](#pricing--2-month-free-trial)
 17. [Competitive Advantage](#competitive-advantage)
 18. [The Autonomous Freight Marketplace](#the-autonomous-freight-marketplace)
-19. [REALM Autopilot: The Freight Consolidation & Lane Prediction Engine](#realm-autopilot)
-20. [The REALM Autopilot: Why Brokers Will Throw Their Money At This](#the-realm-autopilot)
+19. [AXIOM Autopilot: The Freight Consolidation & Lane Prediction Engine](#axiom-autopilot)
+20. [The AXIOM Autopilot: Why Brokers Will Throw Their Money At This](#the-axiom-autopilot)
 
 ---
 
-## What Is REALM CRM?
+## What Is AXIOM CRM?
 
-REALM CRM is the first **fully autonomous freight brokerage operating system** — a platform that doesn't just help brokers manage their business, it **runs the business for them**. While every other CRM and TMS on the market requires brokers to manually enter data, make calls, find loads, vet carriers, and chase payments, REALM CRM does all of this automatically through interconnected AI systems that work together as a single intelligent brain.
+AXIOM CRM is the first **fully autonomous freight brokerage operating system** — a platform that doesn't just help brokers manage their business, it **runs the business for them**. While every other CRM and TMS on the market requires brokers to manually enter data, make calls, find loads, vet carriers, and chase payments, AXIOM CRM does all of this automatically through interconnected AI systems that work together as a single intelligent brain.
 
 The platform was built with one core insight from the February 2026 market disruption: when AI company Algorhythm Holdings demonstrated that its SemiCab platform could scale freight volumes by 300-400% without adding headcount, traditional brokerage stocks like C.H. Robinson (-14.5%), RXO (-20.5%), and J.B. Hunt (-5%) plummeted in a single day [1]. The message was clear: **the future of freight brokerage is autonomous, and brokers who don't adopt AI will be left behind**.
 
-REALM CRM puts that same autonomous power into the hands of every freight broker — from solo operators to large brokerages — at a fraction of the cost of building it themselves. With an average broker gross margin of just $189 per load [2], every minute saved and every load optimized directly impacts the bottom line.
+AXIOM CRM puts that same autonomous power into the hands of every freight broker — from solo operators to large brokerages — at a fraction of the cost of building it themselves. With an average broker gross margin of just $189 per load [2], every minute saved and every load optimized directly impacts the bottom line.
 
 > **The Promise:** Set up in 60 seconds. Making money in 60 minutes. Profitable in 60 days.
 
@@ -45,7 +45,7 @@ REALM CRM puts that same autonomous power into the hands of every freight broker
 
 ## The 60-Second Setup
 
-REALM CRM was designed to eliminate the number one reason freight technology fails: **complexity** [3]. Most freight brokers are not technology people. They are relationship people, deal-makers, and logistics experts. The platform respects that by making setup almost invisible.
+AXIOM CRM was designed to eliminate the number one reason freight technology fails: **complexity** [3]. Most freight brokers are not technology people. They are relationship people, deal-makers, and logistics experts. The platform respects that by making setup almost invisible.
 
 ### Step 1: Create Your Account (15 seconds)
 Click "Start Free Trial," enter your name, email, and company name. That's it. No credit card required. Your 2-month free trial starts immediately.
@@ -53,7 +53,7 @@ Click "Start Free Trial," enter your name, email, and company name. That's it. N
 ### Step 2: Import Your Data (30 seconds)
 The **One-Touch Migration Engine** connects to your existing platform — whether that's HubSpot, Salesforce, DAT, Tai TMS, Zoho, McLeod, or even a spreadsheet — and imports all your contacts, companies, deals, carriers, and loads automatically. One click. No manual data entry.
 
-### Step 3: Let REALM Work (15 seconds)
+### Step 3: Let AXIOM Work (15 seconds)
 The **Autonomous Command Center** activates and immediately begins analyzing your data, identifying opportunities, and generating AI-recommended actions. Within minutes, you'll see your first revenue recommendations.
 
 ### What Happens Next (Automatically):
@@ -71,7 +71,7 @@ The **Autonomous Command Center** activates and immediately begins analyzing you
 
 ## Platform Architecture: How Everything Works Together
 
-REALM CRM is organized into seven interconnected modules, each of which can operate independently but becomes exponentially more powerful when working together.
+AXIOM CRM is organized into seven interconnected modules, each of which can operate independently but becomes exponentially more powerful when working together.
 
 | Module | Purpose | Key Features |
 |--------|---------|-------------|
@@ -85,7 +85,7 @@ REALM CRM is organized into seven interconnected modules, each of which can oper
 
 ### The Data Flow
 
-Every action in REALM CRM feeds data into a central intelligence layer. When a broker adds a contact, that contact is automatically scored by the Win Probability Engine, enriched by the B2B Database, and prioritized by the Revenue Autopilot. When a load is created, it's automatically posted to load boards, matched with vetted carriers, and tracked through delivery. When an invoice is generated, it's automatically sent through the Customer Portal and followed up by Smart Notifications if payment is late.
+Every action in AXIOM CRM feeds data into a central intelligence layer. When a broker adds a contact, that contact is automatically scored by the Win Probability Engine, enriched by the B2B Database, and prioritized by the Revenue Autopilot. When a load is created, it's automatically posted to load boards, matched with vetted carriers, and tracked through delivery. When an invoice is generated, it's automatically sent through the Customer Portal and followed up by Smart Notifications if payment is late.
 
 This is not a collection of separate tools bolted together. It is a **single nervous system** where every feature feeds and strengthens every other feature.
 
@@ -93,7 +93,7 @@ This is not a collection of separate tools bolted together. It is a **single ner
 
 ## Core CRM Module
 
-The foundation of REALM CRM is a modern, full-featured customer relationship management system built specifically for freight brokers.
+The foundation of AXIOM CRM is a modern, full-featured customer relationship management system built specifically for freight brokers.
 
 ### Contacts
 The contact management system stores every shipper, carrier, driver, and business relationship in one place. Each contact record includes standard fields (name, email, phone, company) plus freight-specific fields like MC number, DOT number, equipment types, and lane preferences. Contacts are automatically enriched with data from the B2B Database and scored by the Win Probability Engine.
@@ -114,7 +114,7 @@ Multiple customizable pipelines support different business processes — one for
 
 ## Operations Center
 
-The Operations Center is where daily freight brokerage work happens. This is the module that makes REALM CRM a true TMS (Transportation Management System), not just a CRM.
+The Operations Center is where daily freight brokerage work happens. This is the module that makes AXIOM CRM a true TMS (Transportation Management System), not just a CRM.
 
 ### Load Management
 The load management system handles the complete lifecycle of every shipment:
@@ -180,9 +180,9 @@ This feature alone can save a broker 2-3 hours per day on data entry, which at a
 
 ## AI Premium Suite
 
-The AI Premium Suite is what makes REALM CRM fundamentally different from every other platform on the market. These are not simple automations — they are intelligent agents that learn, adapt, and act on behalf of the broker.
+The AI Premium Suite is what makes AXIOM CRM fundamentally different from every other platform on the market. These are not simple automations — they are intelligent agents that learn, adapt, and act on behalf of the broker.
 
-### AI Voice Agent (REALM Caller)
+### AI Voice Agent (AXIOM Caller)
 The AI Voice Agent is an autonomous calling system that makes and receives phone calls on behalf of the broker:
 
 - **Outbound campaigns** — the AI calls prospects, carriers, and customers using natural-sounding voice
@@ -213,7 +213,7 @@ The Carrier Packet system ensures that every carrier's documentation is complete
 - **One-click sharing** — packets can be shared with shippers as proof of carrier qualification
 - **Continuous monitoring** — packets are automatically updated when new documents are uploaded
 
-This is critical for the SaaS model: when brokers pitch other brokers to book loads, those carrier packets must be perfect. REALM CRM ensures they always are.
+This is critical for the SaaS model: when brokers pitch other brokers to book loads, those carrier packets must be perfect. AXIOM CRM ensures they always are.
 
 ### Win Probability Engine
 The Win Probability Engine uses AI to predict the likelihood of closing every deal in the pipeline:
@@ -335,16 +335,16 @@ The Compliance & Safety Center ensures brokers stay compliant with federal regul
 
 ## SaaS & White-Label System
 
-REALM CRM is built from the ground up as a multi-tenant SaaS platform, designed to be resold to other brokerages.
+AXIOM CRM is built from the ground up as a multi-tenant SaaS platform, designed to be resold to other brokerages.
 
 ### White-Label Branding
 The White-Label system allows each brokerage to customize the platform with their own brand:
 
-- **Company name and logo** — replace REALM CRM branding with the brokerage's identity
+- **Company name and logo** — replace AXIOM CRM branding with the brokerage's identity
 - **Color scheme** — customize primary, accent, and background colors
 - **Custom domain** — use the brokerage's own domain (e.g., crm.mybrokerage.com)
 - **Email branding** — customize email sender name and footer
-- **Powered-by toggle** — option to show or hide "Powered by REALM CRM"
+- **Powered-by toggle** — option to show or hide "Powered by AXIOM CRM"
 
 ### Subscription Management
 The subscription system handles billing and plan management:
@@ -356,7 +356,7 @@ The subscription system handles billing and plan management:
 - **Upgrade/downgrade** — seamless plan changes with prorated billing
 
 ### One-Touch Migration
-The Migration Engine makes switching to REALM CRM effortless:
+The Migration Engine makes switching to AXIOM CRM effortless:
 
 - **Supported platforms** — HubSpot, Salesforce, DAT, Tai TMS, Zoho, McLeod, CSV import
 - **Automatic mapping** — the system automatically maps fields from the source platform
@@ -384,7 +384,7 @@ The Command Center aggregates data from every module in real-time. It uses the W
 
 ## How Features Work Together Autonomously
 
-This is the most important section of this guide. REALM CRM is not a collection of separate tools — it is an **autonomous operating system** where every feature feeds and strengthens every other feature. Here are the key autonomous workflows:
+This is the most important section of this guide. AXIOM CRM is not a collection of separate tools — it is an **autonomous operating system** where every feature feeds and strengthens every other feature. Here are the key autonomous workflows:
 
 ### Workflow 1: Lead to Load (Fully Autonomous)
 1. **Visitor Tracking** identifies a shipping company visiting the website
@@ -435,7 +435,7 @@ This is the most important section of this guide. REALM CRM is not a collection 
 
 ## How Features Work Independently
 
-While the autonomous workflows above show the power of integration, every feature in REALM CRM also works perfectly on its own. A broker can use just the CRM without the AI features. They can use just the Load Management without the marketing tools. They can use just the Voice Agent without the rest of the platform.
+While the autonomous workflows above show the power of integration, every feature in AXIOM CRM also works perfectly on its own. A broker can use just the CRM without the AI features. They can use just the Load Management without the marketing tools. They can use just the Voice Agent without the rest of the platform.
 
 This is by design. Brokers should be able to start with what they need and grow into the full platform over time. There is no forced adoption of features they don't want.
 
@@ -455,7 +455,7 @@ This is by design. Brokers should be able to start with what they need and grow 
 ## Setup Guide: Accounts, Users, Admins
 
 ### Creating Your Account
-1. Visit the REALM CRM website and click "Start Free Trial"
+1. Visit the AXIOM CRM website and click "Start Free Trial"
 2. Enter your name, email, and company name
 3. Verify your email address
 4. You're in — your 2-month free trial is active
@@ -496,15 +496,15 @@ Every plan includes a **60-day free trial** with full access to all features. No
 | **Enterprise** | $599/mo | Unlimited | Unlimited | Everything in Pro, Voice Agent (unlimited), White-Labeling, Custom Integrations, Dedicated Account Manager, 99.9% SLA |
 
 ### The ROI Math
-With an average gross margin of $189 per load [2], a broker handling 15,700 loads per year generates approximately $2.97 million in gross margin. If REALM CRM improves efficiency by just 10% — through faster load matching, better carrier rates, and reduced administrative time — that's an additional **$297,000 in annual profit** for a $2,988 annual subscription (Enterprise plan). That's a **99:1 ROI**.
+With an average gross margin of $189 per load [2], a broker handling 15,700 loads per year generates approximately $2.97 million in gross margin. If AXIOM CRM improves efficiency by just 10% — through faster load matching, better carrier rates, and reduced administrative time — that's an additional **$297,000 in annual profit** for a $2,988 annual subscription (Enterprise plan). That's a **99:1 ROI**.
 
 ---
 
 ## Competitive Advantage
 
-REALM CRM was built after analyzing every major competitor in the freight brokerage technology space. Here is how it compares:
+AXIOM CRM was built after analyzing every major competitor in the freight brokerage technology space. Here is how it compares:
 
-| Capability | REALM CRM | HubSpot | Salesforce | Tai TMS | DAT | McLeod |
+| Capability | AXIOM CRM | HubSpot | Salesforce | Tai TMS | DAT | McLeod |
 |-----------|---------|---------|-----------|--------|-----|--------|
 | Freight-Specific CRM | **Yes** | No | No | Partial | No | Yes |
 | AI Voice Agent | **Yes** | No | No | No | No | No |
@@ -521,17 +521,17 @@ REALM CRM was built after analyzing every major competitor in the freight broker
 | Autonomous Operation | **Yes** | No | No | No | No | No |
 | 2-Month Free Trial | **Yes** | Partial | No | No | No | No |
 
-**No single competitor offers all of these capabilities in one platform.** REALM CRM is the only solution that combines a full CRM, TMS, AI suite, marketing engine, and SaaS platform into a single autonomous system.
+**No single competitor offers all of these capabilities in one platform.** AXIOM CRM is the only solution that combines a full CRM, TMS, AI suite, marketing engine, and SaaS platform into a single autonomous system.
 
 ---
 
 ## The Autonomous Freight Marketplace
 
-The Freight Marketplace is REALM CRM's most revolutionary feature — a **fully autonomous digital freight exchange** built directly into the platform. This is not a load board. This is an AI-powered marketplace where manufacturers and distributors post loads for free, the system matches them with vetted carriers, handles all paperwork autonomously, processes payments, and tracks delivery from pickup to drop-off.
+The Freight Marketplace is AXIOM CRM's most revolutionary feature — a **fully autonomous digital freight exchange** built directly into the platform. This is not a load board. This is an AI-powered marketplace where manufacturers and distributors post loads for free, the system matches them with vetted carriers, handles all paperwork autonomously, processes payments, and tracks delivery from pickup to drop-off.
 
 ### How It Works for Manufacturers & Distributors (FREE)
 
-Manufacturers and distributors access the marketplace at zero cost. They simply fill out a load posting form with their shipment details — commodity, weight, equipment type, origin, destination, pickup and delivery dates, and their desired rate. The moment they click "Post Load," the REALM AI takes over.
+Manufacturers and distributors access the marketplace at zero cost. They simply fill out a load posting form with their shipment details — commodity, weight, equipment type, origin, destination, pickup and delivery dates, and their desired rate. The moment they click "Post Load," the AXIOM AI takes over.
 
 | Step | What Happens | Who Does It | Time |
 |------|-------------|-------------|------|
@@ -585,9 +585,9 @@ Every load in the marketplace is tracked in real-time from pickup to delivery. B
 
 ---
 
-## REALM Autopilot: The Freight Consolidation & Lane Prediction Engine
+## AXIOM Autopilot: The Freight Consolidation & Lane Prediction Engine
 
-REALM Autopilot is the AI brain that sits on top of the entire platform and makes autonomous decisions to maximize profitability. Inspired by the technology that caused a **$50B+ stock sell-off** in the trucking industry when SemiCab/Algorhythm Holdings demonstrated 300-400% volume scaling without adding headcount [1], REALM Autopilot brings that same power to individual freight brokers.
+AXIOM Autopilot is the AI brain that sits on top of the entire platform and makes autonomous decisions to maximize profitability. Inspired by the technology that caused a **$50B+ stock sell-off** in the trucking industry when SemiCab/Algorhythm Holdings demonstrated 300-400% volume scaling without adding headcount [1], AXIOM Autopilot brings that same power to individual freight brokers.
 
 ### Lane Demand Prediction
 
@@ -619,7 +619,7 @@ For each consolidation opportunity, the system calculates:
 
 ### The Autonomous Loop
 
-REALM Autopilot creates a self-reinforcing cycle that gets smarter over time:
+AXIOM Autopilot creates a self-reinforcing cycle that gets smarter over time:
 
 1. **Predict** — AI predicts lane demand and identifies opportunities
 2. **Consolidate** — AI combines shipments for maximum efficiency
@@ -630,15 +630,15 @@ REALM Autopilot creates a self-reinforcing cycle that gets smarter over time:
 
 ---
 
-## The REALM Autopilot: Why Brokers Will Throw Their Money At This
+## The AXIOM Autopilot: Why Brokers Will Throw Their Money At This
 
-The ultimate feature that wraps everything together is what we call **REALM Autopilot** — the concept that the platform doesn't just help you run your brokerage, it **runs your brokerage for you**.
+The ultimate feature that wraps everything together is what we call **AXIOM Autopilot** — the concept that the platform doesn't just help you run your brokerage, it **runs your brokerage for you**.
 
 ### The Problem Every Broker Faces
 Freight brokers work 60-80 hour weeks doing repetitive tasks: making cold calls, entering load data, chasing carriers, sending invoices, following up on payments, updating spreadsheets. The average broker handles 15,700 loads per year [2] with a gross margin of just 9.91%. One mistake — a missed follow-up, an expired carrier document, a late invoice — can cost thousands.
 
 ### The Complete Autonomous Workflow
-REALM Autopilot is not a single feature. It is the **emergent intelligence** that arises when all 40+ features work together:
+AXIOM Autopilot is not a single feature. It is the **emergent intelligence** that arises when all 40+ features work together:
 
 1. **The AI finds your next customer** — Visitor Tracking identifies companies visiting your site, B2B Database enriches their data, and Paradigm Signals score their intent.
 
@@ -650,7 +650,7 @@ REALM Autopilot is not a single feature. It is the **emergent intelligence** tha
 
 5. **The AI moves the freight** — The Freight Marketplace accepts loads from shippers, the AI matches carriers, generates all documents, and tracks delivery from start to finish.
 
-6. **The AI optimizes your routes** — REALM Autopilot consolidates partial shipments, predicts lane demand, and eliminates empty miles — cutting costs by up to 70%.
+6. **The AI optimizes your routes** — AXIOM Autopilot consolidates partial shipments, predicts lane demand, and eliminates empty miles — cutting costs by up to 70%.
 
 7. **The AI gets you paid** — Payments are collected from shippers at booking, held in escrow, and released to carriers after delivery. Your margin is deposited automatically.
 
@@ -661,7 +661,7 @@ The math is simple. A broker paying $249/month for the Professional plan who sav
 
 If the Freight Marketplace processes just 10 loads per month at an average margin of $500, that's **$5,000/month in additional revenue** — all generated autonomously by the platform.
 
-But the real reason brokers will throw their money at REALM CRM is not the math. It's the **feeling**. For the first time, a freight broker can open their computer in the morning and see exactly what needs to happen today, with the confidence that the AI has already handled everything that could be automated. The broker focuses on relationships and decisions. The AI handles everything else.
+But the real reason brokers will throw their money at AXIOM CRM is not the math. It's the **feeling**. For the first time, a freight broker can open their computer in the morning and see exactly what needs to happen today, with the confidence that the AI has already handled everything that could be automated. The broker focuses on relationships and decisions. The AI handles everything else.
 
 > **This is not a tool. It is a partner. And it works 24 hours a day, 7 days a week, without taking a sick day, without making a mistake, and without asking for a raise.**
 
@@ -688,5 +688,5 @@ By the time the trial ends, the platform will have already paid for itself. That
 
 ---
 
-*REALM CRM — The Autonomous Freight Brokerage Operating System*
+*AXIOM CRM — The Autonomous Freight Brokerage Operating System*
 *Built for brokers. Powered by AI. Designed to make money while you sleep.*

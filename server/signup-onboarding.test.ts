@@ -128,8 +128,8 @@ describe("Onboarding Tutorial System", () => {
       { id: "email-campaigns", category: "advanced", requiredRole: undefined },
       { id: "analytics", category: "advanced", requiredRole: undefined },
       { id: "paradigm-engine", category: "automation", requiredRole: undefined },
-      { id: "team-management", category: "admin", requiredRole: ["company_admin", "manager", "realm_owner", "developer"] },
-      { id: "settings", category: "admin", requiredRole: ["company_admin", "realm_owner", "developer"] },
+      { id: "team-management", category: "admin", requiredRole: ["company_admin", "manager", "axiom_owner", "developer"] },
+      { id: "settings", category: "admin", requiredRole: ["company_admin", "axiom_owner", "developer"] },
       { id: "complete", category: "getting-started", requiredRole: undefined },
     ];
 
@@ -239,7 +239,7 @@ describe("Onboarding Tutorial System", () => {
 describe("5-Tier Role Hierarchy", () => {
   const ROLE_LEVELS: Record<string, number> = {
     developer: 100,
-    realm_owner: 80,
+    axiom_owner: 80,
     super_admin: 70,
     company_admin: 60,
     manager: 40,
@@ -247,8 +247,8 @@ describe("5-Tier Role Hierarchy", () => {
   };
 
   it("should have correct role level ordering", () => {
-    expect(ROLE_LEVELS.developer).toBeGreaterThan(ROLE_LEVELS.realm_owner);
-    expect(ROLE_LEVELS.realm_owner).toBeGreaterThan(ROLE_LEVELS.company_admin);
+    expect(ROLE_LEVELS.developer).toBeGreaterThan(ROLE_LEVELS.axiom_owner);
+    expect(ROLE_LEVELS.axiom_owner).toBeGreaterThan(ROLE_LEVELS.company_admin);
     expect(ROLE_LEVELS.company_admin).toBeGreaterThan(ROLE_LEVELS.manager);
     expect(ROLE_LEVELS.manager).toBeGreaterThan(ROLE_LEVELS.user);
   });
@@ -256,21 +256,21 @@ describe("5-Tier Role Hierarchy", () => {
   it("should allow developers to access everything", () => {
     const userLevel = ROLE_LEVELS.developer;
     expect(userLevel).toBeGreaterThanOrEqual(ROLE_LEVELS.developer);
-    expect(userLevel).toBeGreaterThanOrEqual(ROLE_LEVELS.realm_owner);
+    expect(userLevel).toBeGreaterThanOrEqual(ROLE_LEVELS.axiom_owner);
     expect(userLevel).toBeGreaterThanOrEqual(ROLE_LEVELS.company_admin);
     expect(userLevel).toBeGreaterThanOrEqual(ROLE_LEVELS.manager);
     expect(userLevel).toBeGreaterThanOrEqual(ROLE_LEVELS.user);
   });
 
-  it("should restrict realm_owner from developer-only features", () => {
-    const userLevel = ROLE_LEVELS.realm_owner;
+  it("should restrict axiom_owner from developer-only features", () => {
+    const userLevel = ROLE_LEVELS.axiom_owner;
     expect(userLevel).toBeLessThan(ROLE_LEVELS.developer);
-    expect(userLevel).toBeGreaterThanOrEqual(ROLE_LEVELS.realm_owner);
+    expect(userLevel).toBeGreaterThanOrEqual(ROLE_LEVELS.axiom_owner);
   });
 
   it("should restrict company_admin from platform-level features", () => {
     const userLevel = ROLE_LEVELS.company_admin;
-    expect(userLevel).toBeLessThan(ROLE_LEVELS.realm_owner);
+    expect(userLevel).toBeLessThan(ROLE_LEVELS.axiom_owner);
     expect(userLevel).toBeGreaterThanOrEqual(ROLE_LEVELS.company_admin);
   });
 
@@ -286,30 +286,30 @@ describe("5-Tier Role Hierarchy", () => {
     expect(userLevel).toBeGreaterThanOrEqual(ROLE_LEVELS.user);
   });
 
-  describe("REALM Owner Capabilities", () => {
+  describe("AXIOM Owner Capabilities", () => {
     it("should be able to view all tenant companies", () => {
-      const role = "realm_owner";
-      const canViewAllCompanies = ROLE_LEVELS[role] >= ROLE_LEVELS.realm_owner;
+      const role = "axiom_owner";
+      const canViewAllCompanies = ROLE_LEVELS[role] >= ROLE_LEVELS.axiom_owner;
       expect(canViewAllCompanies).toBe(true);
     });
 
     it("should be able to manage subscription tiers", () => {
-      const role = "realm_owner";
-      const canManageTiers = ROLE_LEVELS[role] >= ROLE_LEVELS.realm_owner;
+      const role = "axiom_owner";
+      const canManageTiers = ROLE_LEVELS[role] >= ROLE_LEVELS.axiom_owner;
       expect(canManageTiers).toBe(true);
     });
 
     it("should not have developer-level access", () => {
-      const role = "realm_owner";
+      const role = "axiom_owner";
       const hasDeveloperAccess = ROLE_LEVELS[role] >= ROLE_LEVELS.developer;
       expect(hasDeveloperAccess).toBe(false);
     });
   });
 });
 
-// ─── REALM Platform Dashboard Tests ───
+// ─── AXIOM Platform Dashboard Tests ───
 
-describe("REALM Platform Dashboard", () => {
+describe("AXIOM Platform Dashboard", () => {
   it("should define subscription tiers correctly", () => {
     const tiers = ["trial", "starter", "professional", "enterprise"];
     expect(tiers).toContain("trial");

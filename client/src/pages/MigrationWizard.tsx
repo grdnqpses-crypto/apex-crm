@@ -447,7 +447,7 @@ export default function MigrationWizard() {
           <h1 className="text-4xl font-black text-gray-900">You're In!</h1>
           <p className="text-gray-500 text-lg">
             {totalImported.toLocaleString()} records imported successfully.
-            Your REALM CRM is ready — and it already looks familiar.
+            Your AXIOM CRM is ready — and it already looks familiar.
           </p>
         </div>
 
@@ -493,7 +493,7 @@ export default function MigrationWizard() {
                 {(job as any).customFieldsCreated} custom fields created automatically
               </div>
               <div className="text-sm text-blue-600 mt-0.5">
-                The AI detected fields unique to your previous CRM and created them in REALM so nothing was lost.
+                The AI detected fields unique to your previous CRM and created them in AXIOM so nothing was lost.
               </div>
             </div>
           </div>
@@ -522,7 +522,7 @@ export default function MigrationWizard() {
             </div>
             <div className="text-sm text-gray-500 mt-1">
               Same navigation, same terminology, same layout. You already know how to use this.
-              When you're ready, switch to the full REALM experience to unlock everything.
+              When you're ready, switch to the full AXIOM experience to unlock everything.
             </div>
           </div>
         </div>
@@ -532,10 +532,10 @@ export default function MigrationWizard() {
           <Button
             variant="outline"
             className="h-12 rounded-xl border-gray-200"
-            onClick={() => setSkin.mutate({ skin: "realm" })}
+            onClick={() => setSkin.mutate({ skin: "axiom" })}
           >
             <TrendingUp className="mr-2 w-4 h-4" />
-            Switch to REALM UI
+            Switch to AXIOM UI
           </Button>
           <Button
             className="h-12 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold"

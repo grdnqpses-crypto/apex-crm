@@ -98,7 +98,7 @@ export default function ABEngine() {
               <CardContent className="space-y-4">
                 <div>
                   <Label>Subject Line</Label>
-                  <Input value={subject} onChange={e => setSubject(e.target.value)} placeholder="e.g., Grow Your Brokerage with REALM CRM" />
+                  <Input value={subject} onChange={e => setSubject(e.target.value)} placeholder="e.g., Grow Your Brokerage with AXIOM CRM" />
                 </div>
                 <div>
                   <Label>Email Content (brief summary)</Label>

@@ -141,7 +141,7 @@ export function registerOAuthRoutes(app: Express) {
         success: true,
         companyId,
         userId,
-        message: "Account created successfully! Welcome to REALM CRM.",
+        message: "Account created successfully! Welcome to AXIOM CRM.",
       });
     } catch (error) {
       console.error("[Auth] Registration failed", error);

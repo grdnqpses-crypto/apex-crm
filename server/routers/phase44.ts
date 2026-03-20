@@ -41,7 +41,7 @@ export const calendarRouter = router({
   connect: protectedProcedure.input(z.object({
     provider: z.enum(["google", "outlook", "apple", "caldav"]),
     calendarUrl: z.string().optional(),
-    syncDirection: z.enum(["two_way", "realm_to_calendar", "calendar_to_realm"]).default("two_way"),
+    syncDirection: z.enum(["two_way", "axiom_to_calendar", "calendar_to_axiom"]).default("two_way"),
   })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -146,7 +146,7 @@ export const emailSyncRouter = router({
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
     const now = Date.now();
-    const bccAddress = `crm+${ctx.user.tenantCompanyId}-${ctx.user.id}@realm-crm.app`;
+    const bccAddress = `crm+${ctx.user.tenantCompanyId}-${ctx.user.id}@axiom-crm.app`;
     const existing = await db.select().from(emailConnections)
       .where(and(
         eq(emailConnections.userId, ctx.user.id),
@@ -857,7 +857,7 @@ export const integrationHubRouter = router({
     const catalog = [
       { key: "slack", name: "Slack", category: "communication", logo: "💬", description: "Send deal alerts and activity notifications to Slack channels" },
       { key: "teams", name: "Microsoft Teams", category: "communication", logo: "🟦", description: "Push CRM updates to Teams channels" },
-      { key: "zapier", name: "Zapier", category: "automation", logo: "⚡", description: "Connect REALM CRM to 5,000+ apps via Zapier" },
+      { key: "zapier", name: "Zapier", category: "automation", logo: "⚡", description: "Connect AXIOM CRM to 5,000+ apps via Zapier" },
       { key: "make", name: "Make (Integromat)", category: "automation", logo: "🔄", description: "Build complex automation scenarios with Make" },
       { key: "quickbooks", name: "QuickBooks", category: "finance", logo: "💰", description: "Sync invoices and payments with QuickBooks" },
       { key: "stripe", name: "Stripe", category: "finance", logo: "💳", description: "Track payments and subscriptions from Stripe" },
@@ -867,7 +867,7 @@ export const integrationHubRouter = router({
       { key: "typeform", name: "Typeform", category: "forms", logo: "📋", description: "Create contacts from Typeform submissions" },
       { key: "calendly", name: "Calendly", category: "scheduling", logo: "📅", description: "Sync Calendly bookings to CRM activities" },
       { key: "linkedin", name: "LinkedIn Sales Navigator", category: "prospecting", logo: "💼", description: "Import LinkedIn prospects directly" },
-      { key: "twilio", name: "Twilio", category: "telephony", logo: "📞", description: "Enable click-to-call and SMS from within REALM" },
+      { key: "twilio", name: "Twilio", category: "telephony", logo: "📞", description: "Enable click-to-call and SMS from within AXIOM" },
       { key: "sendgrid", name: "SendGrid", category: "email", logo: "📧", description: "Route transactional emails through SendGrid" },
       { key: "hubspot", name: "HubSpot", category: "migration", logo: "🟠", description: "Import data from HubSpot" },
       { key: "salesforce", name: "Salesforce", category: "migration", logo: "☁️", description: "Import data from Salesforce" },
@@ -948,7 +948,7 @@ export const integrationHubRouter = router({
         const resp = await fetch(conn.webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: "ping", source: "realm-crm", timestamp: Date.now() }),
+          body: JSON.stringify({ type: "ping", source: "axiom-crm", timestamp: Date.now() }),
         });
         success = resp.ok;
       } catch { success = false; }
@@ -1047,7 +1047,7 @@ export const onboardingRouter = router({
   })).mutation(async ({ ctx, input }) => {
     const response = await invokeLLM({
       messages: [
-        { role: "system", content: "You are the REALM CRM onboarding assistant. Answer questions about how to use REALM CRM concisely and helpfully. Focus on actionable steps. Keep answers under 150 words." },
+        { role: "system", content: "You are the AXIOM CRM onboarding assistant. Answer questions about how to use AXIOM CRM concisely and helpfully. Focus on actionable steps. Keep answers under 150 words." },
         { role: "user", content: input.question },
       ],
     });

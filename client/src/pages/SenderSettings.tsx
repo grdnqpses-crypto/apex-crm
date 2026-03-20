@@ -102,7 +102,7 @@ export default function SenderSettings() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Default From Name</Label>
-              <Input value={form.defaultFromName} onChange={e => setForm(f => ({ ...f, defaultFromName: e.target.value }))} placeholder="John from REALM" />
+              <Input value={form.defaultFromName} onChange={e => setForm(f => ({ ...f, defaultFromName: e.target.value }))} placeholder="John from AXIOM" />
             </div>
             <div>
               <Label>Default Reply-To</Label>

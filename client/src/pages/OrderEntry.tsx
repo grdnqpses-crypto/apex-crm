@@ -67,7 +67,7 @@ export default function OrderEntry() {
           );
         })}
         {(!emails.data || emails.data.length === 0) && (
-          <Card className="border-dashed"><CardContent className="p-12 text-center"><Mail className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" /><h3 className="text-lg font-medium">No inbound emails</h3><p className="text-sm text-muted-foreground mt-1">Forward load request emails to your REALM inbox for AI parsing</p></CardContent></Card>
+          <Card className="border-dashed"><CardContent className="p-12 text-center"><Mail className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" /><h3 className="text-lg font-medium">No inbound emails</h3><p className="text-sm text-muted-foreground mt-1">Forward load request emails to your AXIOM inbox for AI parsing</p></CardContent></Card>
         )}
       </div>
     </div>

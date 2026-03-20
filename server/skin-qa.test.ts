@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 // Verify skin terminology mapping matches expected CRM terms
 const SKIN_TERMS: Record<string, Record<string, string>> = {
-  realm:        { contacts: "Contacts", deals: "Deals", companies: "Companies", activities: "Activities", pipeline: "Pipeline" },
+  axiom:        { contacts: "Contacts", deals: "Deals", companies: "Companies", activities: "Activities", pipeline: "Pipeline" },
   hubspot:     { contacts: "Contacts", deals: "Deals", companies: "Companies", activities: "Activity", pipeline: "Pipeline" },
   salesforce:  { contacts: "Contacts", deals: "Opportunities", companies: "Accounts", activities: "Activities", pipeline: "Opportunities" },
   pipedrive:   { contacts: "People", deals: "Deals", companies: "Organizations", activities: "Activities", pipeline: "Pipeline" },
@@ -24,17 +24,17 @@ describe("Skin terminology mapping", () => {
   it("Pipedrive uses Organizations for companies", () => {
     expect(SKIN_TERMS.pipedrive.companies).toBe("Organizations");
   });
-  it("REALM uses native CRM terms", () => {
-    expect(SKIN_TERMS.realm.deals).toBe("Deals");
-    expect(SKIN_TERMS.realm.contacts).toBe("Contacts");
-    expect(SKIN_TERMS.realm.companies).toBe("Companies");
+  it("AXIOM uses native CRM terms", () => {
+    expect(SKIN_TERMS.axiom.deals).toBe("Deals");
+    expect(SKIN_TERMS.axiom.contacts).toBe("Contacts");
+    expect(SKIN_TERMS.axiom.companies).toBe("Companies");
   });
   it("All 7 skins are defined", () => {
-    const skinIds = ["realm", "hubspot", "salesforce", "pipedrive", "zoho", "gohighlevel", "close"];
+    const skinIds = ["axiom", "hubspot", "salesforce", "pipedrive", "zoho", "gohighlevel", "close"];
     skinIds.forEach(id => expect(SKIN_TERMS[id]).toBeDefined());
   });
-  it("getClientSkin procedure returns realm as default", () => {
-    const defaultResult = { skin: "realm", migratedFrom: null };
-    expect(defaultResult.skin).toBe("realm");
+  it("getClientSkin procedure returns axiom as default", () => {
+    const defaultResult = { skin: "axiom", migratedFrom: null };
+    expect(defaultResult.skin).toBe("axiom");
   });
 });

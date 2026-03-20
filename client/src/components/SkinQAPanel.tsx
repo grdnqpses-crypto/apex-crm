@@ -1,12 +1,12 @@
 /**
- * SkinQAPanel — Full-featured skin QA switcher for developers and REALM owners
+ * SkinQAPanel — Full-featured skin QA switcher for developers and AXIOM owners
  *
  * Features:
  * - Live color swatch + font preview for all 7 skins
  * - One-click skin switch with instant CSS variable application
  * - "QA Mode" indicator badge when viewing a non-default skin
  * - Shows which skin a client is using when impersonating
- * - Accessible from Developer panel and REALM Owner Settings → Appearance
+ * - Accessible from Developer panel and AXIOM Owner Settings → Appearance
  */
 import { useSkin, SkinId, SKINS } from "@/contexts/SkinContext";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,7 @@ import { Check, Palette, Eye, RotateCcw, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SKIN_META: Record<SkinId, { description: string; userBase: string; colorLabel: string }> = {
-  realm:        { description: "Native REALM experience — full feature set", userBase: "New users", colorLabel: "REALM Orange" },
+  axiom:        { description: "Native AXIOM experience — full feature set", userBase: "New users", colorLabel: "AXIOM Orange" },
   hubspot:     { description: "Mirrors HubSpot CRM — familiar layout & terms", userBase: "HubSpot migrants", colorLabel: "HubSpot Orange-Red" },
   salesforce:  { description: "Mirrors Salesforce — Opportunities, Accounts, Leads", userBase: "Salesforce migrants", colorLabel: "Salesforce Blue" },
   pipedrive:   { description: "Mirrors Pipedrive — pipeline-first deal view", userBase: "Pipedrive migrants", colorLabel: "Pipedrive Green" },
@@ -34,7 +34,7 @@ interface SkinQAPanelProps {
 
 export function SkinQAPanel({ clientSkin, clientName, compact = false }: SkinQAPanelProps) {
   const { skin, skinId, setSkin, allSkins } = useSkin();
-  const isQAMode = skinId !== "realm";
+  const isQAMode = skinId !== "axiom";
 
   return (
     <div className="space-y-4">
@@ -58,9 +58,9 @@ export function SkinQAPanel({ clientSkin, clientName, compact = false }: SkinQAP
               variant="outline"
               size="sm"
               className="rounded-lg text-xs gap-1.5 h-7"
-              onClick={() => setSkin("realm")}
+              onClick={() => setSkin("axiom")}
             >
-              <RotateCcw className="h-3 w-3" /> Reset to REALM
+              <RotateCcw className="h-3 w-3" /> Reset to AXIOM
             </Button>
           </div>
         )}

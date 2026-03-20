@@ -105,7 +105,7 @@ export default function OnboardingWizard({ onClose, onComplete }: OnboardingWiza
   };
 
   const handleGenerateLogo = () => {
-    const name = myCompany?.name || coName || "REALM";
+    const name = myCompany?.name || coName || "AXIOM";
     setGeneratingLogo(true);
     generateLogoMutation.mutate({ companyName: name });
   };
@@ -150,7 +150,7 @@ export default function OnboardingWizard({ onClose, onComplete }: OnboardingWiza
             <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-amber-500/20">
               <Rocket className="h-10 w-10 text-white" />
             </div>
-            <h2 className="text-2xl font-black text-stone-800 mb-2">Welcome to REALM CRM</h2>
+            <h2 className="text-2xl font-black text-stone-800 mb-2">Welcome to AXIOM CRM</h2>
             <p className="text-stone-500 mb-6 max-w-sm mx-auto">
               Let's get your CRM set up in under 2 minutes. We'll add your logo, confirm your company details, and invite your first team member.
             </p>

@@ -18,7 +18,7 @@ import { useSkin } from "@/contexts/SkinContext";
 
 const roleColors: Record<string, string> = {
   developer: "bg-red-500/10 text-red-400 border-red-500/20",
-  realm_owner: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  axiom_owner: "bg-orange-500/10 text-orange-400 border-orange-500/20",
   company_admin: "bg-purple-500/10 text-purple-400 border-purple-500/20",
   sales_manager: "bg-blue-500/10 text-blue-400 border-blue-500/20",
   office_manager: "bg-teal-500/10 text-teal-400 border-teal-500/20",
@@ -30,7 +30,7 @@ const roleColors: Record<string, string> = {
 
 const roleLabels: Record<string, string> = {
   developer: "Developer",
-  realm_owner: "REALM Owner",
+  axiom_owner: "AXIOM Owner",
   company_admin: "Company Admin",
   sales_manager: "Sales Manager",
   office_manager: "Office Manager",
@@ -42,7 +42,7 @@ const roleLabels: Record<string, string> = {
 
 const roleIcons: Record<string, any> = {
   developer: Shield,
-  realm_owner: Shield,
+  axiom_owner: Shield,
   company_admin: ShieldCheck,
   sales_manager: UserCog,
   office_manager: UserCog,

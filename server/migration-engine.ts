@@ -1,5 +1,5 @@
 /**
- * REALM CRM Migration Monster — AI-Powered Migration Engine
+ * AXIOM CRM Migration Monster — AI-Powered Migration Engine
  *
  * One-button migration from any competitor CRM.
  * The AI handles all field mapping, deduplication, and import silently.
@@ -18,7 +18,7 @@ import { eq, and } from "drizzle-orm";
 
 // ─── Competitor Profiles ──────────────────────────────────────────────────────
 // Each profile defines the standard fields the competitor uses, so the AI
-// has context when auto-mapping to REALM fields.
+// has context when auto-mapping to AXIOM fields.
 
 export const COMPETITOR_PROFILES: Record<string, CompetitorProfile> = {
   hubspot: {
@@ -207,7 +207,7 @@ export const COMPETITOR_PROFILES: Record<string, CompetitorProfile> = {
     apiKeyPlaceholder: "",
     standardFields: { contacts: [], companies: [], deals: [] },
     activityTypes: [],
-    skinKey: "realm",
+    skinKey: "axiom",
   },
 };
 
@@ -224,10 +224,10 @@ export interface CompetitorProfile {
   skinKey: string;
 }
 
-// ─── REALM Standard Field Map ──────────────────────────────────────────────────
-// What REALM calls its own fields — used as the target for AI mapping
+// ─── AXIOM Standard Field Map ──────────────────────────────────────────────────
+// What AXIOM calls its own fields — used as the target for AI mapping
 
-export const REALM_FIELDS = {
+export const AXIOM_FIELDS = {
   contacts: [
     { key: "firstName", label: "First Name", type: "text" },
     { key: "lastName", label: "Last Name", type: "text" },
@@ -287,12 +287,12 @@ export const REALM_FIELDS = {
 };
 
 // ─── AI Field Mapper ──────────────────────────────────────────────────────────
-// Uses LLM to auto-map source fields to REALM fields. Returns a mapping object
+// Uses LLM to auto-map source fields to AXIOM fields. Returns a mapping object
 // plus a list of unmapped fields that need new custom field definitions.
 
 export interface FieldMapping {
-  mapped: Record<string, string>;        // sourceField → realmField
-  customFields: CustomFieldToCreate[];   // fields with no REALM equivalent
+  mapped: Record<string, string>;        // sourceField → axiomField
+  customFields: CustomFieldToCreate[];   // fields with no AXIOM equivalent
   confidence: Record<string, number>;    // sourceField → 0-100
 }
 
@@ -308,13 +308,13 @@ export async function aiMapFields(
   sourceFields: { contacts: string[]; companies: string[]; deals: string[] },
   tenantCompanyId: number
 ): Promise<FieldMapping> {
-  const realmFieldsJson = JSON.stringify(REALM_FIELDS, null, 2);
+  const axiomFieldsJson = JSON.stringify(AXIOM_FIELDS, null, 2);
   const sourceFieldsJson = JSON.stringify(sourceFields, null, 2);
 
-  const prompt = `You are an expert CRM data migration specialist. Map fields from ${sourceSystem} to REALM CRM.
+  const prompt = `You are an expert CRM data migration specialist. Map fields from ${sourceSystem} to AXIOM CRM.
 
-REALM CRM FIELDS:
-${realmFieldsJson}
+AXIOM CRM FIELDS:
+${axiomFieldsJson}
 
 SOURCE SYSTEM (${sourceSystem}) FIELDS:
 ${sourceFieldsJson}
@@ -322,7 +322,7 @@ ${sourceFieldsJson}
 Return a JSON object with this exact structure:
 {
   "mapped": {
-    "sourceFieldName": "realmFieldKey",
+    "sourceFieldName": "axiomFieldKey",
     ...
   },
   "customFields": [
@@ -340,8 +340,8 @@ Return a JSON object with this exact structure:
 }
 
 Rules:
-1. Map every source field to the closest REALM field by semantic meaning, not just name
-2. If a source field has no good REALM equivalent, add it to customFields instead
+1. Map every source field to the closest AXIOM field by semantic meaning, not just name
+2. If a source field has no good AXIOM equivalent, add it to customFields instead
 3. Confidence: 90-100 = exact match, 70-89 = strong match, 50-69 = possible match, <50 = uncertain
 4. For fields like "hubspot_owner_id" → map to "ownerId"
 5. For company reference fields → map to "companyId"
@@ -454,9 +454,9 @@ function buildFallbackMapping(
 
   const processFields = (fields: string[], objectType: "contact" | "company" | "deal") => {
     for (const field of fields) {
-      const realmKey = COMMON_MAPS[field] || COMMON_MAPS[field.toLowerCase()];
-      if (realmKey) {
-        mapped[field] = realmKey;
+      const axiomKey = COMMON_MAPS[field] || COMMON_MAPS[field.toLowerCase()];
+      if (axiomKey) {
+        mapped[field] = axiomKey;
         confidence[field] = 85;
       } else if (!field.startsWith("hs_") && !field.includes("__c") && field.length < 50) {
         // Skip HubSpot internal fields and Salesforce custom fields
@@ -479,7 +479,7 @@ function buildFallbackMapping(
 }
 
 // ─── AI Cheat Sheet Generator ─────────────────────────────────────────────────
-// After import, generates a personalized "Your [CRM] → REALM cheat sheet"
+// After import, generates a personalized "Your [CRM] → AXIOM cheat sheet"
 
 export async function generateCheatSheet(
   sourceSystem: string,
@@ -489,17 +489,17 @@ export async function generateCheatSheet(
   const profile = COMPETITOR_PROFILES[sourceSystem];
   if (!profile) return "";
 
-  const prompt = `Create a friendly, concise "migration cheat sheet" for a user who just migrated from ${profile.name} to REALM CRM.
+  const prompt = `Create a friendly, concise "migration cheat sheet" for a user who just migrated from ${profile.name} to AXIOM CRM.
 
 Import stats: ${importStats.contacts} contacts, ${importStats.companies} companies, ${importStats.deals} deals, ${importStats.activities} activities.
 
-Key field mappings (${sourceSystem} → REALM):
-${Object.entries(fieldMapping.mapped).slice(0, 20).map(([src, realm]) => `  ${src} → ${realm}`).join("\n")}
+Key field mappings (${sourceSystem} → AXIOM):
+${Object.entries(fieldMapping.mapped).slice(0, 20).map(([src, axiom]) => `  ${src} → ${axiom}`).join("\n")}
 
 Write a short, warm, encouraging guide (max 300 words) that:
 1. Congratulates them on the successful migration
-2. Shows 5-8 key "where to find things" mappings (e.g. "HubSpot Deals → REALM Pipeline")
-3. Highlights 2-3 REALM features they didn't have in ${profile.name}
+2. Shows 5-8 key "where to find things" mappings (e.g. "HubSpot Deals → AXIOM Pipeline")
+3. Highlights 2-3 AXIOM features they didn't have in ${profile.name}
 4. Ends with an encouraging call to action
 
 Use plain text, no markdown headers. Keep it conversational and exciting.`;
@@ -513,7 +513,7 @@ Use plain text, no markdown headers. Keep it conversational and exciting.`;
     });
     return (response.choices[0]?.message?.content as string) || "";
   } catch {
-    return `Welcome to REALM CRM! Your ${profile.name} data has been successfully imported — ${importStats.contacts} contacts, ${importStats.companies} companies, and ${importStats.deals} deals are ready to go. Everything you had before is here, plus a whole lot more.`;
+    return `Welcome to AXIOM CRM! Your ${profile.name} data has been successfully imported — ${importStats.contacts} contacts, ${importStats.companies} companies, and ${importStats.deals} deals are ready to go. Everything you had before is here, plus a whole lot more.`;
   }
 }
 
@@ -548,7 +548,7 @@ export function isDuplicateCompany(
 }
 
 // ─── Stage Normalizer ─────────────────────────────────────────────────────────
-// Maps competitor deal stages to REALM stages
+// Maps competitor deal stages to AXIOM stages
 
 const STAGE_MAPS: Record<string, Record<string, string>> = {
   hubspot: {

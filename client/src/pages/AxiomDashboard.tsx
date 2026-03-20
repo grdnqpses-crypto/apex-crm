@@ -59,7 +59,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 const ALL_TIERS = ["trial", "success_starter", "growth_foundation", "fortune_foundation", "fortune", "fortune_plus"] as const;
 
-export default function RealmDashboard() {
+export default function AxiomDashboard() {
   const { t } = useSkin();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
@@ -135,14 +135,14 @@ export default function RealmDashboard() {
     });
   };
 
-  if (!user || !["developer", "realm_owner"].includes(user.systemRole)) {
+  if (!user || !["developer", "axiom_owner"].includes(user.systemRole)) {
     return (
       <div className="flex items-center justify-center h-full">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <Shield className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
             <h2 className="text-xl font-bold mb-2">Access Restricted</h2>
-            <p className="text-muted-foreground">This dashboard is only available to REALM Owners and Developers.</p>
+            <p className="text-muted-foreground">This dashboard is only available to AXIOM Owners and Developers.</p>
           </CardContent>
         </Card>
       </div>
@@ -156,7 +156,7 @@ export default function RealmDashboard() {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <Crown className="w-8 h-8 text-amber-400" />
-            <h1 className="text-3xl font-bold tracking-tight">REALM Platform Dashboard</h1>
+            <h1 className="text-3xl font-bold tracking-tight">AXIOM Platform Dashboard</h1>
           </div>
           <p className="text-muted-foreground">Manage all tenant companies, subscriptions, and platform health</p>
         </div>

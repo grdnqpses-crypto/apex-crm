@@ -1,4 +1,4 @@
-# REALM CRM Visual Redesign Notes
+# AXIOM CRM Visual Redesign Notes
 
 ## Design Direction
 - Warm, premium, inviting — like Crextio (image 3) and the peach SaaS dashboard (image 6)

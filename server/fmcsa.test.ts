@@ -71,7 +71,7 @@ describe("FMCSA Broker Filing Feature", () => {
     });
 
     it("renewing broker template has join and demo CTAs", () => {
-      expect(RENEWING_BROKER_TEMPLATE_HTML).toContain("Join REALM CRM Free");
+      expect(RENEWING_BROKER_TEMPLATE_HTML).toContain("Join AXIOM CRM Free");
       expect(RENEWING_BROKER_TEMPLATE_HTML).toContain("Schedule a Quick Demo Instead");
     });
 

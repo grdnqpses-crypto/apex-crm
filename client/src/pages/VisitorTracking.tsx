@@ -98,7 +98,7 @@ function CredentialsDialog({
         </DialogHeader>
         <div className="space-y-4 py-2">
           <p className="text-sm text-muted-foreground">
-            Store your platform credentials so REALM can auto-install the tracking script without any manual steps — now and for future updates.
+            Store your platform credentials so AXIOM can auto-install the tracking script without any manual steps — now and for future updates.
           </p>
 
           {/* Platform selector */}
@@ -362,7 +362,7 @@ export default function VisitorTracking() {
                 </div>
                 <h2 className="text-xl font-bold mb-1">AI-Powered One-Click Install</h2>
                 <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                  Enter your website URL. REALM detects your platform and installs the tracking script automatically — no technical knowledge needed.
+                  Enter your website URL. AXIOM detects your platform and installs the tracking script automatically — no technical knowledge needed.
                 </p>
               </div>
 

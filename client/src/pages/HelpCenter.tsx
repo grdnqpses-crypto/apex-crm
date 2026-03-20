@@ -38,7 +38,7 @@ const guides: GuideSection[] = [
   {
     id: "dashboard", title: "Dashboard", icon: BarChart3, category: "Getting Started", path: "/",
     tagline: "Your real-time command center — every metric, every opportunity, one glance.",
-    overview: "The Dashboard is the nerve center of REALM CRM. The moment you log in, you see live counts for companies, contacts, open deals, pipeline value, won/lost deals, pending tasks, active campaigns, and AI prospects. Six color-coded sections — CRM Core, Performance, Email Operations, Paradigm Engine, Freight Operations, and a Recent Activity feed — give you a 360° pulse on your business. Every card is clickable, so you can drill into any metric instantly.",
+    overview: "The Dashboard is the nerve center of AXIOM CRM. The moment you log in, you see live counts for companies, contacts, open deals, pipeline value, won/lost deals, pending tasks, active campaigns, and AI prospects. Six color-coded sections — CRM Core, Performance, Email Operations, Paradigm Engine, Freight Operations, and a Recent Activity feed — give you a 360° pulse on your business. Every card is clickable, so you can drill into any metric instantly.",
     capabilities: ["Live KPI cards across 6 business domains", "Recent Activity feed with 12 latest interactions", "Quick Actions for one-click company/deal/campaign/task creation", "System Status panel showing health of all subsystems", "Color-coded section headers with contextual descriptions"],
     workflow: ["Check Dashboard every morning — it's your early warning system", "Click any metric card to drill into that section", "Use Quick Actions to create records without navigating away", "Scroll to Recent Activity to see what happened while you were away", "Monitor System Status to ensure all engines are running"],
     proTips: ["If pipeline value drops, investigate stalled deals immediately", "Rising pending tasks = team is overloaded — redistribute or prioritize", "Use the AI Assistant (orange button, bottom-right) to ask about any metric"],
@@ -48,7 +48,7 @@ const guides: GuideSection[] = [
   {
     id: "ai-assistant", title: "AI Assistant", icon: Sparkles, category: "Getting Started", path: "/",
     tagline: "Your personal CRM copilot — ask anything, command anything, instantly.",
-    overview: "The REALM AI Assistant is a fully integrated copilot that lives in every page of the CRM. Click the orange sparkle button in the bottom-right corner to open it. It knows every feature, every workflow, and every data point in your CRM. Ask it questions ('How many open deals do I have?') or give it commands ('Add a company called Acme Logistics in Transportation') — it executes immediately and confirms the result. It can create contacts, companies, deals, tasks, campaigns, templates, segments, log activities, search your data, and provide analytics summaries — all through natural conversation.",
+    overview: "The AXIOM AI Assistant is a fully integrated copilot that lives in every page of the CRM. Click the orange sparkle button in the bottom-right corner to open it. It knows every feature, every workflow, and every data point in your CRM. Ask it questions ('How many open deals do I have?') or give it commands ('Add a company called Acme Logistics in Transportation') — it executes immediately and confirms the result. It can create contacts, companies, deals, tasks, campaigns, templates, segments, log activities, search your data, and provide analytics summaries — all through natural conversation.",
     capabilities: ["Create companies, contacts, deals, tasks, campaigns, templates, segments", "Log activities (notes, calls, emails, meetings) on any contact", "Search across all entities — contacts, companies, deals, tasks", "Provide pipeline summaries and analytics on demand", "Import/bulk-create contacts from a list", "Update or delete existing records", "Answer questions about any CRM feature or workflow"],
     workflow: ["Click the orange sparkle button on any page to open the AI panel", "Type a question or command in natural language", "The AI executes immediately — no confirmation dialogs, no friction", "See action confirmations with green badges showing what was created", "Ask follow-up questions to refine or continue your workflow"],
     proTips: ["Say 'Add a company called X in Y industry' — it creates it instantly", "Say 'Show my pipeline summary' — it pulls live data and summarizes", "Say 'Log a call with John at Acme — discussed Q2 pricing' — done", "The AI remembers your conversation context within the session", "Use it for bulk operations: 'Create 5 tasks for follow-ups this week'"],
@@ -59,7 +59,7 @@ const guides: GuideSection[] = [
   {
     id: "companies", title: "Companies", icon: Building2, category: "CRM Core", path: "/companies",
     tagline: "Your primary entity — every contact, deal, and activity belongs to a company.",
-    overview: "Companies are the foundation of REALM CRM's architecture. Every contact must belong to a company, every deal is linked through a contact to a company, and every activity rolls up to the company level. This company-first design gives you true account-based selling. The Companies page shows a searchable, sortable table with aggregate metrics — contact count, open deals, pipeline value, and status — so you can instantly see which accounts need attention.",
+    overview: "Companies are the foundation of AXIOM CRM's architecture. Every contact must belong to a company, every deal is linked through a contact to a company, and every activity rolls up to the company level. This company-first design gives you true account-based selling. The Companies page shows a searchable, sortable table with aggregate metrics — contact count, open deals, pipeline value, and status — so you can instantly see which accounts need attention.",
     capabilities: ["Searchable table with 40+ fields per company", "Aggregate metrics: contact count, open deals, pipeline value per company", "Status tracking: Cold, Warm, Hot, Customer, Churned", "Logistics fields: MC/DOT numbers, fleet size, equipment types, service areas", "Cascade delete: removing a company removes all its contacts and activities", "Quick Add Company from the contact creation dialog"],
     workflow: ["Click '+ Add Company' to create a new company record", "Fill in name, industry, website, and any logistics-specific data", "Click any company row to view its full profile with contacts and deals", "Use the search bar to find companies by name or domain", "Monitor the Contacts and Open Deals columns for account health"],
     proTips: ["Always create the company first, then add contacts to it", "Fill in MC/DOT numbers for freight companies — essential for verification", "Use the aggregate metrics columns to prioritize high-value accounts", "The AI Assistant can create companies instantly: 'Add a company called...'"],
@@ -202,7 +202,7 @@ const guides: GuideSection[] = [
   {
     id: "paradigm", title: "Paradigm Pulse", icon: Brain, category: "Paradigm Engine", path: "/paradigm",
     tagline: "AI-powered sales intelligence — discover prospects, signals, and opportunities automatically.",
-    overview: "The Paradigm Engine is REALM CRM's AI brain. It continuously scans the market for new prospects, buying signals, and opportunities. The Pulse Dashboard gives you a real-time view of AI activity: new prospects discovered, signals detected, sequences running, and battle cards generated. Think of it as your always-on sales research team.",
+    overview: "The Paradigm Engine is AXIOM CRM's AI brain. It continuously scans the market for new prospects, buying signals, and opportunities. The Pulse Dashboard gives you a real-time view of AI activity: new prospects discovered, signals detected, sequences running, and battle cards generated. Think of it as your always-on sales research team.",
     capabilities: ["AI prospect discovery from market data", "Buying signal detection and scoring", "Automated outreach sequences", "Competitive battle card generation", "Real-time activity dashboard", "Integration with CRM contacts and deals"],
     workflow: ["Check the Pulse Dashboard daily for new AI discoveries", "Review and qualify new prospects", "Act on high-priority buying signals", "Launch sequences for qualified prospects", "Use battle cards in competitive situations"],
     proTips: ["The more data you feed the CRM, the smarter the AI becomes", "Review AI prospects weekly — they're pre-qualified leads", "Combine signals with your own market knowledge for best results"],
@@ -252,7 +252,7 @@ const guides: GuideSection[] = [
   {
     id: "quantum", title: "Quantum Score", icon: Award, category: "Paradigm Engine", path: "/quantum-score",
     tagline: "AI lead scoring — prioritize prospects by conversion probability.",
-    overview: "Quantum Score is REALM CRM's AI-powered lead scoring system. It analyzes every prospect and contact across dozens of signals — engagement, firmographics, behavior, timing — and assigns a conversion probability score. Higher scores mean higher likelihood of closing. Use it to prioritize your outreach and focus on the prospects most likely to convert.",
+    overview: "Quantum Score is AXIOM CRM's AI-powered lead scoring system. It analyzes every prospect and contact across dozens of signals — engagement, firmographics, behavior, timing — and assigns a conversion probability score. Higher scores mean higher likelihood of closing. Use it to prioritize your outreach and focus on the prospects most likely to convert.",
     capabilities: ["AI-powered conversion probability scoring", "Multi-signal analysis: engagement, firmographics, behavior", "Score breakdown showing contributing factors", "Historical score tracking", "Threshold-based alerts", "Integration with deals and pipeline"],
     workflow: ["Review Quantum Scores weekly to reprioritize your pipeline", "Focus outreach on high-score prospects first", "Investigate score changes — drops may indicate lost interest", "Use score thresholds to automate routing (e.g., score > 80 → sales team)"],
     proTips: ["Scores above 70 are strong — prioritize these aggressively", "Declining scores are early warnings — reach out before they go cold", "Combine Quantum Score with Signals for maximum insight"],
@@ -510,12 +510,12 @@ export default function HelpCenter() {
               <BookOpen className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-extrabold tracking-tight">REALM CRM Guide</h1>
+              <h1 className="text-3xl font-extrabold tracking-tight">AXIOM CRM Guide</h1>
               <p className="text-white/80 text-sm font-medium">Master every feature. Close more deals. Grow faster.</p>
             </div>
           </div>
           <p className="text-white/90 text-sm leading-relaxed max-w-2xl mt-4">
-            Welcome to the complete guide for REALM CRM — the most powerful freight broker CRM platform ever built. 
+            Welcome to the complete guide for AXIOM CRM — the most powerful freight broker CRM platform ever built. 
             Below you'll find detailed documentation for every feature, from basic contact management to AI-powered 
             prospecting, automated sequences, and freight operations. Each guide includes capabilities, step-by-step 
             workflows, pro tips from power users, and pitfalls to avoid.
@@ -616,7 +616,7 @@ export default function HelpCenter() {
             { step: 1, title: "Configure Sender Settings", desc: "Set your company name, physical address, and unsubscribe URL. Required by CAN-SPAM law.", path: "/sender-settings" },
             { step: 2, title: "Add SMTP Accounts", desc: "Configure your email sending addresses. Set daily limits per address (~385 recommended).", path: "/smtp-accounts" },
             { step: 3, title: "Verify Domain Health", desc: "Check that all domains have SPF, DKIM, and DMARC properly configured.", path: "/deliverability" },
-            { step: 4, title: "Import Companies", desc: "Add your existing companies — they're the foundation of everything in REALM CRM.", path: "/companies" },
+            { step: 4, title: "Import Companies", desc: "Add your existing companies — they're the foundation of everything in AXIOM CRM.", path: "/companies" },
             { step: 5, title: "Import Contacts", desc: "Add contacts and link them to companies. Fill in as many fields as possible.", path: "/contacts" },
             { step: 6, title: "Create Your First Segment", desc: "Build a targeted list (e.g., 'Manufacturers in Texas') for your first campaign.", path: "/segments" },
             { step: 7, title: "Build Email Templates", desc: "Create reusable templates for cold outreach, follow-ups, and proposals.", path: "/templates" },
@@ -636,7 +636,7 @@ export default function HelpCenter() {
             <Sparkles className="h-7 w-7 text-white" />
           </div>
           <div className="flex-1">
-            <h3 className="font-bold text-foreground text-lg">Still have questions? Ask REALM AI.</h3>
+            <h3 className="font-bold text-foreground text-lg">Still have questions? Ask AXIOM AI.</h3>
             <p className="text-sm text-muted-foreground mt-1">
               Click the orange sparkle button in the bottom-right corner of any page. Ask anything — 
               "How do I create a campaign?", "Add a company called Acme", "Show my pipeline summary" — 

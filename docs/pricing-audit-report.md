@@ -1,4 +1,4 @@
-# REALM CRM — Pricing & Feature Gate Audit Report
+# AXIOM CRM — Pricing & Feature Gate Audit Report
 **Date:** March 18, 2026 | **Status: FULLY IMPLEMENTED**
 
 ---
@@ -20,7 +20,7 @@
 
 ## Competitor Comparison (Per-Seat Equivalent)
 
-| Competitor | Their Price | REALM Equivalent | Savings |
+| Competitor | Their Price | AXIOM Equivalent | Savings |
 |---|---|---|---|
 | HubSpot Starter | $100/mo (1 user) | $74/mo | 26% |
 | HubSpot Pro (5 users) | $500/mo | $149/mo | 70% |
@@ -108,7 +108,7 @@
 | Voice Agent | Unlimited | — |
 | DocScan | Unlimited | — |
 | **Revenue Autopilot ("Money Machine")** | Full | Competitors don't offer |
-| **REALM Autopilot** (freight consolidation + lane prediction) | Full | Competitors don't offer |
+| **AXIOM Autopilot** (freight consolidation + lane prediction) | Full | Competitors don't offer |
 | Visitor Tracking | Unlimited | — |
 | **White-labeling — full platform branding** | Full | MEDIUM MAINTENANCE — marked up |
 | Custom AI training (basic) | — | Competitors don't offer |
@@ -156,14 +156,14 @@
 | `client/src/pages/MarketingHome.tsx` | ✅ Pricing cards, competitor savings, comparison table |
 | `client/src/pages/Subscription.tsx` | ✅ Full 5-tier pricing with free/freemium/premium/locked badges |
 | `client/src/pages/Billing.tsx` | ✅ Current plan display, competitor savings table |
-| `client/src/pages/RealmDashboard.tsx` | ✅ Admin tier dropdowns, TIER_PRICES lookup table |
+| `client/src/pages/AxiomDashboard.tsx` | ✅ Admin tier dropdowns, TIER_PRICES lookup table |
 | `client/src/pages/Signup.tsx` | ✅ Signup flow pricing tiers |
 
 ---
 
 ## High-Maintenance Services (Marked Up vs. Standard Tiers)
 
-These are REALM-unique services with real operational cost, priced at premium tiers:
+These are AXIOM-unique services with real operational cost, priced at premium tiers:
 
 | Service | Tier | Why Marked Up |
 |---|---|---|

@@ -49,7 +49,7 @@ export default function DigitalOnboarding() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Digital Onboarding</h1>
-          <p className="text-muted-foreground">Guided setup to get your team fully operational in REALM CRM</p>
+          <p className="text-muted-foreground">Guided setup to get your team fully operational in AXIOM CRM</p>
         </div>
         {!progress && (
           <Button onClick={() => initMutation.mutate()} disabled={initMutation.isPending}>

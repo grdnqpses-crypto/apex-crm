@@ -12,7 +12,7 @@ import { useSkin, SkinId, SKINS } from "@/contexts/SkinContext";
 
 const roleColors: Record<string, string> = {
   developer: "bg-red-500/10 text-red-400 border-red-500/20",
-  realm_owner: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  axiom_owner: "bg-orange-500/10 text-orange-400 border-orange-500/20",
   company_admin: "bg-purple-500/10 text-purple-400 border-purple-500/20",
   sales_manager: "bg-blue-500/10 text-blue-400 border-blue-500/20",
   office_manager: "bg-teal-500/10 text-teal-400 border-teal-500/20",
@@ -24,7 +24,7 @@ const roleColors: Record<string, string> = {
 
 const roleLabels: Record<string, string> = {
   developer: "Developer",
-  realm_owner: "REALM Owner",
+  axiom_owner: "AXIOM Owner",
   company_admin: "Company Admin",
   sales_manager: "Sales Manager",
   office_manager: "Office Manager",
@@ -36,7 +36,7 @@ const roleLabels: Record<string, string> = {
 
 const roleIcons: Record<string, any> = {
   developer: Shield,
-  realm_owner: Shield,
+  axiom_owner: Shield,
   company_admin: ShieldCheck,
   sales_manager: UserCog,
   office_manager: UserCog,
@@ -94,13 +94,13 @@ export default function DevImpersonate() {
           <h1 className="text-2xl font-bold">Developer Tools</h1>
           <p className="text-muted-foreground text-sm mt-1">Impersonate clients and QA-test all skins</p>
         </div>
-        {skinId !== "realm" && (
+        {skinId !== "axiom" && (
           <div className="flex items-center gap-2">
             <Badge className="bg-amber-500/10 text-amber-600 border-amber-200 gap-1">
               <Eye className="h-3 w-3" /> Viewing in: {SKINS[skinId]?.name}
             </Badge>
-            <Button variant="outline" size="sm" className="rounded-lg gap-1.5" onClick={() => setSkin("realm")}>
-              <RotateCcw className="h-3.5 w-3.5" /> Reset to REALM
+            <Button variant="outline" size="sm" className="rounded-lg gap-1.5" onClick={() => setSkin("axiom")}>
+              <RotateCcw className="h-3.5 w-3.5" /> Reset to AXIOM
             </Button>
           </div>
         )}
@@ -233,7 +233,7 @@ export default function DevImpersonate() {
                       <CardTitle className="text-base flex items-center gap-2">
                         <Eye className="h-4 w-4 text-amber-400" />Viewing as: {impersonatedUser.user.name}
                       </CardTitle>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedUserId(null); setSkin("realm"); }}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedUserId(null); setSkin("axiom"); }}>
                         <X className="h-4 w-4" />
                       </Button>
                     </div>

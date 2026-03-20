@@ -1,0 +1,22 @@
+{
+  "query": "UPDATE tenant_companies SET name = 'AXIOM CRM' WHERE name LIKE '%REALM%' OR name LIKE '%Realm%' OR name LIKE '%Apex%';\nSELECT id, name FROM tenant_companies LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute UPDATE tenant_companies SET name = 'AXIOM CRM' WHERE name LIKE '%REALM%' OR name LIKE '%Realm%' OR name LIKE '%Apex%';\nSELECT id, name FROM tenant_companies LIMIT 5;",
+  "rows": [
+    {
+      "id": "2",
+      "name": "Logistics Worldwide"
+    },
+    {
+      "id": "30001",
+      "name": "AXIOM CRM"
+    },
+    {
+      "id": "60001",
+      "name": "Cryptogrdn"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n2\tLogistics Worldwide\n30001\tAXIOM CRM\n60001\tCryptogrdn\n",
+  "stderr": "",
+  "execution_time_ms": 498
+}

@@ -1,5 +1,5 @@
 /**
- * REALM CRM AI Assistant — Smart self-contained assistant with optional LLM enhancement.
+ * AXIOM CRM AI Assistant — Smart self-contained assistant with optional LLM enhancement.
  *
  * The assistant uses a local command parser to handle all CRM operations
  * WITHOUT requiring any external API. When an LLM is available, it enhances
@@ -12,11 +12,11 @@ import * as db from "./db";
 
 // ─── System Prompt (used when LLM is available) ─────────────────────────────
 
-export const SYSTEM_PROMPT = `You are **REALM**, the built-in AI assistant for REALM CRM — a comprehensive freight-broker CRM platform. You are friendly, knowledgeable, and action-oriented. When a user asks you to do something, you DO IT immediately — no hesitation, no "would you like me to…" — just execute and confirm. You NEVER say you cannot help with something that is within the CRM's capabilities.
+export const SYSTEM_PROMPT = `You are **AXIOM**, the built-in AI assistant for AXIOM CRM — a comprehensive freight-broker CRM platform. You are friendly, knowledgeable, and action-oriented. When a user asks you to do something, you DO IT immediately — no hesitation, no "would you like me to…" — just execute and confirm. You NEVER say you cannot help with something that is within the CRM's capabilities.
 
 ## Your Capabilities
 1. **Execute any CRM action** instantly: create companies, contacts, deals, tasks, campaigns, templates, segments, workflows, log activities, update records, delete records, and more.
-2. **Answer any question** about REALM CRM features, workflows, pages, and best practices.
+2. **Answer any question** about AXIOM CRM features, workflows, pages, and best practices.
 3. **Search and retrieve data** from the CRM: find contacts, companies, deals, tasks, campaigns, and provide summaries.
 4. **Bulk operations**: import multiple contacts at once, create multiple records in sequence.
 5. **Guide users** step-by-step through any workflow.
@@ -28,7 +28,7 @@ export const SYSTEM_PROMPT = `You are **REALM**, the built-in AI assistant for R
 
 ### CRM Core
 - **Dashboard**: Shows key metrics (companies, contacts, open deals, pipeline value, won/lost deals, pending tasks, segments), recent activity feed, quick actions, and system status. All data is real-time.
-- **Companies**: The primary entity in REALM CRM. Every contact must belong to a company. Companies have name, industry, website, phone, address, lead status, and notes. The Companies page shows aggregate metrics per company (contact count, open deals, pipeline value). You can create, edit, and delete companies.
+- **Companies**: The primary entity in AXIOM CRM. Every contact must belong to a company. Companies have name, industry, website, phone, address, lead status, and notes. The Companies page shows aggregate metrics per company (contact count, open deals, pipeline value). You can create, edit, and delete companies.
 - **Contacts**: People associated with companies. Fields include first name, last name, email, phone, job title, lead status, city, country, freight volume, customer type, decision maker role, and lead score. Contacts are always scoped to a company. You can create, edit, and delete contacts.
 - **Deals**: Opportunities in a Kanban pipeline. Fields include name, value, stage, status (open/won/lost), expected close date, linked contact and company. Deals can be moved between pipeline stages.
 - **Tasks**: Action items linked to contacts, companies, or deals. Fields include title, type (call/email/meeting/follow_up/proposal/other), priority (low/medium/high/urgent), status (pending/in_progress/completed/cancelled), due date, and notes.
@@ -458,7 +458,7 @@ function getFeatureExplanation(topic: string): string {
   const t = topic.toLowerCase();
 
   if (/dashboard/.test(t)) return "📊 **Dashboard** is your command center. It shows real-time metrics: total companies, contacts, open deals, pipeline value, won/lost deals, pending tasks, and recent activity. Click any card to dive deeper into that section.";
-  if (/compan/.test(t)) return "🏢 **Companies** are the primary entities in REALM CRM. Every contact belongs to a company. You can track industry, website, phone, address, lead status, and notes. The Companies page shows aggregate metrics per company including contact count, open deals, and pipeline value.";
+  if (/compan/.test(t)) return "🏢 **Companies** are the primary entities in AXIOM CRM. Every contact belongs to a company. You can track industry, website, phone, address, lead status, and notes. The Companies page shows aggregate metrics per company including contact count, open deals, and pipeline value.";
   if (/contact/.test(t)) return "👤 **Contacts** are people associated with companies. Track first/last name, email, phone, job title, lead status, city, country, freight volume, customer type, and lead score. Every contact must belong to a company.";
   if (/deal|pipeline|opportunity/.test(t)) return "💰 **Deals** represent opportunities in your sales pipeline. Each deal has a name, value, stage, status (open/won/lost), expected close date, and can be linked to a contact and company. Use the Kanban view to drag deals between stages.";
   if (/task/.test(t)) return "✅ **Tasks** are action items you can link to contacts, companies, or deals. Set type (call/email/meeting/follow-up/proposal), priority (low/medium/high/urgent), status, due date, and notes to stay organized.";
@@ -468,12 +468,12 @@ function getFeatureExplanation(topic: string): string {
   if (/workflow|automation/.test(t)) return "⚡ **Workflows** automate your CRM processes. Set triggers (new contact, deal stage change, scheduled) and define steps with actions and delays. Automate follow-ups, notifications, and more.";
   if (/deliverability/.test(t)) return "📬 **Deliverability** monitors your email domain health. Check SPF/DKIM/DMARC records, inbox placement rates, and domain reputation. Keep your emails out of spam.";
   if (/prospect/.test(t)) return "🔍 **Prospects** are potential leads from the Paradigm Engine. Get enrichment data, verification status, and engagement scoring to find the best leads.";
-  if (/ai|assistant/.test(t)) return "🤖 **I'm REALM AI**, your built-in assistant! I can create companies, contacts, deals, tasks, campaigns, and more — just tell me what you need. I can also search your data, give you stats, and guide you through any feature. Try saying: \"Create a company called Acme Corp\" or \"Show me my open deals\"";
+  if (/ai|assistant/.test(t)) return "🤖 **I'm AXIOM AI**, your built-in assistant! I can create companies, contacts, deals, tasks, campaigns, and more — just tell me what you need. I can also search your data, give you stats, and guide you through any feature. Try saying: \"Create a company called Acme Corp\" or \"Show me my open deals\"";
   if (/freight|load|carrier|marketplace/.test(t)) return "🚛 **Freight Operations** includes Load Management (track shipments), Carrier Vetting (safety ratings & compliance), Invoicing, and the Freight Marketplace. Manage your entire logistics operation from within the CRM.";
   if (/report|analytics/.test(t)) return "📈 **Reports & Analytics** gives you insights into your CRM performance — pipeline trends, win rates, revenue forecasts, team activity, and more.";
   if (/pulse/.test(t)) return "💓 **Pulse Dashboard** provides real-time monitoring of your CRM health — engagement metrics, activity trends, and performance indicators at a glance.";
 
-  return `I can help you with anything in REALM CRM! Here's what I can do:\n\n• **Create** — companies, contacts, deals, tasks, campaigns, templates, segments, workflows\n• **Search** — find any record by name or criteria\n• **Stats** — get dashboard metrics and pipeline summaries\n• **Navigate** — go to any page (say "go to deals")\n• **Explain** — learn about any feature\n\nJust tell me what you need!`;
+  return `I can help you with anything in AXIOM CRM! Here's what I can do:\n\n• **Create** — companies, contacts, deals, tasks, campaigns, templates, segments, workflows\n• **Search** — find any record by name or criteria\n• **Stats** — get dashboard metrics and pipeline summaries\n• **Navigate** — go to any page (say "go to deals")\n• **Explain** — learn about any feature\n\nJust tell me what you need!`;
 }
 
 // ─── Format Results for Display ─────────────────────────────────────────────
@@ -575,10 +575,10 @@ export async function handleChat(
   if (parsed) {
     switch (parsed.action) {
       case "greeting":
-        return `Hey ${userName}! 👋 I'm **REALM AI**, your CRM assistant. I'm ready to help you manage your business. Here's what I can do:\n\n• **Create** anything — "Create a company called Acme Corp"\n• **Search** your data — "Show me open deals"\n• **Get stats** — "Dashboard stats" or "Pipeline summary"\n• **Navigate** — "Go to contacts"\n• **Learn** — "What are campaigns?"\n\nWhat would you like to do?`;
+        return `Hey ${userName}! 👋 I'm **AXIOM AI**, your CRM assistant. I'm ready to help you manage your business. Here's what I can do:\n\n• **Create** anything — "Create a company called Acme Corp"\n• **Search** your data — "Show me open deals"\n• **Get stats** — "Dashboard stats" or "Pipeline summary"\n• **Navigate** — "Go to contacts"\n• **Learn** — "What are campaigns?"\n\nWhat would you like to do?`;
 
       case "help":
-        return `🤖 **REALM AI Assistant — Commands**\n\n**Create Records:**\n• "Create a company called [name]"\n• "Add a contact [name]"\n• "New deal [name] $[value]"\n• "Create task [title]"\n• "New campaign [name]"\n\n**Search & View:**\n• "Show my companies"\n• "Find contacts [search]"\n• "List open deals"\n• "Show pending tasks"\n\n**Stats & Reports:**\n• "Dashboard stats"\n• "Pipeline summary"\n• "Recent activities"\n\n**Navigate:**\n• "Go to [page name]"\n• Pages: dashboard, companies, contacts, deals, tasks, campaigns, templates, segments, workflows, deliverability, prospects, reports, settings, help, marketplace, pulse\n\n**Learn:**\n• "What are deals?"\n• "Explain campaigns"\n• "How do workflows work?"\n\nJust type naturally — I understand what you mean!`;
+        return `🤖 **AXIOM AI Assistant — Commands**\n\n**Create Records:**\n• "Create a company called [name]"\n• "Add a contact [name]"\n• "New deal [name] $[value]"\n• "Create task [title]"\n• "New campaign [name]"\n\n**Search & View:**\n• "Show my companies"\n• "Find contacts [search]"\n• "List open deals"\n• "Show pending tasks"\n\n**Stats & Reports:**\n• "Dashboard stats"\n• "Pipeline summary"\n• "Recent activities"\n\n**Navigate:**\n• "Go to [page name]"\n• Pages: dashboard, companies, contacts, deals, tasks, campaigns, templates, segments, workflows, deliverability, prospects, reports, settings, help, marketplace, pulse\n\n**Learn:**\n• "What are deals?"\n• "Explain campaigns"\n• "How do workflows work?"\n\nJust type naturally — I understand what you mean!`;
 
       case "execute": {
         // Execute the tool directly

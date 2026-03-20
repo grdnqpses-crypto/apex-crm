@@ -70,7 +70,7 @@ describe("voiceCampaigns router", () => {
     const caller = appRouter.createCaller(ctx);
     const result = await caller.voiceCampaigns.create({
       name: "Outbound Carrier Check",
-      script: "Hi, I'm calling from REALM Logistics to verify your carrier status.",
+      script: "Hi, I'm calling from AXIOM Logistics to verify your carrier status.",
       voiceType: "professional",
       targetType: "carriers",
     });

@@ -97,7 +97,7 @@ export default function Billing() {
     addUserSeats.mutate({ quantity: seatQty, origin: window.location.origin });
   };
 
-  const isAdmin = user && ["developer", "realm_owner", "company_admin"].includes(user.systemRole);
+  const isAdmin = user && ["developer", "axiom_owner", "company_admin"].includes(user.systemRole);
   const currentTier = subscription?.tier || "trial";
   const isOnTrial = currentTier === "trial";
 
@@ -191,15 +191,15 @@ export default function Billing() {
       {/* ─── Competitor Savings Banner ─── */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
         {[
-          { tier: "1 user (Solo)", realm: "$49/mo", vs: "HubSpot: $100", save: "51% less" },
-          { tier: "3 users (Starter)", realm: "$97/mo", vs: "HubSpot: $300", save: "68% less" },
-          { tier: "10 users (Growth)", realm: "$297/mo", vs: "GHL+Instantly: $655", save: "55% less" },
-          { tier: "20 users (Fortune Fdn)", realm: "$497/mo", vs: "HubSpot: $2,000", save: "75% less" },
-          { tier: "100 users (Fortune+)", realm: "$1,497/mo", vs: "HubSpot: $10,000+", save: "85% less" },
+          { tier: "1 user (Solo)", axiom: "$49/mo", vs: "HubSpot: $100", save: "51% less" },
+          { tier: "3 users (Starter)", axiom: "$97/mo", vs: "HubSpot: $300", save: "68% less" },
+          { tier: "10 users (Growth)", axiom: "$297/mo", vs: "GHL+Instantly: $655", save: "55% less" },
+          { tier: "20 users (Fortune Fdn)", axiom: "$497/mo", vs: "HubSpot: $2,000", save: "75% less" },
+          { tier: "100 users (Fortune+)", axiom: "$1,497/mo", vs: "HubSpot: $10,000+", save: "85% less" },
         ].map((item) => (
           <div key={item.tier} className="rounded-lg bg-green-50 border border-green-200 p-3 text-center">
             <p className="text-xs text-muted-foreground">{item.tier}</p>
-            <p className="text-lg font-bold text-green-700">{item.realm}</p>
+            <p className="text-lg font-bold text-green-700">{item.axiom}</p>
             <p className="text-xs text-muted-foreground line-through">{item.vs}</p>
             <p className="text-xs font-semibold text-green-600">{item.save}</p>
           </div>

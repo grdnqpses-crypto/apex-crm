@@ -47,7 +47,7 @@ export const users = mysqlTable("users", {
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   // Multi-tenant hierarchy fields
-  systemRole: mysqlEnum("systemRole", ["developer", "realm_owner", "super_admin", "company_admin", "sales_manager", "office_manager", "manager", "account_manager", "coordinator", "sales_rep", "user"]).default("sales_rep").notNull(),
+  systemRole: mysqlEnum("systemRole", ["developer", "axiom_owner", "super_admin", "company_admin", "sales_manager", "office_manager", "manager", "account_manager", "coordinator", "sales_rep", "user"]).default("sales_rep").notNull(),
   tenantCompanyId: int("tenantCompanyId"),
   managerId: int("managerId"),
   isActive: boolean("isActive").default(true).notNull(),
@@ -1112,7 +1112,7 @@ export type DomainHealthRecord = typeof domainHealthRecords.$inferSelect;
 // PHASE 13: PREMIUM FEATURES
 // ═══════════════════════════════════════════════════════════════
 
-// ─── AI Voice Agent ("REALM Caller") ───
+// ─── AI Voice Agent ("AXIOM Caller") ───
 export const voiceCampaigns = mysqlTable("voice_campaigns", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
@@ -2030,7 +2030,7 @@ export const migrationJobs = mysqlTable("migration_jobs", {
 export type MigrationJob = typeof migrationJobs.$inferSelect;
 export type InsertMigrationJob = typeof migrationJobs.$inferInsert;
 // ============================================================
-// PHASE 16:6: AUTONOMOUS DIGITAL FREIGHT MARKETPLACE + REALM Autopilot
+// PHASE 16:6: AUTONOMOUS DIGITAL FREIGHT MARKETPLACE + AXIOM Autopilot
 // ============================================================
 
 // Marketplace Loads — shippers post loads for free
@@ -2333,11 +2333,11 @@ export type InsertBibleShare = typeof bibleShares.$inferInsert;
 // Model:
 //   - CRM-related AI features are FREE (included in subscription)
 //   - Non-CRM AI usage requires purchased credits
-//   - Credits sold by REALM Owner at 25% markup on Manus pricing
+//   - Credits sold by AXIOM Owner at 25% markup on Manus pricing
 //   - Billed directly to tenant company's Stripe card on file
 // ═══════════════════════════════════════════════════════════════
 
-// ─── AI Credit Packages (defined by REALM Owner, priced at Manus cost + 25%) ───
+// ─── AI Credit Packages (defined by AXIOM Owner, priced at Manus cost + 25%) ───
 export const aiCreditPackages = mysqlTable("ai_credit_packages", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 128 }).notNull(), // e.g. "Starter", "Growth", "Enterprise"
@@ -2377,7 +2377,7 @@ export const aiCreditTransactions = mysqlTable("ai_credit_transactions", {
     "crm_free",    // CRM AI feature used — no credits deducted (logged for analytics)
     "paid_usage",  // Non-CRM AI feature — credits deducted
     "refund",      // Credits returned
-    "adjustment",  // Manual correction by REALM Owner
+    "adjustment",  // Manual correction by AXIOM Owner
   ]).notNull(),
   credits: int("credits").notNull(), // positive = added, negative = deducted (0 for crm_free)
   balanceBefore: int("balanceBefore").notNull(),
@@ -2480,7 +2480,7 @@ export const trialHealthScores = mysqlTable("trial_health_scores", {
   lastLoginAt: bigint("lastLoginAt", { mode: "number" }),
   daysSinceLastLogin: int("daysSinceLastLogin").default(0),
   trialDaysRemaining: int("trialDaysRemaining"),
-  assignedAccountManagerId: int("assignedAccountManagerId"), // userId of REALM account manager
+  assignedAccountManagerId: int("assignedAccountManagerId"), // userId of AXIOM account manager
   lastContactedAt: bigint("lastContactedAt", { mode: "number" }),
   callOutcome: varchar("callOutcome", { length: 256 }),
   notes: text("thsNotes"),
@@ -2602,9 +2602,9 @@ export type InsertApBill = typeof apBills.$inferInsert;
 export const skinPreferences = mysqlTable("skin_preferences", {
   id: int("id").autoincrement().primaryKey(),
   tenantCompanyId: int("tenantCompanyId").notNull(),
-  skin: mysqlEnum("skin", ["realm", "hubspot", "salesforce", "pipedrive", "zoho", "gohighlevel", "close"]).default("realm").notNull(),
+  skin: mysqlEnum("skin", ["axiom", "hubspot", "salesforce", "pipedrive", "zoho", "gohighlevel", "close"]).default("axiom").notNull(),
   migratedFrom: mysqlEnum("migratedFrom", ["hubspot", "salesforce", "pipedrive", "zoho", "gohighlevel", "close", "spreadsheet", "other"]),
-  graduatedToRealm: boolean("graduatedToRealm").default(false).notNull(),
+  graduatedToAxiom: boolean("graduatedToAxiom").default(false).notNull(),
   graduatedAt: bigint("graduatedAt", { mode: "number" }),
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
 });
@@ -2701,7 +2701,7 @@ export const activityHistory = mysqlTable("activity_history", {
   toField: varchar("toField", { length: 256 }),
   metadata: json("metadata").$type<Record<string, unknown>>(),
   occurredAt: bigint("occurredAt", { mode: "number" }).notNull(), // when it actually happened
-  sourceSystem: varchar("sourceSystem", { length: 64 }),          // "hubspot", "salesforce", "realm"
+  sourceSystem: varchar("sourceSystem", { length: 64 }),          // "hubspot", "salesforce", "axiom"
   sourceActivityId: varchar("sourceActivityId", { length: 256 }), // original ID in source CRM
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
 });

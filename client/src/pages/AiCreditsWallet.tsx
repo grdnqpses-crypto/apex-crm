@@ -84,7 +84,7 @@ export default function AiCreditsWallet() {
                 </div>
               </div>
               <p className="text-muted-foreground text-xs">
-                To purchase more credits, contact your REALM CRM account manager. Credits are priced
+                To purchase more credits, contact your AXIOM CRM account manager. Credits are priced
                 at Manus list price + 25% and charged separately from your subscription.
               </p>
             </div>

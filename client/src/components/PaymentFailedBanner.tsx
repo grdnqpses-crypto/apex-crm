@@ -9,7 +9,7 @@ export default function PaymentFailedBanner() {
   const [, navigate] = useLocation();
   const [dismissed, setDismissed] = useState(false);
 
-  const allowedRoles = ["company_admin", "realm_owner", "developer"];
+  const allowedRoles = ["company_admin", "axiom_owner", "developer"];
   const canSee = user && allowedRoles.includes(user.systemRole || user.role);
 
   const { data } = trpc.billing.paymentStatus.useQuery(undefined, {

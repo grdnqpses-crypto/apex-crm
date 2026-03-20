@@ -133,7 +133,7 @@ export default function EmailWarmup() {
             <div className="text-sm">
               <p className="font-semibold text-orange-400 mb-1">How Email Warmup Works</p>
               <p className="text-muted-foreground">
-                REALM automatically sends small batches of real-looking emails to a network of trusted seed inboxes. These inboxes
+                AXIOM automatically sends small batches of real-looking emails to a network of trusted seed inboxes. These inboxes
                 open, reply, and mark your emails as "not spam" — signaling to Gmail, Outlook, and other providers that your domain
                 is legitimate. Over 30–60 days, your daily sending limit ramps up safely from ~5 to 500+ emails/day.
               </p>
@@ -316,7 +316,7 @@ export default function EmailWarmup() {
             <div className="space-y-4">
               <div>
                 <h3 className="font-semibold mb-1">Configure Your Warmup</h3>
-                <p className="text-sm text-muted-foreground">Set your target sending volume. REALM will ramp up gradually to reach it safely.</p>
+                <p className="text-sm text-muted-foreground">Set your target sending volume. AXIOM will ramp up gradually to reach it safely.</p>
               </div>
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -381,7 +381,7 @@ export default function EmailWarmup() {
                     color: "text-blue-400",
                     bg: "bg-blue-500/10",
                     title: "Real-Looking Emails",
-                    desc: "REALM sends natural, conversational emails (not marketing blasts) to a network of seed inboxes. Topics include business greetings, follow-ups, and short conversations — nothing that looks like spam."
+                    desc: "AXIOM sends natural, conversational emails (not marketing blasts) to a network of seed inboxes. Topics include business greetings, follow-ups, and short conversations — nothing that looks like spam."
                   },
                   {
                     icon: Shield,

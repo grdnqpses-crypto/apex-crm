@@ -12,7 +12,7 @@ import {
 } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import {
-  COMPETITOR_PROFILES, REALM_FIELDS,
+  COMPETITOR_PROFILES, AXIOM_FIELDS,
   aiMapFields, generateCheatSheet, parseCSV,
   isDuplicateContact, isDuplicateCompany,
   normalizeStage, updateMigrationProgress,
@@ -41,38 +41,38 @@ export const migrationRouter = router({
     }));
   }),
 
-  // ─── Get skin for a specific user's company (developer/realm_owner QA use) ─────
+  // ─── Get skin for a specific user's company (developer/axiom_owner QA use) ─────
   getClientSkin: adminProcedure
     .input(z.object({ userId: z.number() }))
     .query(async ({ input }) => {
       const db = await getDb();
-      if (!db) return { skin: "realm", migratedFrom: null };
+      if (!db) return { skin: "axiom", migratedFrom: null };
       const [targetUser] = await db.select({ tenantCompanyId: users.tenantCompanyId })
         .from(users)
         .where(eq(users.id, input.userId))
         .limit(1);
-      if (!targetUser?.tenantCompanyId) return { skin: "realm", migratedFrom: null };
+      if (!targetUser?.tenantCompanyId) return { skin: "axiom", migratedFrom: null };
       const [pref] = await db.select()
         .from(skinPreferences)
         .where(eq(skinPreferences.tenantCompanyId, targetUser.tenantCompanyId))
         .limit(1);
-      return pref || { skin: "realm", migratedFrom: null };
+      return pref || { skin: "axiom", migratedFrom: null };
     }),
   // ─── Get current skin preferencece ─────────────────────────────────────────
   getSkin: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
-    if (!db || !ctx.user.tenantCompanyId) return { skin: "realm", migratedFrom: null };
+    if (!db || !ctx.user.tenantCompanyId) return { skin: "axiom", migratedFrom: null };
     const [pref] = await db.select()
       .from(skinPreferences)
       .where(eq(skinPreferences.tenantCompanyId, ctx.user.tenantCompanyId))
       .limit(1);
-    return pref || { skin: "realm", migratedFrom: null };
+    return pref || { skin: "axiom", migratedFrom: null };
   }),
 
   // ─── Set skin preference ──────────────────────────────────────────────────
   setSkin: companyAdminProcedure
     .input(z.object({
-      skin: z.enum(["realm", "hubspot", "salesforce", "pipedrive", "zoho", "gohighlevel", "close"]),
+      skin: z.enum(["axiom", "hubspot", "salesforce", "pipedrive", "zoho", "gohighlevel", "close"]),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
@@ -89,19 +89,19 @@ export const migrationRouter = router({
         await db.insert(skinPreferences).values({
           tenantCompanyId: ctx.user.tenantCompanyId,
           skin: input.skin,
-          graduatedToRealm: false,
+          graduatedToAxiom: false,
           updatedAt: Date.now(),
         });
       }
       return { success: true };
     }),
 
-  // ─── Graduate to REALM native UI ───────────────────────────────────────────
-  graduateToRealm: companyAdminProcedure.mutation(async ({ ctx }) => {
+  // ─── Graduate to AXIOM native UI ───────────────────────────────────────────
+  graduateToAxiom: companyAdminProcedure.mutation(async ({ ctx }) => {
     const db = await getDb();
     if (!db || !ctx.user.tenantCompanyId) return;
     await db.update(skinPreferences)
-      .set({ skin: "realm", graduatedToRealm: true, graduatedAt: Date.now(), updatedAt: Date.now() })
+      .set({ skin: "axiom", graduatedToAxiom: true, graduatedAt: Date.now(), updatedAt: Date.now() })
       .where(eq(skinPreferences.tenantCompanyId, ctx.user.tenantCompanyId));
     return { success: true };
   }),
@@ -526,7 +526,7 @@ async function runMigrationAsync(
   }
 
   // ── Step 5: Apply the matching skin ──────────────────────────────────────
-  const skinKey = profile.skinKey as "realm" | "hubspot" | "salesforce" | "pipedrive" | "zoho" | "gohighlevel" | "close";
+  const skinKey = profile.skinKey as "axiom" | "hubspot" | "salesforce" | "pipedrive" | "zoho" | "gohighlevel" | "close";
   const existingSkin = await db.select({ id: skinPreferences.id })
     .from(skinPreferences)
     .where(eq(skinPreferences.tenantCompanyId, tenantCompanyId))
@@ -541,7 +541,7 @@ async function runMigrationAsync(
       tenantCompanyId,
       skin: skinKey,
       migratedFrom: input.sourceSystem as any,
-      graduatedToRealm: false,
+      graduatedToAxiom: false,
       updatedAt: Date.now(),
     });
   }
@@ -656,8 +656,8 @@ async function importNormalizedActivity(
 function applyMapping(row: Record<string, string>, mapping: Record<string, string>): Record<string, string> {
   const result: Record<string, string> = {};
   for (const [sourceField, value] of Object.entries(row)) {
-    const realmField = mapping[sourceField];
-    if (realmField) result[realmField] = value;
+    const axiomField = mapping[sourceField];
+    if (axiomField) result[axiomField] = value;
     else result[`_custom_${sourceField}`] = value;
   }
   return result;

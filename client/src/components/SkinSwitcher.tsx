@@ -15,7 +15,7 @@ import {
 import { Palette, Check } from "lucide-react";
 
 const SKIN_DESCRIPTIONS: Record<SkinId, string> = {
-  realm: "Native REALM experience",
+  axiom: "Native AXIOM experience",
   hubspot: "Migrating from HubSpot",
   salesforce: "Migrating from Salesforce",
   pipedrive: "Migrating from Pipedrive",

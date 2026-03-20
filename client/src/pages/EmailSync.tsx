@@ -193,7 +193,7 @@ export default function EmailSync() {
               />
             </div>
             <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
-              You'll be redirected to authorize REALM CRM to access your {PROVIDERS.find(p => p.key === selectedProvider)?.label} account securely via OAuth.
+              You'll be redirected to authorize AXIOM CRM to access your {PROVIDERS.find(p => p.key === selectedProvider)?.label} account securely via OAuth.
             </p>
           </div>
           <DialogFooter className="mt-4">

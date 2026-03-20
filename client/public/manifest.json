@@ -1,6 +1,6 @@
 {
-  "name": "REALM CRM",
-  "short_name": "REALM CRM",
+  "name": "AXIOM CRM",
+  "short_name": "AXIOM CRM",
   "description": "The AI-powered CRM that migrates, adapts, and evolves with your team",
   "start_url": "/dashboard",
   "display": "standalone",

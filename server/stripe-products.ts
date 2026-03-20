@@ -1,5 +1,5 @@
 /**
- * REALM CRM — Final Approved Pricing Model (March 2026)
+ * AXIOM CRM — Final Approved Pricing Model (March 2026)
  *
  * Display Names & Prices (DB internal keys kept stable):
  *   Solo              $49/mo   (1 user)    — DB key: success_starter
@@ -103,7 +103,7 @@ export const FEATURE_GATES: Record<string, number> = {
 
   // Fortune Plus (level 5)
   revenue_autopilot:        5,
-  realm_autopilot:           5,
+  axiom_autopilot:           5,
   white_labeling:           5,
   dedicated_smtp_infra:     5,
   custom_ai_training:       5,
@@ -175,7 +175,7 @@ export interface PlanFeature {
   highlight?: boolean;
   premium?: boolean;
   freemium?: boolean;
-  realmOnly?: boolean;
+  axiomOnly?: boolean;
 }
 
 export interface StripePlan {
@@ -241,13 +241,13 @@ export const PLANS: StripePlan[] = [
       { text: 'Core CRM — contacts, companies, deals, pipeline', included: true },
       { text: 'Tasks, activities, notes, calendar', included: true },
       { text: '500 AI credits/month', included: true, freemium: true },
-      { text: 'AI Assistant — write emails, answer questions, take action', included: true, highlight: true, realmOnly: true },
+      { text: 'AI Assistant — write emails, answer questions, take action', included: true, highlight: true, axiomOnly: true },
       { text: '1,000 email sends/month', included: true },
       { text: '100 BNB prospects/month', included: true },
       { text: '1 Ghost Mode sequence', included: true },
       { text: '20 DocScans/month', included: true },
-      { text: 'One-click migration from any CRM', included: true, highlight: true, realmOnly: true },
-      { text: 'Business category intelligence', included: true, realmOnly: true },
+      { text: 'One-click migration from any CRM', included: true, highlight: true, axiomOnly: true },
+      { text: 'Business category intelligence', included: true, axiomOnly: true },
       { text: 'Basic AR/AP (manual entry)', included: true },
       { text: 'Basic Shipping & Receiving', included: true },
       { text: 'Free onboarding & setup', included: true, highlight: true },
@@ -288,13 +288,13 @@ export const PLANS: StripePlan[] = [
       { text: '2,000 AI credits/month', included: true, freemium: true },
       { text: 'AI email personalization', included: true, highlight: true },
       { text: 'AI call summaries', included: true },
-      { text: 'Win probability scoring', included: true, realmOnly: true },
+      { text: 'Win probability scoring', included: true, axiomOnly: true },
       { text: '10,000 email sends/month', included: true },
       { text: '500 BNB prospects/month', included: true },
       { text: '5 Ghost Mode sequences', included: true },
       { text: '100 DocScans/month', included: true },
-      { text: 'Full AR/AP automation', included: true, realmOnly: true },
-      { text: 'Full Shipping & Receiving', included: true, realmOnly: true },
+      { text: 'Full AR/AP automation', included: true, axiomOnly: true },
+      { text: 'Full Shipping & Receiving', included: true, axiomOnly: true },
       { text: 'Email warmup (2 accounts)', included: true },
       { text: 'Email support', included: true },
       { text: 'Voice Agent', included: false },
@@ -330,9 +330,9 @@ export const PLANS: StripePlan[] = [
       { text: '100,000 contacts', included: true },
       { text: 'Everything in Starter', included: true },
       { text: '10,000 AI credits/month', included: true, freemium: true },
-      { text: 'Behavioral DNA Profiling', included: true, highlight: true, realmOnly: true },
-      { text: 'Predictive Send Time Optimizer', included: true, realmOnly: true },
-      { text: 'Battle Cards (AI tactical summaries)', included: true, realmOnly: true },
+      { text: 'Behavioral DNA Profiling', included: true, highlight: true, axiomOnly: true },
+      { text: 'Predictive Send Time Optimizer', included: true, axiomOnly: true },
+      { text: 'Battle Cards (AI tactical summaries)', included: true, axiomOnly: true },
       { text: '100,000 email sends/month', included: true },
       { text: '5,000 BNB prospects/month', included: true },
       { text: '25 Ghost Mode sequences', included: true },
@@ -377,8 +377,8 @@ export const PLANS: StripePlan[] = [
       { text: 'Unlimited contacts', included: true },
       { text: 'Everything in Growth', included: true },
       { text: '30,000 AI credits/month', included: true, freemium: true },
-      { text: '260 SMTP Rotation Engine™', included: true, highlight: true, premium: true, realmOnly: true },
-      { text: 'Compliance Fortress™ (GDPR + CCPA + CAN-SPAM auto)', included: true, highlight: true, premium: true, realmOnly: true },
+      { text: '260 SMTP Rotation Engine™', included: true, highlight: true, premium: true, axiomOnly: true },
+      { text: 'Compliance Fortress™ (GDPR + CCPA + CAN-SPAM auto)', included: true, highlight: true, premium: true, axiomOnly: true },
       { text: 'Unlimited BNB prospects', included: true, highlight: true },
       { text: 'Unlimited Ghost Mode sequences', included: true },
       { text: '500,000 email sends/month', included: true },
@@ -387,7 +387,7 @@ export const PLANS: StripePlan[] = [
       { text: 'Email warmup (50 accounts)', included: true },
       { text: 'Priority support', included: true },
       { text: 'Revenue Autopilot™', included: false },
-      { text: 'REALM Autopilot™', included: false },
+      { text: 'AXIOM Autopilot™', included: false },
       { text: 'White-labeling', included: false },
     ],
   },
@@ -396,8 +396,8 @@ export const PLANS: StripePlan[] = [
   {
     id: 'fortune_plus',
     name: 'Fortune Plus',
-    tagline: 'Dedicated infrastructure. Custom AI. Resell REALM as your own.',
-    description: 'Enterprise-grade dedicated infrastructure, unlimited everything, Revenue Autopilot, and the ability to resell REALM as your own SaaS product.',
+    tagline: 'Dedicated infrastructure. Custom AI. Resell AXIOM as your own.',
+    description: 'Enterprise-grade dedicated infrastructure, unlimited everything, Revenue Autopilot, and the ability to resell AXIOM as your own SaaS product.',
     monthlyPriceId: process.env.STRIPE_PRICE_FORTUNE_PLUS_MONTHLY || '',
     annualPriceId:  process.env.STRIPE_PRICE_FORTUNE_PLUS_ANNUAL  || '',
     monthlyPrice:        149700,
@@ -420,12 +420,12 @@ export const PLANS: StripePlan[] = [
       { text: 'Unlimited everything', included: true },
       { text: 'Everything in Fortune Foundation', included: true },
       { text: '200,000 AI credits/month', included: true, freemium: true },
-      { text: 'Revenue Autopilot™', included: true, highlight: true, premium: true, realmOnly: true },
-      { text: 'REALM Autopilot™ (fully autonomous sales)', included: true, highlight: true, premium: true, realmOnly: true },
-      { text: 'White-labeling (your brand, FREE setup)', included: true, highlight: true, realmOnly: true },
-      { text: 'Dedicated SMTP infrastructure (your own IP blocks)', included: true, premium: true, realmOnly: true },
-      { text: 'SaaS Mode — resell REALM as your own product', included: true, premium: true, realmOnly: true },
-      { text: 'Custom AI model training (unlimited)', included: true, premium: true, realmOnly: true },
+      { text: 'Revenue Autopilot™', included: true, highlight: true, premium: true, axiomOnly: true },
+      { text: 'AXIOM Autopilot™ (fully autonomous sales)', included: true, highlight: true, premium: true, axiomOnly: true },
+      { text: 'White-labeling (your brand, FREE setup)', included: true, highlight: true, axiomOnly: true },
+      { text: 'Dedicated SMTP infrastructure (your own IP blocks)', included: true, premium: true, axiomOnly: true },
+      { text: 'SaaS Mode — resell AXIOM as your own product', included: true, premium: true, axiomOnly: true },
+      { text: 'Custom AI model training (unlimited)', included: true, premium: true, axiomOnly: true },
       { text: '99.9% uptime SLA', included: true },
       { text: '24/7 white-glove support', included: true },
       { text: 'Custom contract & invoicing', included: true },
@@ -450,25 +450,25 @@ export const FREE_SERVICES = [
 // COMPETITOR COMPARISON
 // ─────────────────────────────────────────────────────────────────────────────
 export const COMPETITOR_FEATURES = [
-  { name: 'Full CRM (contacts, deals, pipeline)',          realm: true,  hubspot: true,      ghl: true,      salesforce: true,  outreach: false,    instantly: false },
-  { name: 'AI Assistant (action-capable)',                 realm: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
-  { name: 'One-Click CRM Migration (free)',                realm: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
-  { name: '260 SMTP Rotation Engine',                      realm: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: 'partial' },
-  { name: 'BNB Paradigm Engine™',                         realm: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
-  { name: 'Ghost Mode™ (AI sequences)',                    realm: true,  hubspot: false,     ghl: 'partial', salesforce: false, outreach: true,     instantly: true },
-  { name: 'Compliance Fortress™ (GDPR/CCPA auto)',         realm: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
-  { name: 'Voice Agent (AI calling)',                      realm: true,  hubspot: false,     ghl: 'partial', salesforce: false, outreach: false,    instantly: false },
-  { name: 'Revenue Autopilot™',                           realm: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
-  { name: 'REALM Autopilot™ (fully autonomous)',            realm: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
-  { name: 'AR/AP Automation',                             realm: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
-  { name: 'Shipping & Receiving Module',                   realm: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
-  { name: 'DocScan AI',                                   realm: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
-  { name: 'Business Category Intelligence',                realm: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
-  { name: 'White-Labeling / SaaS Mode',                   realm: true,  hubspot: false,     ghl: true,      salesforce: false, outreach: false,    instantly: false },
-  { name: 'Behavioral DNA Profiling',                     realm: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
-  { name: 'Dedicated SMTP Infrastructure',                realm: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: 'partial' },
-  { name: 'Free Onboarding & Setup',                      realm: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
-  { name: 'Free Migration from Any CRM',                  realm: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'Full CRM (contacts, deals, pipeline)',          axiom: true,  hubspot: true,      ghl: true,      salesforce: true,  outreach: false,    instantly: false },
+  { name: 'AI Assistant (action-capable)',                 axiom: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'One-Click CRM Migration (free)',                axiom: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: '260 SMTP Rotation Engine',                      axiom: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: 'partial' },
+  { name: 'BNB Paradigm Engine™',                         axiom: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'Ghost Mode™ (AI sequences)',                    axiom: true,  hubspot: false,     ghl: 'partial', salesforce: false, outreach: true,     instantly: true },
+  { name: 'Compliance Fortress™ (GDPR/CCPA auto)',         axiom: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'Voice Agent (AI calling)',                      axiom: true,  hubspot: false,     ghl: 'partial', salesforce: false, outreach: false,    instantly: false },
+  { name: 'Revenue Autopilot™',                           axiom: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'AXIOM Autopilot™ (fully autonomous)',            axiom: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'AR/AP Automation',                             axiom: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'Shipping & Receiving Module',                   axiom: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'DocScan AI',                                   axiom: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'Business Category Intelligence',                axiom: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'White-Labeling / SaaS Mode',                   axiom: true,  hubspot: false,     ghl: true,      salesforce: false, outreach: false,    instantly: false },
+  { name: 'Behavioral DNA Profiling',                     axiom: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'Dedicated SMTP Infrastructure',                axiom: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: 'partial' },
+  { name: 'Free Onboarding & Setup',                      axiom: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
+  { name: 'Free Migration from Any CRM',                  axiom: true,  hubspot: false,     ghl: false,     salesforce: false, outreach: false,    instantly: false },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

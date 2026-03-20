@@ -14,10 +14,10 @@
   "messages": [
     "id\tname\tlogoUrl",
     "2\tLogistics Worldwide\tNULL",
-    "30001\tREALM Platform\tNULL",
+    "30001\tAXIOM Platform\tNULL",
     "60001\tCryptogrdn\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/company-logos/60001-logo-1773961922463.png"
   ],
-  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nlogoUrl\tvarchar(512)\tYES\t\tNULL\t\nid\tname\tlogoUrl\n2\tLogistics Worldwide\tNULL\n30001\tREALM Platform\tNULL\n60001\tCryptogrdn\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/company-logos/60001-logo-1773961922463.png\n",
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nlogoUrl\tvarchar(512)\tYES\t\tNULL\t\nid\tname\tlogoUrl\n2\tLogistics Worldwide\tNULL\n30001\tAXIOM Platform\tNULL\n60001\tCryptogrdn\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/company-logos/60001-logo-1773961922463.png\n",
   "stderr": "",
   "execution_time_ms": 139
 }

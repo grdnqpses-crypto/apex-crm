@@ -1,5 +1,5 @@
 /**
- * REALM CRM — Self-Healing Engine
+ * AXIOM CRM — Self-Healing Engine
  * ─────────────────────────────────────────────────────────────────────────────
  * Continuously monitors system health, auto-corrects known failure patterns,
  * predicts failures before they happen, and escalates when self-correction fails.
@@ -212,7 +212,7 @@ async function escalateToOwner(err: Error, ruleDescription: string, attempts: nu
   console.error(`[SelfHeal] 🚨 Escalating to owner after ${attempts} failed corrections: ${ruleDescription}`);
   try {
     await notifyOwner({
-      title: `🚨 REALM CRM Self-Healing Alert`,
+      title: `🚨 AXIOM CRM Self-Healing Alert`,
       content: `**Auto-correction failed after ${attempts} attempts.**\n\n**Issue:** ${ruleDescription}\n**Error:** ${err.message}\n\n**Action required:** Please review the System Health Dashboard at /dev/system-health for details.`,
     });
   } catch {}
@@ -286,7 +286,7 @@ export async function runHealthCheck(): Promise<HealthReport> {
   if (overall === "critical") {
     const criticalSystems = subsystems.filter(s => s.status === "critical").map(s => s.name).join(", ");
     await notifyOwner({
-      title: "🚨 REALM CRM Critical Health Alert",
+      title: "🚨 AXIOM CRM Critical Health Alert",
       content: `System health is CRITICAL (score: ${score}/100).\n\nAffected subsystems: ${criticalSystems}\n\nCheck /dev/system-health for details.`,
     }).catch(() => {});
   }

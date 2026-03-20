@@ -66,7 +66,7 @@ export const SIDEBAR_FEATURE_MAP: Record<string, string> = {
 };
 
 // ─── Role-Based Access Control ───
-// Role hierarchy: developer > realm_owner > company_admin > manager > user
+// Role hierarchy: developer > axiom_owner > company_admin > manager > user
 
 // Developer-only routes
 const DEVELOPER_ROUTES = [
@@ -74,17 +74,17 @@ const DEVELOPER_ROUTES = [
   "/fmcsa-scanner", "/api-keys", "/webhooks",
 ];
 
-// REALM Owner+ routes (realm_owner, developer)
-const REALM_OWNER_ROUTES = [
-  "/realm",
+// AXIOM Owner+ routes (axiom_owner, developer)
+const AXIOM_OWNER_ROUTES = [
+  "/axiom",
 ];
 
-// Manager+ routes (manager, company_admin, realm_owner, developer)
+// Manager+ routes (manager, company_admin, axiom_owner, developer)
 const MANAGER_ROUTES = [
   "/team-performance",
 ];
 
-// Admin+ routes (company_admin, realm_owner, developer)
+// Admin+ routes (company_admin, axiom_owner, developer)
 const ADMIN_ROUTES = [
   "/team", "/white-label", "/subscription", "/migration",
   "/settings", "/import/hubspot",
@@ -97,13 +97,13 @@ export function useFeatureAccess() {
   const { user } = useAuth();
   const role = user?.systemRole;
   const isDeveloper = role === "developer";
-  const isRealmOwner = role === "realm_owner";
+  const isAxiomOwner = role === "axiom_owner";
   const isAdmin = role === "company_admin";
   const isManager = ["manager", "sales_manager", "office_manager"].includes(role || "");
   const isUser = ["user", "account_manager", "coordinator"].includes(role || "");
   
-  // Developers, realm owners, and company admins get full feature access
-  const shouldFetchFeatures = !!user && !isDeveloper && !isRealmOwner && !isAdmin;
+  // Developers, axiom owners, and company admins get full feature access
+  const shouldFetchFeatures = !!user && !isDeveloper && !isAxiomOwner && !isAdmin;
   
   const { data: features } = trpc.userManagement.myFeatures.useQuery(
     undefined,
@@ -111,8 +111,8 @@ export function useFeatureAccess() {
   );
 
   const hasFeature = (featureKey: string): boolean => {
-    // Developers, realm owners, and admins have all features
-    if (isDeveloper || isRealmOwner || isAdmin) return true;
+    // Developers, axiom owners, and admins have all features
+    if (isDeveloper || isAxiomOwner || isAdmin) return true;
     // If features haven't loaded yet, show everything to avoid flash
     if (!features) return true;
     return features.includes(featureKey);
@@ -127,19 +127,19 @@ export function useFeatureAccess() {
       return isDeveloper;
     }
     
-    // REALM Owner+ routes
-    if (REALM_OWNER_ROUTES.includes(path)) {
-      return isDeveloper || isRealmOwner;
+    // AXIOM Owner+ routes
+    if (AXIOM_OWNER_ROUTES.includes(path)) {
+      return isDeveloper || isAxiomOwner;
     }
     
     // Admin+ routes
     if (ADMIN_ROUTES.includes(path)) {
-      return isDeveloper || isRealmOwner || isAdmin;
+      return isDeveloper || isAxiomOwner || isAdmin;
     }
     
     // Manager+ routes
     if (MANAGER_ROUTES.includes(path)) {
-      return isDeveloper || isRealmOwner || isAdmin || isManager;
+      return isDeveloper || isAxiomOwner || isAdmin || isManager;
     }
     
     // All other routes: accessible to all roles (feature-gated separately)
@@ -172,12 +172,12 @@ export function useFeatureAccess() {
     canAccessRoute,
     canAccessSidebarItem,
     isDeveloper,
-    isRealmOwner,
+    isAxiomOwner,
     isAdmin,
     isManager,
     isUser,
     role,
-    features: isDeveloper || isRealmOwner || isAdmin ? null : features,
+    features: isDeveloper || isAxiomOwner || isAdmin ? null : features,
     loading: shouldFetchFeatures && !features,
   };
 }

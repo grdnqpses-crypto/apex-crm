@@ -1,4 +1,4 @@
-# REALM CRM — Complete Freemium Monetization Strategy
+# AXIOM CRM — Complete Freemium Monetization Strategy
 
 ## The Core Philosophy
 
@@ -6,13 +6,13 @@
 
 Three categories drive every decision:
 
-1. **Free Forever** — Features that cost us almost nothing to deliver but create massive stickiness and word-of-mouth. These are our "trojan horse" — once a company's data is in REALM, switching costs are enormous.
+1. **Free Forever** — Features that cost us almost nothing to deliver but create massive stickiness and word-of-mouth. These are our "trojan horse" — once a company's data is in AXIOM, switching costs are enormous.
 
 2. **Freemium (usage-limited free → paid upgrade)** — Features we give a taste of for free, then gate at a usage limit that forces a natural upgrade conversation. The limit is set just below where a real business would need more.
 
-3. **Premium (paid-only, tiered)** — Features that either cost REALM real money to operate (SMTP infrastructure, AI compute, voice minutes) or represent our highest competitive moat. These are never free.
+3. **Premium (paid-only, tiered)** — Features that either cost AXIOM real money to operate (SMTP infrastructure, AI compute, voice minutes) or represent our highest competitive moat. These are never free.
 
-4. **Marked-Up Services** — Features where REALM has real operational cost AND no competitor offers them. We price these at a premium because customers have no alternative.
+4. **Marked-Up Services** — Features where AXIOM has real operational cost AND no competitor offers them. We price these at a premium because customers have no alternative.
 
 ---
 
@@ -25,7 +25,7 @@ These features are **always free, no time limit, no usage cap.** They are our ac
 | **Data Entry** (contacts, companies, deals, tasks, notes) | Core CRM data = lock-in. Once they enter 500 contacts, they won't leave. | HubSpot free, GHL free |
 | **One-Click Migration** from any CRM | Removes the #1 barrier to switching. Zero friction = more signups. | Nobody offers this |
 | **Basic Pipeline View** (up to 3 stages) | Shows the product works. Creates desire for more stages. | HubSpot free |
-| **Business Category Intelligence** (read-only) | Unique to REALM. Shows value immediately on signup. | Nobody offers this |
+| **Business Category Intelligence** (read-only) | Unique to AXIOM. Shows value immediately on signup. | Nobody offers this |
 | **AI Assistant** — first 25 queries/month | Demonstrates AI capability. 25 queries = enough to get addicted, not enough to run a business. | HubSpot: paid only |
 | **Basic AR/AP** (manual entry, view only) | Shows the ops module exists. Upgrade to automate. | Nobody offers this free |
 | **Basic Shipping & Receiving** (manual, view only) | Same as above. | Nobody offers this free |
@@ -58,7 +58,7 @@ These features exist on paid tiers with **usage meters** that create natural upg
 
 ### BNB Paradigm Engine™ (Usage Metered)
 
-| Tier | Monthly Prospect Limit | Cost to REALM | Our Margin |
+| Tier | Monthly Prospect Limit | Cost to AXIOM | Our Margin |
 |---|---|---|---|
 | Free | 0 | — | — |
 | Starter | 100 prospects/mo | ~$8 | ~88% |
@@ -79,11 +79,11 @@ These features exist on paid tiers with **usage meters** that create natural upg
 | **Email warmup accounts** | 0 | 2 | 10 | 25 | 50 | Unlimited |
 | **Blacklist monitoring** | 0 | Basic (5 lists) | Standard (25 lists) | Full (50+ lists) | Full + alerts | Full + SLA |
 
-**Revenue logic:** The 260 SMTP rotation engine costs REALM real money to maintain (server infrastructure, IP reputation management). We give shared pool access free/cheap, then charge premium for the full rotation. Fortune Foundation is where the real deliverability money is — 260 servers is our moat.
+**Revenue logic:** The 260 SMTP rotation engine costs AXIOM real money to maintain (server infrastructure, IP reputation management). We give shared pool access free/cheap, then charge premium for the full rotation. Fortune Foundation is where the real deliverability money is — 260 servers is our moat.
 
 ### Voice Agent (Usage Metered)
 
-| Tier | Voice Minutes/mo | Cost to REALM | Our Margin |
+| Tier | Voice Minutes/mo | Cost to AXIOM | Our Margin |
 |---|---|---|---|
 | Free | 0 | — | — |
 | Starter | 0 | — | — |
@@ -118,12 +118,12 @@ These features are **never available on free or trial.** They are our revenue mo
 | **260 SMTP Rotation Engine** (full) | Fortune Foundation ($497) | Real infrastructure cost. 260 servers × maintenance. | HIGH — 3× cost |
 | **Compliance Fortress™ Full** (GDPR/CCPA auto-filing) | Fortune Foundation ($497) | Legal liability if we give this away incorrectly. Requires ongoing maintenance. | HIGH — 4× cost |
 | **Revenue Autopilot™** | Fortune ($797) | Highest AI compute cost. Autonomous deal progression = our crown jewel. | VERY HIGH — 5× cost |
-| **REALM Autopilot™** | Fortune ($797) | Full autonomous sales engine. This is the product's ultimate form. | VERY HIGH — 6× cost |
+| **AXIOM Autopilot™** | Fortune ($797) | Full autonomous sales engine. This is the product's ultimate form. | VERY HIGH — 6× cost |
 | **White-Labeling** | Fortune ($797) + $299 setup | Real engineering cost to provision per-customer branding. | HIGH — setup fee covers cost |
 | **Dedicated SMTP Infrastructure** (your own IPs) | Fortune Plus ($1,497) | We buy/manage dedicated IP blocks per customer. Real cost. | VERY HIGH — 4× cost |
 | **Custom AI Training** | Fortune Plus ($1,497) | GPU compute + data storage per customer. | HIGH — 3× cost |
 | **24/7 White-Glove Support** | Fortune Plus ($1,497) | Real human labor cost. | HIGH — included in tier |
-| **SaaS Mode** (resell REALM as your own product) | Fortune Plus ($1,497) | Platform engineering + support cost. | VERY HIGH |
+| **SaaS Mode** (resell AXIOM as your own product) | Fortune Plus ($1,497) | Platform engineering + support cost. | VERY HIGH |
 | **99.9% SLA** | Fortune Plus ($1,497) | Requires redundant infrastructure. | HIGH |
 
 ---
@@ -132,7 +132,7 @@ These features are **never available on free or trial.** They are our revenue mo
 
 These are **à la carte charges** on top of any subscription. Pure margin.
 
-| Add-On | Price | Cost to REALM | Margin |
+| Add-On | Price | Cost to AXIOM | Margin |
 |---|---|---|---|
 | **Extra user seats** | $35/user/mo | ~$3/user | ~91% |
 | **Extra BNB prospects** | $29/1,000 prospects | ~$8 | ~72% |
@@ -168,7 +168,7 @@ FORTUNE FOUNDATION ($497/mo)
 FORTUNE ($797/mo)
   ↓ Agency scales past 25 users
   ↓ Wants dedicated IPs for enterprise clients
-  ↓ Wants SaaS Mode to resell REALM
+  ↓ Wants SaaS Mode to resell AXIOM
 FORTUNE PLUS ($1,497/mo)
 ```
 
@@ -184,7 +184,7 @@ These features are **always paid** regardless of any promotion, trial, or negoti
 
 1. **260 SMTP Rotation** — This is our #1 deliverability differentiator. Giving it away devalues it and costs us real money.
 2. **BNB Paradigm Engine™** — Our autonomous prospecting engine. Demo only, never free usage.
-3. **REALM Autopilot™** — The crown jewel. Never free, never discounted below Fortune.
+3. **AXIOM Autopilot™** — The crown jewel. Never free, never discounted below Fortune.
 4. **Revenue Autopilot™** — Same as above.
 5. **Dedicated SMTP Infrastructure** — Real hardware cost. Fortune Plus only.
 6. **White-Label SaaS Mode** — Requires per-customer engineering. Fortune Plus only.
@@ -196,8 +196,8 @@ These features are **always paid** regardless of any promotion, trial, or negoti
 
 These are features **no competitor offers at any price** that we give away free to dominate the conversation:
 
-1. **One-Click Migration** — Free forever. This is our #1 acquisition tool. Every competitor customer can switch to REALM in 30 minutes with zero data loss. We never charge for this.
-2. **Business Category Intelligence** — Free read-only. Shows REALM understands your industry on day 1.
+1. **One-Click Migration** — Free forever. This is our #1 acquisition tool. Every competitor customer can switch to AXIOM in 30 minutes with zero data loss. We never charge for this.
+2. **Business Category Intelligence** — Free read-only. Shows AXIOM understands your industry on day 1.
 3. **Basic AR/AP** (manual entry) — Free. Shows we're more than a CRM. Competitors don't even have this.
 4. **Basic Shipping & Receiving** (manual) — Free. Same rationale.
 5. **DocScan** (10 scans/mo) — Free taste. Nobody else has this.

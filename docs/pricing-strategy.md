@@ -1,4 +1,4 @@
-# REALM CRM Pricing Strategy — Design Document
+# AXIOM CRM Pricing Strategy — Design Document
 
 ## Competitor Baseline (True Competitors Only)
 
@@ -42,20 +42,20 @@ These are table-stakes features all competitors offer. Price competitively.
 - Business category intelligence — ALWAYS FREE (leading-edge differentiator)
 - Basic AI assistant (50 queries/mo) — ALWAYS FREE (leading-edge differentiator)
 
-### Category B: REALM-Unique, High-Maintenance Services (mark up above market)
-These are features competitors don't offer OR require significant REALM infrastructure/ops.
+### Category B: AXIOM-Unique, High-Maintenance Services (mark up above market)
+These are features competitors don't offer OR require significant AXIOM infrastructure/ops.
 - **SMTP Deliverability Engine** (52 domains, 260 addresses, rotation, warm-up) — HIGH MAINTENANCE
   → Competitors charge $200-500/mo add-on for basic deliverability tools
-  → REALM includes in tiers but marks up at Fortune Foundation+
+  → AXIOM includes in tiers but marks up at Fortune Foundation+
 - **Compliance Fortress™** (CAN-SPAM/GDPR/CCPA auto-enforcement) — MEDIUM MAINTENANCE
   → No competitor includes this natively
 - **BNB Paradigm Engine™** (Quantum Lead Score, Ghost Mode, Behavioral DNA) — HIGH MAINTENANCE
   → Competitors charge $500-2,000/mo for comparable tools (Apollo, Outreach, Salesloft)
-  → REALM includes basic in Growth, full in Fortune Foundation+
+  → AXIOM includes basic in Growth, full in Fortune Foundation+
 - **White-labeling** — MEDIUM MAINTENANCE (setup + support overhead)
   → HubSpot: not available at any price for Sales Hub
   → Salesforce: requires Partner license ($$$)
-  → REALM: Fortune+ only, premium tier
+  → AXIOM: Fortune+ only, premium tier
 - **Dedicated SMTP Infrastructure** (dedicated IPs, custom domain pools) — VERY HIGH MAINTENANCE
   → Fortune Plus only, significant infrastructure cost
 - **AI Voice Agent** — HIGH MAINTENANCE (telephony costs)
@@ -70,7 +70,7 @@ These are features competitors don't offer OR require significant REALM infrastr
   → Fortune+ only
 
 ### Category C: Freemium (free tier to hook, premium to scale)
-These are REALM-unique features with no competitor equivalent. Give basic free, charge for scale.
+These are AXIOM-unique features with no competitor equivalent. Give basic free, charge for scale.
 - **AI Assistant**: 50 queries/mo FREE → credit-based above that
 - **Logo Generation**: simple logo FREE → custom variations + high-res = credits
 - **Business Category Intelligence**: FREE across all tiers (differentiator)
@@ -116,7 +116,7 @@ These are REALM-unique features with no competitor equivalent. Give basic free, 
 
 ### Tier 1: Growth Foundation — $149/mo (was $197)
 **Competitor equivalent**: HubSpot Pro 5-seat = $500/mo, Close Growth 5-seat = $545/mo
-**25% below HubSpot Pro**: $500 × 0.75 = $375 → REALM at $149 is 70% below (justified by fewer seats in base)
+**25% below HubSpot Pro**: $500 × 0.75 = $375 → AXIOM at $149 is 70% below (justified by fewer seats in base)
 **Per-seat comparison**: $149/5 = $29.80/seat vs HubSpot $100/seat = **70% savings**
 
 - 5 users included (+$25/user/mo, up to 10 more users)
@@ -148,7 +148,7 @@ These are REALM-unique features with no competitor equivalent. Give basic free, 
 
 ### Tier 2: Fortune Foundation — $374/mo (was $497) ⭐ MOST POPULAR
 **Competitor equivalent**: HubSpot Pro 15-seat = $1,500/mo, Salesforce Enterprise 15-seat = $2,625/mo
-**25% below HubSpot**: $1,500 × 0.75 = $1,125 → REALM at $374 is **75% below** (massive value story)
+**25% below HubSpot**: $1,500 × 0.75 = $1,125 → AXIOM at $374 is **75% below** (massive value story)
 **Per-seat**: $374/15 = $24.93/seat vs HubSpot $100/seat
 
 - 15 users included (+$25/user/mo, up to 10 more users)
@@ -180,7 +180,7 @@ These are REALM-unique features with no competitor equivalent. Give basic free, 
 
 ### Tier 3: Fortune — $524/mo (was $697)
 **Competitor equivalent**: HubSpot Enterprise 25-seat = $3,000/mo, Salesforce Enterprise 25-seat = $4,375/mo
-**25% below HubSpot Enterprise**: $3,000 × 0.75 = $2,250 → REALM at $524 is **83% below**
+**25% below HubSpot Enterprise**: $3,000 × 0.75 = $2,250 → AXIOM at $524 is **83% below**
 
 - 25 users included (+$25/user/mo, up to 15 more users)
 - 250,000 contacts
@@ -188,7 +188,7 @@ These are REALM-unique features with no competitor equivalent. Give basic free, 
 - Voice Agent: unlimited calls
 - DocScan: unlimited scans
 - Revenue Autopilot ("Money Machine")
-- REALM Autopilot (freight consolidation + lane prediction)
+- AXIOM Autopilot (freight consolidation + lane prediction)
 - Custom AI training (basic)
 - Visitor Tracking: unlimited
 - Campaigns: 200,000 sends/mo
@@ -203,7 +203,7 @@ These are REALM-unique features with no competitor equivalent. Give basic free, 
 
 ### Tier 4: Fortune Plus — $1,124/mo (was $1,497)
 **Competitor equivalent**: Salesforce Unlimited 50-seat = $17,500/mo, HubSpot Enterprise 50-seat = $6,000/mo
-**25% below HubSpot Enterprise**: $6,000 × 0.75 = $4,500 → REALM at $1,124 is **75% below**
+**25% below HubSpot Enterprise**: $6,000 × 0.75 = $4,500 → AXIOM at $1,124 is **75% below**
 
 - 50 users included (no add-on — top tier)
 - Unlimited contacts
@@ -266,7 +266,7 @@ These are REALM-unique features with no competitor equivalent. Give basic free, 
 | Shipping/Receiving (full) | ❌ | ✅ | ✅ | ✅ | ✅ |
 | Visitor tracking | ❌ | ❌ | 1K/mo | Unlimited | Unlimited |
 | Revenue Autopilot | ❌ | ❌ | ❌ | ✅ | ✅ |
-| REALM Autopilot | ❌ | ❌ | ❌ | ✅ | ✅ |
+| AXIOM Autopilot | ❌ | ❌ | ❌ | ✅ | ✅ |
 | Custom branding | ❌ | ❌ | ✅ | ✅ | ✅ |
 | White-labeling | ❌ | ❌ | ❌ | ✅ | ✅ |
 | Dedicated SMTP infra | ❌ | ❌ | ❌ | ❌ | ✅ |

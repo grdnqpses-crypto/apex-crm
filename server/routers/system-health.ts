@@ -8,9 +8,9 @@ import { getDb } from "../db";
 import { systemHealthEvents } from "../../drizzle/schema";
 import { desc, gte, eq, and, sql } from "drizzle-orm";
 
-// Only realm_owner and developer can access the health dashboard
+// Only axiom_owner and developer can access the health dashboard
 const adminHealthProcedure = protectedProcedure.use(({ ctx, next }) => {
-  const allowed = ["developer", "realm_owner"];
+  const allowed = ["developer", "axiom_owner"];
   if (!allowed.includes(ctx.user.systemRole)) {
     throw new Error("FORBIDDEN: Health dashboard is restricted to platform administrators");
   }

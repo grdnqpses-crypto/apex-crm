@@ -1,6 +1,6 @@
 {
-  "query": "\nSELECT \n  u.username,\n  u.name AS full_name,\n  u.email,\n  u.systemRole AS role,\n  u.jobTitle,\n  tc.name AS company_name,\n  tc.subscriptionTier AS subscription_tier\nFROM users u\nLEFT JOIN tenant_companies tc ON u.tenantCompanyId = tc.id\nWHERE u.username IS NOT NULL\nORDER BY FIELD(u.systemRole, 'developer', 'realm_owner', 'super_admin', 'company_admin', 'manager', 'user'), tc.name, u.username;\n",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute \nSELECT \n  u.username,\n  u.name AS full_name,\n  u.email,\n  u.systemRole AS role,\n  u.jobTitle,\n  tc.name AS company_name,\n  tc.subscriptionTier AS subscription_tier\nFROM users u\nLEFT JOIN tenant_companies tc ON u.tenantCompanyId = tc.id\nWHERE u.username IS NOT NULL\nORDER BY FIELD(u.systemRole, 'developer', 'realm_owner', 'super_admin', 'company_admin', 'manager', 'user'), tc.name, u.username;\n",
+  "query": "\nSELECT \n  u.username,\n  u.name AS full_name,\n  u.email,\n  u.systemRole AS role,\n  u.jobTitle,\n  tc.name AS company_name,\n  tc.subscriptionTier AS subscription_tier\nFROM users u\nLEFT JOIN tenant_companies tc ON u.tenantCompanyId = tc.id\nWHERE u.username IS NOT NULL\nORDER BY FIELD(u.systemRole, 'developer', 'axiom_owner', 'super_admin', 'company_admin', 'manager', 'user'), tc.name, u.username;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute \nSELECT \n  u.username,\n  u.name AS full_name,\n  u.email,\n  u.systemRole AS role,\n  u.jobTitle,\n  tc.name AS company_name,\n  tc.subscriptionTier AS subscription_tier\nFROM users u\nLEFT JOIN tenant_companies tc ON u.tenantCompanyId = tc.id\nWHERE u.username IS NOT NULL\nORDER BY FIELD(u.systemRole, 'developer', 'axiom_owner', 'super_admin', 'company_admin', 'manager', 'user'), tc.name, u.username;\n",
   "rows": [
     {
       "username": "jlavallee",
@@ -13,11 +13,11 @@
     },
     {
       "username": "apexowner",
-      "full_name": "REALM Platform Owner",
+      "full_name": "AXIOM Platform Owner",
       "email": "owner@apexcrm.com",
-      "role": "realm_owner",
+      "role": "axiom_owner",
       "jobTitle": "NULL",
-      "company_name": "REALM Platform",
+      "company_name": "AXIOM Platform",
       "subscription_tier": "enterprise"
     },
     {
@@ -58,7 +58,7 @@
     }
   ],
   "messages": [],
-  "stdout": "username\tfull_name\temail\trole\tjobTitle\tcompany_name\tsubscription_tier\njlavallee\tJames Lavallee\tjlavallee@shiplw.com\tdeveloper\tVP of Operations\tLogistics Worldwide\tenterprise\napexowner\tREALM Platform Owner\towner@apexcrm.com\trealm_owner\tNULL\tREALM Platform\tenterprise\nLavallee\tJerry\tglavallee@shiplw.com\tcompany_admin\tVP\tLogistics Worldwide\tenterprise\nmrodriguez\tMike Rodriguez\tmrodriguez@shiplw.com\tmanager\tSales Manager\tLogistics Worldwide\tenterprise\ndthompson\tDavid Thompson\tdthompson@shiplw.com\tuser\tSales Representative\tLogistics Worldwide\tenterprise\nschen\tSarah Chen\tschen@shiplw.com\tuser\tSales Representative\tLogistics Worldwide\tenterprise\n",
+  "stdout": "username\tfull_name\temail\trole\tjobTitle\tcompany_name\tsubscription_tier\njlavallee\tJames Lavallee\tjlavallee@shiplw.com\tdeveloper\tVP of Operations\tLogistics Worldwide\tenterprise\napexowner\tAXIOM Platform Owner\towner@apexcrm.com\taxiom_owner\tNULL\tAXIOM Platform\tenterprise\nLavallee\tJerry\tglavallee@shiplw.com\tcompany_admin\tVP\tLogistics Worldwide\tenterprise\nmrodriguez\tMike Rodriguez\tmrodriguez@shiplw.com\tmanager\tSales Manager\tLogistics Worldwide\tenterprise\ndthompson\tDavid Thompson\tdthompson@shiplw.com\tuser\tSales Representative\tLogistics Worldwide\tenterprise\nschen\tSarah Chen\tschen@shiplw.com\tuser\tSales Representative\tLogistics Worldwide\tenterprise\n",
   "stderr": "",
   "execution_time_ms": 387
 }

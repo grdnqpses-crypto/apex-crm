@@ -361,11 +361,11 @@ describe("A/B tests", () => {
 });
 
 describe("API keys", () => {
-  it("creates API key with realm_ prefix", async () => {
+  it("creates API key with axiom_ prefix", async () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
     const result = await caller.apiKeys.create({ name: "Test Key", permissions: ["contacts:read"] });
-    expect(result.key.startsWith("realm_")).toBe(true);
+    expect(result.key.startsWith("axiom_")).toBe(true);
     const list = await caller.apiKeys.list();
     expect(list.length).toBeGreaterThan(0);
   });
@@ -906,7 +906,7 @@ describe("sender settings", () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
     await caller.senderSettings.upsert({
-      companyName: "REALM Corp",
+      companyName: "AXIOM Corp",
       physicalAddress: "456 Business Ave",
       city: "Chicago",
       state: "IL",
@@ -921,7 +921,7 @@ describe("sender settings", () => {
     const settings = await caller.senderSettings.get();
     expect(settings).not.toBeNull();
     if (settings) {
-      expect(settings.companyName).toBe("REALM Corp");
+      expect(settings.companyName).toBe("AXIOM Corp");
       expect(settings.outlookThrottlePerMinute).toBe(8);
       expect(settings.gmailThrottlePerMinute).toBe(15);
     }

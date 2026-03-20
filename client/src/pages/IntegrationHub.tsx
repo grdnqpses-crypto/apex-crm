@@ -75,7 +75,7 @@ export default function IntegrationHub() {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold">Integration Hub</h1>
-          <p className="text-muted-foreground mt-1">Connect REALM CRM to your favorite tools and automate your workflow</p>
+          <p className="text-muted-foreground mt-1">Connect AXIOM CRM to your favorite tools and automate your workflow</p>
         </div>
 
         {/* Connected summary */}

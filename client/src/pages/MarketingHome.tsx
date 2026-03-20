@@ -139,26 +139,26 @@ const FEATURES = [
     glow: "shadow-cyan-500/20",
     title: "AI Visitor Tracking",
     headline: "Installs itself in 30 seconds. No developer needed.",
-    body: "Paste your URL and REALM detects your platform (WordPress, Shopify, Webflow, Wix, Squarespace, and more) and installs the tracking script automatically via API. Every competitor requires manual copy-paste. REALM does it for you.",
+    body: "Paste your URL and AXIOM detects your platform (WordPress, Shopify, Webflow, Wix, Squarespace, and more) and installs the tracking script automatically via API. Every competitor requires manual copy-paste. AXIOM does it for you.",
     stats: [{ label: "Install time", value: "< 30s" }, { label: "Platforms supported", value: "8+" }],
   },
 ];
 
 const COMPARISON = [
-  { feature: "AI Visitor Tracking (Auto-Install)", realm: true, hubspot: false, salesforce: false, close: false },
-  { feature: "AI Prospect Research", realm: true, hubspot: false, salesforce: false, close: false },
-  { feature: "Autonomous Email Sequences", realm: true, hubspot: "Add-on ($500+/mo)", salesforce: "Add-on ($125+/user)", close: "Partial" },
-  { feature: "98%+ Inbox Placement", realm: true, hubspot: false, salesforce: false, close: false },
-  { feature: "260 SMTP Rotation Engine", realm: true, hubspot: false, salesforce: false, close: false },
-  { feature: "Compliance Fortress™ (GDPR/CCPA)", realm: true, hubspot: "Partial", salesforce: "Partial", close: false },
-  { feature: "60-Day Free Trial", realm: true, hubspot: false, salesforce: false, close: false },
-  { feature: "One-Click Migration — FREE", realm: true, hubspot: false, salesforce: false, close: false },
-  { feature: "AI Battle Cards", realm: true, hubspot: false, salesforce: false, close: false },
-  { feature: "AR/AP Module", realm: true, hubspot: false, salesforce: false, close: false },
-  { feature: "Shipping & Receiving Module", realm: true, hubspot: false, salesforce: false, close: false },
-  { feature: "Business Category Intelligence", realm: true, hubspot: false, salesforce: false, close: false },
-  { feature: "White-Labeling", realm: true, hubspot: false, salesforce: "Enterprise only", close: false },
-  { feature: "Price for 10 users/month", realm: "$297", hubspot: "$1,000", salesforce: "$1,750", close: "$1,090" },
+  { feature: "AI Visitor Tracking (Auto-Install)", axiom: true, hubspot: false, salesforce: false, close: false },
+  { feature: "AI Prospect Research", axiom: true, hubspot: false, salesforce: false, close: false },
+  { feature: "Autonomous Email Sequences", axiom: true, hubspot: "Add-on ($500+/mo)", salesforce: "Add-on ($125+/user)", close: "Partial" },
+  { feature: "98%+ Inbox Placement", axiom: true, hubspot: false, salesforce: false, close: false },
+  { feature: "260 SMTP Rotation Engine", axiom: true, hubspot: false, salesforce: false, close: false },
+  { feature: "Compliance Fortress™ (GDPR/CCPA)", axiom: true, hubspot: "Partial", salesforce: "Partial", close: false },
+  { feature: "60-Day Free Trial", axiom: true, hubspot: false, salesforce: false, close: false },
+  { feature: "One-Click Migration — FREE", axiom: true, hubspot: false, salesforce: false, close: false },
+  { feature: "AI Battle Cards", axiom: true, hubspot: false, salesforce: false, close: false },
+  { feature: "AR/AP Module", axiom: true, hubspot: false, salesforce: false, close: false },
+  { feature: "Shipping & Receiving Module", axiom: true, hubspot: false, salesforce: false, close: false },
+  { feature: "Business Category Intelligence", axiom: true, hubspot: false, salesforce: false, close: false },
+  { feature: "White-Labeling", axiom: true, hubspot: false, salesforce: "Enterprise only", close: false },
+  { feature: "Price for 10 users/month", axiom: "$297", hubspot: "$1,000", salesforce: "$1,750", close: "$1,090" },
 ];
 
 const TESTIMONIALS = [
@@ -212,9 +212,9 @@ const PLANS = [
   {
     id: "fortune_plus",
     name: "Fortune Plus", price: 1497, annualPrice: 1347,
-    desc: "Dedicated infrastructure. Custom AI. Resell REALM as your own.",
+    desc: "Dedicated infrastructure. Custom AI. Resell AXIOM as your own.",
     savings: "85% less than HubSpot Enterprise",
-    features: ["100 users included (+$30/user/mo)", "Unlimited everything", "200,000 AI credits/month", "Revenue Autopilot™ + REALM Autopilot™", "White-labeling (your brand, FREE setup)", "Dedicated SMTP infrastructure", "SaaS Mode — resell REALM as your product", "99.9% SLA + 24/7 white-glove support"],
+    features: ["100 users included (+$30/user/mo)", "Unlimited everything", "200,000 AI credits/month", "Revenue Autopilot™ + AXIOM Autopilot™", "White-labeling (your brand, FREE setup)", "Dedicated SMTP infrastructure", "SaaS Mode — resell AXIOM as your product", "99.9% SLA + 24/7 white-glove support"],
     cta: "Start Free Trial", highlight: false, addOnNote: "Add seats at $30/user/mo",
   },
 ];
@@ -222,7 +222,7 @@ const PLANS = [
 const FAQS = [
   { q: "How does the 60-day free trial work?", a: "You get full access to the entire platform for 60 days. A credit card is required to start — this ensures we can provision your dedicated SMTP infrastructure and AI resources from day one. You won't be charged until day 61, and you can cancel anytime before that." },
   { q: "How long does migration from my current CRM take?", a: "Most customers complete their full migration in under 30 minutes. Our one-touch migration engine connects directly to HubSpot, Salesforce, Pipedrive, and Close via API, automatically maps all your custom fields, and imports contacts, deals, emails, and activity history with zero data loss." },
-  { q: "Can REALM CRM be customized for my industry?", a: "Absolutely. REALM CRM is built for any B2B sales team. Custom fields, workflows, pipeline stages, email templates, and AI prompts can all be tailored to your specific industry and sales process. Our onboarding team will configure everything for you." },
+  { q: "Can AXIOM CRM be customized for my industry?", a: "Absolutely. AXIOM CRM is built for any B2B sales team. Custom fields, workflows, pipeline stages, email templates, and AI prompts can all be tailored to your specific industry and sales process. Our onboarding team will configure everything for you." },
   { q: "Why is your inbox placement rate so much higher?", a: "We operate 260 dedicated SMTP addresses across 52 domains with real-time rotation. Every domain is warmed up, monitored against 50+ blacklists, and configured with SPF, DKIM, and DMARC. Competitors use shared sending infrastructure — your emails compete with thousands of other senders. Ours don't." },
   { q: "What is the Paradigm Engine™?", a: "It's our 5-layer AI prospecting system: (1) Sentinel Layer monitors job changes and social signals 24/7, (2) Nutrition Gate verifies every email via NeverBounce, (3) Digital Twin builds a psychographic profile of each prospect, (4) Ghost Mode deploys personalized sequences, (5) Battle Cards generate AI tactical summaries when a prospect shows buying intent." },
 ];
@@ -351,7 +351,7 @@ export default function MarketingHome({
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:shadow-orange-500/50 transition-shadow">
                 <Zap className="h-4 w-4 text-white fill-white" />
               </div>
-              <span className="font-black text-lg tracking-tight">REALM CRM</span>
+              <span className="font-black text-lg tracking-tight">AXIOM CRM</span>
             </div>
           </Link>
 
@@ -435,7 +435,7 @@ export default function MarketingHome({
                   </div>
                   <div>
                     <h2 className="text-xl font-black">Welcome back</h2>
-                    <p className="text-sm text-white/40">Sign in to your REALM CRM account</p>
+                    <p className="text-sm text-white/40">Sign in to your AXIOM CRM account</p>
                   </div>
                 </div>
 
@@ -612,7 +612,7 @@ export default function MarketingHome({
                 <X className="h-4 w-4" />
               </button>
               <video
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/realm-promo-final_10e5790e.mp4"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/axiom-promo-final_10e5790e.mp4"
                 autoPlay
                 controls
                 playsInline
@@ -634,7 +634,7 @@ export default function MarketingHome({
           className="absolute inset-0 w-full h-full object-cover pointer-events-none"
           style={{ filter: "brightness(0.45) saturate(1.4) contrast(1.1)" }}
         >
-          <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/realm-promo-final_10e5790e.mp4" type="video/mp4" />
+          <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/axiom-promo-final_10e5790e.mp4" type="video/mp4" />
         </video>
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#04080f]/50 via-transparent to-[#04080f] pointer-events-none" />
@@ -660,7 +660,7 @@ export default function MarketingHome({
             className="text-6xl md:text-8xl font-black tracking-tight leading-[0.95] mb-8"
             style={{ textShadow: "0 0 80px rgba(201,168,76,0.3), 0 0 160px rgba(30,100,255,0.2)" }}
           >
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#c9a84c] to-[#f0d080]">REALM</span><br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#c9a84c] to-[#f0d080]">AXIOM</span><br />
             <span className="text-white text-4xl md:text-5xl font-light tracking-[0.3em]">COMMAND YOUR MARKET</span>
           </motion.h1>
 
@@ -885,7 +885,7 @@ export default function MarketingHome({
               {/* Gradient border glow */}
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-orange-500/10 via-transparent to-orange-500/10 pointer-events-none z-10" />
               <video
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/realm-promo-final_10e5790e.mp4"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/axiom-promo-final_10e5790e.mp4"
                 className="w-full aspect-video object-contain bg-black"
                 controls
                 playsInline
@@ -895,7 +895,7 @@ export default function MarketingHome({
             <div className="mt-6 grid grid-cols-3 md:grid-cols-5 gap-3">
               {[
                 { label: "The Problem", time: "0:00" },
-                { label: "REALM Intro", time: "0:06" },
+                { label: "AXIOM Intro", time: "0:06" },
                 { label: "vs Competitors", time: "0:12" },
                 { label: "One-Touch Migration", time: "0:20" },
                 { label: "BNB AI Engine", time: "0:26" },
@@ -1013,7 +1013,7 @@ export default function MarketingHome({
                 <thead>
                   <tr className="border-b border-white/5">
                     <th className="text-left p-4 font-semibold text-white/30 w-2/5">Feature</th>
-                    <th className="p-4 font-black text-orange-400 bg-orange-500/5">REALM CRM</th>
+                    <th className="p-4 font-black text-orange-400 bg-orange-500/5">AXIOM CRM</th>
                     <th className="p-4 font-semibold text-white/30">HubSpot</th>
                     <th className="p-4 font-semibold text-white/30">Salesforce</th>
                     <th className="p-4 font-semibold text-white/30">Close CRM</th>
@@ -1023,7 +1023,7 @@ export default function MarketingHome({
                   {COMPARISON.map((row, i) => (
                     <tr key={i} className={`border-b border-white/[0.04] ${i % 2 === 0 ? "" : "bg-white/[0.02]"}`}>
                       <td className="p-4 text-white/60 font-medium">{row.feature}</td>
-                      {[row.realm, row.hubspot, row.salesforce, row.close].map((val, j) => (
+                      {[row.axiom, row.hubspot, row.salesforce, row.close].map((val, j) => (
                         <td key={j} className={`p-4 text-center ${j === 0 ? "bg-orange-500/5" : ""}`}>
                           {val === true ? (
                             <CheckCircle className="h-4 w-4 text-green-400 mx-auto" />
@@ -1213,7 +1213,7 @@ export default function MarketingHome({
                   <GradText>your sales?</GradText>
                 </h2>
                 <p className="text-white/40 text-lg mb-10 max-w-xl mx-auto">
-                  Join thousands of teams who switched to REALM CRM and never looked back. Any business. Any industry. Any size.
+                  Join thousands of teams who switched to AXIOM CRM and never looked back. Any business. Any industry. Any size.
                 </p>
                 <Link href="/signup">
                   <button className="group inline-flex items-center gap-2 bg-white text-black font-black text-base px-10 py-5 rounded-2xl hover:bg-white/90 transition-all hover:shadow-2xl hover:shadow-white/10 hover:-translate-y-0.5">
@@ -1238,14 +1238,14 @@ export default function MarketingHome({
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center">
               <Zap className="h-3.5 w-3.5 text-white fill-white" />
             </div>
-            <span className="font-black text-white">REALM CRM</span>
+            <span className="font-black text-white">AXIOM CRM</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-white/25">
             {["Privacy Policy", "Terms of Service", "Contact"].map(l => (
               <a key={l} href="#" className="hover:text-white/60 transition-colors">{l}</a>
             ))}
           </div>
-          <p className="text-sm text-white/20">© 2026 REALM CRM. All rights reserved.</p>
+          <p className="text-sm text-white/20">© 2026 AXIOM CRM. All rights reserved.</p>
         </div>
       </footer>
     </div>

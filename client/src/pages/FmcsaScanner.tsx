@@ -575,7 +575,7 @@ export default function FmcsaScanner() {
                 <div>
                   <h4 className="font-semibold">New Broker Welcome Campaign</h4>
                   <p className="text-xs text-muted-foreground">
-                    Congratulates new brokers, introduces REALM CRM benefits, offers 2-month free trial
+                    Congratulates new brokers, introduces AXIOM CRM benefits, offers 2-month free trial
                   </p>
                 </div>
               </div>
@@ -641,7 +641,7 @@ export default function FmcsaScanner() {
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
-                <span>How REALM CRM helps new brokers grow and prosper</span>
+                <span>How AXIOM CRM helps new brokers grow and prosper</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />

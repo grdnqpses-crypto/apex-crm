@@ -1,4 +1,4 @@
-# REALM CRM - Project TODO
+# AXIOM CRM - Project TODO
 
 ## Core Infrastructure
 - [x] Database schema design (all tables)
@@ -345,7 +345,7 @@
 
 ### New Broker Campaign
 - [x] Create email template: Congratulations on new brokerage
-- [x] Explain how REALM CRM helps new brokers grow and prosper (5 features)
+- [x] Explain how AXIOM CRM helps new brokers grow and prosper (5 features)
 - [x] Offer 2-month free trial with CTA button
 - [x] Auto-create campaign + template when enrolling new broker filings
 
@@ -366,7 +366,7 @@
 ## Phase 9: Developer Options Secret Unlock
 
 - [x] Hide Developer section from sidebar by default
-- [x] Add 11-tap secret activation on REALM CRM logo in sidebar header
+- [x] Add 11-tap secret activation on AXIOM CRM logo in sidebar header
 - [x] Show toast countdown feedback during tapping (last 5 taps show countdown)
 - [x] Persist developer mode in sessionStorage (session-only, resets on close)
 - [x] Show unlock confirmation toast when activated
@@ -460,7 +460,7 @@
 
 ### HubSpot Import/Mapping Tool
 - [x] Build HubSpot CSV parser with quoted field support
-- [x] Auto-map 38 contact properties and 21 company properties to REALM CRM fields
+- [x] Auto-map 38 contact properties and 21 company properties to AXIOM CRM fields
 - [x] Show mapping UI with source → destination field matching, grouped by category
 - [x] One-click import with dedup and skip-empty options
 - [x] Import progress bar and per-file results summary (created/skipped/errors)
@@ -548,11 +548,11 @@
 
 ## Phase 13: Premium Features — AI Voice Agent, DocScan, Win Probability, Revenue Autopilot
 
-### AI Voice Agent ("REALM Caller")
+### AI Voice Agent ("AXIOM Caller")
 - [x] Build call_logs and voice_campaigns database tables
 - [x] Build voice agent backend: call initiation, script generation, transcription, lead qualification
-- [x] Build REALM Caller UI page with call dashboard, script editor, campaign builder
-- [x] Integrate with Prospect and Contact pages ("Call with REALM Caller" button)
+- [x] Build AXIOM Caller UI page with call dashboard, script editor, campaign builder
+- [x] Integrate with Prospect and Contact pages ("Call with AXIOM Caller" button)
 - [x] Call recording, transcription, and activity logging
 - [x] Hot lead flagging and automatic task creation from call results
 
@@ -606,14 +606,14 @@
 - [x] Tests for Revenue Autopilot recommendations
 
 ### 30-Second Commercial
-- [x] Create compelling 30-second video commercial for REALM CRM
+- [x] Create compelling 30-second video commercial for AXIOM CRM
 - [x] Showcase AI Voice Agent, DocScan, Win Probability, and automation features
 - [x] Target audience: freight brokers looking for cutting-edge CRM technology
 
 ### Competitive Analysis
 - [x] Research all major freight broker CRM/TMS platforms comprehensively
-- [x] Identify features competitors have that REALM CRM doesn't
-- [x] Document competitive advantages of REALM CRM
+- [x] Identify features competitors have that AXIOM CRM doesn't
+- [x] Document competitive advantages of AXIOM CRM
 - [x] Create comprehensive competitive analysis report
 
 ### Phase 14: Competitive Feature Parity (12 Features)
@@ -735,7 +735,7 @@
 - [x] One-touch import from Zoho CRM (contacts, deals, accounts)
 - [x] One-touch import from spreadsheets/CSV (universal import)
 - [x] Migration wizard UI with progress tracking and validation
-- [x] Integration: map imported data to REALM CRM fields, auto-deduplicate
+- [x] Integration: map imported data to AXIOM CRM fields, auto-deduplicate
 - [x] Feature in commercial: "Switch in 60 seconds — bring everything with you"
 
 ### Phase 15: Complete Build + Autonomous Command Center
@@ -761,7 +761,7 @@
 - [x] Update index.css with semantic CRM color variables
 - [x] Apply color system across all status badges, indicators, and UI elements
 
-## Phase 16: Autonomous Digital Freight Marketplace + REALM Autopilot
+## Phase 16: Autonomous Digital Freight Marketplace + AXIOM Autopilot
 
 ### Shipper Self-Service Portal (FREE for Manufacturers/Distributors)
 - [x] Database: marketplace_loads (shipper posts load specs: origin, destination, commodity, weight, dimensions, pickup/delivery dates, special requirements)
@@ -780,7 +780,7 @@
 - [x] Delivery confirmation: POD upload, signature capture, auto-close load
 - [x] All documentation handled autonomously — zero manual paperwork
 
-### REALM Autopilot (Freight Consolidation + Lane Prediction)
+### AXIOM Autopilot (Freight Consolidation + Lane Prediction)
 - [x] Database: lane_analytics (historical lane data, demand patterns, seasonal trends)
 - [x] Database: consolidation_opportunities (AI-identified shipment combinations)
 - [x] Freight consolidation algorithm: combine LTL shipments into FTL on same routes
@@ -796,13 +796,13 @@
 - [x] Payment & Escrow: payment collection, carrier payouts, margin reports
 - [x] Live Tracking: real-time map view of all active shipments
 - [x] Autonomous Documents: auto-generated paperwork library
-- [x] REALM Autopilot Dashboard: consolidation opportunities, lane predictions, optimization metrics
+- [x] AXIOM Autopilot Dashboard: consolidation opportunities, lane predictions, optimization metrics
 
 ### Tests
 - [x] Tests for marketplace load posting and carrier matching
 - [x] Tests for payment/escrow flow
 - [x] Tests for autonomous document generation
-- [x] Tests for REALM Autopilot consolidation algorithm
+- [x] Tests for AXIOM Autopilot consolidation algorithm
 
 ## Phase 17: Comprehensive Platform Audit
 - [x] Audit email deliverability system (SPF/DKIM/DMARC validation logic)
@@ -955,7 +955,7 @@
 
 ## Phase 31: CRM UX Fixes - AI Everywhere + Top Navigation
 - [x] AI Assistant chat button/panel available on every single page
-- [x] REALM CRM branding/logo at the top of every page
+- [x] AXIOM CRM branding/logo at the top of every page
 - [x] Dashboard link always accessible at the top for easy navigation back
 - [x] Top header bar persistent across all pages
 
@@ -976,7 +976,7 @@
 - [x] Research pricing for all major CRMs (HubSpot, Salesforce, Pipedrive, Zoho, Monday, Freshsales, Close, Copper, Insightly, Nutshell, etc.)
 - [x] Compare functionality: AI assistant, email deliverability, prospecting, automation, compliance
 - [x] Create competitive analysis matrix (features vs price)
-- [x] Determine where REALM CRM stands vs competitors
+- [x] Determine where AXIOM CRM stands vs competitors
 - [x] Set competitive tier pricing below market
 
 ### Video Commercial with Voiceover
@@ -996,9 +996,9 @@
 - [x] Hide Manus platform billing banner that blocks dashboard on published site
 
 ## Phase 34: Competitive Pricing Analysis & Video with Voiceover
-- [x] Complete feature-by-feature comparison: REALM CRM vs all major competitors
+- [x] Complete feature-by-feature comparison: AXIOM CRM vs all major competitors
 - [x] Calculate average market pricing across all tiers
-- [x] Set REALM CRM pricing tiers that undercut the market
+- [x] Set AXIOM CRM pricing tiers that undercut the market
 - [x] Add voiceover narration to commercial
 - [x] Get better cinematic music
 - [x] Include pricing at the end of the commercial
@@ -1060,12 +1060,12 @@
 - [x] Backend procedure guards per role (enforce at API level)
 - [x] Write vitest tests for all role-based access scenarios (33 RBAC tests passing)
 
-## Phase 9: 5-Tier Role Hierarchy (Developer → REALM Owner → Company Admin → Manager → Sales Rep)
+## Phase 9: 5-Tier Role Hierarchy (Developer → AXIOM Owner → Company Admin → Manager → Sales Rep)
 - [x] Add "apex_owner" to systemRole enum in database and schema
 - [x] Developer dashboard: god-mode, sees everything, manages entire platform
-- [x] Developer can create REALM Owner accounts
-- [x] REALM Owner dashboard: business oversight, onboard companies, manage subscriptions
-- [x] REALM Owner can create Company Admin accounts and onboard new tenant companies
+- [x] Developer can create AXIOM Owner accounts
+- [x] AXIOM Owner dashboard: business oversight, onboard companies, manage subscriptions
+- [x] AXIOM Owner can create Company Admin accounts and onboard new tenant companies
 - [x] Company Admin dashboard: manage own company (create managers + reps, branding, imports)
 - [x] Company Admin can create Managers and Sales Reps
 - [x] Manager dashboard: team performance, oversight of assigned sales reps
@@ -1075,14 +1075,14 @@
 - [x] Easy-to-use user management panel at each level
 - [x] Update sidebar navigation per role (5 tiers)
 - [x] Update route guards per role (5 tiers)
-- [x] Create REALM Owner account and test full hierarchy flow
+- [x] Create AXIOM Owner account and test full hierarchy flow
 - [x] Write tests for 5-tier hierarchy (38 new tests)
 
-## Phase 9b: REALM Owner Dashboard & Self-Service Signup
-- [x] REALM Owner dashboard: view all companies, subscription tiers, revenue overview
-- [x] REALM Owner: manage company tiers (upgrade/downgrade)
-- [x] REALM Owner: onboard new companies directly
-- [x] REALM Owner: view company health metrics and user counts
+## Phase 9b: AXIOM Owner Dashboard & Self-Service Signup
+- [x] AXIOM Owner dashboard: view all companies, subscription tiers, revenue overview
+- [x] AXIOM Owner: manage company tiers (upgrade/downgrade)
+- [x] AXIOM Owner: onboard new companies directly
+- [x] AXIOM Owner: view company health metrics and user counts
 - [x] Self-service signup: public landing page with video and pricing
 - [x] Self-service signup: registration form (company name, admin details, tier selection)
 - [x] Self-service signup: payment integration placeholder
@@ -1099,7 +1099,7 @@
 - [x] Stats bar: key numbers (companies served, deals closed, etc.)
 - [x] Feature showcase: animated feature cards for all major modules with icons and descriptions
 - [x] How It Works: 3-step visual explainer (Import → Automate → Close)
-- [x] Competitor comparison table: REALM CRM vs HubSpot vs Salesforce vs Pipedrive
+- [x] Competitor comparison table: AXIOM CRM vs HubSpot vs Salesforce vs Pipedrive
 - [x] Pricing section: 3 tiers (Starter/Growth/Enterprise) with feature lists and monthly/annual toggle
 - [x] Testimonials/social proof: customer quotes with avatars, company logos, key stats
 - [x] Video section: embedded demo video with play button overlay
@@ -1117,7 +1117,7 @@
 - [x] Stats bar (500+ companies, $2.1B+ pipeline, 98.7% deliverability, etc.)
 - [x] Features section with 9 feature cards (CRM Core, Paradigm Engine, etc.)
 - [x] How It Works (3-step process)
-- [x] Competitor comparison table (REALM vs HubSpot vs Salesforce vs Pipedrive)
+- [x] Competitor comparison table (AXIOM vs HubSpot vs Salesforce vs Pipedrive)
 - [x] Pricing section with monthly/annual toggle and 3 plans
 - [x] Testimonials section (6 customer stories)
 - [x] FAQ accordion (8 questions)
@@ -1222,7 +1222,7 @@
 - [x] Update Bible content to document role access levels and Share system
 
 ## Billing Access Split
-- [x] Company Admin sees payment history/schedule (read-only); REALM Owner/Developer see full billing management
+- [x] Company Admin sees payment history/schedule (read-only); AXIOM Owner/Developer see full billing management
 - [x] Update CRM Bible billing section to document the two-tier access
 
 ## AI Button & Assistant Fix
@@ -1233,7 +1233,7 @@
 - [x] Backend: tRPC procedure to fetch Stripe invoices for the tenant's customer ID
 - [x] Frontend: /billing-history page showing invoice date, amount, status, PDF download link
 - [x] Add Billing History nav item under Resources for Company Admin+
-- [x] Role-gate: Company Admin, REALM Owner, Developer only
+- [x] Role-gate: Company Admin, AXIOM Owner, Developer only
 
 ## Payment Failed Banner
 - [x] Backend: tRPC procedure to check Stripe subscription payment status
@@ -1274,20 +1274,20 @@
 - [x] Move AI button/panel to bottom-right, above the Manus badge
 - [x] Fix tour "Next" button navigating away from CRM to public homepage
 - [x] Add logo upload/generate button prominently on the dashboard
-- [x] Brand AI assistant with user's company name and logo (not "REALM")
-- [x] White-label CRM so non-admin roles only see company branding (hide "REALM" identity)
+- [x] Brand AI assistant with user's company name and logo (not "AXIOM")
+- [x] White-label CRM so non-admin roles only see company branding (hide "AXIOM" identity)
 - [x] Build AI credit reselling system (purchase, track, consume credits)
 
-## AI Credit Reselling System (REALM Owner → Tenant Companies)
-- [x] REALM Owner dashboard: define credit packages with wholesale cost + retail price
-- [x] REALM Owner: sell credits to specific tenant companies at marked-up price
-- [x] REALM Owner: view all tenant credit balances
+## AI Credit Reselling System (AXIOM Owner → Tenant Companies)
+- [x] AXIOM Owner dashboard: define credit packages with wholesale cost + retail price
+- [x] AXIOM Owner: sell credits to specific tenant companies at marked-up price
+- [x] AXIOM Owner: view all tenant credit balances
 - [x] Tenant Company Admin: view their credit balance (read-only)
 - [x] Tenant Company Admin: view credit usage history
 - [x] AI credit balance shown in sidebar for Company Admin+
 - [x] DB tables: ai_credit_packages, tenant_ai_credits, ai_credit_transactions (done)
 - [x] tRPC routers: aiCredits.* (done)
-- [x] Frontend: /realm/ai-credits page for REALM Owner
+- [x] Frontend: /axiom/ai-credits page for AXIOM Owner
 - [x] Frontend: credit balance widget in Company Admin settings
 
 ## AI Credit System (Revised Model)
@@ -1299,7 +1299,7 @@
 - [x] Stripe: create credit top-up checkout session for tenant companies (Stripe webhook integration pending)
 - [x] Stripe webhook: handle credit purchase completion, add credits to tenant balance
 - [x] Backend: consumeAiCredits checks if feature is CRM-free before deducting
-- [x] REALM Owner UI: /realm/ai-credits — view all tenant balances, credit packages
+- [x] AXIOM Owner UI: /axiom/ai-credits — view all tenant balances, credit packages
 - [x] Company Admin UI: /settings/ai-credits — view balance, buy more credits, usage history
 - [x] Credit balance widget in sidebar for Company Admin+
 - [x] AI Assistant: CRM queries are free, general queries consume credits
@@ -1316,7 +1316,7 @@
 - [x] Update DB enum for subscriptionTier (migrate existing data)
 - [x] Update routers.ts tier enum validation
 - [x] Update stripe.ts webhook tier type
-- [x] Update RealmDashboard with new tier names, colors, prices
+- [x] Update AxiomDashboard with new tier names, colors, prices
 - [x] Update Subscription page UI with 5 new tiers
 - [x] Update MarketingHome pricing section with 5 new tiers
 - [x] Update Billing page tier icons/colors
@@ -1339,19 +1339,19 @@
 - [x] Tenant self-service: buy AI credits button (Stripe checkout)
 - [x] Tenant self-service: full payment history (all invoices, amounts, dates, status)
 - [x] Tenant self-service: download invoice PDFs
-- [x] REALM Owner/Developer: /realm/payments dashboard — all tenant payment records
-- [x] REALM Owner/Developer: overdue accounts list with days overdue
-- [x] REALM Owner/Developer: manual charge trigger per tenant
-- [x] REALM Owner/Developer: account suspension/reactivation for overdue
-- [x] REALM Owner/Developer: revenue reports (MRR, ARR, overdue total, collected this month)
-- [x] REALM Owner/Developer: Stripe customer portal link per tenant
+- [x] AXIOM Owner/Developer: /axiom/payments dashboard — all tenant payment records
+- [x] AXIOM Owner/Developer: overdue accounts list with days overdue
+- [x] AXIOM Owner/Developer: manual charge trigger per tenant
+- [x] AXIOM Owner/Developer: account suspension/reactivation for overdue
+- [x] AXIOM Owner/Developer: revenue reports (MRR, ARR, overdue total, collected this month)
+- [x] AXIOM Owner/Developer: Stripe customer portal link per tenant
 - [x] Stripe webhook: payment_intent.succeeded → mark invoice paid
 - [x] Stripe webhook: invoice.payment_failed → mark overdue, trigger notification
 - [x] Stripe webhook: customer.subscription.deleted → suspend account
 - [x] DB: invoices table (tenant, amount, status, due_date, paid_date, stripe_invoice_id)
 - [x] DB: payment_methods table (tenant, stripe_customer_id, card last4, brand, exp)
 - [x] Sidebar: "Billing" nav item clearly visible to Company Admin+
-- [x] Sidebar: "Payments" nav item in REALM Platform section for Owner/Developer
+- [x] Sidebar: "Payments" nav item in AXIOM Platform section for Owner/Developer
 
 ## Business Category / Vertical Intelligence System
 - [x] Define 10 business categories with sub-types and feature mappings in shared/businessCategories.ts
@@ -1382,21 +1382,21 @@
 ## Trial Health Monitoring & Customer Success Automation
 - [x] Feature usage tracking table (which features each tenant has used, count, last used)
 - [x] Trial health score calculation (0-100 based on feature adoption)
-- [x] Trial health dashboard for REALM Owner/Account Managers
+- [x] Trial health dashboard for AXIOM Owner/Account Managers
 - [x] Automated email campaign triggers by trial day (Day 1, 3, 7, 14, 30, 55)
 - [x] Re-engagement trigger: no login in 7 days
 - [x] Account Manager battle cards per tenant (features used/unused, call script, talking points)
-- [x] Daily call queue for REALM Account Managers sorted by priority
+- [x] Daily call queue for AXIOM Account Managers sorted by priority
 - [x] Call outcome logging from battle card
 - [x] Weekly and monthly check-in email templates
 
 ## Competitor Comparison & One-Click Migration (Mar 18 2026)
 - [x] Fix "freigght" spelling error in video/marketing copy → "freight"
 - [x] Build comprehensive competitor comparison page (/compare or tab in MarketingHome)
-  - All REALM features vs HubSpot, Salesforce, Pipedrive, Zoho, Monday, Freshsales, Keap, ActiveCampaign
+  - All AXIOM features vs HubSpot, Salesforce, Pipedrive, Zoho, Monday, Freshsales, Keap, ActiveCampaign
   - Pricing comparison table by feature category
-  - Visual "REALM wins" differentiators for every advantage
-  - Easy toggle to compare REALM vs any single competitor
+  - Visual "AXIOM wins" differentiators for every advantage
+  - Easy toggle to compare AXIOM vs any single competitor
 - [x] Build one-click CRM migration system (/migration page)
   - Per-competitor migration buttons: HubSpot, Salesforce, Pipedrive, Zoho, Monday, Freshsales, Keap, ActiveCampaign, Copper, Insightly
   - Import: contacts, companies, deals, tasks, notes, emails, pipelines, custom fields, tags
@@ -1485,7 +1485,7 @@
 - [x] Gate Shipping/Receiving full: Growth Foundation+
 - [x] Gate Visitor Tracking: Fortune Foundation+ (1K/mo), Fortune+ unlimited
 - [x] Gate Revenue Autopilot: Fortune+
-- [x] Gate REALM Autopilot: Fortune+
+- [x] Gate AXIOM Autopilot: Fortune+
 - [x] Gate White-labeling: Fortune+
 - [x] Gate Dedicated SMTP infrastructure: Fortune Plus only
 - [x] Gate Custom AI training: Fortune (basic), Fortune Plus (full)
@@ -1504,8 +1504,8 @@
 ## Phase 31: Video/Demo Section — Full Competitive Messaging
 
 - [x] Update hero video modal with full feature vs competitor script
-- [x] Update "Why REALM" feature showcase section with all modules vs competitors
-- [x] Expand comparison table to include all REALM differentiators (AR/AP, Shipping, BNB, Voice Agent, DocScan, etc.)
+- [x] Update "Why AXIOM" feature showcase section with all modules vs competitors
+- [x] Expand comparison table to include all AXIOM differentiators (AR/AP, Shipping, BNB, Voice Agent, DocScan, etc.)
 - [x] Add dedicated "Switch in 60 Seconds" migration section with step-by-step visual
 - [x] Add animated demo section showing one-click migration flow
 - [x] Update hero headline and subheadline to reflect universal applicability (not just freight)
@@ -1516,7 +1516,7 @@
 
 - [x] Generate 15 keyframe images for all scenes
 - [x] Generate Scene 1: The Problem with legacy CRMs
-- [x] Generate Scene 2: REALM CRM introduction
+- [x] Generate Scene 2: AXIOM CRM introduction
 - [x] Generate Scene 3: Full competitive comparison
 - [x] Generate Scene 4: One-touch migration
 - [x] Generate Scene 5: BNB AI Prospecting Engine
@@ -1527,17 +1527,17 @@
 - [x] Generate Scene 10: DocScan + Revenue Autopilot
 - [x] Generate Scene 11: White-Label branding
 - [x] Generate Scene 12: Pricing comparison — 25% less
-- [x] Generate Scene 13: REALM Autopilot
+- [x] Generate Scene 13: AXIOM Autopilot
 - [x] Generate Scene 14: Works for every industry
 - [x] Generate Scene 15: Epic CTA finale
-- [x] Concatenate all 15 scenes into realm-crm-promo-final.mp4 (96 seconds, 41MB)
+- [x] Concatenate all 15 scenes into axiom-crm-promo-final.mp4 (96 seconds, 41MB)
 - [x] Upload to CDN
 - [x] Embed in MarketingHome.tsx demo section with scene breakdown
 - [x] Update modal video to use new promo video
 - [x] Add add-user-seats Stripe checkout procedure (backend + Billing UI)
 - [x] Create useFeatureGate hook
 - [x] Create FeatureGate component with locked overlay + upgrade CTA
-- [x] Apply FeatureGate to: Prospects, GhostSequences, SmtpAccounts, ComplianceDashboard, VoiceAgent, RevenueAutopilot, WhiteLabel, RealmAutopilot
+- [x] Apply FeatureGate to: Prospects, GhostSequences, SmtpAccounts, ComplianceDashboard, VoiceAgent, RevenueAutopilot, WhiteLabel, AxiomAutopilot
 
 ## Phase 33: Final Approved Pricing Implementation
 
@@ -1553,14 +1553,14 @@
 - [x] Update Billing.tsx with new pricing and overage explanation
 - [x] Update MarketingHome.tsx pricing grid with 5 tiers
 - [x] Update Signup.tsx with new tier options
-- [x] Update RealmDashboard.tsx admin dropdowns
-- [x] Update useFeatureGate.ts, TenantBilling.tsx, RealmPaymentManagement.tsx display names
+- [x] Update AxiomDashboard.tsx admin dropdowns
+- [x] Update useFeatureGate.ts, TenantBilling.tsx, AxiomPaymentManagement.tsx display names
 - [x] Update subscription-tiers.test.ts — 19 tests passing
 - [x] Save checkpoint
 
 ## Phase 34: Three Square Promo Videos (1080×1080)
 
-- [x] Define full feature comparison list (REALM vs HubSpot, Salesforce, Pipedrive) — green ✓ / red ✗
+- [x] Define full feature comparison list (AXIOM vs HubSpot, Salesforce, Pipedrive) — green ✓ / red ✗
 - [x] Write scene scripts for 30-second, 90-second, and 3-minute videos
 - [x] Build 30-second pitch video — left scrolling comparison, right main content, slow transitions
 - [x] Build 90-second video — left scrolling comparison, right main content, slow transitions
@@ -1591,10 +1591,10 @@
 - [x] GoHighLevel skin: nav labels, colors, terminology
 - [x] Close skin: nav labels, colors, terminology
 - [x] Skin switcher UI in settings + onboarding
-- [x] Graduation flow: "Ready to switch to REALM native?" prompt
+- [x] Graduation flow: "Ready to switch to AXIOM native?" prompt
 - [x] Custom field renderer on contact/company/deal detail pages
 - [x] Activity history timeline on all record pages
-- [x] REALM native Limitless retheme (orange primary, luminous whites)
+- [x] AXIOM native Limitless retheme (orange primary, luminous whites)
 - [x] Vitest tests for migration and skin logic
 - [x] Save checkpoint
 
@@ -1638,7 +1638,7 @@
 - [x] AI migration engine (migration-engine.ts) — LLM field mapper, competitor profiles, import pipeline
 - [x] Migration router (server/routers/migration.ts) — startMigration, getStatus, listJobs
 - [x] MigrationWizard page built (/migration/wizard)
-- [x] SkinContext — 6 competitor skins (HubSpot, Salesforce, Pipedrive, Zoho, GoHighLevel, Close) + REALM native
+- [x] SkinContext — 6 competitor skins (HubSpot, Salesforce, Pipedrive, Zoho, GoHighLevel, Close) + AXIOM native
 - [x] SkinSwitcher component in sidebar footer
 - [x] SkinProvider wired into main.tsx
 - [x] Migration Wizard and System Health routes added to App.tsx
@@ -1675,7 +1675,7 @@
 
 ## Future: Manus Developer Panel (Build Later)
 - [x] Developer-only chat panel in CRM that connects to Manus API
-- [x] CRM-aware LLM configured with full knowledge of REALM CRM codebase
+- [x] CRM-aware LLM configured with full knowledge of AXIOM CRM codebase
 - [x] Upgrade path to real Manus API when available
 
 ## Phase 40: AI Autonomous Engine — COMPLETED
@@ -1697,7 +1697,7 @@
 - [x] System health tables in DB (systemHealthEvents, systemHealthLogs)
 - [x] SystemHealth dashboard UI (/system-health) — developer section only
 - [x] Self-Healing Engine in Developer section only
-- [x] SkinContext — 6 competitor skins (HubSpot, Salesforce, Pipedrive, Zoho, GoHighLevel, Close) + REALM native
+- [x] SkinContext — 6 competitor skins (HubSpot, Salesforce, Pipedrive, Zoho, GoHighLevel, Close) + AXIOM native
 - [x] SkinSwitcher component in sidebar footer
 - [x] SkinProvider wired into main.tsx
 - [x] MigrationWizard page (/migration/wizard) — one-button AI-powered migration
@@ -1705,7 +1705,7 @@
 - [x] Migration router (server/routers/migration.ts) wired into appRouter
 
 ## Future: Manus Developer Panel
-- [x] Developer-only panel inside REALM CRM with embedded Manus chat interface
+- [x] Developer-only panel inside AXIOM CRM with embedded Manus chat interface
 - [x] Connect to Manus API when publicly available
 - [x] CRM-aware LLM fallback until real Manus API is ready
 
@@ -1715,7 +1715,7 @@
 - [x] Remove SkinSwitcher from sidebar — users never choose a skin manually
 - [x] Auto-apply competitor skin immediately on migration completion (stored in user DB record)
 - [x] Skin persists across sessions — user always sees their migrated CRM's look until they graduate
-- [x] Add "Graduate to REALM Native" button in user dropdown menu
+- [x] Add "Graduate to AXIOM Native" button in user dropdown menu
 - [x] Store activeSkin field on user record in DB (skinPreferences table)
 
 ### Competitor UI Layouts (Exact Mirroring)
@@ -1737,8 +1737,8 @@
 - [x] AI field mapper: LLM maps ALL fields including custom, with confidence scores logged (not shown to user)
 - [x] Deduplication: auto-merge exact duplicates, flag fuzzy matches for post-import review
 - [x] Activity history import: calls, emails, notes, meetings all imported with original timestamps
-- [x] Custom objects: create equivalent custom record types in REALM
-- [x] Post-import cheat sheet: AI generates "Your [Competitor] → REALM guide" after migration
+- [x] Custom objects: create equivalent custom record types in AXIOM
+- [x] Post-import cheat sheet: AI generates "Your [Competitor] → AXIOM guide" after migration
 - [x] Migration progress: real-time progress bar with phase labels (Connecting → Analyzing → Mapping → Importing → Deduplicating → Finalizing)
 - [x] Skin auto-applied at completion
 
@@ -1816,7 +1816,7 @@
 ### Phase 44G: Onboarding Concierge
 - [x] Step-by-step guided setup checklist per user (first week tasks)
 - [x] Contextual first-time-use tooltips on major features
-- [x] In-app AI help chat: "How do I do X in REALM?" with specific instructions
+- [x] In-app AI help chat: "How do I do X in AXIOM?" with specific instructions
 - [x] Onboarding progress tracked per user, shown in dashboard
 
 ## Phase 46: Skin-Aware Developer/Owner Experience
@@ -1825,7 +1825,7 @@
 - [x] Wire SkinQAPanel into Settings → Your Preferences → Appearance & Skin
 - [x] Add getClientSkin procedure to migration router (adminProcedure, fetches skin for any user's company)
 - [x] DevImpersonate auto-applies client's skin when a user is selected (useEffect + getClientSkin query)
-- [x] DevImpersonate shows "Viewing in [Client's Skin]" banner when a non-realm skin is active
+- [x] DevImpersonate shows "Viewing in [Client's Skin]" banner when a non-axiom skin is active
 - [x] Fix SkinContext CSS bridging — useEffect now sets --primary, --background, --foreground, --sidebar, --font-sans, --radius, --border, --muted, --ring and all Tailwind 4 tokens directly
 - [x] Apply font-family directly to document.body as belt-and-suspenders for font switching
 - [x] AIEnginePanel uses useSkin() — header icon uses skin.primaryColor, title uses t("ai")
@@ -1866,7 +1866,7 @@
 
 ### 49b: Landing Page Auto-Install Callout
 - [x] Add "Installs itself in 30 seconds" feature section to MarketingHome.tsx
-- [x] Add comparison row vs competitors (all manual vs REALM auto)
+- [x] Add comparison row vs competitors (all manual vs AXIOM auto)
 
 ### 49c: Real-Time Visitor Notifications
 - [x] Server: notifyOwner call when a new identified company session is recorded
@@ -2015,10 +2015,10 @@
 - [ ] Protect all dashboard routes — redirect unauthenticated users to MarketingHome
 - [ ] Test full auth flow end-to-end
 
-## Rebrand: REALM CRM → REALM CRM
-- [ ] Update VITE_APP_TITLE to "REALM CRM"
-- [ ] Update all hardcoded "REALM CRM" references in codebase
+## Rebrand: AXIOM CRM → AXIOM CRM
+- [ ] Update VITE_APP_TITLE to "AXIOM CRM"
+- [ ] Update all hardcoded "AXIOM CRM" references in codebase
 - [ ] Redesign MarketingHome with wealthy blue/champagne palette
-- [ ] Generate REALM CRM hero video
+- [ ] Generate AXIOM CRM hero video
 - [ ] Integrate video and new assets into marketing page
 - [ ] Update index.html title and meta tags

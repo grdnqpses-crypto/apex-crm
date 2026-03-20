@@ -6,7 +6,7 @@ import { Brain, TrendingUp, Layers, Zap, ArrowRight, DollarSign, Truck, BarChart
 import { FeatureGate } from "@/components/FeatureGate";
 import { useSkin } from "@/contexts/SkinContext";
 
-export default function RealmAutopilot() {
+export default function AxiomAutopilot() {
   const { t } = useSkin();
   const { data: lanes, isLoading: lanesLoading } = trpc.autopilot.lanes.useQuery();
   const { data: consolidations, isLoading: consLoading } = trpc.autopilot.consolidations.useQuery();
@@ -27,8 +27,8 @@ export default function RealmAutopilot() {
 
   return (
       <FeatureGate
-        featureKey="realm_autopilot"
-        featureName="REALM Autopilot™"
+        featureKey="axiom_autopilot"
+        featureName="AXIOM Autopilot™"
         description="Full autonomous CRM operation — AI handles prospecting, outreach, follow-up, and deal progression end-to-end. Fortune plan and above."
         freemium={false}
       >
@@ -39,7 +39,7 @@ export default function RealmAutopilot() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Brain className="h-7 w-7 text-crm-premium" />
-            REALM Autopilot
+            AXIOM Autopilot
           </h1>
           <p className="text-muted-foreground mt-1">AI-powered freight consolidation, lane prediction, and autonomous route optimization</p>
         </div>
@@ -192,7 +192,7 @@ export default function RealmAutopilot() {
       <Card className="border-crm-premium/30 bg-crm-premium/5">
         <CardContent className="p-6">
           <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-            <Brain className="h-5 w-5 text-crm-premium" /> How REALM Autopilot Works
+            <Brain className="h-5 w-5 text-crm-premium" /> How AXIOM Autopilot Works
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[

@@ -66,7 +66,7 @@ const FEATURE_GATES: Record<string, number> = {
   voice_agent_unlimited:      4,
   docscan_unlimited:          4,
   revenue_autopilot:          4,
-  realm_autopilot:             4,
+  axiom_autopilot:             4,
   custom_ai_training_basic:   4,
   visitor_tracking_unlimited: 4,
   white_labeling:             4,

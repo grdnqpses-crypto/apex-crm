@@ -76,7 +76,7 @@ const AIEnginePanel = lazy(() => import("./pages/AIEnginePanel"));
 const Subscription = lazy(() => import("./pages/Subscription"));
 const CommandCenter = lazy(() => import("./pages/CommandCenter"));
 const FreightMarketplace = lazy(() => import("./pages/FreightMarketplace"));
-const RealmAutopilot = lazy(() => import("./pages/RealmAutopilot"));
+const AxiomAutopilot = lazy(() => import("./pages/AxiomAutopilot"));
 const EmailMasking = lazy(() => import("./pages/EmailMasking"));
 const Commercial = lazy(() => import("./pages/Commercial"));
 const CalendarSync = lazy(() => import("./pages/CalendarSync"));
@@ -89,7 +89,7 @@ const WorkflowBuilder = lazy(() => import("./pages/WorkflowBuilder"));
 const IntegrationHub = lazy(() => import("./pages/IntegrationHub"));
 const Proposals = lazy(() => import("./pages/Proposals"));
 const Dialer = lazy(() => import("./pages/Dialer"));
-const RealmDashboard = lazy(() => import("./pages/RealmDashboard"));
+const AxiomDashboard = lazy(() => import("./pages/AxiomDashboard"));
 const Signup = lazy(() => import("./pages/Signup"));
 const MarketingHome = lazy(() => import("./pages/MarketingHome"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -97,14 +97,14 @@ const Billing = lazy(() => import("./pages/Billing"));
 const CRMBible = lazy(() => import("./pages/CRMBible"));
 const BillingHistory = lazy(() => import("./pages/BillingHistory"));
 const EmailSetup = lazy(() => import("./pages/EmailSetup"));
-const RealmAiCredits = lazy(() => import("./pages/RealmAiCredits"));
+const AxiomAiCredits = lazy(() => import("./pages/AxiomAiCredits"));
 const AiCreditsWallet = lazy(() => import("./pages/AiCreditsWallet"));
 const BusinessCategorySelector = lazy(() => import("./pages/BusinessCategorySelector"));
 const ShippingReceiving = lazy(() => import("./pages/ShippingReceiving"));
 const AccountsReceivable = lazy(() => import("./pages/AccountsReceivable"));
 const AccountsPayable = lazy(() => import("./pages/AccountsPayable"));
 const TenantBilling = lazy(() => import("./pages/TenantBilling"));
-const RealmPaymentManagement = lazy(() => import("./pages/RealmPaymentManagement"));
+const AxiomPaymentManagement = lazy(() => import("./pages/AxiomPaymentManagement"));
 const RottenDeals = lazy(() => import("./pages/RottenDeals"));
 const WinLossAnalysis = lazy(() => import("./pages/WinLossAnalysis"));
 const AuditLogs = lazy(() => import("./pages/AuditLogs"));
@@ -213,7 +213,7 @@ function Router() {
           <Route path="/subscription" component={Subscription} />
           <Route path="/command-center" component={CommandCenter} />
           <Route path="/freight-marketplace" component={FreightMarketplace} />
-          <Route path="/realm-autopilot" component={RealmAutopilot} />
+          <Route path="/axiom-autopilot" component={AxiomAutopilot} />
           <Route path="/email-masking" component={EmailMasking} />
           <Route path="/commercial" component={Commercial} />
           <Route path="/calendar-sync" component={CalendarSync} />
@@ -226,19 +226,19 @@ function Router() {
           <Route path="/integration-hub" component={IntegrationHub} />
           <Route path="/proposals" component={Proposals} />
           <Route path="/dialer" component={Dialer} />
-          <Route path="/realm" component={RealmDashboard} />
+          <Route path="/axiom" component={AxiomDashboard} />
           <Route path="/help" component={HelpCenter} />
           <Route path="/crm-bible" component={CRMBible} />
           <Route path="/billing-history" component={BillingHistory} />
           <Route path="/email-setup" component={EmailSetup} />
-          <Route path="/realm/ai-credits" component={RealmAiCredits} />
+          <Route path="/axiom/ai-credits" component={AxiomAiCredits} />
           <Route path="/settings/ai-credits" component={AiCreditsWallet} />
           <Route path="/settings/business-type" component={BusinessCategorySelector} />
           <Route path="/shipping-receiving" component={ShippingReceiving} />
           <Route path="/accounts-receivable" component={AccountsReceivable} />
           <Route path="/accounts-payable" component={AccountsPayable} />
           <Route path="/settings/billing" component={TenantBilling} />
-          <Route path="/realm/payments" component={RealmPaymentManagement} />
+          <Route path="/axiom/payments" component={AxiomPaymentManagement} />
           <Route path="/rotten-deals" component={RottenDeals} />
           <Route path="/win-loss" component={WinLossAnalysis} />
           <Route path="/audit-logs" component={AuditLogs} />
