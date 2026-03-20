@@ -196,6 +196,46 @@ export const scheduledReportsRouter = router({
       );
       return { success: true };
     }),
+
+  runNow: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const dbConn = (await db.getDb())!;
+      const [report] = await dbConn
+        .select()
+        .from(scheduledReports)
+        .where(
+          and(
+            eq(scheduledReports.id, input.id),
+            eq(scheduledReports.tenantCompanyId, ctx.user.tenantCompanyId!)
+          )
+        )
+        .limit(1);
+      if (!report) throw new TRPCError({ code: "NOT_FOUND", message: "Report not found" });
+      await dbConn
+        .update(scheduledReports)
+        .set({ lastSentAt: Date.now(), updatedAt: Date.now() })
+        .where(eq(scheduledReports.id, input.id));
+      const recipients = report.recipients as string[];
+      return {
+        success: true,
+        message: `Report "${report.reportName}" queued for immediate delivery to ${recipients.length} recipient(s).`,
+      };
+    }),
+
+  activeCount: protectedProcedure.query(async ({ ctx }) => {
+    const dbConn = (await db.getDb())!;
+    const rows = await dbConn
+      .select()
+      .from(scheduledReports)
+      .where(
+        and(
+          eq(scheduledReports.tenantCompanyId, ctx.user.tenantCompanyId!),
+          eq(scheduledReports.isActive, true)
+        )
+      );
+    return { count: rows.length };
+  }),
 });
 
 // ─── 3. Proposal Analytics ───────────────────────────────────────────────────

@@ -399,6 +399,15 @@ function DashboardLayoutContent({
   const { data: myCompany } = trpc.tenants.myCompany.useQuery(undefined, { enabled: !!user });
   // White-label: only Company Admin and above see "powered by AXIOM"
   const showAxiomBranding = isDeveloper || isAxiomOwner || isAdmin;
+  // ─── Sidebar badges ───
+  const { data: unreadNotifRaw } = trpc.smartNotifications.unreadCount.useQuery(undefined, { enabled: !!user, refetchInterval: 60000 });
+  const { data: activeReportsData } = trpc.scheduledReports.activeCount.useQuery(undefined, { enabled: !!user, refetchInterval: 300000 });
+  const unreadNotifCount = (unreadNotifRaw as number) ?? 0;
+  const activeReportsCount = activeReportsData?.count ?? 0;
+  const sidebarBadges: Record<string, number> = {
+    "/smart-notifications": unreadNotifCount,
+    "/scheduled-reports": activeReportsCount,
+  };
 
   // ─── Skin system ───
   const { skin, skinId, graduateToAxiom, migratedFrom } = useSkin();
@@ -573,7 +582,12 @@ function DashboardLayoutContent({
                           style={isActive ? { background: `${skin.primaryColor}14`, color: skin.primaryColor } : {}}
                         >
                           <item.icon className="h-4 w-4" style={isActive ? { color: skin.primaryColor } : {}} />
-                          <span>{item.label}</span>
+                          <span className="flex-1">{item.label}</span>
+                          {sidebarBadges[item.path] > 0 && (
+                            <span className="ml-auto text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1" style={{ background: skin.primaryColor, color: '#fff' }}>
+                              {sidebarBadges[item.path] > 99 ? '99+' : sidebarBadges[item.path]}
+                            </span>
+                          )}
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     );

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { CalendarClock, Plus, Trash2, Mail, BarChart3, FileText, TrendingUp } from "lucide-react";
+import { CalendarClock, Plus, Trash2, Mail, BarChart3, FileText, TrendingUp, Play } from "lucide-react";
 import { toast } from "sonner";
 
 const REPORT_TYPES = [
@@ -54,6 +54,11 @@ export default function ScheduledReports() {
       toast.success("Report deleted");
       utils.scheduledReports.list.invalidate();
     },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const runNow = trpc.scheduledReports.runNow.useMutation({
+    onSuccess: (data) => toast.success(data.message),
     onError: (e) => toast.error(e.message),
   });
 
@@ -219,6 +224,17 @@ export default function ScheduledReports() {
                           onCheckedChange={(checked) => toggle.mutate({ id: r.id, isActive: checked })}
                         />
                       </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-blue-600 border-blue-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 gap-1.5"
+                        onClick={() => runNow.mutate({ id: r.id })}
+                        disabled={runNow.isPending}
+                        title="Send this report immediately"
+                      >
+                        <Play className="w-3.5 h-3.5" />
+                        Run Now
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
