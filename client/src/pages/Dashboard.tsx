@@ -293,6 +293,35 @@ export default function Dashboard() {
     onError: (e) => toast.error(e.message),
   });
 
+  const setFaviconMutation = trpc.tenants.setFavicon.useMutation({
+    onSuccess: (data) => {
+      // Inject favicon link tag dynamically
+      const existingLink = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+      if (existingLink) {
+        existingLink.href = data.faviconUrl;
+      } else {
+        const link = document.createElement('link');
+        link.rel = 'icon';
+        link.type = 'image/png';
+        link.href = data.faviconUrl;
+        document.head.appendChild(link);
+      }
+      toast.success('Favicon updated! The browser tab icon now shows your logo.');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const regenerateWithSameStyleMutation = trpc.tenants.regenerateWithSameStyle.useMutation({
+    onSuccess: (data) => {
+      setPreviewLogoUrl(data.logoUrl);
+      setLogoStep('preview');
+      setShowLogoDialog(true);
+      refetchLogoHistory();
+      toast.success('New variation generated!');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   // Auto-generate logo on first load if company has no logo
   useEffect(() => {
     if (company && !company.logoUrl && !autoBannerLogoUrl && !bannerDismissed) {
@@ -672,6 +701,18 @@ export default function Dashboard() {
                   Share Logo (Copy Link)
                 </Button>
                 <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => {
+                    if (!previewLogoUrl) return;
+                    setFaviconMutation.mutate({ faviconUrl: previewLogoUrl });
+                  }}
+                  disabled={setFaviconMutation.isPending}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M2 12h20"/></svg>
+                  {setFaviconMutation.isPending ? 'Setting Favicon...' : 'Set as Favicon'}
+                </Button>
+                <Button
                   variant="ghost"
                   className="w-full text-muted-foreground"
                   onClick={() => {
@@ -866,12 +907,12 @@ export default function Dashboard() {
                               restoreLogoMutation.mutate({ logoUrl: entry.logoUrl });
                               setShowLogoDialog(false);
                             }}
+                            title={isActive ? 'Currently active logo' : entry.prompt ? `Prompt: ${entry.prompt}` : 'Click to restore'}
                             className={`group relative rounded-xl border p-3 transition-all aspect-square flex items-center justify-center ${
                               isActive
                                 ? 'border-primary bg-primary/10 ring-2 ring-primary/30'
                                 : 'border-border/40 bg-muted/30 hover:border-primary/40 hover:bg-accent/30'
                             }`}
-                            title={isActive ? 'Currently active logo' : 'Click to restore this logo'}
                           >
                             <img src={entry.logoUrl} alt="Logo history" className="h-full w-full object-contain" />
                             {/* Active badge */}
@@ -902,6 +943,25 @@ export default function Dashboard() {
                           </button>
                         );
                       })}
+                    </div>
+                    {/* Regenerate with Same Style — shown when hovering a history entry */}
+                    <div className="pt-2">
+                      <p className="text-xs text-muted-foreground mb-2">Want a variation of a past logo?</p>
+                      <div className="flex flex-col gap-1.5">
+                        {logoHistory.slice(0, 3).map((entry, idx) => (
+                          <Button
+                            key={entry.id}
+                            variant="outline"
+                            size="sm"
+                            className="w-full justify-start gap-2 text-xs"
+                            disabled={regenerateWithSameStyleMutation.isPending}
+                            onClick={() => regenerateWithSameStyleMutation.mutate({ historyId: entry.id })}
+                          >
+                            <img src={entry.logoUrl} alt="" className="h-5 w-5 rounded object-contain shrink-0" />
+                            {regenerateWithSameStyleMutation.isPending ? 'Generating...' : `Regenerate style ${idx + 1}`}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}

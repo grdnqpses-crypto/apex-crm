@@ -1920,3 +1920,10 @@
 - [x] DashboardLayout sidebar: show company logo next to company name (already implemented, verified)
 - [x] Server: deleteLogoHistoryEntry procedure (delete by id, only owner can delete)
 - [x] History tab: ✕ delete button on hover for each history entry
+
+## Phase 56: Logo — Favicon, Email Templates, Regenerate Style
+- [x] Server: setFavicon procedure — store faviconUrl on tenant_companies, return URL
+- [x] Server: regenerateWithSameStyle procedure — re-run generateImage with original prompt from history entry
+- [x] Frontend: "Set as Favicon" button in preview step — calls setFavicon, injects <link rel="icon"> dynamically
+- [x] Frontend: "Regenerate with Same Style" buttons in History tab (top 3 entries)
+- [x] Email templates: auto-embed company logoUrl at top of all outgoing CRM campaign emails

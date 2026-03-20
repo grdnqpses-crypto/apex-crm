@@ -647,9 +647,25 @@ export const appRouter = router({
       const settings = await db.getSenderSettings(ctx.user.id);
       const complianceResult = db.runComplianceCheck({ htmlContent: campaign.htmlContent, subject: campaign.subject, fromEmail: campaign.fromEmail, toEmail: contactList[0].email, senderSettings: settings, isSuppressed: false });
       if (!complianceResult.passed) throw new Error(`Compliance check failed: ${complianceResult.failures.join(', ')}`);
+      // Inject company logo at top of email if tenant has one
+      let finalHtml = campaign.htmlContent;
+      if (ctx.user.tenantCompanyId) {
+        const company = await db.getTenantCompanyById(ctx.user.tenantCompanyId);
+        if (company?.logoUrl) {
+          const logoHeader = `<div style="text-align:center;padding:20px 0 12px;border-bottom:1px solid #eee;margin-bottom:16px">
+            <img src="${company.logoUrl}" alt="${company.name || 'Company'}" style="max-height:60px;max-width:200px;object-fit:contain" />
+          </div>`;
+          // Insert after opening <body> tag, or prepend if no body tag
+          if (finalHtml.includes('<body')) {
+            finalHtml = finalHtml.replace(/(<body[^>]*>)/i, `$1${logoHeader}`);
+          } else {
+            finalHtml = logoHeader + finalHtml;
+          }
+        }
+      }
       // Queue emails
       const emails = contactList.map((c: any) => ({ email: c.email, contactId: c.id, firstName: c.firstName }));
-      const queued = await db.queueCampaignEmails(input.id, ctx.user.id, emails, campaign.subject, campaign.htmlContent, campaign.fromEmail);
+      const queued = await db.queueCampaignEmails(input.id, ctx.user.id, emails, campaign.subject, finalHtml, campaign.fromEmail);
       await db.updateCampaign(input.id, ctx.user.id, { status: 'sending' });
       return { queued, total: contactList.length, skippedSuppressed: contactList.length - queued };
     }),
@@ -2079,6 +2095,54 @@ export const appRouter = router({
           )
         );
       return { success: true };
+    }),
+
+    // Set favicon URL on the tenant company
+    setFavicon: protectedProcedure.input(z.object({
+      faviconUrl: z.string().url(),
+    })).mutation(async ({ ctx, input }) => {
+      const isAdmin = ["developer", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
+      if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST" });
+      await db.updateTenantCompany(ctx.user.tenantCompanyId, { faviconUrl: input.faviconUrl, updatedAt: Date.now() } as any);
+      return { faviconUrl: input.faviconUrl };
+    }),
+
+    // Regenerate a logo using the same prompt as a history entry
+    regenerateWithSameStyle: protectedProcedure.input(z.object({
+      historyId: z.number().int().positive(),
+    })).mutation(async ({ ctx, input }) => {
+      if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST" });
+      const dbConn = await (await import("./db.js")).getDb();
+      if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const { logoGenerations } = await import("../drizzle/schema.js");
+      const { eq, and } = await import("drizzle-orm");
+      // Fetch the original history entry
+      const [entry] = await dbConn
+        .select()
+        .from(logoGenerations)
+        .where(and(
+          eq(logoGenerations.id, input.historyId),
+          eq(logoGenerations.tenantCompanyId, ctx.user.tenantCompanyId)
+        ))
+        .limit(1);
+      if (!entry) throw new TRPCError({ code: "NOT_FOUND", message: "History entry not found" });
+      const { generateImage } = await import("./_core/imageGeneration.js");
+      const result = await generateImage({ prompt: entry.prompt || "Professional business logo" });
+      if (!result?.url) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Image generation failed" });
+      const { storagePut } = await import("./storage.js");
+      const response = await fetch(result.url);
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const key = `company-logos/${ctx.user.tenantCompanyId}-logo-regen-${Date.now()}.png`;
+      const { url: s3Url } = await storagePut(key, buffer, "image/png");
+      // Save to history
+      await dbConn.insert(logoGenerations).values({
+        tenantCompanyId: ctx.user.tenantCompanyId,
+        logoUrl: s3Url,
+        prompt: entry.prompt,
+        createdAt: Date.now(),
+      });
+      return { logoUrl: s3Url };
     }),
 
     // Upload logo file (accepts base64 data URL)
