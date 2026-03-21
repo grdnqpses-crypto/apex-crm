@@ -1,0 +1,11 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `skin_preferences` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `tenantCompanyId` int NOT NULL,\n  `skin` varchar(50) NOT NULL DEFAULT 'salesforce',\n  `migratedFrom` varchar(50) DEFAULT NULL,\n  `graduatedToAxiom` tinyint(1) NOT NULL DEFAULT 0,\n  `graduatedAt` bigint DEFAULT NULL,\n  `updatedAt` bigint NOT NULL DEFAULT (UNIX_TIMESTAMP() * 1000),\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `skin_preferences_tenantCompanyId_unique` (`tenantCompanyId`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute CREATE TABLE IF NOT EXISTS `skin_preferences` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `tenantCompanyId` int NOT NULL,\n  `skin` varchar(50) NOT NULL DEFAULT 'salesforce',\n  `migratedFrom` varchar(50) DEFAULT NULL,\n  `graduatedToAxiom` tinyint(1) NOT NULL DEFAULT 0,\n  `graduatedAt` bigint DEFAULT NULL,\n  `updatedAt` bigint NOT NULL DEFAULT (UNIX_TIMESTAMP() * 1000),\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `skin_preferences_tenantCompanyId_unique` (`tenantCompanyId`)\n);",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 8 column 58 near \"* 1000),",
+    "  PRIMARY KEY (`id`),",
+    "  UNIQUE KEY `skin_preferences_tenantCompanyId_unique` (`tenantCompanyId`)",
+    ")\""
+  ]
+}

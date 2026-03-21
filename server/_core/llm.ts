@@ -343,31 +343,31 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  // Strategy: Try Gemini first (user's own key), fall back to Forge
+  // Strategy: Use Forge API first (built-in, no quota limits). Fall back to Gemini only if Forge is unavailable.
   let response: Response | null = null;
 
-  if (ENV.geminiApiKey) {
-    try {
-      response = await callGemini(payload);
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.warn(`[LLM] Gemini failed (${response.status}): ${errorText.substring(0, 200)}`);
-        response = null; // Fall through to Forge
-      }
-    } catch (err: any) {
-      console.warn(`[LLM] Gemini network error: ${err.message}`);
-      response = null;
-    }
-  }
-
-  // Fallback to Forge if Gemini failed or not configured
-  if (!response && ENV.forgeApiKey) {
+  if (ENV.forgeApiKey) {
     try {
       response = await callForge(payload);
       if (!response.ok) {
         const errorText = await response.text();
+        console.warn(`[LLM] Forge failed (${response.status}): ${errorText.substring(0, 200)}`);
+        response = null; // Fall through to Gemini
+      }
+    } catch (err: any) {
+      console.warn(`[LLM] Forge network error: ${err.message}`);
+      response = null;
+    }
+  }
+
+  // Fallback to Gemini if Forge failed or not configured
+  if (!response && ENV.geminiApiKey) {
+    try {
+      response = await callGemini(payload);
+      if (!response.ok) {
+        const errorText = await response.text();
         throw new Error(
-          `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
+          `LLM invoke failed (Gemini): ${response.status} ${response.statusText} – ${errorText}`
         );
       }
     } catch (err: any) {

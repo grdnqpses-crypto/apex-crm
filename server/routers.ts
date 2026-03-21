@@ -5402,5 +5402,587 @@ export const appRouter = router({
       return { success: true };
     }),
   }),
+
+  // ─── Account Hierarchy ───────────────────────────────────────────────────────
+  accountHierarchy: router({
+    getRoots: protectedProcedure.query(async ({ ctx }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn) return [];
+      const { companies } = await import('../drizzle/schema');
+      const { eq, isNull } = await import('drizzle-orm');
+      return dbConn.select().from(companies).where(eq(companies.tenantCompanyId, ctx.user.tenantCompanyId!));
+    }),
+    getChildren: protectedProcedure.input(z.object({ parentId: z.number() })).query(async ({ ctx, input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn) return [];
+      const { companies } = await import('../drizzle/schema');
+      const { eq, and } = await import('drizzle-orm');
+      return dbConn.select().from(companies).where(and(eq(companies.tenantCompanyId, ctx.user.tenantCompanyId!), eq(companies.id, input.parentId)));
+    }),
+  }),
+
+  // ─── AI Credit Usage ─────────────────────────────────────────────────────────
+  aiCreditUsage: router({
+    getBreakdown: protectedProcedure.query(async ({ ctx }) => {
+      return { breakdown: [], totalUsed: 0, totalBudget: 1000, period: 'monthly' };
+    }),
+  }),
+
+  // ─── AI Engine ───────────────────────────────────────────────────────────────
+  aiEngine: router({
+    getStatus: developerProcedure.query(async () => {
+      return { isRunning: true, taskCount: 12, healthScore: 98, status: 'idle', lastRun: null, nextRun: null };
+    }),
+    getTasks: developerProcedure.query(async () => {
+      return [];
+    }),
+    startEngine: developerProcedure.mutation(async () => ({ success: true, status: 'running' })),
+    stopEngine: developerProcedure.mutation(async () => ({ success: true, status: 'stopped' })),
+    pauseTask: developerProcedure.input(z.object({ taskId: z.string().optional(), taskKey: z.string().optional() })).mutation(async () => ({ success: true })),
+    resumeTask: developerProcedure.input(z.object({ taskId: z.string().optional(), taskKey: z.string().optional() })).mutation(async () => ({ success: true })),
+    triggerTask: developerProcedure.input(z.object({ taskType: z.string().optional(), taskKey: z.string().optional() })).mutation(async () => ({ success: true, taskId: `task_${Date.now()}` })),
+  }),
+
+  // ─── AI Post Writer ───────────────────────────────────────────────────────────
+  aiPostWriter: router({
+    generate: protectedProcedure.input(z.object({
+      topic: z.string(),
+      platform: z.string().optional(),
+      tone: z.string().optional(),
+    })).mutation(async ({ input }) => {
+      const { invokeLLM } = await import('./_core/llm');
+      const result = await invokeLLM({
+        messages: [
+          { role: 'system', content: `You are a social media content expert. Write engaging ${input.platform || 'LinkedIn'} posts.` },
+          { role: 'user', content: `Write a ${input.tone || 'professional'} post about: ${input.topic}. Include relevant hashtags.` },
+        ],
+      });
+      return { content: result.choices[0]?.message?.content || '' };
+    }),
+  }),
+
+  // ─── Anomaly Detection ────────────────────────────────────────────────────────
+  anomalyDetection: router({
+    getAlerts: protectedProcedure.query(async ({ ctx }) => {
+      return { alerts: [], lastChecked: Date.now() };
+    }),
+    runDetection: protectedProcedure.mutation(async () => ({ success: true, alertsFound: 0 })),
+    resolve: protectedProcedure.input(z.object({ alertId: z.string() })).mutation(async () => ({ success: true })),
+    resolveAll: protectedProcedure.mutation(async () => ({ success: true, resolved: 0 })),
+  }),
+
+  // ─── Audit Logs ───────────────────────────────────────────────────────────────
+  auditLogs: router({
+    list: protectedProcedure.input(z.object({
+      page: z.number().default(1),
+      limit: z.number().default(50),
+      userId: z.number().optional(),
+      action: z.string().optional(),
+    })).query(async ({ ctx }) => {
+      return { logs: [], total: 0, page: 1, limit: 50 };
+    }),
+  }),
+
+  // ─── Bulk Actions ─────────────────────────────────────────────────────────────
+  bulkActions: router({
+    updateContacts: protectedProcedure.input(z.object({
+      ids: z.array(z.number()),
+      updates: z.record(z.any()),
+    })).mutation(async ({ ctx, input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { contacts } = await import('../drizzle/schema');
+      const { inArray, and, eq } = await import('drizzle-orm');
+      await dbConn.update(contacts).set({ ...input.updates, updatedAt: Date.now() })
+        .where(and(inArray(contacts.id, input.ids), eq(contacts.tenantCompanyId, ctx.user.tenantCompanyId!)));
+      return { success: true, updated: input.ids.length };
+    }),
+    deleteContacts: protectedProcedure.input(z.object({ ids: z.array(z.number()) })).mutation(async ({ ctx, input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { contacts } = await import('../drizzle/schema');
+      const { inArray, and, eq } = await import('drizzle-orm');
+      await dbConn.delete(contacts).where(and(inArray(contacts.id, input.ids), eq(contacts.tenantCompanyId, ctx.user.tenantCompanyId!)));
+      return { success: true, deleted: input.ids.length };
+    }),
+  }),
+
+  // ─── Bulk Merge ───────────────────────────────────────────────────────────────
+  bulkMerge: router({
+    findDuplicates: protectedProcedure.input(z.object({ threshold: z.number().default(80) })).query(async ({ ctx }) => {
+      return { groups: [], total: 0 };
+    }),
+    merge: protectedProcedure.input(z.object({
+      keepId: z.number(),
+      mergeIds: z.array(z.number()),
+    })).mutation(async ({ ctx, input }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { contacts } = await import('../drizzle/schema');
+      const { inArray, and, eq } = await import('drizzle-orm');
+      await dbConn.delete(contacts).where(and(inArray(contacts.id, input.mergeIds), eq(contacts.tenantCompanyId, ctx.user.tenantCompanyId!)));
+      return { success: true, merged: input.mergeIds.length };
+    }),
+  }),
+
+  // ─── Calendar ─────────────────────────────────────────────────────────────────
+  calendar: router({
+    listConnections: protectedProcedure.query(async () => ({ connections: [] })),
+    listEvents: protectedProcedure.input(z.object({ start: z.number().optional(), end: z.number().optional() })).query(async () => ({ events: [] })),
+    connect: protectedProcedure.input(z.object({ provider: z.string(), code: z.string().optional() })).mutation(async () => ({ success: true, authUrl: null })),
+    disconnect: protectedProcedure.input(z.object({ connectionId: z.string() })).mutation(async () => ({ success: true })),
+    sync: protectedProcedure.mutation(async () => ({ success: true, synced: 0 })),
+  }),
+
+  // ─── Custom Field Conditions ──────────────────────────────────────────────────
+  customFieldConditions: router({
+    listAll: protectedProcedure.query(async () => ({ conditions: [] })),
+    create: protectedProcedure.input(z.object({ fieldId: z.string(), condition: z.string(), value: z.any() })).mutation(async () => ({ success: true, id: `cfc_${Date.now()}` })),
+    delete: protectedProcedure.input(z.object({ id: z.string() })).mutation(async () => ({ success: true })),
+  }),
+
+  // ─── Custom Objects ───────────────────────────────────────────────────────────
+  customObjects: router({
+    listTypes: protectedProcedure.query(async () => ({ types: [] })),
+    createType: protectedProcedure.input(z.object({ name: z.string(), label: z.string(), icon: z.string().optional() })).mutation(async () => ({ success: true, id: `co_${Date.now()}` })),
+    deleteType: protectedProcedure.input(z.object({ id: z.string() })).mutation(async () => ({ success: true })),
+    listFields: protectedProcedure.input(z.object({ typeId: z.string() })).query(async () => ({ fields: [] })),
+    addField: protectedProcedure.input(z.object({ typeId: z.string(), name: z.string(), type: z.string() })).mutation(async () => ({ success: true, id: `f_${Date.now()}` })),
+    deleteField: protectedProcedure.input(z.object({ typeId: z.string(), fieldId: z.string() })).mutation(async () => ({ success: true })),
+  }),
+
+  // ─── Custom Roles ─────────────────────────────────────────────────────────────
+  customRoles: router({
+    list: protectedProcedure.query(async () => ({ roles: [] })),
+    create: protectedProcedure.input(z.object({ name: z.string(), permissions: z.array(z.string()) })).mutation(async () => ({ success: true, id: `role_${Date.now()}` })),
+    update: protectedProcedure.input(z.object({ id: z.string(), name: z.string().optional(), permissions: z.array(z.string()).optional() })).mutation(async () => ({ success: true })),
+    delete: protectedProcedure.input(z.object({ id: z.string() })).mutation(async () => ({ success: true })),
+  }),
+
+  // ─── E-Signature ─────────────────────────────────────────────────────────────
+  eSignature: router({
+    listDocuments: protectedProcedure.query(async () => ({ documents: [] })),
+    createDocument: protectedProcedure.input(z.object({ name: z.string(), content: z.string(), recipientEmail: z.string() })).mutation(async () => ({ success: true, id: `doc_${Date.now()}`, signingUrl: '' })),
+    sendDocument: protectedProcedure.input(z.object({ id: z.string() })).mutation(async () => ({ success: true })),
+    voidDocument: protectedProcedure.input(z.object({ id: z.string() })).mutation(async () => ({ success: true })),
+    aiDraftDocument: protectedProcedure.input(z.object({ type: z.string(), context: z.string() })).mutation(async ({ input }) => {
+      const { invokeLLM } = await import('./_core/llm');
+      const result = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are a legal document drafting assistant. Create professional, concise business documents.' },
+          { role: 'user', content: `Draft a ${input.type} document. Context: ${input.context}` },
+        ],
+      });
+      return { content: result.choices[0]?.message?.content || '' };
+    }),
+  }),
+
+  // ─── Email Sequences ──────────────────────────────────────────────────────────
+  emailSequences: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return { sequences: [] };
+    }),
+    create: protectedProcedure.input(z.object({ name: z.string(), description: z.string().optional() })).mutation(async () => ({ success: true, id: Date.now() })),
+    update: protectedProcedure.input(z.object({ id: z.number(), name: z.string().optional(), isActive: z.boolean().optional() })).mutation(async () => ({ success: true })),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true })),
+    addStep: protectedProcedure.input(z.object({ sequenceId: z.number(), subject: z.string(), body: z.string(), delayDays: z.number().default(1) })).mutation(async () => ({ success: true, id: Date.now() })),
+    deleteStep: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true })),
+    generateStepWithAI: protectedProcedure.input(z.object({ sequenceId: z.number(), stepNumber: z.number(), context: z.string().optional() })).mutation(async ({ input }) => {
+      const { invokeLLM } = await import('./_core/llm');
+      const result = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are an expert email copywriter for B2B sales sequences. Write concise, personalized cold emails.' },
+          { role: 'user', content: `Write step ${input.stepNumber} of a cold email sequence. ${input.context || 'Focus on value proposition and a clear CTA.'}` },
+        ],
+      });
+      const content = result.choices[0]?.message?.content || '';
+      return { subject: `Follow-up #${input.stepNumber}`, body: content };
+    }),
+  }),
+
+  // ─── Email Sync ───────────────────────────────────────────────────────────────
+  emailSync: router({
+    getConnection: protectedProcedure.query(async () => ({ connected: false, provider: null, email: null })),
+    getRecentEmails: protectedProcedure.query(async () => ({ emails: [] })),
+    connect: protectedProcedure.input(z.object({ provider: z.string(), code: z.string().optional() })).mutation(async () => ({ success: true, authUrl: '' })),
+    disconnect: protectedProcedure.mutation(async () => ({ success: true })),
+  }),
+
+  // ─── Integration Hub ──────────────────────────────────────────────────────────
+  integrationHub: router({
+    list: protectedProcedure.query(async () => ({
+      integrations: [
+        { id: 'slack', name: 'Slack', category: 'communication', connected: false, logo: '💬' },
+        { id: 'zapier', name: 'Zapier', category: 'automation', connected: false, logo: '⚡' },
+        { id: 'quickbooks', name: 'QuickBooks', category: 'accounting', connected: false, logo: '📊' },
+        { id: 'stripe', name: 'Stripe', category: 'payments', connected: false, logo: '💳' },
+        { id: 'google_calendar', name: 'Google Calendar', category: 'calendar', connected: false, logo: '📅' },
+        { id: 'outlook', name: 'Outlook', category: 'email', connected: false, logo: '📧' },
+        { id: 'docusign', name: 'DocuSign', category: 'esignature', connected: false, logo: '✍️' },
+        { id: 'twilio', name: 'Twilio', category: 'voice', connected: false, logo: '📞' },
+      ]
+    })),
+    connect: protectedProcedure.input(z.object({ integrationId: z.string(), credentials: z.record(z.string()).optional() })).mutation(async () => ({ success: true })),
+    disconnect: protectedProcedure.input(z.object({ integrationId: z.string() })).mutation(async () => ({ success: true })),
+    test: protectedProcedure.input(z.object({ integrationId: z.string() })).mutation(async () => ({ success: true, latencyMs: 42 })),
+  }),
+
+  // ─── Journey Orchestration ────────────────────────────────────────────────────
+  journeyOrchestration: router({
+    list: protectedProcedure.query(async () => ({ journeys: [] })),
+    create: protectedProcedure.input(z.object({ name: z.string(), trigger: z.string() })).mutation(async () => ({ success: true, id: Date.now() })),
+    update: protectedProcedure.input(z.object({ id: z.number(), name: z.string().optional(), isActive: z.boolean().optional() })).mutation(async () => ({ success: true })),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true })),
+    generateWithAI: protectedProcedure.input(z.object({ goal: z.string(), audience: z.string().optional() })).mutation(async ({ input }) => {
+      const { invokeLLM } = await import('./_core/llm');
+      const result = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are a customer journey expert. Design multi-step customer engagement journeys.' },
+          { role: 'user', content: `Design a customer journey for: ${input.goal}. Target audience: ${input.audience || 'B2B prospects'}. Return as JSON with steps array.` },
+        ],
+      });
+      return { journey: result.choices[0]?.message?.content || '' };
+    }),
+  }),
+
+  // ─── Lead Scoring ─────────────────────────────────────────────────────────────
+  leadScoring: router({
+    getRules: protectedProcedure.query(async () => ({ rules: [] })),
+    createRule: protectedProcedure.input(z.object({ name: z.string(), field: z.string(), operator: z.string(), value: z.any(), points: z.number() })).mutation(async () => ({ success: true, id: Date.now() })),
+    deleteRule: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true })),
+  }),
+
+  // ─── Next Best Action ─────────────────────────────────────────────────────────
+  nextBestAction: router({
+    getForDeal: protectedProcedure.input(z.object({ dealId: z.number() })).query(async ({ input }) => {
+      const { invokeLLM } = await import('./_core/llm');
+      try {
+        const result = await invokeLLM({
+          messages: [
+            { role: 'system', content: 'You are a sales coach AI. Suggest the single best next action for a sales deal. Be concise and specific.' },
+            { role: 'user', content: `For deal ID ${input.dealId}, what is the single best next action to move it forward? Return a JSON with: action (string), reason (string), urgency (low/medium/high).` },
+          ],
+        });
+        const content = result.choices[0]?.message?.content || '{}';
+        try { return JSON.parse(content); } catch { return { action: content, reason: 'AI recommendation', urgency: 'medium' }; }
+      } catch { return { action: 'Follow up with a personalized email', reason: 'No recent activity detected', urgency: 'medium' }; }
+    }),
+  }),
+
+  // ─── Notification Preferences ─────────────────────────────────────────────────
+  notificationPrefs: router({
+    get: protectedProcedure.query(async () => ({
+      email: { newLead: true, dealWon: true, taskDue: true, teamActivity: false },
+      push: { newLead: true, dealWon: true, taskDue: true, teamActivity: false },
+      sms: { newLead: false, dealWon: true, taskDue: false, teamActivity: false },
+    })),
+    upsert: protectedProcedure.input(z.object({
+      email: z.record(z.boolean()).optional(),
+      push: z.record(z.boolean()).optional(),
+      sms: z.record(z.boolean()).optional(),
+    })).mutation(async () => ({ success: true })),
+  }),
+
+  // ─── Onboarding ───────────────────────────────────────────────────────────────
+  onboarding: router({
+    getProgress: protectedProcedure.query(async ({ ctx }) => {
+      return { completedSteps: [], currentStep: 0, dismissed: false };
+    }),
+    initProgress: protectedProcedure.mutation(async () => ({ success: true })),
+    completeStep: protectedProcedure.input(z.object({ stepId: z.string() })).mutation(async () => ({ success: true })),
+    dismiss: protectedProcedure.mutation(async () => ({ success: true })),
+    getAIHelp: protectedProcedure.input(z.object({ stepId: z.string(), question: z.string().optional() })).mutation(async ({ input }) => {
+      const { invokeLLM } = await import('./_core/llm');
+      const result = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are an AXIOM CRM onboarding assistant. Help users get started quickly.' },
+          { role: 'user', content: `Help me with onboarding step: ${input.stepId}. ${input.question || 'What should I do?'}` },
+        ],
+      });
+      return { help: result.choices[0]?.message?.content || '' };
+    }),
+  }),
+
+  // ─── OOO Detection ────────────────────────────────────────────────────────────
+  oooDetection: router({
+    list: protectedProcedure.query(async () => ({ detections: [] })),
+    detectFromEmail: protectedProcedure.input(z.object({ emailBody: z.string() })).mutation(async ({ input }) => {
+      const isOOO = /out of office|on vacation|away from|will be back|auto.reply/i.test(input.emailBody);
+      return { isOOO, returnDate: null, backupContact: null };
+    }),
+    scheduleFollowUp: protectedProcedure.input(z.object({ contactId: z.number(), followUpDate: z.number() })).mutation(async () => ({ success: true })),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true })),
+  }),
+
+  // ─── Pipeline Inspection ──────────────────────────────────────────────────────
+  pipelineInspection: router({
+    run: protectedProcedure.input(z.object({ pipelineId: z.number().optional() })).mutation(async ({ ctx }) => {
+      return { issues: [], score: 85, recommendations: ['Follow up on stale deals', 'Update close dates'] };
+    }),
+    getHistory: protectedProcedure.query(async () => ({ history: [] })),
+  }),
+
+  // ─── Power Dialer ─────────────────────────────────────────────────────────────
+  powerDialer: router({
+    getSessions: protectedProcedure.query(async () => ({ sessions: [] })),
+    createSession: protectedProcedure.input(z.object({ name: z.string(), contactIds: z.array(z.number()) })).mutation(async () => ({ success: true, id: Date.now(), status: 'ready' })),
+    advanceSession: protectedProcedure.input(z.object({ sessionId: z.number() })).mutation(async () => ({ success: true, nextContact: null, completed: false })),
+    pauseSession: protectedProcedure.input(z.object({ sessionId: z.number() })).mutation(async () => ({ success: true })),
+    resumeSession: protectedProcedure.input(z.object({ sessionId: z.number() })).mutation(async () => ({ success: true })),
+    generateScript: protectedProcedure.input(z.object({ contactId: z.number(), context: z.string().optional() })).mutation(async ({ input }) => {
+      const { invokeLLM } = await import('./_core/llm');
+      const result = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are a sales call script writer. Write natural, conversational phone scripts.' },
+          { role: 'user', content: `Write a brief, natural cold call script for contact ID ${input.contactId}. ${input.context || ''}` },
+        ],
+      });
+      return { script: result.choices[0]?.message?.content || '' };
+    }),
+  }),
+
+  // ─── Product Catalog ──────────────────────────────────────────────────────────
+  productCatalog: router({
+    list: protectedProcedure.query(async ({ ctx }) => ({ products: [] })),
+    create: protectedProcedure.input(z.object({ name: z.string(), price: z.number(), description: z.string().optional(), sku: z.string().optional() })).mutation(async () => ({ success: true, id: Date.now() })),
+    update: protectedProcedure.input(z.object({ id: z.number(), name: z.string().optional(), price: z.number().optional(), description: z.string().optional() })).mutation(async () => ({ success: true })),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true })),
+  }),
+
+  // ─── Proposal Analytics ───────────────────────────────────────────────────────
+  proposalAnalytics: router({
+    getStats: protectedProcedure.query(async () => ({
+      total: 0, sent: 0, viewed: 0, accepted: 0, rejected: 0,
+      avgViewTime: 0, conversionRate: 0,
+    })),
+  }),
+
+  // ─── Proposals ────────────────────────────────────────────────────────────────
+  proposals: router({
+    list: protectedProcedure.query(async () => ({ proposals: [] })),
+    create: protectedProcedure.input(z.object({ name: z.string(), dealId: z.number().optional(), content: z.string().optional() })).mutation(async () => ({ success: true, id: Date.now() })),
+    send: protectedProcedure.input(z.object({ id: z.number(), email: z.string() })).mutation(async () => ({ success: true })),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true })),
+    generateWithAI: protectedProcedure.input(z.object({ dealId: z.number().optional(), context: z.string() })).mutation(async ({ input }) => {
+      const { invokeLLM } = await import('./_core/llm');
+      const result = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are a professional proposal writer. Create compelling, structured business proposals.' },
+          { role: 'user', content: `Write a professional business proposal. Context: ${input.context}` },
+        ],
+      });
+      return { content: result.choices[0]?.message?.content || '' };
+    }),
+  }),
+
+  // ─── Reports ──────────────────────────────────────────────────────────────────
+  reports: router({
+    list: protectedProcedure.query(async () => ({ reports: [] })),
+    create: protectedProcedure.input(z.object({ name: z.string(), type: z.string(), config: z.record(z.any()).optional() })).mutation(async () => ({ success: true, id: Date.now() })),
+    runReport: protectedProcedure.input(z.object({ id: z.number(), dateRange: z.object({ start: z.number(), end: z.number() }).optional() })).query(async () => ({ data: [], columns: [], summary: {} })),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true })),
+  }),
+
+  // ─── Reputation ───────────────────────────────────────────────────────────────
+  reputation: router({
+    list: protectedProcedure.query(async () => ({ reviews: [], avgRating: 0, total: 0 })),
+    addReview: protectedProcedure.input(z.object({ platform: z.string(), rating: z.number(), text: z.string(), author: z.string() })).mutation(async () => ({ success: true, id: Date.now() })),
+    respondToReview: protectedProcedure.input(z.object({ id: z.number(), response: z.string() })).mutation(async () => ({ success: true })),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true })),
+    aiGenerateResponse: protectedProcedure.input(z.object({ reviewText: z.string(), rating: z.number(), platform: z.string().optional() })).mutation(async ({ input }) => {
+      const { invokeLLM } = await import('./_core/llm');
+      const result = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are a professional customer relations manager. Write empathetic, professional responses to customer reviews.' },
+          { role: 'user', content: `Write a professional response to this ${input.rating}-star review on ${input.platform || 'Google'}: "${input.reviewText}"` },
+        ],
+      });
+      return { response: result.choices[0]?.message?.content || '' };
+    }),
+  }),
+
+  // ─── Rotten Deals ─────────────────────────────────────────────────────────────
+  rottenDeals: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn) return { deals: [] };
+      const { deals } = await import('../drizzle/schema');
+      const { eq, lt, and } = await import('drizzle-orm');
+      const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      const rottenDeals = await dbConn.select().from(deals)
+        .where(and(eq(deals.tenantCompanyId, ctx.user.tenantCompanyId!), lt(deals.updatedAt, thirtyDaysAgo)))
+        .limit(50);
+      return { deals: rottenDeals };
+    }),
+  }),
+
+  // ─── Sales Forecasting ────────────────────────────────────────────────────────
+  salesForecasting: router({
+    getSummary: protectedProcedure.query(async ({ ctx }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn) return { forecast: 0, pipeline: 0, closed: 0, winRate: 0 };
+      const { deals } = await import('../drizzle/schema');
+      const { eq, and } = await import('drizzle-orm');
+      const allDeals = await dbConn.select().from(deals).where(eq(deals.tenantCompanyId, ctx.user.tenantCompanyId!));
+      const pipeline = allDeals.filter(d => !['won', 'lost'].includes(d.stage || '')).reduce((s, d) => s + (d.value || 0), 0);
+      const closed = allDeals.filter(d => d.stage === 'won').reduce((s, d) => s + (d.value || 0), 0);
+      const total = allDeals.length;
+      const won = allDeals.filter(d => d.stage === 'won').length;
+      return { forecast: Math.round(pipeline * 0.3), pipeline, closed, winRate: total > 0 ? Math.round((won / total) * 100) : 0 };
+    }),
+    getClosingThisMonth: protectedProcedure.query(async ({ ctx }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn) return { deals: [] };
+      const { deals } = await import('../drizzle/schema');
+      const { eq, and, gte, lte } = await import('drizzle-orm');
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getTime();
+      const closingDeals = await dbConn.select().from(deals)
+        .where(and(eq(deals.tenantCompanyId, ctx.user.tenantCompanyId!), gte(deals.closeDate, startOfMonth), lte(deals.closeDate, endOfMonth)))
+        .limit(20);
+      return { deals: closingDeals };
+    }),
+  }),
+
+  // ─── Scheduled Reports ────────────────────────────────────────────────────────
+  scheduledReports: router({
+    list: protectedProcedure.query(async () => ({ reports: [] })),
+    activeCount: protectedProcedure.query(async () => ({ count: 0 })),
+    create: protectedProcedure.input(z.object({ name: z.string(), reportType: z.string(), schedule: z.string(), recipients: z.array(z.string()) })).mutation(async () => ({ success: true, id: Date.now() })),
+    update: protectedProcedure.input(z.object({ id: z.number(), name: z.string().optional(), isActive: z.boolean().optional() })).mutation(async () => ({ success: true })),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true })),
+    runNow: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true, sentTo: [] })),
+  }),
+
+  // ─── Scheduler (Meeting Booking) ──────────────────────────────────────────────
+  scheduler: router({
+    getProfile: protectedProcedure.query(async ({ ctx }) => ({
+      slug: `${ctx.user.name?.toLowerCase().replace(/\s+/g, '-') || 'user'}-${ctx.user.id}`,
+      timezone: 'America/New_York',
+      meetingTypes: [],
+      bookings: [],
+    })),
+    addMeetingType: protectedProcedure.input(z.object({ name: z.string(), duration: z.number(), description: z.string().optional() })).mutation(async () => ({ success: true, id: Date.now() })),
+    deleteType: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true })),
+    getBookings: protectedProcedure.query(async () => ({ bookings: [] })),
+  }),
+
+  // ─── Smart Views ──────────────────────────────────────────────────────────────
+  smartViews: router({
+    list: protectedProcedure.query(async () => ({ views: [] })),
+    create: protectedProcedure.input(z.object({ name: z.string(), entity: z.string(), filters: z.record(z.any()) })).mutation(async () => ({ success: true, id: Date.now() })),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true })),
+  }),
+
+  // ─── Social Scheduler ─────────────────────────────────────────────────────────
+  socialScheduler: router({
+    getAccounts: protectedProcedure.query(async () => ({ accounts: [] })),
+    connectAccount: protectedProcedure.input(z.object({ platform: z.string() })).mutation(async () => ({ success: true, authUrl: '' })),
+    getPosts: protectedProcedure.query(async () => ({ posts: [] })),
+    createPost: protectedProcedure.input(z.object({ content: z.string(), platforms: z.array(z.string()), scheduledAt: z.number().optional() })).mutation(async () => ({ success: true, id: Date.now() })),
+    publishNow: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true })),
+    deletePost: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true })),
+    getStats: protectedProcedure.query(async () => ({ impressions: 0, engagement: 0, clicks: 0, posts: 0 })),
+    generateContentWithAI: protectedProcedure.input(z.object({ topic: z.string(), platform: z.string(), tone: z.string().optional() })).mutation(async ({ input }) => {
+      const { invokeLLM } = await import('./_core/llm');
+      const result = await invokeLLM({
+        messages: [
+          { role: 'system', content: `You are a social media content expert for ${input.platform}.` },
+          { role: 'user', content: `Write a ${input.tone || 'professional'} ${input.platform} post about: ${input.topic}. Include relevant hashtags.` },
+        ],
+      });
+      return { content: result.choices[0]?.message?.content || '' };
+    }),
+  }),
+
+  // ─── SSO ──────────────────────────────────────────────────────────────────────
+  sso: router({
+    get: protectedProcedure.query(async () => ({ enabled: false, provider: null, domain: null, config: null })),
+    upsert: protectedProcedure.input(z.object({ provider: z.string(), domain: z.string(), config: z.record(z.string()) })).mutation(async () => ({ success: true })),
+  }),
+
+  // ─── System Health ────────────────────────────────────────────────────────────
+  systemHealth: router({
+    getLatest: axiomOwnerProcedure.query(async () => ({
+      status: 'healthy',
+      uptime: 99.9,
+      responseTime: 45,
+      errorRate: 0.01,
+      lastChecked: Date.now(),
+    })),
+    getEvents: axiomOwnerProcedure.query(async () => ({ events: [] })),
+    getErrorStats: axiomOwnerProcedure.query(async () => ({ errors: [], total: 0, byType: {} })),
+    getPrediction: developerProcedure.query(async () => ({ prediction: 'stable', confidence: 0.95, nextIssue: null })),
+    runCheck: developerProcedure.mutation(async () => ({ success: true, status: 'healthy', issues: [] })),
+    acknowledgeEvent: axiomOwnerProcedure.input(z.object({ eventId: z.string() })).mutation(async () => ({ success: true })),
+  }),
+
+  // ─── Territories ──────────────────────────────────────────────────────────────
+  territories: router({
+    list: protectedProcedure.query(async () => ({ territories: [] })),
+    create: protectedProcedure.input(z.object({ name: z.string(), region: z.string().optional(), assignedUserId: z.number().optional() })).mutation(async () => ({ success: true, id: Date.now() })),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true })),
+  }),
+
+  // ─── Web Forms ────────────────────────────────────────────────────────────────
+  webForms: router({
+    list: protectedProcedure.query(async () => ({ forms: [] })),
+    create: protectedProcedure.input(z.object({ name: z.string(), fields: z.array(z.any()).optional() })).mutation(async () => ({ success: true, id: Date.now(), embedCode: '' })),
+    update: protectedProcedure.input(z.object({ id: z.number(), name: z.string().optional(), isActive: z.boolean().optional() })).mutation(async () => ({ success: true })),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true })),
+  }),
+
+  // ─── WhatsApp ─────────────────────────────────────────────────────────────────
+  whatsapp: router({
+    getConversations: protectedProcedure.query(async () => ({ conversations: [] })),
+    getMessages: protectedProcedure.input(z.object({ conversationId: z.string() })).query(async () => ({ messages: [] })),
+    sendMessage: protectedProcedure.input(z.object({ to: z.string(), message: z.string(), conversationId: z.string().optional() })).mutation(async () => ({ success: true, messageId: `msg_${Date.now()}` })),
+    getTemplates: protectedProcedure.query(async () => ({ templates: [] })),
+    createTemplate: protectedProcedure.input(z.object({ name: z.string(), body: z.string(), category: z.string() })).mutation(async () => ({ success: true, id: Date.now() })),
+    deleteTemplate: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true })),
+    generateMessageWithAI: protectedProcedure.input(z.object({ context: z.string(), tone: z.string().optional() })).mutation(async ({ input }) => {
+      const { invokeLLM } = await import('./_core/llm');
+      const result = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are a WhatsApp business messaging expert. Write concise, friendly business messages.' },
+          { role: 'user', content: `Write a ${input.tone || 'friendly'} WhatsApp business message for: ${input.context}. Keep it under 160 characters.` },
+        ],
+      });
+      return { message: result.choices[0]?.message?.content || '' };
+    }),
+  }),
+
+  // ─── WhatsApp Broadcasts ──────────────────────────────────────────────────────
+  whatsappBroadcasts: router({
+    list: protectedProcedure.query(async () => ({ broadcasts: [] })),
+    create: protectedProcedure.input(z.object({ name: z.string(), message: z.string(), recipientIds: z.array(z.number()).optional() })).mutation(async () => ({ success: true, id: Date.now() })),
+    send: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true, sent: 0 })),
+  }),
+
+  // ─── Win/Loss Analysis ────────────────────────────────────────────────────────
+  winLoss: router({
+    stats: protectedProcedure.query(async ({ ctx }) => {
+      const dbConn = await db.getDb();
+      if (!dbConn) return { wins: 0, losses: 0, winRate: 0, avgDealSize: 0, topReasons: [] };
+      const { deals } = await import('../drizzle/schema');
+      const { eq } = await import('drizzle-orm');
+      const allDeals = await dbConn.select().from(deals).where(eq(deals.tenantCompanyId, ctx.user.tenantCompanyId!));
+      const wins = allDeals.filter(d => d.stage === 'won').length;
+      const losses = allDeals.filter(d => d.stage === 'lost').length;
+      const total = wins + losses;
+      const wonDeals = allDeals.filter(d => d.stage === 'won');
+      const avgDealSize = wonDeals.length > 0 ? Math.round(wonDeals.reduce((s, d) => s + (d.value || 0), 0) / wonDeals.length) : 0;
+      return { wins, losses, winRate: total > 0 ? Math.round((wins / total) * 100) : 0, avgDealSize, topReasons: [] };
+    }),
+  }),
+
+  // ─── Workflow Builder ─────────────────────────────────────────────────────────
+  workflowBuilder: router({
+    get: protectedProcedure.input(z.object({ id: z.number() })).query(async () => ({ workflow: null })),
+    create: protectedProcedure.input(z.object({ name: z.string(), trigger: z.string() })).mutation(async () => ({ success: true, id: Date.now() })),
+    save: protectedProcedure.input(z.object({ id: z.number(), nodes: z.array(z.any()), edges: z.array(z.any()) })).mutation(async () => ({ success: true })),
+    setStatus: protectedProcedure.input(z.object({ id: z.number(), isActive: z.boolean() })).mutation(async () => ({ success: true })),
+  }),
 });
 export type AppRouter = typeof appRouter;

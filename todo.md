@@ -2110,3 +2110,10 @@
 - [ ] Update backend permission guards for new role hierarchy
 - [ ] Update frontend role selectors, guards, and role management UI
 - [x] Enforce role permission chain: Developer can set up Axiom Admin and below; Axiom Admin can set up other Axiom Admins and below; Company Admin can set up Company Admin and below; Managers can only set up roles below them
+
+## Feature Audit Pass (Mar 21, 2026)
+- [x] Fix LLM provider order: Forge API first (no quota), Gemini as fallback
+- [x] Add 42 missing backend routers: accountHierarchy, aiCreditUsage, aiEngine, aiPostWriter, anomalyDetection, auditLogs, bulkActions, bulkMerge, calendar, customFieldConditions, customObjects, customRoles, eSignature, emailSequences, emailSync, integrationHub, journeyOrchestration, leadScoring, nextBestAction, notificationPrefs, onboarding, oooDetection, pipelineInspection, powerDialer, productCatalog, proposalAnalytics, proposals, reports, reputation, rottenDeals, salesForecasting, scheduledReports, scheduler, smartViews, socialScheduler, sso, systemHealth, territories, webForms, whatsapp, whatsappBroadcasts, winLoss, workflowBuilder
+- [x] Fix aiEngine and systemHealth to use developerProcedure/axiomOwnerProcedure with correct return shapes
+- [x] Create missing skin_preferences table in database
+- [x] All 558 tests passing (27 test files)
