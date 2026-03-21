@@ -933,83 +933,103 @@ export default function MarketingHome({
                 `}</style>
                 <div className="feat-scroll px-3 py-2">
               {([
+                // ── CORE CRM (all have basics) ──────────────────────────────
                 {cat:'CORE CRM',f:'Contact Management',a:true,b:true,c:true,d:true},
-                {cat:'',f:'Company Records',a:true,b:true,c:true,d:true},
-                {cat:'',f:'Multi-Pipeline Kanban',a:true,b:'Paid',c:'Paid',d:'Paid'},
-                {cat:'',f:'Custom Fields',a:true,b:true,c:true,d:true},
-                {cat:'',f:'Smart Views',a:true,b:'Limited',c:'Limited',d:false},
-                {cat:'',f:'Bulk Actions',a:true,b:'Limited',c:true,d:'Limited'},
-                {cat:'AI & INTELLIGENCE',f:'AI Lead Scoring',a:true,b:'$500+/mo',c:'$150+/user',d:false},
-                {cat:'',f:'Win Probability AI',a:true,b:'$500+/mo',c:'$150+/user',d:false},
+                {cat:'',f:'Company / Account Records',a:true,b:true,c:true,d:true},
+                {cat:'',f:'Deal / Opportunity Tracking',a:true,b:true,c:true,d:true},
+                {cat:'',f:'Multi-Pipeline Kanban',a:true,b:true,c:true,d:true},
+                {cat:'',f:'Custom Fields & Objects',a:true,b:true,c:true,d:true},
+                {cat:'',f:'Task & Activity Management',a:true,b:true,c:true,d:true},
+                {cat:'',f:'Smart Views & Filters',a:true,b:true,c:'Limited',d:true},
+                {cat:'',f:'Bulk Actions',a:true,b:true,c:true,d:true},
+                {cat:'',f:'Mobile App',a:true,b:true,c:true,d:true},
+                // ── AI & INTELLIGENCE (AXIOM dominates) ────────────────────
+                {cat:'AI & INTELLIGENCE',f:'AI Lead Scoring',a:true,b:'$500+/mo add-on',c:'$150+/user add-on',d:false},
+                {cat:'',f:'Win Probability AI',a:true,b:'$500+/mo add-on',c:'$150+/user add-on',d:false},
                 {cat:'',f:'Next Best Action AI',a:true,b:false,c:false,d:false},
-                {cat:'',f:'Behavioral DNA Profile',a:true,b:false,c:false,d:false},
-                {cat:'',f:'AI Email Writer',a:true,b:'Add-on',c:'Add-on',d:false},
-                {cat:'',f:'AI Ghostwriter',a:true,b:false,c:false,d:false},
-                {cat:'',f:'Paradigm Pulse™ Intel',a:true,b:false,c:false,d:false},
-                {cat:'',f:'Quantum Score™',a:true,b:false,c:false,d:false},
-                {cat:'EMAIL MARKETING',f:'Email Campaigns',a:true,b:true,c:'Add-on',d:'Add-on'},
-                {cat:'',f:'260 SMTP Rotation™',a:true,b:false,c:false,d:false},
-                {cat:'',f:'Ghost Sequences™',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Behavioral DNA Profiling',a:true,b:false,c:false,d:false},
+                {cat:'',f:'AI Email Writer',a:true,b:'$50+/mo add-on',c:'$75+/mo add-on',d:false},
+                {cat:'',f:'AI Battle Cards',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Quantum Lead Score™ (12-dim)',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Predictive Send Time',a:true,b:'Add-on',c:'Add-on',d:false},
+                // ── EMAIL MARKETING ─────────────────────────────────────────
+                {cat:'EMAIL MARKETING',f:'Email Campaigns',a:true,b:true,c:'Add-on ($25+/user)',d:'Add-on'},
+                {cat:'',f:'Email Templates',a:true,b:true,c:true,d:true},
                 {cat:'',f:'A/B Testing',a:true,b:true,c:'Add-on',d:'Limited'},
-                {cat:'',f:'98.7% Inbox Placement',a:true,b:false,c:false,d:false},
-                {cat:'',f:'Suppression Lists',a:true,b:true,c:true,d:'Limited'},
-                {cat:'AUTOMATION',f:'Workflow Builder',a:true,b:true,c:true,d:'Limited'},
-                {cat:'',f:'Revenue Autopilot™',a:true,b:false,c:false,d:false},
-                {cat:'',f:'AI Sequences',a:true,b:'Add-on',c:'Add-on',d:false},
-                {cat:'',f:'Behavioral Triggers',a:true,b:'Limited',c:'Limited',d:false},
+                {cat:'',f:'Suppression / Unsubscribe Lists',a:true,b:true,c:true,d:true},
+                {cat:'',f:'260 SMTP Rotation Engine™',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Ghost Sequences™ (AI-written)',a:true,b:false,c:false,d:false},
+                {cat:'',f:'98.7% Guaranteed Inbox Rate',a:true,b:false,c:false,d:false},
+                {cat:'',f:'50+ Blacklist Monitoring',a:true,b:false,c:false,d:false},
+                // ── AUTOMATION ──────────────────────────────────────────────
+                {cat:'AUTOMATION',f:'Visual Workflow Builder',a:true,b:true,c:true,d:'Basic'},
+                {cat:'',f:'Trigger-Based Sequences',a:true,b:true,c:true,d:'Basic'},
                 {cat:'',f:'Auto Lead Assignment',a:true,b:true,c:true,d:true},
-                {cat:'PROSPECTING',f:'BNB Prospect Engine™',a:true,b:false,c:false,d:false},
-                {cat:'',f:'FMCSA Scanner',a:true,b:false,c:false,d:false},
-                {cat:'',f:'Visitor Tracking',a:true,b:'Add-on',c:'Add-on',d:false},
-                {cat:'',f:'Intent Signals',a:true,b:'Add-on',c:'Add-on',d:false},
-                {cat:'',f:'Battle Cards',a:true,b:false,c:false,d:false},
-                {cat:'VOICE & CALLS',f:'AI Voice Agent',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Revenue Autopilot™ (AI-driven)',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Conditional Branching Logic',a:true,b:true,c:true,d:false},
+                // ── PROSPECTING ─────────────────────────────────────────────
+                {cat:'PROSPECTING',f:'Built-in Prospect Database',a:true,b:'Add-on ($400+/mo)',c:'Add-on ($125+/user)',d:false},
+                {cat:'',f:'Visitor Tracking',a:true,b:'Add-on ($45+/mo)',c:'Add-on',d:false},
+                {cat:'',f:'Intent Signal Monitoring',a:true,b:'Add-on ($500+/mo)',c:'Add-on',d:false},
+                {cat:'',f:'BNB Prospect Engine™',a:true,b:false,c:false,d:false},
+                {cat:'',f:'FMCSA / Carrier Scanner',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Auto-Install Tracking Script',a:true,b:false,c:false,d:false},
+                // ── VOICE & CALLS ────────────────────────────────────────────
+                {cat:'VOICE & CALLS',f:'Built-in Calling',a:true,b:'Add-on',c:'Add-on',d:'Add-on'},
                 {cat:'',f:'Call Recording',a:true,b:'Add-on',c:'Add-on',d:'Add-on'},
                 {cat:'',f:'Voice Transcription',a:true,b:'Add-on',c:'Add-on',d:false},
-                {cat:'FINANCE & OPS',f:'Accounts Receivable',a:true,b:false,c:false,d:false},
-                {cat:'',f:'Accounts Payable',a:true,b:false,c:false,d:false},
-                {cat:'',f:'Shipping Module',a:true,b:false,c:false,d:false},
-                {cat:'',f:'Invoice Management',a:true,b:false,c:false,d:false},
-                {cat:'',f:'Stripe Payment Collection',a:true,b:false,c:false,d:false},
-                {cat:'',f:'Proposal E-Signing',a:true,b:false,c:false,d:false},
+                {cat:'',f:'AI Voice Agent (outbound)',a:true,b:false,c:false,d:false},
+                // ── FINANCE & OPS ────────────────────────────────────────────
+                {cat:'FINANCE & OPS',f:'Invoice Management',a:true,b:'Add-on',c:'Add-on',d:false},
+                {cat:'',f:'Accounts Receivable Module',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Accounts Payable Module',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Shipping & Receiving Module',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Stripe Payment Collection',a:true,b:true,c:'Add-on',d:false},
+                {cat:'',f:'Proposal E-Signing',a:true,b:'Add-on ($45+/mo)',c:'Add-on',d:false},
+                // ── BRANDING & CONTENT ───────────────────────────────────────
                 {cat:'BRANDING & CONTENT',f:'AI Logo Generation',a:true,b:false,c:false,d:false},
-                {cat:'',f:'AI Social Post Writer',a:true,b:false,c:false,d:false},
-                {cat:'',f:'Social Media Scheduler',a:true,b:'Add-on',c:'Add-on',d:false},
                 {cat:'',f:'Brand Kit Builder',a:true,b:false,c:false,d:false},
+                {cat:'',f:'AI Social Post Writer',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Social Media Scheduler',a:true,b:'Add-on ($800+/mo)',c:'Add-on',d:false},
+                // ── MESSAGING ────────────────────────────────────────────────
                 {cat:'MESSAGING',f:'WhatsApp Broadcasts',a:true,b:false,c:false,d:false},
                 {cat:'',f:'SMS Campaigns',a:true,b:'Add-on',c:'Add-on',d:'Add-on'},
                 {cat:'',f:'Unified Inbox (All Channels)',a:true,b:'Add-on',c:'Add-on',d:false},
-                {cat:'COMPLIANCE',f:'Compliance Fortress™',a:true,b:'Add-on',c:'Add-on',d:false},
-                {cat:'',f:'GDPR Tools',a:true,b:true,c:true,d:'Limited'},
+                // ── COMPLIANCE ───────────────────────────────────────────────
+                {cat:'COMPLIANCE',f:'CAN-SPAM Management',a:true,b:true,c:true,d:true},
+                {cat:'',f:'GDPR Tools',a:true,b:true,c:true,d:'Basic'},
                 {cat:'',f:'CCPA Compliance',a:true,b:true,c:true,d:false},
-                {cat:'',f:'CAN-SPAM Mgmt',a:true,b:true,c:true,d:true},
-                {cat:'MIGRATION',f:'One-Touch Migration™',a:true,b:false,c:false,d:false},
-                {cat:'',f:'HubSpot Import',a:true,b:'N/A',c:false,d:false},
-                {cat:'',f:'Salesforce Import',a:true,b:false,c:'N/A',d:false},
-                {cat:'',f:'Pipedrive Import',a:true,b:false,c:false,d:'N/A'},
-                {cat:'',f:'CSV Import',a:true,b:true,c:true,d:true},
-                {cat:'PLATFORM',f:'White Labeling',a:true,b:false,c:false,d:false},
-                {cat:'',f:'SaaS Resell Mode',a:true,b:false,c:false,d:false},
-                {cat:'',f:'Multi-Tenant',a:true,b:'Enterprise',c:'Enterprise',d:false},
-                {cat:'',f:'API Access',a:true,b:true,c:true,d:true},
+                {cat:'',f:'Compliance Fortress™ (auto)',a:true,b:false,c:false,d:false},
+                // ── MIGRATION ────────────────────────────────────────────────
+                {cat:'MIGRATION',f:'CSV Import',a:true,b:true,c:true,d:true},
+                {cat:'',f:'Native CRM Import Tools',a:true,b:'Limited',c:'Limited',d:'Limited'},
+                {cat:'',f:'One-Touch Migration™ (FREE)',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Migration Concierge Service',a:true,b:'$3,000+',c:'$5,000+',d:false},
+                // ── PLATFORM ─────────────────────────────────────────────────
+                {cat:'PLATFORM',f:'API Access',a:true,b:true,c:true,d:true},
                 {cat:'',f:'Webhooks',a:true,b:true,c:true,d:true},
-                {cat:'PRICING (10 users)',f:'Monthly Cost',a:'$297',b:'$1,000',c:'$1,750',d:'$1,090'},
-                {cat:'',f:'AI Features Included',a:'✓ All',b:'$500+ add-on',c:'$150+/user',d:'None'},
-                {cat:'',f:'Migration Cost',a:'FREE',b:'N/A',c:'N/A',d:'N/A'},
-                // duplicate for seamless infinite loop
+                {cat:'',f:'White Labeling',a:true,b:false,c:'Enterprise only',d:false},
+                {cat:'',f:'SaaS Resell / Multi-Tenant',a:true,b:false,c:'Enterprise only',d:false},
+                {cat:'',f:'60-Day Free Trial',a:true,b:false,c:false,d:false},
+                // ── PRICING ──────────────────────────────────────────────────
+                {cat:'PRICING (10 users/mo)',f:'Base Monthly Cost',a:'$297',b:'$1,000+',c:'$1,750+',d:'$1,090+'},
+                {cat:'',f:'AI Features',a:'Included',b:'$500+ add-on',c:'$150+/user',d:'Not available'},
+                {cat:'',f:'Migration',a:'FREE',b:'$3,000+',c:'$5,000+',d:'Manual only'},
+                // ── duplicate block for seamless infinite scroll ─────────────
                 {cat:'CORE CRM',f:'Contact Management',a:true,b:true,c:true,d:true},
-                {cat:'',f:'Company Records',a:true,b:true,c:true,d:true},
-                {cat:'',f:'Multi-Pipeline Kanban',a:true,b:'Paid',c:'Paid',d:'Paid'},
-                {cat:'AI & INTELLIGENCE',f:'AI Lead Scoring',a:true,b:'$500+/mo',c:'$150+/user',d:false},
-                {cat:'',f:'Win Probability AI',a:true,b:'$500+/mo',c:'$150+/user',d:false},
+                {cat:'',f:'Deal / Opportunity Tracking',a:true,b:true,c:true,d:true},
+                {cat:'',f:'Multi-Pipeline Kanban',a:true,b:true,c:true,d:true},
+                {cat:'AI & INTELLIGENCE',f:'AI Lead Scoring',a:true,b:'$500+/mo add-on',c:'$150+/user add-on',d:false},
                 {cat:'',f:'Next Best Action AI',a:true,b:false,c:false,d:false},
-                {cat:'EMAIL MARKETING',f:'260 SMTP Rotation™',a:true,b:false,c:false,d:false},
-                {cat:'',f:'Ghost Sequences™',a:true,b:false,c:false,d:false},
-                {cat:'AUTOMATION',f:'Revenue Autopilot™',a:true,b:false,c:false,d:false},
+                {cat:'',f:'AI Battle Cards',a:true,b:false,c:false,d:false},
+                {cat:'EMAIL MARKETING',f:'260 SMTP Rotation Engine™',a:true,b:false,c:false,d:false},
+                {cat:'',f:'98.7% Guaranteed Inbox Rate',a:true,b:false,c:false,d:false},
+                {cat:'AUTOMATION',f:'Revenue Autopilot™ (AI-driven)',a:true,b:false,c:false,d:false},
                 {cat:'PROSPECTING',f:'BNB Prospect Engine™',a:true,b:false,c:false,d:false},
-                {cat:'FINANCE & OPS',f:'Accounts Receivable',a:true,b:false,c:false,d:false},
-                {cat:'MIGRATION',f:'One-Touch Migration™',a:true,b:false,c:false,d:false},
-                {cat:'PRICING (10 users)',f:'Monthly Cost',a:'$297',b:'$1,000',c:'$1,750',d:'$1,090'},
+                {cat:'FINANCE & OPS',f:'Accounts Receivable Module',a:true,b:false,c:false,d:false},
+                {cat:'',f:'Shipping & Receiving Module',a:true,b:false,c:false,d:false},
+                {cat:'PLATFORM',f:'60-Day Free Trial',a:true,b:false,c:false,d:false},
+                {cat:'PRICING (10 users/mo)',f:'Base Monthly Cost',a:'$297',b:'$1,000+',c:'$1,750+',d:'$1,090+'},
               ] as {cat:string,f:string,a:boolean|string,b:boolean|string,c:boolean|string,d:boolean|string}[]).map((row,i)=>(
                 <div key={i}>
                   {row.cat && <div className="text-xs font-black mt-3 mb-1 px-1" style={{color:'#c9a84c',letterSpacing:'0.1em'}}>{row.cat}</div>}
@@ -1019,24 +1039,30 @@ export default function MarketingHome({
                       <div key={ci} style={{
                         textAlign:'center',
                         fontSize:'10px',
-                        background: ci===0 ? 'rgba(201,168,76,0.08)' : 'transparent',
+                        background: ci===0 ? 'rgba(201,168,76,0.07)' : 'transparent',
                         borderRadius: ci===0 ? '3px' : '0',
                         padding: '1px 0'
                       }}>
                         {val===true
-                          /* AXIOM true = large gold glowing ✓ | Competitor true = small dim ✓ */
+                          /* true = checkmark for everyone; AXIOM gets gold glow, competitors get normal green */
                           ?<span style={{
-                              color: ci===0?'#f0c040':'rgba(255,255,255,0.35)',
-                              fontWeight:'900',
-                              fontSize: ci===0?'16px':'12px',
-                              lineHeight:'1',
-                              textShadow: ci===0?'0 0 12px rgba(240,192,64,0.9)':'none'
+                              color: ci===0 ? '#f0c040' : '#4ade80',
+                              fontWeight: '900',
+                              fontSize: ci===0 ? '16px' : '13px',
+                              lineHeight: '1',
+                              textShadow: ci===0 ? '0 0 10px rgba(240,192,64,0.8)' : 'none'
                             }}>✓</span>
-                          :val===false
-                          /* false = big red X */
+                          : val===false
+                          /* false = red X */
                           ?<span style={{color:'#ef4444',fontWeight:'900',fontSize:'15px',lineHeight:'1',textShadow:'0 0 8px rgba(239,68,68,0.7)'}}>✗</span>
-                          /* string value */
-                          :<span style={{color:ci===0?'#c9a84c':'#ef4444',fontWeight:ci===0?'900':'700',fontSize:'8px',lineHeight:'1.2',display:'block'}}>{val as string}</span>}
+                          /* string = gold for AXIOM, orange/amber for competitors (not red — add-ons aren't failures, just costly) */
+                          :<span style={{
+                              color: ci===0 ? '#c9a84c' : '#f97316',
+                              fontWeight: ci===0 ? '900' : '600',
+                              fontSize: '8px',
+                              lineHeight: '1.2',
+                              display: 'block'
+                            }}>{val as string}</span>}
                       </div>
                     ))}
                   </div>
