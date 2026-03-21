@@ -313,8 +313,8 @@ function useDevMode() {
 function getMenuSections(devMode: boolean, userRole?: string) {
   const sections = [...standardSections];
 
-  // Add AXIOM Platform section for axiom_owner and developer roles
-  if (userRole === "axiom_owner" || userRole === "developer") {
+  // Add AXIOM Platform section for axiom_admin, axiom_owner, and developer roles
+  if (["developer", "axiom_admin", "axiom_owner", "apex_owner"].includes(userRole || "")) {
     const overviewIdx = sections.findIndex(s => s.label === "Overview");
     if (overviewIdx >= 0) {
       sections.splice(overviewIdx + 1, 0, axiomPlatformSection);

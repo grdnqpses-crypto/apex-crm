@@ -97,7 +97,7 @@ export default function Billing() {
     addUserSeats.mutate({ quantity: seatQty, origin: window.location.origin });
   };
 
-  const isAdmin = user && ["developer", "axiom_owner", "company_admin"].includes(user.systemRole);
+  const isAdmin = user && ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(user.systemRole);
   const currentTier = subscription?.tier || "trial";
   const isOnTrial = currentTier === "trial";
 

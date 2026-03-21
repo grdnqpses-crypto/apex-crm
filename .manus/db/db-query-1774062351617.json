@@ -1,0 +1,34 @@
+{
+  "query": "SELECT DISTINCT systemRole, COUNT(*) as cnt FROM users GROUP BY systemRole;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT DISTINCT systemRole, COUNT(*) as cnt FROM users GROUP BY systemRole;",
+  "rows": [
+    {
+      "systemRole": "sales_manager",
+      "cnt": "1"
+    },
+    {
+      "systemRole": "developer",
+      "cnt": "4"
+    },
+    {
+      "systemRole": "company_admin",
+      "cnt": "3"
+    },
+    {
+      "systemRole": "user",
+      "cnt": "1"
+    },
+    {
+      "systemRole": "apex_owner",
+      "cnt": "1"
+    },
+    {
+      "systemRole": "account_manager",
+      "cnt": "2"
+    }
+  ],
+  "messages": [],
+  "stdout": "systemRole\tcnt\nsales_manager\t1\ndeveloper\t4\ncompany_admin\t3\nuser\t1\napex_owner\t1\naccount_manager\t2\n",
+  "stderr": "",
+  "execution_time_ms": 403
+}

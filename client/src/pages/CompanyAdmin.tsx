@@ -17,46 +17,58 @@ import PageGuide from "@/components/PageGuide";
 import { useSkin } from "@/contexts/SkinContext";
 
 const roleColors: Record<string, string> = {
-  developer: "bg-red-500/10 text-red-400 border-red-500/20",
-  axiom_owner: "bg-orange-500/10 text-orange-400 border-orange-500/20",
-  company_admin: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-  sales_manager: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  developer:      "bg-red-500/10 text-red-400 border-red-500/20",
+  axiom_admin:    "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  axiom_owner:    "bg-orange-500/10 text-orange-400 border-orange-500/20",  // legacy
+  apex_owner:     "bg-orange-500/10 text-orange-400 border-orange-500/20",  // legacy
+  company_admin:  "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  sales_manager:  "bg-blue-500/10 text-blue-400 border-blue-500/20",
   office_manager: "bg-teal-500/10 text-teal-400 border-teal-500/20",
-  manager: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  account_manager: "bg-green-500/10 text-green-400 border-green-500/20",
-  coordinator: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
-  user: "bg-gray-500/10 text-gray-400 border-gray-500/20",
+  manager:        "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  account_manager:"bg-green-500/10 text-green-400 border-green-500/20",
+  coordinator:    "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
+  sales_rep:      "bg-green-500/10 text-green-400 border-green-500/20",
+  user:           "bg-gray-500/10 text-gray-400 border-gray-500/20",
 };
 
 const roleLabels: Record<string, string> = {
-  developer: "Developer",
-  axiom_owner: "AXIOM Owner",
-  company_admin: "Company Admin",
-  sales_manager: "Sales Manager",
+  developer:      "Developer",
+  axiom_admin:    "Axiom Admin",
+  axiom_owner:    "Axiom Admin",   // legacy → display as Axiom Admin
+  apex_owner:     "Axiom Admin",   // legacy
+  company_admin:  "Company Admin",
+  sales_manager:  "Sales Manager",
   office_manager: "Office Manager",
-  manager: "Sales Manager",
-  account_manager: "Account Manager",
-  coordinator: "Coordinator",
-  user: "Account Manager",
+  manager:        "Sales Manager",
+  account_manager:"Account Manager",
+  coordinator:    "Coordinator",
+  sales_rep:      "Account Manager",
+  user:           "Account Manager",
 };
 
 const roleIcons: Record<string, any> = {
-  developer: Shield,
-  axiom_owner: Shield,
-  company_admin: ShieldCheck,
-  sales_manager: UserCog,
+  developer:      Shield,
+  axiom_admin:    Shield,
+  axiom_owner:    Shield,
+  apex_owner:     Shield,
+  company_admin:  ShieldCheck,
+  sales_manager:  UserCog,
   office_manager: UserCog,
-  manager: UserCog,
-  account_manager: User,
-  coordinator: User,
-  user: User,
+  manager:        UserCog,
+  account_manager:User,
+  coordinator:    User,
+  sales_rep:      User,
+  user:           User,
 };
 
 export default function CompanyAdmin() {
   const { t } = useSkin();
   const { user } = useAuth();
   const companyId = user?.tenantCompanyId;
-  const isAdmin = user?.systemRole === "company_admin" || user?.systemRole === "developer";
+  // isAdmin: company_admin and above can manage users within their company
+  const isAdmin = ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(user?.systemRole || "");
+  // isAxiomLevel: developer and axiom_admin can see/assign axiom_admin role
+  const isAxiomLevel = ["developer", "axiom_admin"].includes(user?.systemRole || "");
   const isManager = ["manager", "sales_manager", "office_manager"].includes(user?.systemRole || "");
 
   const { data: companyUsers, isLoading } = trpc.tenants.users.useQuery(
@@ -73,7 +85,7 @@ export default function CompanyAdmin() {
   // Create User state
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [newUser, setNewUser] = useState({
-    username: "", password: "", name: "", email: "", systemRole: "account_manager" as "company_admin" | "sales_manager" | "office_manager" | "account_manager" | "coordinator",
+    username: "", password: "", name: "", email: "", systemRole: "account_manager" as "axiom_admin" | "company_admin" | "sales_manager" | "office_manager" | "account_manager" | "coordinator",
     jobTitle: "", phone: "",
   });
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -82,7 +94,7 @@ export default function CompanyAdmin() {
   // Invite state
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"company_admin" | "sales_manager" | "office_manager" | "account_manager" | "coordinator">("account_manager");
+  const [inviteRole, setInviteRole] = useState<"axiom_admin" | "company_admin" | "sales_manager" | "office_manager" | "account_manager" | "coordinator">("account_manager");
   const [inviteCustomRoleId, setInviteCustomRoleId] = useState<number | undefined>(undefined);
   const { data: customRoles } = trpc.customRoles.list.useQuery(undefined, { enabled: isAdmin });
 
@@ -233,6 +245,7 @@ export default function CompanyAdmin() {
                       <Select value={newUser.systemRole} onValueChange={(v: any) => setNewUser(p => ({ ...p, systemRole: v }))}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
+                          {isAxiomLevel && <SelectItem value="axiom_admin">Axiom Admin</SelectItem>}
                           {isAdmin && <SelectItem value="company_admin">Company Admin</SelectItem>}
                           {isAdmin && <SelectItem value="sales_manager">Sales Manager</SelectItem>}
                           {isAdmin && <SelectItem value="office_manager">Office Manager</SelectItem>}
@@ -315,6 +328,7 @@ export default function CompanyAdmin() {
                     <Select value={inviteRole} onValueChange={(v: any) => setInviteRole(v)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
+                        {isAxiomLevel && <SelectItem value="axiom_admin">Axiom Admin</SelectItem>}
                         {isAdmin && <SelectItem value="company_admin">Company Admin</SelectItem>}
                         {isAdmin && <SelectItem value="sales_manager">Sales Manager</SelectItem>}
                         {isAdmin && <SelectItem value="office_manager">Office Manager</SelectItem>}
@@ -402,6 +416,7 @@ export default function CompanyAdmin() {
                                 <div className="flex items-center gap-1.5"><RoleIcon className="h-3.5 w-3.5" /><SelectValue /></div>
                               </SelectTrigger>
                               <SelectContent>
+                                {isAxiomLevel && <SelectItem value="axiom_admin">Axiom Admin</SelectItem>}
                                 <SelectItem value="company_admin">Company Admin</SelectItem>
                                 <SelectItem value="sales_manager">Sales Manager</SelectItem>
                                 <SelectItem value="office_manager">Office Manager</SelectItem>
@@ -604,7 +619,8 @@ export default function CompanyAdmin() {
 // Sub-component for feature matrix row
 function FeatureRow({ user: u, allFeatures }: { user: any; allFeatures: readonly any[] }) {
   const { data: features } = trpc.userManagement.getFeatures.useQuery({ userId: u.id });
-  const isDev = u.systemRole === "developer";
+  // Developer and Axiom Admin have full feature access by default
+  const isDev = ["developer", "axiom_admin", "axiom_owner", "apex_owner"].includes(u.systemRole);
 
   return (
     <TableRow>

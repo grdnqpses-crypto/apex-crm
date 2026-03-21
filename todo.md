@@ -2105,3 +2105,8 @@
 - [x] Upload original 64s trailer to CDN and update marketing page to use it
 - [x] CRITICAL: Fix comparison scroll — AXIOM must show ✓ for all its features, competitors must show red ✗ for features they lack
 - [x] Redesign comparison scroll with accurate, credible data — competitors get ✓ on features they genuinely have, red ✗ only where they truly lack, focus on AXIOM-exclusive features to win the comparison honestly
+- [ ] Add Developer and Axiom Admin roles to CRM with full hierarchy: Developer > Axiom Admin > Company Admin > (existing roles)
+- [ ] Migrate DB schema role enum to include developer and axiom_admin
+- [ ] Update backend permission guards for new role hierarchy
+- [ ] Update frontend role selectors, guards, and role management UI
+- [x] Enforce role permission chain: Developer can set up Axiom Admin and below; Axiom Admin can set up other Axiom Admins and below; Company Admin can set up Company Admin and below; Managers can only set up roles below them

@@ -1,0 +1,18 @@
+{
+  "query": "SHOW COLUMNS FROM users LIKE 'systemRole';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SHOW COLUMNS FROM users LIKE 'systemRole';",
+  "rows": [
+    {
+      "Field": "systemRole",
+      "Type": "enum('developer','apex_owner','super_admin','company_admin','sales_manager','office_manager','manager','account_manager','coordinator','sales_rep','user')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "sales_rep",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nsystemRole\tenum('developer','apex_owner','super_admin','company_admin','sales_manager','office_manager','manager','account_manager','coordinator','sales_rep','user')\tNO\t\tsales_rep\t\n",
+  "stderr": "",
+  "execution_time_ms": 365
+}

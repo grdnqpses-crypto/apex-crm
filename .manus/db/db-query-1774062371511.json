@@ -1,0 +1,9 @@
+{
+  "query": "\nUPDATE users SET systemRole = 'axiom_admin' WHERE systemRole = 'apex_owner';\n\nALTER TABLE company_invites MODIFY COLUMN inviteRole ENUM('axiom_admin','company_admin','sales_manager','office_manager','manager','account_manager','coordinator','sales_rep','user') NOT NULL DEFAULT 'sales_rep';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute \nUPDATE users SET systemRole = 'axiom_admin' WHERE systemRole = 'apex_owner';\n\nALTER TABLE company_invites MODIFY COLUMN inviteRole ENUM('axiom_admin','company_admin','sales_manager','office_manager','manager','account_manager','coordinator','sales_rep','user') NOT NULL DEFAULT 'sales_rep';\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 845
+}

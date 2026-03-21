@@ -36,7 +36,7 @@ export default function BillingHistory() {
     retry: false,
   });
 
-  const allowedRoles = ["company_admin", "axiom_owner", "developer"];
+  const allowedRoles = ["company_admin", "axiom_admin", "axiom_owner", "apex_owner", "developer"];
   if (user && !allowedRoles.includes(user.systemRole || user.role)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">

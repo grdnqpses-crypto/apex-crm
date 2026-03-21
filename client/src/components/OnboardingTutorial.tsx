@@ -117,7 +117,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     icon: Users,
     route: "/team",
     category: "admin",
-    requiredRole: ["company_admin", "manager", "axiom_owner", "developer"],
+    requiredRole: ["company_admin", "axiom_admin", "axiom_owner", "apex_owner", "manager", "developer"],
   },
   {
     id: "settings",
@@ -127,7 +127,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     icon: Settings,
     route: "/settings",
     category: "admin",
-    requiredRole: ["company_admin", "axiom_owner", "developer"],
+    requiredRole: ["company_admin", "axiom_admin", "axiom_owner", "apex_owner", "developer"],
   },
   {
     id: "complete",
@@ -180,7 +180,7 @@ export default function OnboardingTutorial() {
   const [animateIn, setAnimateIn] = useState(false);
 
   const { data: myCompany } = trpc.tenants.myCompany.useQuery(undefined, { enabled: !!user });
-  const isAdminOrAbove = ["company_admin", "axiom_owner", "developer"].includes(user?.systemRole || "");
+  const isAdminOrAbove = ["company_admin", "axiom_admin", "axiom_owner", "apex_owner", "developer"].includes(user?.systemRole || "");
 
   // Filter steps based on user role
   const availableSteps = useMemo(() => {

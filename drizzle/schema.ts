@@ -47,7 +47,7 @@ export const users = mysqlTable("users", {
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   // Multi-tenant hierarchy fields
-  systemRole: mysqlEnum("systemRole", ["developer", "axiom_owner", "super_admin", "company_admin", "sales_manager", "office_manager", "manager", "account_manager", "coordinator", "sales_rep", "user"]).default("sales_rep").notNull(),
+  systemRole: mysqlEnum("systemRole", ["developer", "axiom_admin", "axiom_owner", "super_admin", "company_admin", "sales_manager", "office_manager", "manager", "account_manager", "coordinator", "sales_rep", "user"]).default("sales_rep").notNull(),
   tenantCompanyId: int("tenantCompanyId"),
   managerId: int("managerId"),
   isActive: boolean("isActive").default(true).notNull(),
@@ -81,7 +81,7 @@ export const companyInvites = mysqlTable("company_invites", {
   id: int("id").autoincrement().primaryKey(),
   tenantCompanyId: int("tenantCompanyId").notNull(),
   email: varchar("email", { length: 320 }).notNull(),
-  inviteRole: mysqlEnum("inviteRole", ["company_admin", "sales_manager", "office_manager", "manager", "account_manager", "coordinator", "sales_rep", "user"]).default("sales_rep").notNull(),
+  inviteRole: mysqlEnum("inviteRole", ["axiom_admin", "company_admin", "sales_manager", "office_manager", "manager", "account_manager", "coordinator", "sales_rep", "user"]).default("sales_rep").notNull(),
   managerId: int("managerId"),
   token: varchar("token", { length: 128 }).notNull().unique(),
   invitedBy: int("invitedBy").notNull(),

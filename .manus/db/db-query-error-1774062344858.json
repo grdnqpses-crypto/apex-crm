@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE users MODIFY COLUMN systemRole ENUM('developer','axiom_admin','axiom_owner','super_admin','company_admin','sales_manager','office_manager','manager','account_manager','coordinator','user') NOT NULL DEFAULT 'sales_rep';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute ALTER TABLE users MODIFY COLUMN systemRole ENUM('developer','axiom_admin','axiom_owner','super_admin','company_admin','sales_manager','office_manager','manager','account_manager','coordinator','user') NOT NULL DEFAULT 'sales_rep';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1067 (42000) at line 1: Invalid default value for 'systemRole'"
+  ]
+}

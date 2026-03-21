@@ -2008,7 +2008,7 @@ export const appRouter = router({
 
     // Get company users (axiom_owner+, or admin of that company)
     users: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
-      const canViewAny = ["developer", "axiom_owner"].includes(ctx.user.systemRole);
+      const canViewAny = ["developer", "axiom_admin", "axiom_owner", "apex_owner"].includes(ctx.user.systemRole);
       if (!canViewAny && ctx.user.tenantCompanyId !== input.companyId) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
@@ -2017,7 +2017,7 @@ export const appRouter = router({
 
     // Get users under a manager
     managerUsers: protectedProcedure.input(z.object({ managerId: z.number() })).query(async ({ ctx, input }) => {
-      const canViewAny = ["developer", "axiom_owner"].includes(ctx.user.systemRole);
+      const canViewAny = ["developer", "axiom_admin", "axiom_owner", "apex_owner"].includes(ctx.user.systemRole);
       if (!canViewAny && ctx.user.id !== input.managerId && ctx.user.systemRole !== "company_admin") {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
@@ -2041,7 +2041,7 @@ export const appRouter = router({
       name: z.string().min(1).optional(),
       logoUrl: z.string().url().nullable().optional(),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "axiom_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN", message: "Only company admins can update branding" });
       if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST", message: "No company associated" });
       await db.updateTenantCompany(ctx.user.tenantCompanyId, { ...input, updatedAt: Date.now() } as any);
@@ -2053,7 +2053,7 @@ export const appRouter = router({
       companyName: z.string().min(1),
       industry: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "axiom_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
       const { generateImage } = await import("./_core/imageGeneration.js");
       const prompt = `Professional business logo for a company called "${input.companyName}"${
@@ -2102,7 +2102,7 @@ export const appRouter = router({
     restoreLogo: protectedProcedure.input(z.object({
       logoUrl: z.string().url(),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "axiom_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
       if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST" });
       await db.updateTenantCompany(ctx.user.tenantCompanyId, { logoUrl: input.logoUrl, updatedAt: Date.now() } as any);
@@ -2113,7 +2113,7 @@ export const appRouter = router({
     createLogoCustomizationCheckout: protectedProcedure.input(z.object({
       origin: z.string(),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "axiom_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
       const { stripe } = await import("./stripe.js");
       if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe is not configured. Please add your Stripe keys in Settings → Payment." });
@@ -2201,7 +2201,7 @@ export const appRouter = router({
     setFavicon: protectedProcedure.input(z.object({
       faviconUrl: z.string().url(),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "axiom_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
       if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST" });
       await db.updateTenantCompany(ctx.user.tenantCompanyId, { faviconUrl: input.faviconUrl, updatedAt: Date.now() } as any);
@@ -2250,7 +2250,7 @@ export const appRouter = router({
       dataUrl: z.string().min(1),
       mimeType: z.string().default("image/png"),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "axiom_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
       if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST" });
       const { storagePut } = await import("./storage.js");
@@ -2276,41 +2276,48 @@ export const appRouter = router({
       password: z.string().min(8).max(128),
       name: z.string().min(1),
       email: z.string().email().optional(),
-      systemRole: z.enum(["axiom_owner", "company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"]),
+      systemRole: z.enum(["developer", "axiom_admin", "axiom_owner", "company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"]),
       tenantCompanyId: z.number(),
       managerId: z.number().optional(),
       jobTitle: z.string().optional(),
       phone: z.string().optional(),
       features: z.array(z.string()).optional(),
     })).mutation(async ({ ctx, input }) => {
-      // Permission checks — each role can only create roles below them
+      // ── Role permission chain ──────────────────────────────────────────────
+      // Developer (6)     → can create Developer, Axiom Admin, and all below
+      // Axiom Admin (5)   → can create Axiom Admin and all below
+      // Company Admin (3) → can create Company Admin, Managers, and sub-roles
+      // Sales Manager (2) → can only create Account Managers
+      // Office Manager(2) → can only create Coordinators
       const callerRole = ctx.user.systemRole;
       const callerLevel = getRoleLevel(callerRole);
       const targetLevel = getRoleLevel(input.systemRole);
-      
-      // Must be at least manager to create users
-      if (callerLevel < 2) {
+
+      // Must be at least manager level to create users
+      if (callerLevel < getRoleLevel("sales_manager")) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Insufficient permissions to create users" });
       }
-      // Can only create roles below your own level
+      // Can only create roles strictly below your own level
       if (targetLevel >= callerLevel) {
         throw new TRPCError({ code: "FORBIDDEN", message: `Cannot create a ${input.systemRole} — you can only create roles below your own level` });
       }
-      // Managers can only create their sub-roles
-      if (["sales_manager", "manager"].includes(callerRole) && !["account_manager"].includes(input.systemRole)) {
+      // Managers can only create their specific sub-roles
+      if (["sales_manager", "manager"].includes(callerRole) && input.systemRole !== "account_manager") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Sales Managers can only create Account Managers" });
       }
       if (callerRole === "office_manager" && input.systemRole !== "coordinator") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Office Managers can only create Coordinators" });
       }
-      // Company admins can create managers and their sub-roles
-      if (callerRole === "company_admin" && !["sales_manager", "office_manager", "account_manager", "coordinator"].includes(input.systemRole)) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Company admins can only create managers and their sub-roles" });
+      // Company Admin can create Company Admin (same level check above prevents this — they can create managers and below)
+      if (callerRole === "company_admin" && !["company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"].includes(input.systemRole)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Company Admins can only create Company Admins and below" });
       }
-      // AXIOM owners can create company_admins and below
-      if (callerRole === "axiom_owner" && !["company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"].includes(input.systemRole)) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "AXIOM owners can create company admins and below" });
+      // Axiom Admin can create Axiom Admin, Company Admin, and all below
+      if (["axiom_admin", "axiom_owner"].includes(callerRole) && !["axiom_admin", "company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"].includes(input.systemRole)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Axiom Admins can create Axiom Admins, Company Admins, and below" });
       }
+      // Developer can create anyone including other developers
+      // (no additional restriction — callerLevel >= targetLevel check above handles it)
       // Check company exists
       const company = await db.getTenantCompanyById(input.tenantCompanyId);
       if (!company) throw new TRPCError({ code: "NOT_FOUND", message: "Company not found" });
@@ -2371,18 +2378,25 @@ export const appRouter = router({
       return { success: true };
     }),
 
-    // Update user role (each level can only set roles below them)
+    // Update user role (each level can only set roles strictly below their own)
     setRole: protectedProcedure.input(z.object({
       userId: z.number(),
-      systemRole: z.enum(["developer", "axiom_owner", "company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"]),
+      systemRole: z.enum(["developer", "axiom_admin", "axiom_owner", "company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"]),
     })).mutation(async ({ ctx, input }) => {
       const callerLevel = getRoleLevel(ctx.user.systemRole);
       const targetLevel = getRoleLevel(input.systemRole);
+      // Must be at least Company Admin to change roles
       if (callerLevel < getRoleLevel("company_admin")) {
-        throw new TRPCError({ code: "FORBIDDEN" });
+        throw new TRPCError({ code: "FORBIDDEN", message: "Company Admin access or above required to change roles" });
       }
+      // Can only assign roles strictly below your own level
       if (targetLevel >= callerLevel) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Cannot set a role equal to or above your own" });
+      }
+      // Company Admin cannot assign axiom_admin or developer
+      if (getRoleLevel(ctx.user.systemRole) === getRoleLevel("company_admin") &&
+          ["axiom_admin", "axiom_owner", "developer"].includes(input.systemRole)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Company Admins cannot assign Axiom-level roles" });
       }
       await db.updateUserRole(input.userId, input.systemRole);
       return { success: true };
@@ -2556,23 +2570,35 @@ export const appRouter = router({
   }),
 
   invites: router({
-    // Create invite (admin or manager)
+    // Create invite — permission chain mirrors createUser
     create: protectedProcedure.input(z.object({
       companyId: z.number(),
       email: z.string().email(),
-      role: z.enum(["company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"]),
+      role: z.enum(["axiom_admin", "company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"]),
       managerId: z.number().optional(),
       features: z.array(z.string()).optional(),
     })).mutation(async ({ ctx, input }) => {
       const callerRole = ctx.user.systemRole;
-      if (!["developer", "company_admin", "sales_manager", "office_manager", "manager"].includes(callerRole)) {
-        throw new TRPCError({ code: "FORBIDDEN" });
+      const callerLevel = getRoleLevel(callerRole);
+      const targetLevel = getRoleLevel(input.role);
+      // Must be at least manager to send invites
+      if (callerLevel < getRoleLevel("sales_manager")) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Insufficient permissions to invite users" });
       }
+      // Can only invite roles strictly below your own level
+      if (targetLevel >= callerLevel) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Cannot invite someone to a role equal to or above your own" });
+      }
+      // Manager-specific restrictions
       if (["sales_manager", "manager"].includes(callerRole) && input.role !== "account_manager") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Sales Managers can only invite Account Managers" });
       }
       if (callerRole === "office_manager" && input.role !== "coordinator") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Office Managers can only invite Coordinators" });
+      }
+      // Company Admin cannot invite axiom_admin or developer
+      if (callerLevel === getRoleLevel("company_admin") && ["axiom_admin", "axiom_owner", "developer"].includes(input.role)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Company Admins cannot invite Axiom-level roles" });
       }
       const token = nanoid(48);
       const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -4343,7 +4369,7 @@ export const appRouter = router({
       if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const share = await dbConn.select().from(bibleShares).where(eq(bibleShares.id, input.shareId)).limit(1);
       if (!share.length) throw new TRPCError({ code: "NOT_FOUND" });
-      const isAdmin = ["developer", "axiom_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
       if (share[0].sharedByUserId !== ctx.user.id && !isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
       await dbConn.update(bibleShares).set({ revokedAt: Date.now(), revokedByUserId: ctx.user.id }).where(eq(bibleShares.id, input.shareId));
       return { success: true };
@@ -4420,7 +4446,7 @@ export const appRouter = router({
       // Required when billing=annual: user must acknowledge non-refundable policy
       annualAcknowledged: z.boolean().optional(),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "axiom_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN", message: "Only company admins can manage billing" });
       if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST", message: "No company associated" });
 
@@ -4478,7 +4504,7 @@ export const appRouter = router({
       quantity: z.number().int().min(1).max(50),
       origin: z.string().url(),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "axiom_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN", message: "Only company admins can add user seats" });
       if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST", message: "No company associated" });
       const { stripe } = await import("./stripe.js");
@@ -4512,7 +4538,7 @@ export const appRouter = router({
     createPortal: protectedProcedure.input(z.object({
       origin: z.string().url(),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "axiom_owner", "company_admin"].includes(ctx.user.systemRole);
+      const isAdmin = ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
       if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST" });
 
@@ -4531,7 +4557,7 @@ export const appRouter = router({
 
     invoices: protectedProcedure.query(async ({ ctx }) => {
       if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: 'BAD_REQUEST' });
-      const allowedRoles = ['company_admin', 'axiom_owner', 'developer'];
+      const allowedRoles = ['company_admin', 'axiom_admin', 'axiom_owner', 'apex_owner', 'developer'];
       if (!allowedRoles.includes(ctx.user.systemRole)) throw new TRPCError({ code: 'FORBIDDEN' });
       const { default: Stripe } = await import('stripe');
       const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' as any }) : null;
@@ -4566,7 +4592,7 @@ export const appRouter = router({
 
     paymentStatus: protectedProcedure.query(async ({ ctx }) => {
       if (!ctx.user.tenantCompanyId) return { isPastDue: false, status: null };
-      const allowedRoles = ['company_admin', 'axiom_owner', 'developer'];
+      const allowedRoles = ['company_admin', 'axiom_admin', 'axiom_owner', 'apex_owner', 'developer'];
       if (!allowedRoles.includes(ctx.user.systemRole)) return { isPastDue: false, status: null };
       const { default: Stripe } = await import('stripe');
       const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' as any }) : null;
@@ -4870,7 +4896,7 @@ export const appRouter = router({
     })).mutation(async ({ ctx, input }) => {
       const dbConn = await db.getDb();
       if (!dbConn || !ctx.user.tenantCompanyId) throw new TRPCError({ code: 'FORBIDDEN' });
-      if (!['company_admin', 'super_admin', 'axiom_owner', 'developer'].includes(ctx.user.systemRole)) {
+      if (!['company_admin', 'super_admin', 'axiom_admin', 'axiom_owner', 'apex_owner', 'developer'].includes(ctx.user.systemRole)) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Only Company Admin or above can update business category' });
       }
       const { tenantCompanies } = await import('../drizzle/schema');
@@ -5149,7 +5175,7 @@ export const appRouter = router({
     createPortalSession: protectedProcedure.mutation(async ({ ctx }) => {
       const dbConn = await db.getDb();
       if (!dbConn || !ctx.user.tenantCompanyId) throw new TRPCError({ code: 'FORBIDDEN' });
-      if (!['company_admin', 'super_admin', 'axiom_owner', 'developer'].includes(ctx.user.systemRole)) {
+      if (!['company_admin', 'super_admin', 'axiom_admin', 'axiom_owner', 'apex_owner', 'developer'].includes(ctx.user.systemRole)) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Only Company Admin can manage billing' });
       }
       const { tenantCompanies } = await import('../drizzle/schema');

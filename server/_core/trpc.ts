@@ -11,20 +11,23 @@ export const router = t.router;
 export const publicProcedure = t.procedure;
 
 // ─── Role hierarchy (highest to lowest) ───
-// developer > axiom_owner > company_admin > sales_manager / office_manager > account_manager / coordinator
-// super_admin and manager are legacy aliases; user is legacy alias for account_manager
+// developer > axiom_admin > axiom_owner > company_admin > sales_manager / office_manager > account_manager / coordinator
+// super_admin and manager are legacy aliases; user/sales_rep are legacy aliases for account_manager
 
 const ROLE_LEVELS: Record<string, number> = {
-  developer: 5,
-  axiom_owner: 4,
-  super_admin: 3, // legacy alias for company_admin
+  developer: 6,
+  axiom_admin: 5,
+  axiom_owner: 4,   // legacy alias for axiom_admin
+  apex_owner: 4,    // legacy alias
+  super_admin: 3,   // legacy alias for company_admin
   company_admin: 3,
   sales_manager: 2,
   office_manager: 2,
-  manager: 2,         // legacy alias for sales_manager
+  manager: 2,       // legacy alias for sales_manager
   account_manager: 1,
   coordinator: 1,
-  user: 1,            // legacy alias for account_manager
+  sales_rep: 1,     // legacy alias
+  user: 1,          // legacy alias
 };
 
 export function getRoleLevel(role: string): number {
@@ -81,7 +84,22 @@ export const companyAdminProcedure = t.procedure.use(
   }),
 );
 
-// ─── Role: AXIOM Owner or above (axiom_owner, developer) ───
+// ─── Role: AXIOM Admin or above (axiom_admin, axiom_owner [legacy], developer) ───
+export const axiomAdminProcedure = t.procedure.use(
+  t.middleware(async opts => {
+    const { ctx, next } = opts;
+    if (!ctx.user) {
+      throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
+    }
+    if (getRoleLevel(ctx.user.systemRole) < ROLE_LEVELS.axiom_admin) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "AXIOM Admin access or above required." });
+    }
+    return next({ ctx: { ...ctx, user: ctx.user } });
+  }),
+);
+
+// ─── Role: AXIOM Owner or above (axiom_owner [legacy], axiom_admin, developer) ───
+// NOTE: axiomOwnerProcedure is kept for backward compatibility; prefer axiomAdminProcedure for new code
 export const axiomOwnerProcedure = t.procedure.use(
   t.middleware(async opts => {
     const { ctx, next } = opts;
@@ -89,7 +107,7 @@ export const axiomOwnerProcedure = t.procedure.use(
       throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
     }
     if (getRoleLevel(ctx.user.systemRole) < ROLE_LEVELS.axiom_owner) {
-      throw new TRPCError({ code: "FORBIDDEN", message: "AXIOM Owner access or above required." });
+      throw new TRPCError({ code: "FORBIDDEN", message: "AXIOM Admin access or above required." });
     }
     return next({ ctx: { ...ctx, user: ctx.user } });
   }),
@@ -102,7 +120,7 @@ export const developerProcedure = t.procedure.use(
     if (!ctx.user) {
       throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
     }
-    if (ctx.user.systemRole !== "developer") {
+    if (getRoleLevel(ctx.user.systemRole) < ROLE_LEVELS.developer) {
       throw new TRPCError({ code: "FORBIDDEN", message: "Developer access required." });
     }
     return next({ ctx: { ...ctx, user: ctx.user } });

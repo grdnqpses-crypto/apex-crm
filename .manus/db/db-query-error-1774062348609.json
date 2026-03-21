@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE users MODIFY COLUMN systemRole ENUM('developer','axiom_admin','axiom_owner','super_admin','company_admin','sales_manager','office_manager','manager','account_manager','coordinator','user') NOT NULL DEFAULT 'account_manager';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute ALTER TABLE users MODIFY COLUMN systemRole ENUM('developer','axiom_admin','axiom_owner','super_admin','company_admin','sales_manager','office_manager','manager','account_manager','coordinator','user') NOT NULL DEFAULT 'account_manager';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1265 (01000) at line 1: Data truncated for column 'systemRole', value is 'apex_owner'"
+  ]
+}

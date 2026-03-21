@@ -13,11 +13,13 @@ import { useSkin } from "@/contexts/SkinContext";
 
 // ─── Role Access Matrix ───────────────────────────────────────────────────────
 // minRoles: array of roles that can see this section by default (and all higher roles)
-// Role hierarchy: developer > axiom_owner > company_admin > sales_manager/office_manager > account_manager/coordinator
+// Role hierarchy: developer > axiom_admin > company_admin > sales_manager/office_manager > account_manager/coordinator
 
 const ROLE_LEVEL: Record<string, number> = {
   developer: 100,
-  axiom_owner: 90,
+  axiom_admin: 95,
+  axiom_owner: 90,   // legacy alias for axiom_admin
+  apex_owner: 90,    // legacy alias
   super_admin: 85,
   company_admin: 80,
   sales_manager: 60,
@@ -745,7 +747,9 @@ function SharedWithMePanel() {
 
 const ROLE_DISPLAY: Record<string, { label: string; color: string }> = {
   developer: { label: "Developer", color: "bg-red-500/10 text-red-500 border-red-500/20" },
-  axiom_owner: { label: "AXIOM Owner", color: "bg-orange-500/10 text-orange-500 border-orange-500/20" },
+  axiom_admin: { label: "Axiom Admin", color: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
+  axiom_owner: { label: "Axiom Admin", color: "bg-amber-500/10 text-amber-500 border-amber-500/20" },  // legacy
+  apex_owner: { label: "Axiom Admin", color: "bg-amber-500/10 text-amber-500 border-amber-500/20" },   // legacy
   super_admin: { label: "Super Admin", color: "bg-orange-500/10 text-orange-500 border-orange-500/20" },
   company_admin: { label: "Company Admin", color: "bg-violet-500/10 text-violet-500 border-violet-500/20" },
   sales_manager: { label: "Sales Manager", color: "bg-blue-500/10 text-blue-500 border-blue-500/20" },

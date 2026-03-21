@@ -51,8 +51,8 @@ export default function AxiomAiCredits() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
 
-  // Guard: only AXIOM Owner
-  if (user && (user as any).systemRole !== "axiom_owner") {
+  // Guard: axiom_admin and above only
+  if (user && !["developer", "axiom_admin", "axiom_owner", "apex_owner"].includes((user as any).systemRole)) {
     navigate("/dashboard");
     return null;
   }
