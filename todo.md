@@ -2122,3 +2122,4 @@
 - [ ] Upgrade AI logo generator to produce vivid, animated SVG logos with CSS animations
 - [ ] Update company branding UI with URL logo pull field and animated logo preview
 - [x] Fix Team Performance: users must only see data for team members at or below their own role level
+- [x] Fix "unexpected error occurred" on Custom Objects tab

@@ -5624,17 +5624,7 @@ export const appRouter = router({
     delete: protectedProcedure.input(z.object({ id: z.string() })).mutation(async () => ({ success: true })),
   }),
 
-  // ─── Custom Objects ───────────────────────────────────────────────────────────
-  customObjects: router({
-    listTypes: protectedProcedure.query(async () => ({ types: [] })),
-    createType: protectedProcedure.input(z.object({ name: z.string(), label: z.string(), icon: z.string().optional() })).mutation(async () => ({ success: true, id: `co_${Date.now()}` })),
-    deleteType: protectedProcedure.input(z.object({ id: z.string() })).mutation(async () => ({ success: true })),
-    listFields: protectedProcedure.input(z.object({ typeId: z.string() })).query(async () => ({ fields: [] })),
-    addField: protectedProcedure.input(z.object({ typeId: z.string(), name: z.string(), type: z.string() })).mutation(async () => ({ success: true, id: `f_${Date.now()}` })),
-    deleteField: protectedProcedure.input(z.object({ typeId: z.string(), fieldId: z.string() })).mutation(async () => ({ success: true })),
-  }),
-
-  // ─── Custom Roles ─────────────────────────────────────────────────────────────
+  // ─── Custom Roles ──────────────────────────────────────────────────────────────
   customRoles: router({
     list: protectedProcedure.query(async () => ({ roles: [] })),
     create: protectedProcedure.input(z.object({ name: z.string(), permissions: z.array(z.string()) })).mutation(async () => ({ success: true, id: `role_${Date.now()}` })),

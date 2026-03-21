@@ -1,0 +1,19 @@
+{
+  "query": "SHOW TABLES LIKE 'custom_object%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SHOW TABLES LIKE 'custom_object%';",
+  "rows": [
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY (custom_object%)": "custom_object_defs"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY (custom_object%)": "custom_object_records"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY (custom_object%)": "custom_object_types"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_mLLZEfmfSEuH47dfeJgVGY (custom_object%)\ncustom_object_defs\ncustom_object_records\ncustom_object_types\n",
+  "stderr": "",
+  "execution_time_ms": 358
+}
