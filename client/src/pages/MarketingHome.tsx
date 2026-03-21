@@ -613,7 +613,7 @@ export default function MarketingHome({
                 <X className="h-4 w-4" />
               </button>
               <video
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/axiom-promo-final_10e5790e.mp4"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/axiom-trailer-64s_5486e94e.mp4"
                 autoPlay
                 controls
                 playsInline
@@ -635,7 +635,7 @@ export default function MarketingHome({
           className="absolute inset-0 w-full h-full object-cover pointer-events-none"
           style={{ filter: "brightness(0.45) saturate(1.4) contrast(1.1)" }}
         >
-          <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/axiom-promo-final_10e5790e.mp4" type="video/mp4" />
+          <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/axiom-trailer-64s_5486e94e.mp4" type="video/mp4" />
         </video>
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#04080f]/50 via-transparent to-[#04080f] pointer-events-none" />
@@ -890,7 +890,7 @@ export default function MarketingHome({
           <div className="relative w-full bg-black">
             <div className="relative w-full" style={{aspectRatio:'16/9'}}>
               <video
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/axiom-trailer-64s_5c4e5e4e.mp4"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/axiom-trailer-64s_5486e94e.mp4"
                 className="w-full h-full object-cover"
                 controls
                 loop

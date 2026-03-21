@@ -2049,3 +2049,57 @@
 - [x] Add cinematic music bed to the 3-minute trailer MP4
 - [x] Widen comparison scroll panel from 260px to 320px
 - [x] Add "Start Your 60-Day Free Trial" CTA button below video chapter markers
+- [x] Fix MP4 video metadata title from "Apex CRM" to "AXIOM CRM — Command Your Market"
+
+## Video Rebuild (Round 4)
+- [ ] Extract original 64s trailer audio (voiceover + music bed)
+- [ ] Rebuild extended video using original footage segments with smooth cross-fades (no choppiness)
+- [ ] Export final clean MP4 with original audio + extended visuals
+
+## Video Extension (Option 3 - Matching Original Voice)
+- [x] Transcribe original 64s voiceover to capture exact style and pacing
+- [x] Write extension script (1:05 to 3:00) matching original voice style
+- [x] Generate extension audio with matching voice settings
+- [x] Stitch original + extension audio with extended visuals into clean 3-min MP4
+
+## 3-Minute Trailer - New Cinematic Scenes
+- [x] Generate Scene 1: Confident executive at sleek desk, holographic CRM dashboard glowing
+- [x] Generate Scene 2: Fast-cut city skyline at night, neon data streams, Matrix-style code rain
+- [x] Generate Scene 3: Boardroom power moment - team celebrating a closed deal
+- [x] Generate Scene 4: Empire collapse - dark corporate towers going dark/obsolete
+- [x] Generate Scene 5: Speed sequence - sports car tunnel, cutting to sales dashboard
+- [x] Generate Scene 6: AXIOM crown rising from digital ashes, gold light explosion
+- [x] Generate Scene 7: Diverse sales team commanding holographic screens
+- [x] Generate Scene 8: Final hero shot - lone figure overlooking city at dawn, victorious
+- [x] Stitch all scenes with original footage and extended voiceover into final 3-min MP4
+
+## 3-Minute Trailer - 16 Additional Unique Scenes
+- [ ] Scene 9: Close-up hands typing on keyboard, CRM pipeline animating on screen
+- [ ] Scene 10: Salesperson on phone call, smiling, closing a deal, city view behind
+- [ ] Scene 11: WhatsApp broadcast sequence - messages flying out to hundreds of contacts
+- [ ] Scene 12: Social media post going viral - likes and shares exploding on screen
+- [ ] Scene 13: Email deliverability - 260 servers visualization, emails flying globally
+- [ ] Scene 14: AI analyzing a contact profile - data points assembling into a behavioral map
+- [ ] Scene 15: Invoice being sent and payment received instantly - Stripe notification
+- [ ] Scene 16: Ghost Mode - invisible figure moving through a competitor's radar undetected
+- [ ] Scene 17: Power dialer - rapid fire calls, deal after deal closing on screen
+- [ ] Scene 18: Competitor executive looking at crashing revenue chart in panic
+- [ ] Scene 19: AXIOM logo assembling from data particles in 3D space
+- [ ] Scene 20: Aerial city shot at golden hour, data network connecting every building
+- [ ] Scene 21: Close-up of a smartphone showing AXIOM mobile app with live pipeline
+- [ ] Scene 22: Two businesspeople shaking hands, holographic contract signing between them
+- [ ] Scene 23: Server room with glowing blue racks - the 260 SMTP infrastructure
+- [ ] Scene 24: Final wide shot - AXIOM crown floating above a city, commanding everything below
+- [ ] Reassemble full 3-min trailer with all 24+ unique scenes, no repetition
+
+## Voiceover Redo - Limitless/Fast & Furious Style
+- [x] Re-record all extension voiceover lines with deep cinematic male voice (Limitless/Fast & Furious style)
+- [x] Rebuild final trailer MP4 with new high-quality voiceover
+
+## Salesforce UI Audit & AXIOM Design Improvements
+- [ ] Log into Salesforce dummy account and capture key UI screenshots
+- [ ] Analyze Salesforce design patterns (layout, colors, typography, components)
+- [ ] Apply improvements to AXIOM UI to match or exceed Salesforce quality
+- [ ] Log into HubSpot dummy account and capture UI screenshots
+- [ ] Log into Salesforce dummy account and capture UI screenshots
+- [x] Upload original 64s trailer to CDN and update marketing page to use it
