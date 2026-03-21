@@ -2103,3 +2103,4 @@
 - [ ] Log into HubSpot dummy account and capture UI screenshots
 - [ ] Log into Salesforce dummy account and capture UI screenshots
 - [x] Upload original 64s trailer to CDN and update marketing page to use it
+- [x] CRITICAL: Fix comparison scroll — AXIOM must show ✓ for all its features, competitors must show red ✗ for features they lack

@@ -905,23 +905,30 @@ export default function MarketingHome({
               </div>
 
               {/* OVERLAY: Scrolling Feature Comparison — floats on top of video */}
-              <div className="absolute top-0 left-0 bottom-0 z-30" style={{width:'320px',background:'linear-gradient(180deg,rgba(5,10,26,0.85) 0%,rgba(2,5,16,0.85) 100%)',backdropFilter:'blur(14px)',WebkitBackdropFilter:'blur(14px)',borderRight:'1px solid rgba(26,108,246,0.25)',overflow:'hidden'}}>
+              <div className="absolute top-0 left-0 bottom-0 z-30" style={{width:'360px',background:'linear-gradient(180deg,rgba(4,8,20,0.92) 0%,rgba(2,5,16,0.92) 100%)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)',borderRight:'1px solid rgba(201,168,76,0.3)',overflow:'hidden'}}>
                 {/* Header */}
-                <div className="px-3 py-2 sticky top-0 z-10" style={{background:'rgba(5,10,26,0.95)',borderBottom:'1px solid rgba(26,108,246,0.2)'}}>
+                <div className="px-3 py-2 sticky top-0 z-10" style={{background:'rgba(4,8,20,0.98)',borderBottom:'1px solid rgba(201,168,76,0.25)'}}>
                   <div className="flex items-center justify-center mb-2">
-                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/axiom-logo-horizontal-HHHs82wk3F787GiBnE8hJy.png" alt="AXIOM" className="h-7 w-auto object-contain" />
+                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/axiom-logo-horizontal-HHHs82wk3F787GiBnE8hJy.png" alt="AXIOM" className="h-6 w-auto object-contain" />
                     <span className="ml-2 text-xs font-black tracking-widest" style={{color:'#c9a84c'}}>VS THE WORLD</span>
                   </div>
-                  <div className="grid grid-cols-4 gap-1 text-center">
+                  {/* Column headers: Feature | AXIOM | HubSpot | Salesforce | Pipedrive */}
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 52px 52px 52px 52px',gap:'2px',textAlign:'center'}}>
+                    <div style={{fontSize:'8px',color:'rgba(255,255,255,0.3)',textAlign:'left',paddingLeft:'2px'}}>FEATURE</div>
                     {['AXIOM','HubSpot','Salesforce','Pipedrive'].map((c,i)=>(
-                      <div key={i} className="text-xs font-bold py-1 rounded" style={i===0?{background:'linear-gradient(135deg,#1a6cf6,#0d4db5)',color:'white',borderRadius:'6px'}:{color:'rgba(255,255,255,0.5)'}}>{c}</div>
+                      <div key={i} style={{
+                        fontSize:'8px',fontWeight:'900',padding:'3px 2px',borderRadius:'4px',
+                        background:i===0?'linear-gradient(135deg,#c9a84c,#f0d080)':'transparent',
+                        color:i===0?'#000':'rgba(255,255,255,0.4)',
+                        letterSpacing:'0.02em'
+                      }}>{c}</div>
                     ))}
                   </div>
                 </div>
                 {/* Scrolling rows */}
                 <style>{`
                   @keyframes featureScrollUp { 0%{transform:translateY(0)} 100%{transform:translateY(-50%)} }
-                  .feat-scroll { animation: featureScrollUp 80s linear infinite; }
+                  .feat-scroll { animation: featureScrollUp 90s linear infinite; }
                   .feat-scroll:hover { animation-play-state: paused; }
                 `}</style>
                 <div className="feat-scroll px-3 py-2">
@@ -1006,13 +1013,30 @@ export default function MarketingHome({
               ] as {cat:string,f:string,a:boolean|string,b:boolean|string,c:boolean|string,d:boolean|string}[]).map((row,i)=>(
                 <div key={i}>
                   {row.cat && <div className="text-xs font-black mt-3 mb-1 px-1" style={{color:'#c9a84c',letterSpacing:'0.1em'}}>{row.cat}</div>}
-                  <div className="grid grid-cols-4 gap-1 py-1.5" style={{borderBottom:'1px solid rgba(255,255,255,0.04)'}}>
-                    <div className="text-white/60 leading-tight pr-1" style={{fontSize:'10px'}}>{row.f}</div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 52px 52px 52px 52px',gap:'2px',padding:'4px 0',borderBottom:'1px solid rgba(255,255,255,0.04)',alignItems:'center'}}>
+                    <div style={{fontSize:'9px',color:'rgba(255,255,255,0.7)',lineHeight:'1.3',paddingRight:'4px'}}>{row.f}</div>
                     {([row.a,row.b,row.c,row.d] as (boolean|string)[]).map((val,ci)=>(
-                      <div key={ci} className="text-center" style={{fontSize:'10px'}}>
-                        {val===true?<span style={{color:'#1a6cf6',fontWeight:'900',fontSize:'14px',lineHeight:'1'}}>✓</span>
-                          :val===false?<span style={{color:'#ef4444',fontWeight:'900',fontSize:'16px',lineHeight:'1',textShadow:'0 0 8px rgba(239,68,68,0.6)'}}>✗</span>
-                          :<span style={{color:ci===0?'#c9a84c':'#ef4444',fontWeight:ci===0?'bold':'600',fontSize:ci===0?'10px':'9px'}}>{val as string}</span>}
+                      <div key={ci} style={{
+                        textAlign:'center',
+                        fontSize:'10px',
+                        background: ci===0 ? 'rgba(201,168,76,0.08)' : 'transparent',
+                        borderRadius: ci===0 ? '3px' : '0',
+                        padding: '1px 0'
+                      }}>
+                        {val===true
+                          /* AXIOM true = large gold glowing ✓ | Competitor true = small dim ✓ */
+                          ?<span style={{
+                              color: ci===0?'#f0c040':'rgba(255,255,255,0.35)',
+                              fontWeight:'900',
+                              fontSize: ci===0?'16px':'12px',
+                              lineHeight:'1',
+                              textShadow: ci===0?'0 0 12px rgba(240,192,64,0.9)':'none'
+                            }}>✓</span>
+                          :val===false
+                          /* false = big red X */
+                          ?<span style={{color:'#ef4444',fontWeight:'900',fontSize:'15px',lineHeight:'1',textShadow:'0 0 8px rgba(239,68,68,0.7)'}}>✗</span>
+                          /* string value */
+                          :<span style={{color:ci===0?'#c9a84c':'#ef4444',fontWeight:ci===0?'900':'700',fontSize:'8px',lineHeight:'1.2',display:'block'}}>{val as string}</span>}
                       </div>
                     ))}
                   </div>
