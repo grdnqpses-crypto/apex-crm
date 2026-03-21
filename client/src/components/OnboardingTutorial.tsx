@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import {
   X, ChevronRight, ChevronLeft, Sparkles, CheckCircle2, Circle,
   LayoutDashboard, Building2, Users, Target, Mail, BarChart3,
   Brain, Truck, Shield, Settings, Zap, ArrowRight, Lightbulb,
-  GraduationCap, Trophy, Star, Rocket
+  GraduationCap, Trophy, Star, Rocket, Maximize2, Minimize2
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -295,6 +295,8 @@ export default function OnboardingTutorial() {
     };
   }, [startTutorial, resetTutorial]);
 
+  const [isExpanded, setIsExpanded] = React.useState(false);
+
   if (!showPopup || state.dismissed) return null;
 
   const isLastStep = state.currentStep === availableSteps.length - 1;
@@ -318,15 +320,22 @@ export default function OnboardingTutorial() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] max-w-md w-full" style={{ pointerEvents: "auto" }}>
-      <div className={`transition-all duration-300 ${animateIn ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95"}`}>
-        <Card className="shadow-2xl border-slate-200 overflow-hidden">
+    <div
+      className={`fixed z-[9999] transition-all duration-300 ${
+        isExpanded
+          ? "inset-4 max-w-none w-auto"
+          : "bottom-6 right-6 max-w-md w-full"
+      }`}
+      style={{ pointerEvents: "auto" }}
+    >
+      <div className={`transition-all duration-300 ${isExpanded ? "h-full" : ""} ${animateIn ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95"}`}>
+        <Card className={`shadow-2xl border-slate-200 overflow-hidden flex flex-col ${isExpanded ? "h-full" : ""}`}>
           {/* Progress bar */}
           <div className="h-1 bg-slate-100">
             <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500" style={{ width: `${progress}%` }} />
           </div>
 
-          <CardContent className="p-5">
+          <CardContent className={`p-5 flex flex-col ${isExpanded ? "flex-1 overflow-y-auto" : ""}`}>
             {/* Header */}
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -350,9 +359,18 @@ export default function OnboardingTutorial() {
                   </p>
                 </div>
               </div>
-              <button onClick={dismissTutorial} className="text-slate-400 hover:text-slate-600 transition p-1 -mr-1 -mt-1">
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setIsExpanded(e => !e)}
+                  className="text-slate-400 hover:text-slate-600 transition p-1"
+                  title={isExpanded ? "Collapse" : "Expand"}
+                >
+                  {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </button>
+                <button onClick={dismissTutorial} className="text-slate-400 hover:text-slate-600 transition p-1 -mr-1 -mt-1">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Content */}
@@ -362,10 +380,10 @@ export default function OnboardingTutorial() {
                 ? currentStepData.title.replace("AXIOM CRM", myCompany.name)
                 : currentStepData.title}
             </h3>
-            <p className="text-sm text-slate-600 mb-3 leading-relaxed">{currentStepData.description}</p>
+            <p className={`text-sm text-slate-600 mb-3 leading-relaxed ${isExpanded ? "text-base" : ""}`}>{currentStepData.description}</p>
 
             {/* AI Tip */}
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 mb-4 border border-amber-100">
+            <div className={`bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 mb-4 border border-amber-100 ${isExpanded ? "p-4" : ""}`}>
               <div className="flex items-start gap-2">
                 <Lightbulb className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
                 <p className="text-xs text-amber-800 leading-relaxed">{currentStepData.tip}</p>

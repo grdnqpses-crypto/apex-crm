@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, email, systemRole, tenantCompanyId FROM users LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, email, systemRole, tenantCompanyId FROM users LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "email": "crm@shiplw.com",
+      "systemRole": "developer",
+      "tenantCompanyId": "2"
+    },
+    {
+      "id": "12",
+      "email": "grdn.qpses@gmail.com",
+      "systemRole": "developer",
+      "tenantCompanyId": "NULL"
+    },
+    {
+      "id": "2610017",
+      "email": "jlavallee@shiplw.com",
+      "systemRole": "developer",
+      "tenantCompanyId": "2"
+    },
+    {
+      "id": "2610020",
+      "email": "mrodriguez@shiplw.com",
+      "systemRole": "sales_manager",
+      "tenantCompanyId": "2"
+    },
+    {
+      "id": "2610023",
+      "email": "schen@shiplw.com",
+      "systemRole": "account_manager",
+      "tenantCompanyId": "2"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tsystemRole\ttenantCompanyId\n1\tcrm@shiplw.com\tdeveloper\t2\n12\tgrdn.qpses@gmail.com\tdeveloper\tNULL\n2610017\tjlavallee@shiplw.com\tdeveloper\t2\n2610020\tmrodriguez@shiplw.com\tsales_manager\t2\n2610023\tschen@shiplw.com\taccount_manager\t2\n",
+  "stderr": "",
+  "execution_time_ms": 366
+}

@@ -2117,3 +2117,4 @@
 - [x] Fix aiEngine and systemHealth to use developerProcedure/axiomOwnerProcedure with correct return shapes
 - [x] Create missing skin_preferences table in database
 - [x] All 558 tests passing (27 test files)
+- [x] Make the AI "Let's Get Started" tutorial window expandable/resizable
