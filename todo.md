@@ -2118,3 +2118,7 @@
 - [x] Create missing skin_preferences table in database
 - [x] All 558 tests passing (27 test files)
 - [x] Make the AI "Let's Get Started" tutorial window expandable/resizable
+- [ ] Add website logo extractor: paste a URL, auto-pull favicon/OG image as company logo
+- [ ] Upgrade AI logo generator to produce vivid, animated SVG logos with CSS animations
+- [ ] Update company branding UI with URL logo pull field and animated logo preview
+- [x] Fix Team Performance: users must only see data for team members at or below their own role level

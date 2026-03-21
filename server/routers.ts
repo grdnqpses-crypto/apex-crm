@@ -2056,9 +2056,9 @@ export const appRouter = router({
       const isAdmin = ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
       const { generateImage } = await import("./_core/imageGeneration.js");
-      const prompt = `Professional business logo for a company called "${input.companyName}"${
+      const prompt = `VIVID, ELECTRIC, STUNNING business logo for a company called "${input.companyName}"${
         input.industry ? ` in the ${input.industry} industry` : ""
-      }. Modern, clean, vector-style logo on a transparent or dark background. Bold typography, minimal design, suitable for a CRM software platform. No text other than the company initials or a simple icon mark.`;
+      }. Ultra-bold, vibrant neon colors — electric blue, hot magenta, blazing gold, or deep violet gradients. Dynamic geometric shapes with glowing light effects, radiant energy bursts, and luminous gradients. The logo should feel ALIVE — like it's pulsing with energy. Modern 3D depth, metallic sheen, vivid color contrast on a rich dark background. Cinematic lighting, dramatic shadows, premium brand identity. Award-winning logo design. Highly detailed, ultra-sharp, 4K quality. NO plain text — only a powerful icon mark or stylized monogram with maximum visual impact.`;
       const result = await generateImage({ prompt });
       if (!result?.url) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Logo generation failed" });
       // Save to S3
@@ -2152,9 +2152,9 @@ export const appRouter = router({
       const company = await db.getTenantCompanyById(ctx.user.tenantCompanyId);
       if (!company || company.logoUrl) return { logoUrl: null }; // already has logo
       const { generateImage } = await import("./_core/imageGeneration.js");
-      const prompt = `Professional business logo for a company called "${company.name}"${
+      const prompt = `VIVID, ELECTRIC, STUNNING business logo for a company called "${company.name}"${
         company.industry ? ` in the ${company.industry} industry` : ""
-      }. Modern, clean, vector-style logo on a transparent or dark background. Bold typography, minimal design, suitable for a CRM software platform.`;
+      }. Ultra-bold, vibrant neon colors — electric blue, hot magenta, blazing gold, or deep violet gradients. Dynamic geometric shapes with glowing light effects, radiant energy bursts, and luminous gradients. The logo should feel ALIVE — like it's pulsing with energy. Modern 3D depth, metallic sheen, vivid color contrast on a rich dark background. Cinematic lighting, dramatic shadows, premium brand identity. Award-winning logo design. Highly detailed, ultra-sharp, 4K quality. NO plain text — only a powerful icon mark or stylized monogram with maximum visual impact.`;
       const result = await generateImage({ prompt });
       if (!result?.url) return { logoUrl: null };
       const { storagePut } = await import("./storage.js");
@@ -2261,6 +2261,75 @@ export const appRouter = router({
       const { url } = await storagePut(key, buffer, input.mimeType);
       await db.updateTenantCompany(ctx.user.tenantCompanyId, { logoUrl: url, updatedAt: Date.now() } as any);
       return { logoUrl: url };
+    }),
+
+    // Fetch logo from a website URL (extracts favicon, OG image, or Apple touch icon)
+    fetchLogoFromWebsite: protectedProcedure.input(z.object({
+      websiteUrl: z.string().min(1),
+    })).mutation(async ({ ctx, input }) => {
+      const isAdmin = ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
+      if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST" });
+
+      // Normalize URL
+      let baseUrl = input.websiteUrl.trim();
+      if (!baseUrl.startsWith("http")) baseUrl = "https://" + baseUrl;
+      const urlObj = new URL(baseUrl);
+      const origin = urlObj.origin;
+
+      // Strategy 1: Clearbit Logo API (best quality)
+      const clearbitUrl = `https://logo.clearbit.com/${urlObj.hostname}`;
+      // Strategy 2: Google Favicon service (reliable fallback)
+      const googleFaviconUrl = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=256`;
+
+      // Strategy 3: Scrape the page for og:image or apple-touch-icon
+      let ogImageUrl: string | null = null;
+      let appleTouchUrl: string | null = null;
+      try {
+        const pageRes = await fetch(origin, {
+          headers: { "User-Agent": "Mozilla/5.0 (compatible; AXIOM-CRM/1.0)" },
+          signal: AbortSignal.timeout(8000),
+        });
+        const html = await pageRes.text();
+        const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+          || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+        if (ogMatch?.[1]) ogImageUrl = ogMatch[1].startsWith("http") ? ogMatch[1] : origin + ogMatch[1];
+        const appleMatch = html.match(/<link[^>]+rel=["'][^"']*apple-touch-icon[^"']*["'][^>]+href=["']([^"']+)["']/i);
+        if (appleMatch?.[1]) appleTouchUrl = appleMatch[1].startsWith("http") ? appleMatch[1] : origin + appleMatch[1];
+      } catch (_) { /* fall back */ }
+
+      const candidates = [clearbitUrl, appleTouchUrl, ogImageUrl, googleFaviconUrl].filter(Boolean) as string[];
+      const { storagePut } = await import("./storage.js");
+
+      for (const candidateUrl of candidates) {
+        try {
+          const res = await fetch(candidateUrl, { signal: AbortSignal.timeout(6000) });
+          if (!res.ok) continue;
+          const contentType = res.headers.get("content-type") || "image/png";
+          if (!contentType.startsWith("image/")) continue;
+          const buffer = Buffer.from(await res.arrayBuffer());
+          if (buffer.length < 200) continue;
+          const ext = contentType.split("/")[1]?.split(";")[0] || "png";
+          const key = `company-logos/${ctx.user.tenantCompanyId}-website-logo-${Date.now()}.${ext}`;
+          const { url: s3Url } = await storagePut(key, buffer, contentType);
+          // Save to logo history
+          try {
+            const dbConn = await (await import("./db.js")).getDb();
+            if (dbConn) {
+              const { logoGenerations } = await import("../drizzle/schema.js");
+              await dbConn.insert(logoGenerations).values({
+                tenantCompanyId: ctx.user.tenantCompanyId,
+                logoUrl: s3Url,
+                prompt: `Fetched from ${urlObj.hostname}`,
+                createdAt: Date.now(),
+              });
+            }
+          } catch (_) { /* history save optional */ }
+          return { logoUrl: s3Url, source: urlObj.hostname };
+        } catch (_) { continue; }
+      }
+
+      throw new TRPCError({ code: "NOT_FOUND", message: `Could not find a logo for ${urlObj.hostname}. Try uploading manually.` });
     }),
   }),
 
@@ -2484,16 +2553,30 @@ export const appRouter = router({
 
   // ─── Team Oversight (Manager+) ───
   teamOversight: router({
-    // Get team performance stats (manager sees direct reports, admin sees all tenant users)
+    // Get team performance stats — strictly role-scoped:
+    // Each caller only sees users whose role level is STRICTLY BELOW their own.
+    // Sales/Office Managers only see their direct reports.
     performance: managerProcedure.query(async ({ ctx }) => {
-      if (ctx.user.systemRole === "manager") {
+      const callerLevel = getRoleLevel(ctx.user.systemRole);
+
+      // Managers (sales_manager / office_manager) only see direct reports
+      if (["sales_manager", "office_manager", "manager"].includes(ctx.user.systemRole)) {
         return db.getTeamPerformanceStats(ctx.user.id);
       }
-      // Company admin or developer: get all users in tenant
+
+      // Company Admin and above: see all tenant users whose role level < caller's level
       if (ctx.user.tenantCompanyId) {
         const tenantUsers = await db.getUsersByCompany(ctx.user.tenantCompanyId);
         if (!tenantUsers) return [];
-        const stats = await Promise.all(tenantUsers.filter((u: any) => u.id !== ctx.user.id).map(async (member: any) => {
+
+        // Filter: exclude self AND exclude anyone at or above the caller's role level
+        const visibleMembers = tenantUsers.filter((u: any) => {
+          if (u.id === ctx.user.id) return false; // exclude self
+          const memberLevel = getRoleLevel(u.systemRole);
+          return memberLevel < callerLevel; // only show roles BELOW caller
+        });
+
+        const stats = await Promise.all(visibleMembers.map(async (member: any) => {
           const memberStats = await db.getDashboardStats(member.id);
           return {
             userId: member.id,

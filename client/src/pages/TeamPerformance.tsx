@@ -46,7 +46,32 @@ export default function TeamPerformance() {
   const totalTasks = team.reduce((s: number, m: any) => s + (m.totalTasks || 0), 0);
   const winRate = totalDeals > 0 ? ((wonDeals / totalDeals) * 100).toFixed(1) : "0";
 
-  const roleName = user?.systemRole === "manager" ? "Manager" : user?.systemRole === "company_admin" ? "Admin" : "Developer";
+  const roleLabels: Record<string, string> = {
+    developer: "Developer",
+    axiom_admin: "Axiom Admin",
+    axiom_owner: "Axiom Owner",
+    company_admin: "Company Admin",
+    sales_manager: "Sales Manager",
+    office_manager: "Office Manager",
+    manager: "Manager",
+    account_manager: "Account Manager",
+    coordinator: "Coordinator",
+    user: "Sales Rep",
+  };
+  const roleName = roleLabels[user?.systemRole || ""] || "User";
+
+  const roleAccessNotes: Record<string, string> = {
+    developer: "As a Developer, you have full platform access across all tenants. You can see all users at every role level.",
+    axiom_admin: "As an Axiom Admin, you can see all Company Admins, Managers, and their teams across the platform.",
+    axiom_owner: "As an Axiom Owner, you can see all users at every level.",
+    company_admin: "As a Company Admin, you can see all Managers and team members within your organization. You cannot see Axiom-level users.",
+    sales_manager: "As a Sales Manager, you can see only the Account Managers directly assigned to you.",
+    office_manager: "As an Office Manager, you can see only the Coordinators directly assigned to you.",
+    manager: "As a Manager, you can see data from all sales reps assigned to you.",
+    account_manager: "As an Account Manager, you can only see your own data. Contact your manager for team data.",
+    coordinator: "As a Coordinator, you can only see your own data. Contact your manager for team data.",
+    user: "As a Sales Rep, you can only see your own data. Contact your manager for team data.",
+  };
 
   return (
     <div className="space-y-6">
@@ -249,10 +274,7 @@ export default function TeamPerformance() {
             <div className="text-sm">
               <p className="font-medium">Role-Based Data Access</p>
               <p className="text-muted-foreground mt-1">
-                {user?.systemRole === "manager" && "As a Manager, you can see data from all sales reps assigned to you. You can reassign companies, deals, and tasks between your team members."}
-                {user?.systemRole === "company_admin" && "As a Company Admin, you can see all data across your entire organization. You can manage users, reassign work, and configure company settings."}
-                {user?.systemRole === "developer" && "As a Developer, you have full platform access across all tenants. Use the Dev Tools section for system-level management."}
-                {user?.systemRole === "user" && "As a Sales Rep, you can only see your own companies, contacts, deals, and tasks. Contact your manager for team data."}
+                {roleAccessNotes[user?.systemRole || ""] || "You can only see data for team members at or below your role level."}
               </p>
             </div>
           </div>

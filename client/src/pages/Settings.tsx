@@ -296,6 +296,8 @@ function AccountDefaults() {
   const [previewLogo, setPreviewLogo] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [isFetchingLogo, setIsFetchingLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -349,6 +351,23 @@ function AccountDefaults() {
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
     if (file) handleFileChange(file);
+  };
+
+  const fetchLogoFromWebsite = trpc.tenants.fetchLogoFromWebsite.useMutation({
+    onSuccess: (data) => {
+      setPreviewLogo(data.logoUrl);
+      utils.tenants.myCompany.invalidate();
+      toast.success(`Logo pulled from ${data.source}!`);
+      setIsFetchingLogo(false);
+      setWebsiteUrl("");
+    },
+    onError: (e) => { toast.error(e.message); setIsFetchingLogo(false); },
+  });
+
+  const handleFetchFromWebsite = () => {
+    if (!websiteUrl.trim()) { toast.error("Enter a website URL first"); return; }
+    setIsFetchingLogo(true);
+    fetchLogoFromWebsite.mutate({ websiteUrl: websiteUrl.trim() });
   };
 
   const handleAIGenerate = () => {
@@ -447,6 +466,38 @@ function AccountDefaults() {
                   <div className="flex-1 h-px bg-border" />
                 </div>
 
+                {/* Pull from website */}
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        value={websiteUrl}
+                        onChange={(e) => setWebsiteUrl(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleFetchFromWebsite()}
+                        placeholder="yourcompany.com"
+                        className="pl-9 text-sm"
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={handleFetchFromWebsite}
+                      disabled={isFetchingLogo || !websiteUrl.trim()}
+                      className="shrink-0 gap-2 border-blue-300/50 text-blue-700 hover:bg-blue-50"
+                    >
+                      <Globe className="h-4 w-4" />
+                      {isFetchingLogo ? "Fetching..." : "Pull from Website"}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Enter your website URL and we'll automatically find your logo.</p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-xs text-muted-foreground">or</span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+
                 <Button
                   variant="outline"
                   className="w-full gap-2 border-amber-300/50 text-amber-700 hover:bg-amber-50"
@@ -454,10 +505,10 @@ function AccountDefaults() {
                   disabled={isGenerating || generateLogo.isPending}
                 >
                   <Sparkles className="h-4 w-4" />
-                  {isGenerating || generateLogo.isPending ? "Generating AI logo..." : "Generate Logo with AI"}
+                  {isGenerating || generateLogo.isPending ? "Generating AI logo..." : "✨ Generate Vivid AI Logo"}
                 </Button>
                 <p className="text-xs text-muted-foreground text-center">
-                  AI will create a professional logo based on your company name and industry.
+                  AI creates a bold, vibrant, electric logo based on your company name and industry.
                 </p>
               </div>
             </div>
