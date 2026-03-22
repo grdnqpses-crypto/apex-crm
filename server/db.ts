@@ -205,6 +205,7 @@ export async function listContacts(userId: number, opts?: { search?: string; sta
   const conditions = [eq(contacts.userId, userId)];
   if (opts?.stage) conditions.push(eq(contacts.lifecycleStage, opts.stage));
   if (opts?.leadStatus) conditions.push(eq(contacts.leadStatus, opts.leadStatus));
+  if (opts?.companyId) conditions.push(eq(contacts.companyId, opts.companyId));
   if (opts?.search) conditions.push(or(like(contacts.firstName, `%${opts.search}%`), like(contacts.lastName, `%${opts.search}%`), like(contacts.email, `%${opts.search}%`))!);
   const where = and(...conditions);
   const [items, countResult] = await Promise.all([
@@ -273,6 +274,59 @@ export async function createCompany(data: any) {
   if (!db) throw new Error("DB not available");
   const result = await db.insert(companies).values(data);
   return result[0].insertId;
+}
+
+// ─── Role-based company helpers ───
+type UserCtx = { id: number; systemRole: string; tenantCompanyId: number | null };
+
+export async function getCompanyByRole(id: number, user: UserCtx) {
+  const db = await getDb();
+  if (!db) return null;
+  const visibleIds = await getVisibleUserIds(user);
+  const result = await db.select().from(companies)
+    .where(and(eq(companies.id, id), inArray(companies.userId, visibleIds)))
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export async function updateCompanyByRole(id: number, user: UserCtx, data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const visibleIds = await getVisibleUserIds(user);
+  await db.update(companies).set({ ...data, updatedAt: Date.now() })
+    .where(and(eq(companies.id, id), inArray(companies.userId, visibleIds)));
+}
+
+export async function deleteCompanyByRole(id: number, user: UserCtx) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const visibleIds = await getVisibleUserIds(user);
+  await db.delete(companies).where(and(eq(companies.id, id), inArray(companies.userId, visibleIds)));
+}
+
+export async function deleteContactsByCompanyByRole(companyId: number, user: UserCtx) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const visibleIds = await getVisibleUserIds(user);
+  await db.delete(contacts).where(and(eq(contacts.companyId, companyId), inArray(contacts.userId, visibleIds)));
+}
+
+export async function getCompanyContactCountByRole(companyId: number, user: UserCtx): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const visibleIds = await getVisibleUserIds(user);
+  const result = await db.select({ count: sql<number>`count(*)` }).from(contacts)
+    .where(and(eq(contacts.companyId, companyId), inArray(contacts.userId, visibleIds)));
+  return Number(result[0]?.count ?? 0);
+}
+
+export async function getContactsByCompanyByRole(companyId: number, user: UserCtx) {
+  const db = await getDb();
+  if (!db) return [];
+  const visibleIds = await getVisibleUserIds(user);
+  return db.select().from(contacts)
+    .where(and(eq(contacts.companyId, companyId), inArray(contacts.userId, visibleIds)))
+    .orderBy(desc(contacts.createdAt));
 }
 
 export async function updateCompany(id: number, userId: number, data: any) {
@@ -1597,6 +1651,36 @@ export async function getTasksByCompany(companyId: number, userId: number) {
 export async function getTasksByDeal(dealId: number, userId: number) {
   const db = await getDb(); if (!db) return [];
   return db.select().from(tasks).where(and(eq(tasks.userId, userId), eq(tasks.dealId, dealId))).orderBy(desc(tasks.createdAt));
+}
+
+// ─── Role-based deal/task/activity helpers ───
+export async function getDealsByCompanyByRole(companyId: number, user: UserCtx) {
+  const db = await getDb(); if (!db) return [];
+  const visibleIds = await getVisibleUserIds(user);
+  return db.select().from(deals).where(and(inArray(deals.userId, visibleIds), eq(deals.companyId, companyId))).orderBy(desc(deals.createdAt));
+}
+
+export async function getTasksByContactByRole(contactId: number, user: UserCtx) {
+  const db = await getDb(); if (!db) return [];
+  const visibleIds = await getVisibleUserIds(user);
+  return db.select().from(tasks).where(and(inArray(tasks.userId, visibleIds), eq(tasks.contactId, contactId))).orderBy(desc(tasks.createdAt));
+}
+
+export async function getTasksByCompanyByRole(companyId: number, user: UserCtx) {
+  const db = await getDb(); if (!db) return [];
+  const visibleIds = await getVisibleUserIds(user);
+  return db.select().from(tasks).where(and(inArray(tasks.userId, visibleIds), eq(tasks.companyId, companyId))).orderBy(desc(tasks.createdAt));
+}
+
+export async function listActivitiesByRole(user: UserCtx, opts?: { contactId?: number; companyId?: number; dealId?: number; type?: string; limit?: number }) {
+  const db = await getDb(); if (!db) return [];
+  const visibleIds = await getVisibleUserIds(user);
+  const conditions: any[] = [inArray(activities.userId, visibleIds)];
+  if (opts?.contactId) conditions.push(eq(activities.contactId, opts.contactId));
+  if (opts?.companyId) conditions.push(eq(activities.companyId, opts.companyId));
+  if (opts?.dealId) conditions.push(eq(activities.dealId, opts.dealId));
+  if (opts?.type) conditions.push(eq(activities.type, opts.type));
+  return db.select().from(activities).where(and(...conditions)).orderBy(desc(activities.createdAt)).limit(opts?.limit ?? 50);
 }
 
 // ─── Get Campaigns for Contact (via segment membership) ───
@@ -3574,7 +3658,7 @@ export async function listCompaniesByRole(user: { id: number; systemRole: string
 /**
  * List contacts visible to a user based on their role.
  */
-export async function listContactsByRole(user: { id: number; systemRole: string; tenantCompanyId: number | null; }, opts?: { search?: string; stage?: string; leadStatus?: string; limit?: number; offset?: number }) {
+export async function listContactsByRole(user: { id: number; systemRole: string; tenantCompanyId: number | null; }, opts?: { search?: string; stage?: string; leadStatus?: string; companyId?: number; limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return { items: [], total: 0 };
 
@@ -3582,6 +3666,7 @@ export async function listContactsByRole(user: { id: number; systemRole: string;
   const conditions = [inArray(contacts.userId, visibleIds)];
   if (opts?.stage) conditions.push(eq(contacts.lifecycleStage, opts.stage));
   if (opts?.leadStatus) conditions.push(eq(contacts.leadStatus, opts.leadStatus));
+  if (opts?.companyId) conditions.push(eq(contacts.companyId, opts.companyId));
   if (opts?.search) conditions.push(or(like(contacts.firstName, `%${opts.search}%`), like(contacts.lastName, `%${opts.search}%`), like(contacts.email, `%${opts.search}%`))!);
   const where = and(...conditions);
   const [items, countResult] = await Promise.all([

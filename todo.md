@@ -2126,3 +2126,12 @@
 - [x] Remove logo generation limits for Developer and Axiom Admin roles (unlimited logos)
 - [x] Logo generation paywall: 1 free logo per user company, then $9.99 to unlock more (Developer/Axiom Admin always unlimited free)
 - [x] Fix Platform Dashboard "Manage" save error: industry/website/phone null values fail Zod validation
+- [ ] Auto-invoice generation: create and email invoices to company admin 15 days before due date; include card-on-file debit notice if payment method exists
+
+## Bug Fixes (Session 3)
+- [x] Fix Companies tab "Company not found" - role-based visibility for getCompany, getContactsByCompany, getDealsByCompany, getTasksByCompany, listActivities
+- [x] Make email + phone mandatory for contacts (create form + edit form + backend validation)
+- [x] Fix Contacts export returning empty file (exportCsv uses wrong userId scope for developer/manager roles)
+- [x] Fix Deals page: 71 deals show in header count but none render on screen
+- [x] Link deals to a company AND a specific contact (company + contact selectors in create/edit)
+- [x] Fix Contacts export returning empty file (role-based scope)

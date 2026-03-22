@@ -197,7 +197,8 @@ export const appRouter = router({
       search: z.string().optional(),
       stage: z.string().optional(),
       leadStatus: z.string().optional(),
-      limit: z.number().min(1).max(100).optional(),
+      companyId: z.number().optional(),
+      limit: z.number().min(1).max(500).optional(),
       offset: z.number().min(0).optional(),
     }).optional()).query(async ({ ctx, input }) => {
       return db.listContactsByRole(ctx.user, input);
@@ -217,14 +218,14 @@ export const appRouter = router({
       return contact;
     }),
     byCompany: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
-      return db.getContactsByCompany(input.companyId, ctx.user.id);
+      return db.getContactsByCompanyByRole(input.companyId, ctx.user);
     }),
     create: protectedProcedure.input(z.object({
       firstName: z.string().min(1),
       lastName: z.string().optional(),
       jobTitle: z.string().optional(),
       companyId: z.number(),
-      email: z.string().optional(),
+      email: z.string().min(1, "Email is required"),
       companyPhone: z.string().optional(),
       directPhone: z.string().optional(),
       mobilePhone: z.string().optional(),
@@ -257,6 +258,9 @@ export const appRouter = router({
       tags: z.array(z.string()).optional(),
       notes: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
+      if (!input.directPhone?.trim() && !input.mobilePhone?.trim()) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Phone number is required — provide a Direct Phone or Mobile Phone." });
+      }
       const now = Date.now();
       const id = await db.createContact({ ...input, userId: ctx.user.id, createdAt: now, updatedAt: now });
       await db.createActivity({ userId: ctx.user.id, contactId: id, type: "contact_created", subject: `Created contact ${input.firstName} ${input.lastName ?? ""}`.trim() });
@@ -309,14 +313,9 @@ export const appRouter = router({
       return { success: true };
     }),
     exportCsv: protectedProcedure.query(async ({ ctx }) => {
-      const dbConn = await db.getDb();
-      if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const { contacts: contactsTable } = await import("../drizzle/schema");
-      const { eq } = await import("drizzle-orm");
-      const rows = await dbConn.select().from(contactsTable)
-        .where(eq(contactsTable.userId, ctx.user.id))
-        .limit(10000);
-      const headers = ["id","firstName","lastName","email","directPhone","jobTitle","city","state","country","createdAt"];
+      const result = await db.listContactsByRole(ctx.user, { limit: 10000 });
+      const rows = result.items;
+      const headers = ["id","firstName","lastName","email","directPhone","mobilePhone","jobTitle","city","stateRegion","country","createdAt"];
       const csvRows = rows.map(r => headers.map(h => {
         const v = (r as Record<string,unknown>)[h];
         if (v == null) return "";
@@ -383,7 +382,7 @@ export const appRouter = router({
       return db.listCompaniesByRole(ctx.user, input);
     }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-      return db.getCompany(input.id, ctx.user.id);
+      return db.getCompanyByRole(input.id, ctx.user);
     }),
     create: protectedProcedure.input(z.object({
       name: z.string().min(1),
@@ -457,17 +456,17 @@ export const appRouter = router({
       tags: z.array(z.string()).optional(),
     })).mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
-      await db.updateCompany(id, ctx.user.id, data);
+      await db.updateCompanyByRole(id, ctx.user, data);
       return { success: true };
     }),
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
       // Company-first: cascade delete all contacts belonging to this company
-      await db.deleteContactsByCompany(input.id, ctx.user.id);
-      await db.deleteCompany(input.id, ctx.user.id);
+      await db.deleteContactsByCompanyByRole(input.id, ctx.user);
+      await db.deleteCompanyByRole(input.id, ctx.user);
       return { success: true };
     }),
     contactCount: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
-      return db.getCompanyContactCount(input.companyId, ctx.user.id);
+      return db.getCompanyContactCountByRole(input.companyId, ctx.user);
     }),
   }),
 
@@ -555,7 +554,7 @@ export const appRouter = router({
       type: z.string().optional(),
       limit: z.number().optional(),
     }).optional()).query(async ({ ctx, input }) => {
-      return db.listActivities(ctx.user.id, input);
+      return db.listActivitiesByRole(ctx.user, input);
     }),
     create: protectedProcedure.input(z.object({
       contactId: z.number().optional(),
@@ -1655,13 +1654,13 @@ export const appRouter = router({
       return db.getDealsByContact(input.contactId, ctx.user.id);
     }),
     dealsByCompany: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
-      return db.getDealsByCompany(input.companyId, ctx.user.id);
+      return db.getDealsByCompanyByRole(input.companyId, ctx.user);
     }),
     tasksByContact: protectedProcedure.input(z.object({ contactId: z.number() })).query(async ({ ctx, input }) => {
-      return db.getTasksByContact(input.contactId, ctx.user.id);
+      return db.getTasksByContactByRole(input.contactId, ctx.user);
     }),
     tasksByCompany: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
-      return db.getTasksByCompany(input.companyId, ctx.user.id);
+      return db.getTasksByCompanyByRole(input.companyId, ctx.user);
     }),
     tasksByDeal: protectedProcedure.input(z.object({ dealId: z.number() })).query(async ({ ctx, input }) => {
       return db.getTasksByDeal(input.dealId, ctx.user.id);
@@ -1674,7 +1673,7 @@ export const appRouter = router({
       return db.getProspectsBySequence(input.sequenceId, ctx.user.id);
     }),
     contactsByCompany: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
-      return db.getContactsByCompany(input.companyId, ctx.user.id);
+      return db.getContactsByCompanyByRole(input.companyId, ctx.user);
     }),
   }),
 

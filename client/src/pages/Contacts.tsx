@@ -145,6 +145,9 @@ export default function Contacts() {
   const handleCreate = () => {
     if (!form.firstName.trim()) { toast.error("First name is required"); return; }
     if (!form.companyId) { toast.error("Company is required. Every contact must belong to a company."); return; }
+    if (!form.email.trim()) { toast.error("Email is required — every contact must have a valid email address."); return; }
+    const phoneVal = form.directPhone.trim() || form.mobilePhone.trim();
+    if (!phoneVal) { toast.error("Phone number is required — enter a Direct Phone or Mobile Phone."); return; }
     const payload: Record<string, any> = { firstName: form.firstName, companyId: parseInt(form.companyId) };
     Object.entries(form).forEach(([k, v]) => {
       if (v && k !== "firstName" && k !== "companyId") payload[k] = v;
@@ -324,7 +327,7 @@ export default function Contacts() {
               </div>
               Add New Contact
             </DialogTitle>
-            <DialogDescription>Every contact must belong to a company. Select or create a company first.</DialogDescription>
+            <DialogDescription>Every contact must belong to a company and have a valid email and phone number. Fields marked * are required.</DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh] pr-4">
             {/* Company Selection (Required, shown first) */}
@@ -397,9 +400,9 @@ export default function Contacts() {
 
               <TabsContent value="communication" className="mt-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label className="text-xs font-semibold">Email</Label><Input type="email" {...f("email")} placeholder="john@company.com" className="rounded-xl bg-muted/30 border-border/50" /></div>
-                  <div className="space-y-2"><Label className="text-xs font-semibold">Direct Phone</Label><Input {...f("directPhone")} placeholder="+1 555 0123" className="rounded-xl bg-muted/30 border-border/50" /></div>
-                  <div className="space-y-2"><Label className="text-xs font-semibold">Mobile Phone</Label><Input {...f("mobilePhone")} placeholder="+1 555 0456" className="rounded-xl bg-muted/30 border-border/50" /></div>
+                  <div className="space-y-2"><Label className="text-xs font-semibold">Email *</Label><Input type="email" {...f("email")} placeholder="john@company.com" className="rounded-xl bg-muted/30 border-border/50" /></div>
+                  <div className="space-y-2"><Label className="text-xs font-semibold">Direct Phone *</Label><Input {...f("directPhone")} placeholder="+1 555 0123" className="rounded-xl bg-muted/30 border-border/50" /></div>
+                  <div className="space-y-2"><Label className="text-xs font-semibold">Mobile Phone *</Label><Input {...f("mobilePhone")} placeholder="+1 555 0456" className="rounded-xl bg-muted/30 border-border/50" /></div>
                   <div className="space-y-2"><Label className="text-xs font-semibold">Company Phone</Label><Input {...f("companyPhone")} placeholder="+1 555 0000" className="rounded-xl bg-muted/30 border-border/50" /></div>
                   <div className="space-y-2"><Label className="text-xs font-semibold">LinkedIn URL</Label><Input {...f("linkedinUrl")} placeholder="https://linkedin.com/in/..." className="rounded-xl bg-muted/30 border-border/50" /></div>
                   <div className="space-y-2"><Label className="text-xs font-semibold">Website URL</Label><Input {...f("websiteUrl")} placeholder="https://..." className="rounded-xl bg-muted/30 border-border/50" /></div>

@@ -600,9 +600,9 @@ function EditContactForm({ contact, companies, onSave, saving }: { contact: any;
 
         <TabsContent value="communication" className="mt-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2"><Label className="text-xs font-semibold">Email</Label><Input value={form.email} onChange={(e) => setForm(p => ({ ...p, email: e.target.value }))} className={inputCls} /></div>
-            <div className="space-y-2"><Label className="text-xs font-semibold">Direct Phone</Label><Input value={form.directPhone} onChange={(e) => setForm(p => ({ ...p, directPhone: e.target.value }))} className={inputCls} /></div>
-            <div className="space-y-2"><Label className="text-xs font-semibold">Mobile Phone</Label><Input value={form.mobilePhone} onChange={(e) => setForm(p => ({ ...p, mobilePhone: e.target.value }))} className={inputCls} /></div>
+            <div className="space-y-2"><Label className="text-xs font-semibold">Email *</Label><Input value={form.email} onChange={(e) => setForm(p => ({ ...p, email: e.target.value }))} className={inputCls} /></div>
+            <div className="space-y-2"><Label className="text-xs font-semibold">Direct Phone *</Label><Input value={form.directPhone} onChange={(e) => setForm(p => ({ ...p, directPhone: e.target.value }))} className={inputCls} /></div>
+            <div className="space-y-2"><Label className="text-xs font-semibold">Mobile Phone *</Label><Input value={form.mobilePhone} onChange={(e) => setForm(p => ({ ...p, mobilePhone: e.target.value }))} className={inputCls} /></div>
             <div className="space-y-2"><Label className="text-xs font-semibold">Company Phone</Label><Input value={form.companyPhone} onChange={(e) => setForm(p => ({ ...p, companyPhone: e.target.value }))} className={inputCls} /></div>
             <div className="space-y-2"><Label className="text-xs font-semibold">LinkedIn URL</Label><Input value={form.linkedinUrl} onChange={(e) => setForm(p => ({ ...p, linkedinUrl: e.target.value }))} className={inputCls} /></div>
             <div className="space-y-2"><Label className="text-xs font-semibold">Website URL</Label><Input value={form.websiteUrl} onChange={(e) => setForm(p => ({ ...p, websiteUrl: e.target.value }))} className={inputCls} /></div>
@@ -682,7 +682,12 @@ function EditContactForm({ contact, companies, onSave, saving }: { contact: any;
         <Textarea value={form.notes} onChange={(e) => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Notes..." className="rounded-xl bg-muted/30 border-border/50 min-h-[80px]" />
       </div>
 
-      <Button onClick={() => onSave(form)} disabled={saving} className="gap-2 mt-4 rounded-xl shadow-sm">
+      <Button onClick={() => {
+        if (!form.email.trim()) { alert("Email is required — every contact must have a valid email address."); return; }
+        const phoneVal = (form.directPhone || "").trim() || (form.mobilePhone || "").trim();
+        if (!phoneVal) { alert("Phone number is required — enter a Direct Phone or Mobile Phone."); return; }
+        onSave(form);
+      }} disabled={saving} className="gap-2 mt-4 rounded-xl shadow-sm">
         <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Changes"}
       </Button>
     </ScrollArea>

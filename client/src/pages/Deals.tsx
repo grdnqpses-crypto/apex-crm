@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Plus, DollarSign, MoreHorizontal, Trash2, Trophy, X, GripVertical, Kanban, TrendingUp } from "lucide-react";
+import { Plus, DollarSign, MoreHorizontal, Trash2, Trophy, X, GripVertical, Kanban, TrendingUp, Building2, User } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -47,11 +47,26 @@ export default function Deals() {
   }), [activePipelineId]);
   const { data: dealData } = trpc.deals.list.useQuery(dealInput);
 
+  // Load companies and contacts for linking
+  const { data: companiesData } = trpc.companies.list.useQuery({ limit: 500 });
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+  const { data: contactsData } = trpc.contacts.list.useQuery(
+    { companyId: selectedCompanyId ?? undefined, limit: 500 },
+    { enabled: true }
+  );
+
   const createPipeline = trpc.pipelines.create.useMutation({
     onSuccess: () => { utils.pipelines.list.invalidate(); setShowPipeline(false); toast.success("Pipeline created"); },
   });
   const createDeal = trpc.deals.create.useMutation({
-    onSuccess: () => { utils.deals.list.invalidate(); utils.dashboard.stats.invalidate(); setShowCreate(false); setDealForm({ name: "", value: "", priority: "medium" }); toast.success("Deal created"); },
+    onSuccess: () => {
+      utils.deals.list.invalidate();
+      utils.dashboard.stats.invalidate();
+      setShowCreate(false);
+      setDealForm({ name: "", value: "", priority: "medium", companyId: null, contactId: null });
+      setSelectedCompanyId(null);
+      toast.success("Deal created");
+    },
     onError: (e) => toast.error(e.message),
   });
   const updateDeal = trpc.deals.update.useMutation({
@@ -61,7 +76,10 @@ export default function Deals() {
     onSuccess: () => { utils.deals.list.invalidate(); utils.dashboard.stats.invalidate(); toast.success("Deal deleted"); },
   });
 
-  const [dealForm, setDealForm] = useState({ name: "", value: "", priority: "medium" as string });
+  const [dealForm, setDealForm] = useState<{
+    name: string; value: string; priority: string;
+    companyId: number | null; contactId: number | null;
+  }>({ name: "", value: "", priority: "medium", companyId: null, contactId: null });
   const [pipelineForm, setPipelineForm] = useState({ name: "", stages: [...DEFAULT_STAGES] });
 
   const handleCreateDeal = () => {
@@ -71,7 +89,9 @@ export default function Deals() {
       pipelineId: activePipelineId,
       stageId: stages[0].id,
       value: dealForm.value ? parseFloat(dealForm.value) : undefined,
-      priority: dealForm.priority as any,
+      priority: dealForm.priority as "low" | "medium" | "high" | "urgent",
+      companyId: dealForm.companyId ?? undefined,
+      contactId: dealForm.contactId ?? undefined,
     });
   };
 
@@ -94,6 +114,19 @@ export default function Deals() {
 
   const totalPipelineValue = dealData?.items?.filter(d => d.status === "open").reduce((sum, d) => sum + (d.value ?? 0), 0) ?? 0;
   const totalOpenDeals = dealData?.items?.filter(d => d.status === "open").length ?? 0;
+
+  // Build company/contact lookup maps for deal cards
+  const companyMap = useMemo(() => {
+    const m = new Map<number, string>();
+    companiesData?.items?.forEach(c => m.set(c.id, c.name));
+    return m;
+  }, [companiesData]);
+
+  const contactMap = useMemo(() => {
+    const m = new Map<number, string>();
+    contactsData?.items?.forEach(c => m.set(c.id, `${c.firstName} ${c.lastName ?? ""}`.trim()));
+    return m;
+  }, [contactsData]);
 
   return (
     <div className="space-y-5">
@@ -197,6 +230,19 @@ export default function Deals() {
                             <span className="text-sm font-bold text-foreground">{formatCurrency(deal.value)}</span>
                           </div>
                         )}
+                        {/* Company / Contact links */}
+                        {deal.companyId && companyMap.get(deal.companyId) && (
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Building2 className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{companyMap.get(deal.companyId)}</span>
+                          </div>
+                        )}
+                        {deal.contactId && contactMap.get(deal.contactId) && (
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <User className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{contactMap.get(deal.contactId)}</span>
+                          </div>
+                        )}
                         <Badge variant="secondary" className={`text-[10px] capitalize rounded-md ${PRIORITY_STYLES[deal.priority] ?? "bg-muted/60 text-muted-foreground"}`}>
                           {deal.priority}
                         </Badge>
@@ -219,8 +265,8 @@ export default function Deals() {
       )}
 
       {/* Create Deal Dialog */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="rounded-2xl border-border/40">
+      <Dialog open={showCreate} onOpenChange={(open) => { setShowCreate(open); if (!open) { setSelectedCompanyId(null); setDealForm({ name: "", value: "", priority: "medium", companyId: null, contactId: null }); } }}>
+        <DialogContent className="rounded-2xl border-border/40 max-w-md">
           <DialogHeader><DialogTitle className="text-lg font-bold">Add New Deal</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -242,6 +288,49 @@ export default function Deals() {
                   <SelectItem value="urgent">Urgent</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            {/* Company link */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold flex items-center gap-1"><Building2 className="h-3.5 w-3.5" /> Link to Company</Label>
+              <Select
+                value={dealForm.companyId?.toString() ?? "none"}
+                onValueChange={(v) => {
+                  const id = v === "none" ? null : parseInt(v);
+                  setDealForm(p => ({ ...p, companyId: id, contactId: null }));
+                  setSelectedCompanyId(id);
+                }}
+              >
+                <SelectTrigger className="rounded-xl bg-muted/30 border-border/50"><SelectValue placeholder="Select company (optional)" /></SelectTrigger>
+                <SelectContent className="rounded-xl max-h-48">
+                  <SelectItem value="none">— No company —</SelectItem>
+                  {companiesData?.items?.map(c => (
+                    <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Contact link */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold flex items-center gap-1"><User className="h-3.5 w-3.5" /> Link to Contact</Label>
+              <Select
+                value={dealForm.contactId?.toString() ?? "none"}
+                onValueChange={(v) => setDealForm(p => ({ ...p, contactId: v === "none" ? null : parseInt(v) }))}
+              >
+                <SelectTrigger className="rounded-xl bg-muted/30 border-border/50"><SelectValue placeholder="Select contact (optional)" /></SelectTrigger>
+                <SelectContent className="rounded-xl max-h-48">
+                  <SelectItem value="none">— No contact —</SelectItem>
+                  {contactsData?.items
+                    ?.filter(c => !dealForm.companyId || c.companyId === dealForm.companyId)
+                    .map(c => (
+                      <SelectItem key={c.id} value={c.id.toString()}>
+                        {c.firstName} {c.lastName ?? ""} {c.jobTitle ? `· ${c.jobTitle}` : ""}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              {dealForm.companyId && (
+                <p className="text-[11px] text-muted-foreground">Showing contacts linked to selected company</p>
+              )}
             </div>
           </div>
           <DialogFooter>
