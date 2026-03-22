@@ -9,6 +9,9 @@ import { getLoginUrl } from "./const";
 import { SkinProvider } from "./contexts/SkinContext";
 import "./index.css";
 
+// Force correct browser tab title (overrides any platform-injected VITE_APP_TITLE)
+document.title = "AXIOM CRM";
+
 // Remove platform-injected billing banners (targeted — only the first non-root div before #root)
 (function removePlatformBanners() {
   const remove = () => {
