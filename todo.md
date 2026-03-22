@@ -2124,3 +2124,4 @@
 - [x] Fix Team Performance: users must only see data for team members at or below their own role level
 - [x] Fix "unexpected error occurred" on Custom Objects tab
 - [x] Remove logo generation limits for Developer and Axiom Admin roles (unlimited logos)
+- [x] Logo generation paywall: 1 free logo per user company, then $9.99 to unlock more (Developer/Axiom Admin always unlimited free)

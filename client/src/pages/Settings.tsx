@@ -288,6 +288,7 @@ function NotificationSettings() {
 
 // ─── Account Defaults Panel ───
 function AccountDefaults() {
+  const { user } = useAuth();
   const { data: myCompany, refetch } = trpc.tenants.myCompany.useQuery();
   const utils = trpc.useUtils();
   const [companyName, setCompanyName] = useState("");
@@ -298,7 +299,26 @@ function AccountDefaults() {
   const [isDragging, setIsDragging] = useState(false);
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [isFetchingLogo, setIsFetchingLogo] = useState(false);
+  const [showLogoUpgrade, setShowLogoUpgrade] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Role checks for logo generation
+  const isUnlimitedLogoRole = ["developer", "axiom_admin"].includes(user?.systemRole || "");
+  const canGenerateLogo = ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(user?.systemRole || "");
+
+  // Logo history to count usage
+  const { data: logoHistory } = trpc.tenants.getLogoHistory.useQuery();
+  const logoCount = logoHistory?.length ?? 0;
+  const addonPaid = ((myCompany?.settings as Record<string, unknown>) || {})?.logoAddonPaid === true;
+  const hasFreeLogo = logoCount >= 1 && !addonPaid && !isUnlimitedLogoRole;
+
+  const createLogoCheckout = trpc.tenants.createLogoCustomizationCheckout.useMutation({
+    onSuccess: (data) => {
+      toast.info("Redirecting to checkout...");
+      window.open(data.checkoutUrl, "_blank");
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   useEffect(() => {
     if (myCompany) {
@@ -328,10 +348,19 @@ function AccountDefaults() {
     onSuccess: (data) => {
       setPreviewLogo(data.logoUrl);
       utils.tenants.myCompany.invalidate();
+      utils.tenants.getLogoHistory.invalidate();
       toast.success("AI logo generated and saved!");
       setIsGenerating(false);
+      setShowLogoUpgrade(false);
     },
-    onError: (e) => { toast.error(e.message); setIsGenerating(false); },
+    onError: (e) => {
+      setIsGenerating(false);
+      if (e.message === "FREE_LOGO_USED") {
+        setShowLogoUpgrade(true);
+      } else {
+        toast.error(e.message);
+      }
+    },
   });
 
   const handleFileChange = (file: File) => {
@@ -498,18 +527,51 @@ function AccountDefaults() {
                   <div className="flex-1 h-px bg-border" />
                 </div>
 
-                <Button
-                  variant="outline"
-                  className="w-full gap-2 border-amber-300/50 text-amber-700 hover:bg-amber-50"
-                  onClick={handleAIGenerate}
-                  disabled={isGenerating || generateLogo.isPending}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  {isGenerating || generateLogo.isPending ? "Generating AI logo..." : "✨ Generate Vivid AI Logo"}
-                </Button>
-                <p className="text-xs text-muted-foreground text-center">
-                  AI creates a bold, vibrant, electric logo based on your company name and industry.
-                </p>
+                {/* Logo generation — paywall for user companies */}
+                {!canGenerateLogo ? (
+                  <p className="text-xs text-muted-foreground text-center py-2">Logo generation is available to Company Admins and above.</p>
+                ) : (showLogoUpgrade || hasFreeLogo) ? (
+                  <div className="rounded-lg border border-amber-300/60 bg-amber-50/50 p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-amber-600" />
+                      <p className="text-sm font-semibold text-amber-800">Unlock Unlimited Logo Generation</p>
+                    </div>
+                    <p className="text-xs text-amber-700">
+                      You've used your 1 free AI logo. Unlock unlimited logo generation for a one-time add-on fee of <strong>$9.99</strong>.
+                    </p>
+                    <Button
+                      className="w-full gap-2 bg-amber-500 hover:bg-amber-600 text-white"
+                      onClick={() => createLogoCheckout.mutate({ origin: window.location.origin })}
+                      disabled={createLogoCheckout.isPending}
+                    >
+                      <CreditCard className="h-4 w-4" />
+                      {createLogoCheckout.isPending ? "Redirecting..." : "Unlock for $9.99 — One-Time"}
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center">Secure payment via Stripe. Instant unlock.</p>
+                  </div>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2 border-amber-300/50 text-amber-700 hover:bg-amber-50"
+                      onClick={handleAIGenerate}
+                      disabled={isGenerating || generateLogo.isPending}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      {isGenerating || generateLogo.isPending ? "Generating AI logo..." : "✨ Generate Vivid AI Logo"}
+                    </Button>
+                    {!isUnlimitedLogoRole && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        {logoCount === 0
+                          ? "1 free logo generation included. Unlimited for $9.99 add-on."
+                          : "Unlimited logo generation unlocked."}
+                      </p>
+                    )}
+                    {isUnlimitedLogoRole && (
+                      <p className="text-xs text-muted-foreground text-center">Unlimited logo generation — no limits on your role.</p>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           </div>

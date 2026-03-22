@@ -2053,11 +2053,39 @@ export const appRouter = router({
       companyName: z.string().min(1),
       industry: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
-      const isAdmin = ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
-      if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
-      // Developer and Axiom Admin have UNLIMITED logo generation — no quota, no rate limit, no credit deduction ever
-      // Other roles may be subject to plan-based limits in the future
-      const _isUnlimitedLogoRole = ["developer", "axiom_admin"].includes(ctx.user.systemRole);
+      // Only Company Admin and above can generate logos — no other roles
+      const canGenerateLogo = ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
+      if (!canGenerateLogo) throw new TRPCError({ code: "FORBIDDEN", message: "Only Company Admins can generate logos." });
+
+      const isUnlimitedLogoRole = ["developer", "axiom_admin"].includes(ctx.user.systemRole);
+
+      // For user companies (company_admin and below): enforce 1 free logo, then require $9.99 add-on
+      if (!isUnlimitedLogoRole && ctx.user.tenantCompanyId) {
+        const dbConn2 = await (await import("./db.js")).getDb();
+        if (dbConn2) {
+          const { tenantCompanies: tcTable } = await import("../drizzle/schema.js");
+          const { eq: eqOp, count: countOp } = await import("drizzle-orm");
+          // Check if add-on has been paid
+          const [company] = await dbConn2.select().from(tcTable).where(eqOp(tcTable.id, ctx.user.tenantCompanyId)).limit(1);
+          const settings = (company?.settings as Record<string, unknown>) || {};
+          const addonPaid = settings.logoAddonPaid === true;
+          if (!addonPaid) {
+            // Count how many logos this tenant has already generated
+            const { logoGenerations: lgTable } = await import("../drizzle/schema.js");
+            const [{ value: logoCount }] = await dbConn2
+              .select({ value: countOp() })
+              .from(lgTable)
+              .where(eqOp(lgTable.tenantCompanyId, ctx.user.tenantCompanyId));
+            if ((logoCount ?? 0) >= 1) {
+              throw new TRPCError({
+                code: "FORBIDDEN",
+                message: "FREE_LOGO_USED", // sentinel for frontend to show upgrade prompt
+              });
+            }
+          }
+        }
+      }
+
       const { generateImage } = await import("./_core/imageGeneration.js");
       const prompt = `VIVID, ELECTRIC, STUNNING business logo for a company called "${input.companyName}"${
         input.industry ? ` in the ${input.industry} industry` : ""

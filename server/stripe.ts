@@ -51,9 +51,11 @@ export function registerStripeWebhook(app: Express) {
             const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
             const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
 
-            if (tenantCompanyId && tier) {
-              const drizzleDb = await getDb();
-              if (drizzleDb) {
+            const feature = session.metadata?.feature;
+            const drizzleDb = await getDb();
+            if (drizzleDb) {
+              // ── Handle subscription upgrade ──
+              if (tenantCompanyId && tier) {
                 await drizzleDb.update(tenantCompanies)
                   .set({
                     subscriptionTier: tier,
@@ -64,6 +66,19 @@ export function registerStripeWebhook(app: Express) {
                   })
                   .where(eq(tenantCompanies.id, tenantCompanyId));
                 console.log(`[Stripe] Company ${tenantCompanyId} upgraded to ${tier}`);
+              }
+              // ── Handle logo customization add-on ($9.99) ──
+              if (tenantCompanyId && feature === "logo_customization") {
+                // Store logoAddonPaid: true in the settings JSON column
+                const [company] = await drizzleDb.select().from(tenantCompanies).where(eq(tenantCompanies.id, tenantCompanyId)).limit(1);
+                const existingSettings = (company?.settings as Record<string, unknown>) || {};
+                await drizzleDb.update(tenantCompanies)
+                  .set({
+                    settings: { ...existingSettings, logoAddonPaid: true },
+                    updatedAt: Date.now(),
+                  })
+                  .where(eq(tenantCompanies.id, tenantCompanyId));
+                console.log(`[Stripe] Company ${tenantCompanyId} unlocked unlimited logo generation`);
               }
             }
             break;
