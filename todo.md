@@ -2123,3 +2123,4 @@
 - [ ] Update company branding UI with URL logo pull field and animated logo preview
 - [x] Fix Team Performance: users must only see data for team members at or below their own role level
 - [x] Fix "unexpected error occurred" on Custom Objects tab
+- [x] Remove logo generation limits for Developer and Axiom Admin roles (unlimited logos)

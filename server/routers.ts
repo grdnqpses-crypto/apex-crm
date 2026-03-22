@@ -2055,6 +2055,9 @@ export const appRouter = router({
     })).mutation(async ({ ctx, input }) => {
       const isAdmin = ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
       if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
+      // Developer and Axiom Admin have UNLIMITED logo generation — no quota, no rate limit, no credit deduction ever
+      // Other roles may be subject to plan-based limits in the future
+      const _isUnlimitedLogoRole = ["developer", "axiom_admin"].includes(ctx.user.systemRole);
       const { generateImage } = await import("./_core/imageGeneration.js");
       const prompt = `VIVID, ELECTRIC, STUNNING business logo for a company called "${input.companyName}"${
         input.industry ? ` in the ${input.industry} industry` : ""
@@ -2082,19 +2085,21 @@ export const appRouter = router({
       return { logoUrl: s3Url };
     }),
 
-    // Get logo generation history for current tenant (last 10)
+    // Get logo generation history for current tenant
+    // Developer and Axiom Admin: last 100 (unlimited history); all others: last 10
     getLogoHistory: protectedProcedure.query(async ({ ctx }) => {
       if (!ctx.user.tenantCompanyId) return [];
       const dbConn = await (await import("./db.js")).getDb();
       if (!dbConn) return [];
       const { logoGenerations } = await import("../drizzle/schema.js");
       const { desc, eq } = await import("drizzle-orm");
+      const isUnlimitedRole = ["developer", "axiom_admin"].includes(ctx.user.systemRole);
       const rows = await dbConn
         .select()
         .from(logoGenerations)
         .where(eq(logoGenerations.tenantCompanyId, ctx.user.tenantCompanyId))
         .orderBy(desc(logoGenerations.createdAt))
-        .limit(10);
+        .limit(isUnlimitedRole ? 100 : 10);
       return rows;
     }),
 
