@@ -2146,3 +2146,10 @@
 - [x] Add PageGuide to Deals page (dealsPage guide)
 - [x] Add Ghost Sequences guide to pageGuides.ts
 - [x] Fix RottenDeals.tsx pre-existing TypeScript errors
+
+## Session 5: Task Clickability + Dashboard Task Widget
+- [x] Add task detail drawer/modal — clicking any task card opens full detail view with all 55 fields, editable inline
+- [x] Task detail shows linked company, contact, deal, pipeline, campaign with clickable links
+- [x] Task detail shows touch history / activity log
+- [x] Redesign Dashboard task widget: Today's Tasks / Overdue / Upcoming sections (HubSpot/Pipedrive pattern)
+- [x] Dashboard task widget: quick-complete checkbox, priority badge, due date countdown, linked record chip

@@ -20,6 +20,9 @@ import { Link, useLocation } from "wouter";
 import { useSkin } from "@/contexts/SkinContext";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { CheckCircle2, Circle, ChevronRight as ChevronRightIcon, Zap, Video, MessageSquare, ClipboardList, RefreshCw as RefreshCwIcon, Building2 as Building2Icon, User as UserIcon, Target as TargetIcon } from "lucide-react";
 
 /*
  * Enterprise CRM Color System:
@@ -189,6 +192,269 @@ function RecentActivityFeed() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+const TASK_TYPE_ICONS: Record<string, any> = {
+  call: Phone,
+  email: MailOpen,
+  to_do: ClipboardList,
+  follow_up: RefreshCwIcon,
+  meeting: Video,
+  demo: Zap,
+  proposal: FileText,
+  whatsapp: MessageSquare,
+  sms: MessageSquare,
+};
+
+const TASK_TYPE_COLORS: Record<string, string> = {
+  call: "text-blue-400 bg-blue-500/10",
+  email: "text-purple-400 bg-purple-500/10",
+  to_do: "text-gray-400 bg-gray-500/10",
+  follow_up: "text-amber-400 bg-amber-500/10",
+  meeting: "text-green-400 bg-green-500/10",
+  demo: "text-cyan-400 bg-cyan-500/10",
+  proposal: "text-pink-400 bg-pink-500/10",
+  whatsapp: "text-emerald-400 bg-emerald-500/10",
+  sms: "text-indigo-400 bg-indigo-500/10",
+};
+
+function TaskCommandCenter() {
+  const now = Date.now();
+  const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
+  const todayEndTs = todayEnd.getTime();
+  const tomorrowEnd = todayEndTs + 86400000 * 7; // next 7 days
+
+  const { data: allTasks, isLoading } = trpc.tasks.list.useQuery({ status: "not_started", limit: 100 });
+  const utils = trpc.useUtils();
+  const completeMutation = trpc.tasks.update.useMutation({
+    onSuccess: () => utils.tasks.list.invalidate(),
+  });
+
+  const [viewingTask, setViewingTask] = useState<any>(null);
+
+  const tasks = allTasks?.items ?? [];
+
+  const overdue = tasks.filter(t => t.dueDate && t.dueDate < now);
+  const today = tasks.filter(t => t.dueDate && t.dueDate >= now && t.dueDate <= todayEndTs);
+  const upcoming = tasks.filter(t => t.dueDate && t.dueDate > todayEndTs && t.dueDate <= tomorrowEnd);
+  const undated = tasks.filter(t => !t.dueDate).slice(0, 5);
+
+  const TaskRow = ({ task, accent }: { task: any; accent?: string }) => {
+    const TypeIcon = TASK_TYPE_ICONS[task.taskType ?? "to_do"] || ClipboardList;
+    const typeColor = TASK_TYPE_COLORS[task.taskType ?? "to_do"] || "text-gray-400 bg-gray-500/10";
+    return (
+      <div
+        onClick={() => setViewingTask(task)}
+        className="group flex items-center gap-3 p-3 rounded-xl hover:bg-accent/30 transition-all cursor-pointer"
+      >
+        <div onClick={e => e.stopPropagation()}>
+          <Checkbox
+            checked={false}
+            onCheckedChange={() => completeMutation.mutate({ id: task.id, status: "completed", completedAt: Date.now() })}
+            className="shrink-0"
+          />
+        </div>
+        <div className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 ${typeColor}`}>
+          <TypeIcon className="h-3.5 w-3.5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-foreground truncate">{task.title}</p>
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+            {task.dueDate && (
+              <span className={`text-[11px] flex items-center gap-0.5 ${accent ?? "text-muted-foreground"}`}>
+                <Calendar className="h-3 w-3" />{new Date(task.dueDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}{task.dueTime ? ` ${task.dueTime}` : ""}
+              </span>
+            )}
+            {task.companyName && (
+              <span className="text-[11px] text-muted-foreground flex items-center gap-0.5">
+                <Building2Icon className="h-3 w-3 text-blue-400" />{task.companyName}
+              </span>
+            )}
+            {task.contactFirstName && (
+              <span className="text-[11px] text-muted-foreground flex items-center gap-0.5">
+                <UserIcon className="h-3 w-3 text-purple-400" />{task.contactFirstName} {task.contactLastName ?? ""}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {task.priority === "high" && <span className="h-2 w-2 rounded-full bg-red-400" title="High priority" />}
+          {task.priority === "medium" && <span className="h-2 w-2 rounded-full bg-amber-400" title="Medium priority" />}
+          <ChevronRightIcon className="h-3.5 w-3.5 text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+      </div>
+    );
+  };
+
+  const Section = ({ label, items, accent, emptyText, color }: { label: string; items: any[]; accent?: string; emptyText: string; color: string }) => (
+    <div>
+      <div className="flex items-center gap-2 mb-2">
+        <div className={`h-1.5 w-1.5 rounded-full ${color}`} />
+        <span className="text-[11px] font-bold text-muted-foreground/70 uppercase tracking-[0.1em]">{label}</span>
+        <Badge variant="outline" className="text-[10px] h-4 px-1.5">{items.length}</Badge>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-xs text-muted-foreground/50 px-3 py-2 italic">{emptyText}</p>
+      ) : (
+        <div className="space-y-0.5">
+          {items.slice(0, 5).map(t => <TaskRow key={t.id} task={t} accent={accent} />)}
+          {items.length > 5 && (
+            <Link href="/tasks" className="flex items-center gap-1 text-xs text-primary/70 hover:text-primary px-3 py-1.5 transition-colors">
+              +{items.length - 5} more <ChevronRightIcon className="h-3 w-3" />
+            </Link>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      <Card className="rounded-2xl border-border/40 shadow-sm">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <ListChecks className="h-4 w-4 text-amber-500" />
+              Task Command Center
+            </CardTitle>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                {overdue.length > 0 && <span className="text-red-400 font-medium">{overdue.length} overdue</span>}
+                <span>{today.length} today</span>
+                <span>{upcoming.length} upcoming</span>
+              </div>
+              <Link href="/tasks">
+                <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
+                  View All <ChevronRightIcon className="h-3 w-3" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-10 bg-muted/40 rounded-xl animate-pulse" />
+            ))}</div>
+          ) : (
+            <Tabs defaultValue="overdue" className="w-full">
+              <TabsList className="bg-secondary/30 mb-4">
+                <TabsTrigger value="overdue" className="text-xs gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+                  Overdue {overdue.length > 0 && <Badge variant="destructive" className="text-[9px] h-4 px-1 ml-0.5">{overdue.length}</Badge>}
+                </TabsTrigger>
+                <TabsTrigger value="today" className="text-xs gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                  Today {today.length > 0 && <Badge variant="secondary" className="text-[9px] h-4 px-1 ml-0.5">{today.length}</Badge>}
+                </TabsTrigger>
+                <TabsTrigger value="upcoming" className="text-xs gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
+                  Next 7 Days
+                </TabsTrigger>
+                <TabsTrigger value="all" className="text-xs">All Open</TabsTrigger>
+              </TabsList>
+              <TabsContent value="overdue">
+                <Section label="Overdue" items={overdue} accent="text-red-400" emptyText="No overdue tasks — great job!" color="bg-red-400" />
+              </TabsContent>
+              <TabsContent value="today">
+                <Section label="Due Today" items={today} accent="text-amber-400" emptyText="Nothing due today" color="bg-amber-400" />
+              </TabsContent>
+              <TabsContent value="upcoming">
+                <Section label="Next 7 Days" items={upcoming} accent="text-blue-400" emptyText="Nothing scheduled in the next 7 days" color="bg-blue-400" />
+              </TabsContent>
+              <TabsContent value="all">
+                <div className="space-y-4">
+                  {overdue.length > 0 && <Section label="Overdue" items={overdue} accent="text-red-400" emptyText="" color="bg-red-400" />}
+                  {today.length > 0 && <Section label="Due Today" items={today} accent="text-amber-400" emptyText="" color="bg-amber-400" />}
+                  {upcoming.length > 0 && <Section label="Next 7 Days" items={upcoming} accent="text-blue-400" emptyText="" color="bg-blue-400" />}
+                  {undated.length > 0 && <Section label="No Due Date" items={undated} emptyText="" color="bg-muted-foreground" />}
+                  {tasks.length === 0 && <p className="text-xs text-muted-foreground/50 px-3 py-4 text-center italic">No open tasks — you're all caught up!</p>}
+                </div>
+              </TabsContent>
+            </Tabs>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Task Quick-View Sheet */}
+      <Sheet open={!!viewingTask} onOpenChange={open => { if (!open) setViewingTask(null); }}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto bg-card border-border">
+          {viewingTask && (() => {
+            const t2 = viewingTask;
+            const TypeIcon2 = TASK_TYPE_ICONS[t2.taskType ?? "to_do"] || ClipboardList;
+            const typeColor2 = TASK_TYPE_COLORS[t2.taskType ?? "to_do"] || "text-gray-400 bg-gray-500/10";
+            const isOverdue2 = t2.dueDate && t2.dueDate < now;
+            return (
+              <>
+                <SheetHeader className="pb-4 border-b border-border">
+                  <div className="flex items-start gap-3">
+                    <div className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 ${typeColor2}`}>
+                      <TypeIcon2 className="h-4.5 w-4.5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <SheetTitle className="text-sm font-semibold leading-snug">{t2.title}</SheetTitle>
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        {t2.priority === "high" && <Badge variant="destructive" className="text-[10px]">High</Badge>}
+                        {t2.priority === "medium" && <Badge variant="secondary" className="text-[10px] bg-amber-500/15 text-amber-400">Medium</Badge>}
+                        {t2.taskType && <Badge variant="outline" className={`text-[10px] capitalize ${typeColor2}`}>{t2.taskType.replace("_", " ")}</Badge>}
+                        {isOverdue2 && <Badge variant="destructive" className="text-[10px]">Overdue</Badge>}
+                      </div>
+                    </div>
+                  </div>
+                </SheetHeader>
+                <div className="py-4 space-y-4">
+                  {t2.description && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Notes</p>
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{t2.description}</p>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-2">
+                    {t2.dueDate && (
+                      <div className={`flex items-center gap-2 p-2 rounded-lg bg-secondary/30 ${isOverdue2 ? "border border-red-500/20" : ""}`}>
+                        <Calendar className={`h-3.5 w-3.5 shrink-0 ${isOverdue2 ? "text-red-400" : "text-muted-foreground"}`} />
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">Due</p>
+                          <p className={`text-xs font-medium ${isOverdue2 ? "text-red-400" : ""}`}>{new Date(t2.dueDate).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    )}
+                    {t2.companyName && (
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30">
+                        <Building2Icon className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">Company</p>
+                          <p className="text-xs font-medium truncate">{t2.companyName}</p>
+                        </div>
+                      </div>
+                    )}
+                    {t2.contactFirstName && (
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30">
+                        <UserIcon className="h-3.5 w-3.5 text-purple-400 shrink-0" />
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">Contact</p>
+                          <p className="text-xs font-medium truncate">{t2.contactFirstName} {t2.contactLastName ?? ""}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <Link href="/tasks" className="flex-1">
+                      <Button size="sm" className="w-full" onClick={() => setViewingTask(null)}>Open in Tasks</Button>
+                    </Link>
+                    <Button size="sm" variant="outline" onClick={() => {
+                      completeMutation.mutate({ id: t2.id, status: "completed", completedAt: Date.now() });
+                      setViewingTask(null);
+                    }}>Mark Done</Button>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
 
@@ -558,6 +824,9 @@ export default function Dashboard() {
 
       {/* ─── Recent Activity Feed ─── */}
       <RecentActivityFeed />
+
+      {/* ─── Task Command Center ─── */}
+      <TaskCommandCenter />
 
       {/* ─── Quick Actions & System Status ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

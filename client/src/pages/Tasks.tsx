@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo, useCallback } from "react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
@@ -112,6 +113,7 @@ export default function Tasks() {
   const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
+  const [viewingTask, setViewingTask] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [queueFilter, setQueueFilter] = useState<string>("all");
@@ -703,7 +705,7 @@ export default function Tasks() {
             const campaignName = getCampaignName(task.campaignId ?? null);
 
             return (
-              <Card key={task.id} className={`bg-card border-border hover:border-primary/20 transition-all ${isOverdue ? "border-red-500/30 bg-red-500/3" : ""} ${task.status === "completed" ? "opacity-60" : ""}`}>
+              <Card key={task.id} onClick={() => setViewingTask(task)} className={`bg-card border-border hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer ${isOverdue ? "border-red-500/30 bg-red-500/3" : ""} ${task.status === "completed" ? "opacity-60" : ""}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <Checkbox
@@ -713,6 +715,7 @@ export default function Tasks() {
                         status: checked ? "completed" : "not_started",
                         completedAt: checked ? Date.now() : undefined,
                       })}
+                      onClick={e => e.stopPropagation()}
                       className="mt-1 shrink-0"
                     />
                     <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${typeColor}`}>
@@ -820,6 +823,7 @@ export default function Tasks() {
                     </div>
 
                     {/* Actions */}
+                    <div onClick={e => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
@@ -844,6 +848,7 @@ export default function Tasks() {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -893,6 +898,274 @@ export default function Tasks() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Task Detail Sheet */}
+      <Sheet open={!!viewingTask} onOpenChange={open => { if (!open) setViewingTask(null); }}>
+        <SheetContent className="w-full sm:max-w-xl overflow-y-auto bg-card border-border">
+          {viewingTask && (() => {
+            const t2 = viewingTask;
+            const TypeIcon2 = TYPE_ICONS[t2.taskType ?? "to_do"] || ClipboardList;
+            const typeColor2 = TYPE_COLORS[t2.taskType ?? "to_do"] || "text-gray-400 bg-gray-500/10";
+            const isOverdue2 = t2.dueDate && t2.taskStatus !== "completed" && t2.dueDate < Date.now();
+            const contactName2 = getContactName(t2.contactId ?? null);
+            const companyName2 = getCompanyName(t2.companyId ?? null);
+            const dealName2 = getDealName(t2.dealId ?? null);
+            const pipelineName2 = getPipelineName(t2.pipelineId ?? null);
+            const campaignName2 = getCampaignName(t2.campaignId ?? null);
+            return (
+              <>
+                <SheetHeader className="pb-4 border-b border-border">
+                  <div className="flex items-start gap-3">
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${typeColor2}`}>
+                      <TypeIcon2 className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <SheetTitle className="text-base font-semibold leading-snug">{t2.title}</SheetTitle>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <Badge variant="secondary" className={`text-[10px] ${PRIORITY_COLORS[t2.priority] ?? ""}`}>{t2.priority}</Badge>
+                        {t2.taskType && <Badge variant="outline" className={`text-[10px] capitalize ${typeColor2}`}>{t2.taskType.replace("_", " ")}</Badge>}
+                        {t2.queue && <Badge variant="outline" className="text-[10px] bg-primary/5">{t2.queue}</Badge>}
+                        {isOverdue2 && <Badge variant="destructive" className="text-[10px]"><AlertCircle className="h-2.5 w-2.5 mr-1" />Overdue</Badge>}
+                        <Badge variant={t2.taskStatus === "completed" ? "default" : "outline"} className="text-[10px]">
+                          {t2.taskStatus === "completed" ? "✓ Completed" : "Not Started"}
+                        </Badge>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="outline" className="shrink-0" onClick={() => { setViewingTask(null); handleEdit(t2); }}>
+                      <Edit2 className="h-3.5 w-3.5 mr-1" /> Edit
+                    </Button>
+                  </div>
+                </SheetHeader>
+
+                <div className="py-4 space-y-5">
+                  {/* Description */}
+                  {t2.description && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Notes</p>
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{t2.description}</p>
+                    </div>
+                  )}
+
+                  {/* Dates */}
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Dates</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {t2.dueDate && (
+                        <div className={`flex items-center gap-2 p-2 rounded-lg bg-secondary/30 ${isOverdue2 ? "border border-red-500/20" : ""}`}>
+                          <Calendar className={`h-4 w-4 shrink-0 ${isOverdue2 ? "text-red-400" : "text-muted-foreground"}`} />
+                          <div>
+                            <p className="text-[10px] text-muted-foreground">Due Date</p>
+                            <p className={`text-xs font-medium ${isOverdue2 ? "text-red-400" : ""}`}>{new Date(t2.dueDate).toLocaleDateString()}{t2.dueTime ? ` at ${t2.dueTime}` : ""}</p>
+                          </div>
+                        </div>
+                      )}
+                      {t2.startDate && (
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30">
+                          <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          <div>
+                            <p className="text-[10px] text-muted-foreground">Start Date</p>
+                            <p className="text-xs font-medium">{new Date(t2.startDate).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                      )}
+                      {t2.followUpDate && (
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/5 border border-amber-500/10">
+                          <RefreshCw className="h-4 w-4 shrink-0 text-amber-400" />
+                          <div>
+                            <p className="text-[10px] text-muted-foreground">Follow-up</p>
+                            <p className="text-xs font-medium text-amber-400">{new Date(t2.followUpDate).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                      )}
+                      {t2.meetingDate && (
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-green-500/5 border border-green-500/10">
+                          <Video className="h-4 w-4 shrink-0 text-green-400" />
+                          <div>
+                            <p className="text-[10px] text-muted-foreground">Meeting</p>
+                            <p className="text-xs font-medium text-green-400">{new Date(t2.meetingDate).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Linked Records */}
+                  {(companyName2 || contactName2 || dealName2 || pipelineName2 || campaignName2) && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Linked Records</p>
+                      <div className="space-y-1.5">
+                        {companyName2 && (
+                          <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30">
+                            <Building2 className="h-4 w-4 text-blue-400 shrink-0" />
+                            <div>
+                              <p className="text-[10px] text-muted-foreground">Company</p>
+                              <p className="text-xs font-medium">{companyName2}</p>
+                            </div>
+                          </div>
+                        )}
+                        {contactName2 && (
+                          <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30">
+                            <User className="h-4 w-4 text-purple-400 shrink-0" />
+                            <div>
+                              <p className="text-[10px] text-muted-foreground">Contact</p>
+                              <p className="text-xs font-medium">{contactName2}</p>
+                            </div>
+                          </div>
+                        )}
+                        {dealName2 && (
+                          <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30">
+                            <Target className="h-4 w-4 text-green-400 shrink-0" />
+                            <div>
+                              <p className="text-[10px] text-muted-foreground">Deal</p>
+                              <p className="text-xs font-medium">{dealName2}</p>
+                            </div>
+                          </div>
+                        )}
+                        {pipelineName2 && (
+                          <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30">
+                            <Layers className="h-4 w-4 text-cyan-400 shrink-0" />
+                            <div>
+                              <p className="text-[10px] text-muted-foreground">Pipeline</p>
+                              <p className="text-xs font-medium">{pipelineName2}</p>
+                            </div>
+                          </div>
+                        )}
+                        {campaignName2 && (
+                          <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30">
+                            <Mail className="h-4 w-4 text-pink-400 shrink-0" />
+                            <div>
+                              <p className="text-[10px] text-muted-foreground">Campaign</p>
+                              <p className="text-xs font-medium">{campaignName2}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Meeting Details */}
+                  {(t2.meetingLocation || t2.meetingAgenda || t2.meetingAttendees) && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Meeting Details</p>
+                      <div className="space-y-1.5">
+                        {t2.meetingLocation && (
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                            <p className="text-xs text-foreground">{t2.meetingLocation}</p>
+                          </div>
+                        )}
+                        {t2.meetingAgenda && (
+                          <div className="flex items-start gap-2">
+                            <FileText className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                            <p className="text-xs text-foreground whitespace-pre-wrap">{t2.meetingAgenda}</p>
+                          </div>
+                        )}
+                        {t2.meetingAttendees && (
+                          <div className="flex items-start gap-2">
+                            <User className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                            <p className="text-xs text-foreground">{t2.meetingAttendees}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Commercial */}
+                  {(t2.revenueAmount || t2.productName || t2.proposalUrl || t2.forecastCategory || t2.businessCategory) && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Commercial</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {t2.revenueAmount && (
+                          <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
+                            <DollarSign className="h-4 w-4 text-emerald-400 shrink-0" />
+                            <div>
+                              <p className="text-[10px] text-muted-foreground">Revenue Potential</p>
+                              <p className="text-xs font-medium text-emerald-400">{(t2.revenueAmount / 100).toLocaleString()} {t2.revenueCurrency ?? "USD"}</p>
+                            </div>
+                          </div>
+                        )}
+                        {t2.productName && (
+                          <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30">
+                            <Briefcase className="h-4 w-4 text-amber-400 shrink-0" />
+                            <div>
+                              <p className="text-[10px] text-muted-foreground">Product</p>
+                              <p className="text-xs font-medium">{t2.productName}</p>
+                            </div>
+                          </div>
+                        )}
+                        {t2.forecastCategory && (
+                          <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30">
+                            <TrendingUp className="h-4 w-4 text-blue-400 shrink-0" />
+                            <div>
+                              <p className="text-[10px] text-muted-foreground">Forecast</p>
+                              <p className="text-xs font-medium">{t2.forecastCategory}</p>
+                            </div>
+                          </div>
+                        )}
+                        {t2.businessCategory && (
+                          <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30">
+                            <Tag className="h-4 w-4 text-indigo-400 shrink-0" />
+                            <div>
+                              <p className="text-[10px] text-muted-foreground">Category</p>
+                              <p className="text-xs font-medium">{t2.businessCategory}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {t2.proposalUrl && (
+                        <a href={t2.proposalUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-primary hover:underline mt-2">
+                          <Link2 className="h-3 w-3" /> View Proposal
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {/* WhatsApp */}
+                  {t2.whatsappNumber && (
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
+                      <MessageSquare className="h-4 w-4 text-emerald-400 shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">WhatsApp</p>
+                        <p className="text-xs font-medium text-emerald-400">{t2.whatsappNumber}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Completion info */}
+                  {t2.taskStatus === "completed" && t2.completedAt && (
+                    <div className="p-3 rounded-lg bg-green-500/5 border border-green-500/15">
+                      <p className="text-xs font-medium text-green-400 mb-0.5">Completed</p>
+                      <p className="text-xs text-muted-foreground">{new Date(t2.completedAt).toLocaleString()}</p>
+                      {t2.outcome && <p className="text-xs text-foreground mt-1">{t2.outcome}</p>}
+                    </div>
+                  )}
+
+                  {/* Metadata */}
+                  <div className="pt-2 border-t border-border">
+                    <p className="text-[10px] text-muted-foreground">Created {new Date(t2.createdAt).toLocaleString()} · ID #{t2.id}</p>
+                    {t2.touchCount != null && t2.touchCount > 0 && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{t2.touchCount} touch{t2.touchCount !== 1 ? "es" : ""} recorded</p>
+                    )}
+                  </div>
+
+                  {/* Quick actions */}
+                  <div className="flex gap-2 pt-1">
+                    <Button size="sm" className="flex-1" onClick={() => { setViewingTask(null); handleEdit(t2); }}>
+                      <Edit2 className="h-3.5 w-3.5 mr-1" /> Edit Task
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => {
+                      updateMutation.mutate({ id: t2.id, status: t2.taskStatus === "completed" ? "not_started" : "completed", completedAt: t2.taskStatus !== "completed" ? Date.now() : undefined });
+                      setViewingTask(null);
+                    }}>
+                      {t2.taskStatus === "completed" ? "Reopen" : "Mark Done"}
+                    </Button>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

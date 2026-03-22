@@ -1,0 +1,10 @@
+{
+  "query": "SELECT COUNT(*) as total FROM tasks; SELECT id, title, taskStatus, priority, userId, tenantCompanyId, companyId, contactId FROM tasks LIMIT 8;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT COUNT(*) as total FROM tasks; SELECT id, title, taskStatus, priority, userId, tenantCompanyId, companyId, contactId FROM tasks LIMIT 8;",
+  "returncode": 1,
+  "logs": [
+    "total",
+    "116",
+    "ERROR 1054 (42S22) at line 1: Unknown column 'tenantcompanyid' in 'field list'"
+  ]
+}

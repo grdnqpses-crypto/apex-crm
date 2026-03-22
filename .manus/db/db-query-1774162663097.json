@@ -1,0 +1,40 @@
+{
+  "query": "SELECT COUNT(*) as total FROM tasks; SELECT id, title, taskStatus, priority, userId, companyId, contactId FROM tasks LIMIT 8;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT COUNT(*) as total FROM tasks; SELECT id, title, taskStatus, priority, userId, companyId, contactId FROM tasks LIMIT 8;",
+  "rows": [
+    {
+      "total": "116"
+    },
+    {
+      "total": "id\ttitle\ttaskStatus\tpriority\tuserId\tcompanyId\tcontactId"
+    },
+    {
+      "total": "1\tCoordinate with dispatch\tnot_started\tlow\t2610017\t810109\t811019"
+    },
+    {
+      "total": "3\tAudit shipment history\tcompleted\tmedium\t2610017\t810110\t811020"
+    },
+    {
+      "total": "5\tCheck in after trial\tnot_started\thigh\t2610017\t810111\t811021"
+    },
+    {
+      "total": "30001\tCoordinate with ops team\tnot_started\thigh\t2610017\t810112\t811022"
+    },
+    {
+      "total": "30003\tCoordinate with ops team\tcompleted\tmedium\t2610017\t810113\t811023"
+    },
+    {
+      "total": "30005\tSchedule site visit\tnot_started\tlow\t2610017\t810114\t811024"
+    },
+    {
+      "total": "30007\tBenchmark carrier rates\tcompleted\tmedium\t2610017\t810115\t811025"
+    },
+    {
+      "total": "30009\tReview SLA performance\tnot_started\thigh\t2610017\t810116\t811026"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\n116\nid\ttitle\ttaskStatus\tpriority\tuserId\tcompanyId\tcontactId\n1\tCoordinate with dispatch\tnot_started\tlow\t2610017\t810109\t811019\n3\tAudit shipment history\tcompleted\tmedium\t2610017\t810110\t811020\n5\tCheck in after trial\tnot_started\thigh\t2610017\t810111\t811021\n30001\tCoordinate with ops team\tnot_started\thigh\t2610017\t810112\t811022\n30003\tCoordinate with ops team\tcompleted\tmedium\t2610017\t810113\t811023\n30005\tSchedule site visit\tnot_started\tlow\t2610017\t810114\t811024\n30007\tBenchmark carrier rates\tcompleted\tmedium\t2610017\t810115\t811025\n30009\tReview SLA performance\tnot_started\thigh\t2610017\t810116\t811026\n",
+  "stderr": "",
+  "execution_time_ms": 416
+}
