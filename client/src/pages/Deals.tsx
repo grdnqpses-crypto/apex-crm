@@ -11,6 +11,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { useSkin } from "@/contexts/SkinContext";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
 
 const DEFAULT_STAGES = [
   { name: "Qualification", probability: 10, color: "#6366f1" },
@@ -130,6 +132,7 @@ export default function Deals() {
 
   return (
     <div className="space-y-5">
+      <PageGuide {...pageGuides.dealsPage} />
       {/* ─── Header ─── */}
       <div className="flex items-center justify-between">
         <div>

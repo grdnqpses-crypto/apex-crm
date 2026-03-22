@@ -2135,3 +2135,14 @@
 - [x] Fix Deals page: 71 deals show in header count but none render on screen
 - [x] Link deals to a company AND a specific contact (company + contact selectors in create/edit)
 - [x] Fix Contacts export returning empty file (role-based scope)
+
+## Session 4: Task Hub Expansion + Guide Banners
+- [x] Extend tasks DB schema with 31 new fields (startDate, followUpDate, meetingDate, meetingLocation, meetingAgenda, meetingAttendees, productName, proposalUrl, revenueAmount, whatsappNumber, businessCategory, businessType, forecastCategory, forecastCloseDate, documents, touchCount, campaignId, pipelineId, workflowId, isRecurring, recurringFrequency, etc.)
+- [x] Extend tasks.create and tasks.update procedures with all new fields
+- [x] Rebuild Tasks.tsx as full CRM activity hub with 6-tab form (Details, Links, Schedule, Meeting, Revenue, Intel)
+- [x] Task cards show all linked records: company, contact, deal, pipeline, campaign, revenue, meeting, product, WhatsApp
+- [x] Add PageGuide to Contacts page (contactsPage guide)
+- [x] Add PageGuide to Companies page (companiesPage guide)
+- [x] Add PageGuide to Deals page (dealsPage guide)
+- [x] Add Ghost Sequences guide to pageGuides.ts
+- [x] Fix RottenDeals.tsx pre-existing TypeScript errors

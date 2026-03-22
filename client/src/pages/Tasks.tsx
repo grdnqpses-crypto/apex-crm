@@ -11,30 +11,107 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Calendar, MoreHorizontal, Trash2, Phone, Mail, ClipboardList, RefreshCw, Building2, User, Target, Clock, Search } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import {
+  Plus, Calendar, MoreHorizontal, Trash2, Phone, Mail, ClipboardList, RefreshCw,
+  Building2, User, Target, Clock, Search, Briefcase, DollarSign, MessageSquare,
+  FileText, Zap, BarChart2, Video, MapPin, Link2, Tag, AlertCircle, Eye,
+  TrendingUp, Shield, Bell, Layers, ChevronRight, Edit2
+} from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { toast } from "sonner";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
 import { useSkin } from "@/contexts/SkinContext";
 
-
 const PRIORITY_COLORS: Record<string, string> = {
   low: "bg-muted text-muted-foreground",
-  medium: "bg-chart-3/15 text-chart-3",
+  medium: "bg-amber-500/15 text-amber-400",
   high: "bg-red-500/15 text-red-400",
 };
 
 const TYPE_ICONS: Record<string, any> = {
-  call: Phone, email: Mail, to_do: ClipboardList, follow_up: RefreshCw,
+  call: Phone,
+  email: Mail,
+  to_do: ClipboardList,
+  follow_up: RefreshCw,
+  meeting: Video,
+  demo: Layers,
+  proposal: FileText,
+  whatsapp: MessageSquare,
+  sms: MessageSquare,
 };
 
-const QUEUES = ["Prospecting Calls", "Customer Renewals", "Carrier Setup", "Follow-ups", "Onboarding", "General"];
+const TYPE_COLORS: Record<string, string> = {
+  call: "text-blue-400 bg-blue-500/10",
+  email: "text-purple-400 bg-purple-500/10",
+  to_do: "text-gray-400 bg-gray-500/10",
+  follow_up: "text-amber-400 bg-amber-500/10",
+  meeting: "text-green-400 bg-green-500/10",
+  demo: "text-cyan-400 bg-cyan-500/10",
+  proposal: "text-pink-400 bg-pink-500/10",
+  whatsapp: "text-emerald-400 bg-emerald-500/10",
+  sms: "text-indigo-400 bg-indigo-500/10",
+};
+
+const QUEUES = ["Prospecting Calls", "Customer Renewals", "Carrier Setup", "Follow-ups", "Onboarding", "General", "Demo Pipeline", "Proposal Review", "WhatsApp Broadcasts"];
+
+const FORECAST_CATEGORIES = ["Pipeline", "Best Case", "Commit", "Closed Won", "Closed Lost", "Omitted"];
+
+const BUSINESS_CATEGORIES = [
+  "Freight Broker", "Carrier", "Shipper", "3PL", "Warehouse", "Last Mile",
+  "Intermodal", "Customs Broker", "NVOCC", "Freight Forwarder", "Cold Chain",
+  "Hazmat", "Oversized/Heavy Haul", "Expedited", "LTL", "FTL", "Parcel"
+];
+
+const BUSINESS_TYPES = [
+  "Prospect", "Customer", "Partner", "Vendor", "Competitor", "Investor", "Other"
+];
+
+const EMPTY_FORM = {
+  title: "",
+  taskType: "to_do" as string,
+  priority: "medium" as string,
+  description: "",
+  dueDate: "",
+  dueTime: "",
+  startDate: "",
+  followUpDate: "",
+  queue: "",
+  contactId: null as number | null,
+  companyId: null as number | null,
+  dealId: null as number | null,
+  campaignId: null as number | null,
+  pipelineId: null as number | null,
+  workflowId: null as number | null,
+  isRecurring: false,
+  recurringFrequency: "",
+  // Meeting
+  meetingDate: "",
+  meetingLocation: "",
+  meetingAgenda: "",
+  meetingAttendees: "",
+  // Commercial
+  productName: "",
+  proposalUrl: "",
+  revenueAmount: "",
+  revenueCurrency: "USD",
+  whatsappNumber: "",
+  // Business
+  businessCategory: "",
+  businessType: "",
+  // Forecast
+  forecastCategory: "",
+  forecastCloseDate: "",
+  // Documents
+  documents: [] as { name: string; url: string; type: string }[],
+};
 
 export default function Tasks() {
   const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
+  const [editingTask, setEditingTask] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [queueFilter, setQueueFilter] = useState<string>("all");
@@ -45,75 +122,518 @@ export default function Tasks() {
     status: statusFilter !== "all" ? statusFilter : undefined,
     taskType: typeFilter !== "all" ? typeFilter : undefined,
     queue: queueFilter !== "all" ? queueFilter : undefined,
-    limit: 100,
+    limit: 200,
   }), [statusFilter, typeFilter, queueFilter]);
 
   const { data, isLoading } = trpc.tasks.list.useQuery(taskInput);
-  const { data: contacts } = trpc.contacts.list.useQuery({ limit: 100 });
-  const { data: companies } = trpc.companies.list.useQuery({ limit: 100 });
+  const { data: contacts } = trpc.contacts.list.useQuery({ limit: 200 });
+  const { data: companies } = trpc.companies.list.useQuery({ limit: 200 });
+  const { data: dealsData } = trpc.deals.list.useQuery({ limit: 100 });
+  const { data: pipelinesData } = trpc.pipelines.list.useQuery();
+  const { data: campaignsData } = trpc.campaigns.list.useQuery({ limit: 50 });
+  const { data: workflowsData } = trpc.workflows.list.useQuery();
+  const { data: battleCardsData } = trpc.battleCards.list.useQuery({ limit: 50 });
 
   const createMutation = trpc.tasks.create.useMutation({
-    onSuccess: () => { utils.tasks.list.invalidate(); utils.dashboard.stats.invalidate(); setShowCreate(false); resetForm(); toast.success("Task created"); },
+    onSuccess: () => {
+      utils.tasks.list.invalidate();
+      utils.dashboard.stats.invalidate();
+      setShowCreate(false);
+      setForm({ ...EMPTY_FORM });
+      toast.success("Task created successfully");
+    },
     onError: (e: any) => toast.error(e.message),
   });
+
   const updateMutation = trpc.tasks.update.useMutation({
-    onSuccess: () => { utils.tasks.list.invalidate(); utils.dashboard.stats.invalidate(); },
+    onSuccess: () => {
+      utils.tasks.list.invalidate();
+      utils.dashboard.stats.invalidate();
+      setEditingTask(null);
+      toast.success("Task updated");
+    },
+    onError: (e: any) => toast.error(e.message),
   });
+
   const deleteMutation = trpc.tasks.delete.useMutation({
-    onSuccess: () => { utils.tasks.list.invalidate(); utils.dashboard.stats.invalidate(); toast.success("Task deleted"); },
+    onSuccess: () => {
+      utils.tasks.list.invalidate();
+      utils.dashboard.stats.invalidate();
+      toast.success("Task deleted");
+    },
   });
 
-  const [form, setForm] = useState({
-    title: "", taskType: "to_do" as string, priority: "medium" as string,
-    description: "", dueDate: "", dueTime: "", queue: "",
-    contactId: null as number | null, companyId: null as number | null, dealId: null as number | null,
-    isRecurring: false, recurringFrequency: "",
-  });
+  const [form, setForm] = useState({ ...EMPTY_FORM });
+  const setF = useCallback((key: string, value: any) => setForm(p => ({ ...p, [key]: value })), []);
 
-  const resetForm = () => setForm({
-    title: "", taskType: "to_do", priority: "medium", description: "", dueDate: "", dueTime: "",
-    queue: "", contactId: null, companyId: null, dealId: null, isRecurring: false, recurringFrequency: "",
+  const buildPayload = (f: typeof EMPTY_FORM) => ({
+    title: f.title,
+    taskType: f.taskType as any,
+    priority: f.priority as any,
+    description: f.description || undefined,
+    dueDate: f.dueDate ? new Date(f.dueDate).getTime() : undefined,
+    dueTime: f.dueTime || undefined,
+    startDate: f.startDate ? new Date(f.startDate).getTime() : undefined,
+    followUpDate: f.followUpDate ? new Date(f.followUpDate).getTime() : undefined,
+    queue: f.queue || undefined,
+    contactId: f.contactId ?? undefined,
+    companyId: f.companyId ?? undefined,
+    dealId: f.dealId ?? undefined,
+    campaignId: f.campaignId ?? undefined,
+    pipelineId: f.pipelineId ?? undefined,
+    workflowId: f.workflowId ?? undefined,
+    isRecurring: f.isRecurring,
+    recurringFrequency: f.recurringFrequency || undefined,
+    meetingDate: f.meetingDate ? new Date(f.meetingDate).getTime() : undefined,
+    meetingLocation: f.meetingLocation || undefined,
+    meetingAgenda: f.meetingAgenda || undefined,
+    meetingAttendees: f.meetingAttendees || undefined,
+    productName: f.productName || undefined,
+    proposalUrl: f.proposalUrl || undefined,
+    revenueAmount: f.revenueAmount ? parseFloat(f.revenueAmount) : undefined,
+    revenueCurrency: f.revenueCurrency || "USD",
+    whatsappNumber: f.whatsappNumber || undefined,
+    businessCategory: f.businessCategory || undefined,
+    businessType: f.businessType || undefined,
+    forecastCategory: f.forecastCategory || undefined,
+    forecastCloseDate: f.forecastCloseDate ? new Date(f.forecastCloseDate).getTime() : undefined,
+    documents: f.documents.length > 0 ? JSON.stringify(f.documents) : undefined,
   });
 
   const handleCreate = () => {
-    if (!form.title.trim()) { toast.error("Title is required"); return; }
-    createMutation.mutate({
-      title: form.title,
-      taskType: form.taskType as any,
-      priority: form.priority as any,
-      description: form.description || undefined,
-      dueDate: form.dueDate ? new Date(form.dueDate).getTime() : undefined,
-      dueTime: form.dueTime || undefined,
-      queue: form.queue || undefined,
-      contactId: form.contactId ?? undefined,
-      companyId: form.companyId ?? undefined,
-      dealId: form.dealId ?? undefined,
-      isRecurring: form.isRecurring,
-      recurringFrequency: form.recurringFrequency || undefined,
+    if (!form.title.trim()) { toast.error("Task title is required"); return; }
+    createMutation.mutate(buildPayload(form));
+  };
+
+  const handleEdit = (task: any) => {
+    setEditingTask(task);
+    setForm({
+      title: task.title ?? "",
+      taskType: task.taskType ?? "to_do",
+      priority: task.priority ?? "medium",
+      description: task.description ?? "",
+      dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "",
+      dueTime: task.dueTime ?? "",
+      startDate: task.startDate ? new Date(task.startDate).toISOString().split("T")[0] : "",
+      followUpDate: task.followUpDate ? new Date(task.followUpDate).toISOString().split("T")[0] : "",
+      queue: task.queue ?? "",
+      contactId: task.contactId ?? null,
+      companyId: task.companyId ?? null,
+      dealId: task.dealId ?? null,
+      campaignId: task.campaignId ?? null,
+      pipelineId: task.pipelineId ?? null,
+      workflowId: task.workflowId ?? null,
+      isRecurring: task.isRecurring ?? false,
+      recurringFrequency: task.recurringFrequency ?? "",
+      meetingDate: task.meetingDate ? new Date(task.meetingDate).toISOString().split("T")[0] : "",
+      meetingLocation: task.meetingLocation ?? "",
+      meetingAgenda: task.meetingAgenda ?? "",
+      meetingAttendees: task.meetingAttendees ?? "",
+      productName: task.productName ?? "",
+      proposalUrl: task.proposalUrl ?? "",
+      revenueAmount: task.revenueAmount ? String(task.revenueAmount) : "",
+      revenueCurrency: task.revenueCurrency ?? "USD",
+      whatsappNumber: task.whatsappNumber ?? "",
+      businessCategory: task.businessCategory ?? "",
+      businessType: task.businessType ?? "",
+      forecastCategory: task.forecastCategory ?? "",
+      forecastCloseDate: task.forecastCloseDate ? new Date(task.forecastCloseDate).toISOString().split("T")[0] : "",
+      documents: task.documents ? JSON.parse(task.documents) : [],
     });
   };
 
-  const filteredTasks = data?.items?.filter(t => {
+  const handleUpdate = () => {
+    if (!editingTask) return;
+    if (!form.title.trim()) { toast.error("Task title is required"); return; }
+    updateMutation.mutate({ id: editingTask.id, ...buildPayload(form) });
+  };
+
+  const filteredTasks = data?.items?.filter(task => {
     if (!search) return true;
-    return t.title.toLowerCase().includes(search.toLowerCase()) ||
-      (t.description && t.description.toLowerCase().includes(search.toLowerCase()));
+    const s = search.toLowerCase();
+    return task.title.toLowerCase().includes(s) ||
+      (task.description && task.description.toLowerCase().includes(s)) ||
+      (task.productName && task.productName.toLowerCase().includes(s)) ||
+      (task.businessCategory && task.businessCategory.toLowerCase().includes(s));
   }) ?? [];
 
   const pendingCount = data?.items?.filter(t => t.status === "not_started").length ?? 0;
   const completedCount = data?.items?.filter(t => t.status === "completed").length ?? 0;
+  const overdueCount = data?.items?.filter(t => t.dueDate && t.status !== "completed" && t.dueDate < Date.now()).length ?? 0;
+
+  const getContactName = (id: number | null) => {
+    if (!id) return null;
+    const c = contacts?.items?.find((x: any) => x.id === id);
+    return c ? `${c.firstName} ${c.lastName ?? ""}`.trim() : `#${id}`;
+  };
+  const getCompanyName = (id: number | null) => {
+    if (!id) return null;
+    const c = companies?.items?.find((x: any) => x.id === id);
+    return c ? c.name : `#${id}`;
+  };
+  const getDealName = (id: number | null) => {
+    if (!id) return null;
+    const d = dealsData?.items?.find((x: any) => x.id === id);
+    return d ? d.name : `#${id}`;
+  };
+  const getPipelineName = (id: number | null) => {
+    if (!id) return null;
+    const p = pipelinesData?.find((x: any) => x.id === id);
+    return p ? p.name : `#${id}`;
+  };
+  const getCampaignName = (id: number | null) => {
+    if (!id) return null;
+    const c = campaignsData?.items?.find((x: any) => x.id === id);
+    return c ? c.name : `#${id}`;
+  };
+
+  const TaskForm = () => (
+    <Tabs defaultValue="details" className="w-full">
+      <TabsList className="bg-secondary/30 w-full grid grid-cols-6 text-[10px]">
+        <TabsTrigger value="details" className="text-[10px]">Details</TabsTrigger>
+        <TabsTrigger value="links" className="text-[10px]">Links</TabsTrigger>
+        <TabsTrigger value="schedule" className="text-[10px]">Schedule</TabsTrigger>
+        <TabsTrigger value="meeting" className="text-[10px]">Meeting</TabsTrigger>
+        <TabsTrigger value="commercial" className="text-[10px]">Revenue</TabsTrigger>
+        <TabsTrigger value="intel" className="text-[10px]">Intel</TabsTrigger>
+      </TabsList>
+
+      {/* ── DETAILS ── */}
+      <TabsContent value="details" className="mt-4 space-y-4">
+        <div className="space-y-2">
+          <Label>Task Title <span className="text-destructive">*</span></Label>
+          <Input value={form.title} onChange={e => setF("title", e.target.value)} placeholder="e.g. Call shipping manager about new lane" className="bg-secondary/30" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label>Task Type</Label>
+            <Select value={form.taskType} onValueChange={v => setF("taskType", v)}>
+              <SelectTrigger className="bg-secondary/30"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="call">📞 Call</SelectItem>
+                <SelectItem value="email">📧 Email</SelectItem>
+                <SelectItem value="to_do">✅ To-do</SelectItem>
+                <SelectItem value="follow_up">🔄 Follow-up</SelectItem>
+                <SelectItem value="meeting">🎥 Meeting</SelectItem>
+                <SelectItem value="demo">🖥️ Demo</SelectItem>
+                <SelectItem value="proposal">📄 Proposal</SelectItem>
+                <SelectItem value="whatsapp">💬 WhatsApp</SelectItem>
+                <SelectItem value="sms">📱 SMS</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Priority</Label>
+            <Select value={form.priority} onValueChange={v => setF("priority", v)}>
+              <SelectTrigger className="bg-secondary/30"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">🟢 Low</SelectItem>
+                <SelectItem value="medium">🟡 Medium</SelectItem>
+                <SelectItem value="high">🔴 High</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label>Business Category</Label>
+            <Select value={form.businessCategory || "none"} onValueChange={v => setF("businessCategory", v === "none" ? "" : v)}>
+              <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select category" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {BUSINESS_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Business Type</Label>
+            <Select value={form.businessType || "none"} onValueChange={v => setF("businessType", v === "none" ? "" : v)}>
+              <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select type" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {BUSINESS_TYPES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Queue</Label>
+          <Select value={form.queue || "none"} onValueChange={v => setF("queue", v === "none" ? "" : v)}>
+            <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select queue" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No queue</SelectItem>
+              {QUEUES.map(q => <SelectItem key={q} value={q}>{q}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Notes / Description</Label>
+          <Textarea value={form.description} onChange={e => setF("description", e.target.value)} placeholder="Lane, volume, pain point, next steps, meeting prep..." className="bg-secondary/30 min-h-[80px]" />
+        </div>
+        {form.taskType === "whatsapp" && (
+          <div className="space-y-2">
+            <Label>WhatsApp Number</Label>
+            <Input value={form.whatsappNumber} onChange={e => setF("whatsappNumber", e.target.value)} placeholder="+1 555 000 0000" className="bg-secondary/30" />
+          </div>
+        )}
+      </TabsContent>
+
+      {/* ── LINKS ── */}
+      <TabsContent value="links" className="mt-4 space-y-4">
+        <p className="text-xs text-muted-foreground">Link this task to any record in the CRM. Every linked record creates a traceable touchpoint.</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1"><Building2 className="h-3 w-3" /> Company</Label>
+            <Select value={form.companyId?.toString() ?? "none"} onValueChange={v => setF("companyId", v === "none" ? null : parseInt(v))}>
+              <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select company" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No company</SelectItem>
+                {companies?.items?.map((c: any) => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1"><User className="h-3 w-3" /> Contact</Label>
+            <Select value={form.contactId?.toString() ?? "none"} onValueChange={v => setF("contactId", v === "none" ? null : parseInt(v))}>
+              <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select contact" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No contact</SelectItem>
+                {contacts?.items?.filter((c: any) => !form.companyId || c.companyId === form.companyId).map((c: any) => (
+                  <SelectItem key={c.id} value={c.id.toString()}>{c.firstName} {c.lastName ?? ""}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1"><Target className="h-3 w-3" /> Deal</Label>
+            <Select value={form.dealId?.toString() ?? "none"} onValueChange={v => setF("dealId", v === "none" ? null : parseInt(v))}>
+              <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select deal" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No deal</SelectItem>
+                {dealsData?.items?.map((d: any) => <SelectItem key={d.id} value={d.id.toString()}>{d.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1"><Layers className="h-3 w-3" /> Pipeline</Label>
+            <Select value={form.pipelineId?.toString() ?? "none"} onValueChange={v => setF("pipelineId", v === "none" ? null : parseInt(v))}>
+              <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select pipeline" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No pipeline</SelectItem>
+                {pipelinesData?.map((p: any) => <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1"><Mail className="h-3 w-3" /> Campaign</Label>
+            <Select value={form.campaignId?.toString() ?? "none"} onValueChange={v => setF("campaignId", v === "none" ? null : parseInt(v))}>
+              <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select campaign" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No campaign</SelectItem>
+                {campaignsData?.items?.map((c: any) => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1"><Zap className="h-3 w-3" /> Workflow</Label>
+            <Select value={form.workflowId?.toString() ?? "none"} onValueChange={v => setF("workflowId", v === "none" ? null : parseInt(v))}>
+              <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select workflow" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No workflow</SelectItem>
+                {(workflowsData as any[])?.map((w: any) => <SelectItem key={w.id} value={w.id.toString()}>{w.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </TabsContent>
+
+      {/* ── SCHEDULE ── */}
+      <TabsContent value="schedule" className="mt-4 space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label>Start Date</Label>
+            <Input type="date" value={form.startDate} onChange={e => setF("startDate", e.target.value)} className="bg-secondary/30" />
+          </div>
+          <div className="space-y-2">
+            <Label>Due Date</Label>
+            <Input type="date" value={form.dueDate} onChange={e => setF("dueDate", e.target.value)} className="bg-secondary/30" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label>Due Time</Label>
+            <Input type="time" value={form.dueTime} onChange={e => setF("dueTime", e.target.value)} className="bg-secondary/30" />
+          </div>
+          <div className="space-y-2">
+            <Label>Follow-up Date</Label>
+            <Input type="date" value={form.followUpDate} onChange={e => setF("followUpDate", e.target.value)} className="bg-secondary/30" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Forecast Close Date</Label>
+          <Input type="date" value={form.forecastCloseDate} onChange={e => setF("forecastCloseDate", e.target.value)} className="bg-secondary/30" />
+        </div>
+        <div className="space-y-2">
+          <Label>Forecast Category</Label>
+          <Select value={form.forecastCategory || "none"} onValueChange={v => setF("forecastCategory", v === "none" ? "" : v)}>
+            <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select forecast" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Not set</SelectItem>
+              {FORECAST_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <Separator />
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/20">
+          <Switch checked={form.isRecurring} onCheckedChange={v => setF("isRecurring", v)} />
+          <div>
+            <Label>Recurring Task</Label>
+            <p className="text-xs text-muted-foreground">Auto-regenerate on a schedule</p>
+          </div>
+        </div>
+        {form.isRecurring && (
+          <div className="space-y-2">
+            <Label>Frequency</Label>
+            <Select value={form.recurringFrequency || "none"} onValueChange={v => setF("recurringFrequency", v === "none" ? "" : v)}>
+              <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select frequency" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Not set</SelectItem>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="biweekly">Bi-weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="quarterly">Quarterly</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </TabsContent>
+
+      {/* ── MEETING ── */}
+      <TabsContent value="meeting" className="mt-4 space-y-4">
+        <p className="text-xs text-muted-foreground">Schedule a meeting, demo, or call. All details are linked to this task and tracked in analytics.</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Meeting Date</Label>
+            <Input type="date" value={form.meetingDate} onChange={e => setF("meetingDate", e.target.value)} className="bg-secondary/30" />
+          </div>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1"><MapPin className="h-3 w-3" /> Location / Link</Label>
+            <Input value={form.meetingLocation} onChange={e => setF("meetingLocation", e.target.value)} placeholder="Zoom link or address" className="bg-secondary/30" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Attendees</Label>
+          <Input value={form.meetingAttendees} onChange={e => setF("meetingAttendees", e.target.value)} placeholder="John Smith, Jane Doe, ..." className="bg-secondary/30" />
+        </div>
+        <div className="space-y-2">
+          <Label>Meeting Agenda / Prep Notes</Label>
+          <Textarea value={form.meetingAgenda} onChange={e => setF("meetingAgenda", e.target.value)} placeholder="Topics to cover, questions to ask, objections to handle..." className="bg-secondary/30 min-h-[100px]" />
+        </div>
+        <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
+          <p className="text-xs text-muted-foreground">
+            <span className="text-primary font-medium">Calendar Sync:</span> After saving, use the calendar integration in Settings → Integrations to sync this meeting to Google Calendar or Outlook.
+          </p>
+        </div>
+      </TabsContent>
+
+      {/* ── COMMERCIAL / REVENUE ── */}
+      <TabsContent value="commercial" className="mt-4 space-y-4">
+        <p className="text-xs text-muted-foreground">Track revenue potential, products, and proposals tied to this task. This feeds directly into your forecasting dashboard.</p>
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1"><Briefcase className="h-3 w-3" /> Product / Service</Label>
+          <Input value={form.productName} onChange={e => setF("productName", e.target.value)} placeholder="e.g. Flatbed Lane Chicago–Dallas, LTL Spot Rate" className="bg-secondary/30" />
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-2 col-span-2">
+            <Label className="flex items-center gap-1"><DollarSign className="h-3 w-3" /> Revenue Potential</Label>
+            <Input type="number" value={form.revenueAmount} onChange={e => setF("revenueAmount", e.target.value)} placeholder="0.00" className="bg-secondary/30" />
+          </div>
+          <div className="space-y-2">
+            <Label>Currency</Label>
+            <Select value={form.revenueCurrency} onValueChange={v => setF("revenueCurrency", v)}>
+              <SelectTrigger className="bg-secondary/30"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="USD">USD</SelectItem>
+                <SelectItem value="CAD">CAD</SelectItem>
+                <SelectItem value="MXN">MXN</SelectItem>
+                <SelectItem value="EUR">EUR</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1"><Link2 className="h-3 w-3" /> Proposal URL</Label>
+          <Input value={form.proposalUrl} onChange={e => setF("proposalUrl", e.target.value)} placeholder="https://docs.google.com/..." className="bg-secondary/30" />
+        </div>
+        <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
+          <p className="text-xs text-muted-foreground">
+            <span className="text-emerald-400 font-medium">Revenue Tracking:</span> Revenue potential from tasks is aggregated in Analytics → Revenue Forecast. Keep this updated to maintain accurate pipeline visibility.
+          </p>
+        </div>
+      </TabsContent>
+
+      {/* ── INTELLIGENCE ── */}
+      <TabsContent value="intel" className="mt-4 space-y-4">
+        <p className="text-xs text-muted-foreground">Intelligence layer — visitor tracking, battle cards, and document attachments for this task.</p>
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/20">
+          <Switch checked={form.whatsappNumber !== ""} onCheckedChange={v => { if (!v) setF("whatsappNumber", ""); }} />
+          <div>
+            <Label>WhatsApp Broadcast</Label>
+            <p className="text-xs text-muted-foreground">Enable WhatsApp messaging for this task</p>
+          </div>
+        </div>
+        {(form.taskType === "whatsapp" || form.whatsappNumber) && (
+          <div className="space-y-2">
+            <Label>WhatsApp Number</Label>
+            <Input value={form.whatsappNumber} onChange={e => setF("whatsappNumber", e.target.value)} placeholder="+1 555 000 0000" className="bg-secondary/30" />
+          </div>
+        )}
+        <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/10 space-y-1">
+          <p className="text-xs font-medium text-blue-400 flex items-center gap-1"><Eye className="h-3 w-3" /> Visitor Tracking</p>
+          <p className="text-xs text-muted-foreground">When the linked company visits your website, this task will be flagged automatically. Configure tracking in Settings → Integrations → Website Visitor Tracking.</p>
+        </div>
+        <div className="p-3 rounded-lg bg-purple-500/5 border border-purple-500/10 space-y-1">
+          <p className="text-xs font-medium text-purple-400 flex items-center gap-1"><Shield className="h-3 w-3" /> Battle Card Access</p>
+          <p className="text-xs text-muted-foreground">Battle cards for the linked company's competitors are available in the Battle Cards tab. Access them during meeting prep to sharpen your pitch.</p>
+        </div>
+        <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/10 space-y-1">
+          <p className="text-xs font-medium text-amber-400 flex items-center gap-1"><Bell className="h-3 w-3" /> Smart Notifications</p>
+          <p className="text-xs text-muted-foreground">Smart notifications fire when: the linked contact opens an email, the company visits your site, a deal stage changes, or this task is overdue. Configure in Settings → Notifications.</p>
+        </div>
+        <div className="p-3 rounded-lg bg-secondary/20 space-y-1">
+          <p className="text-xs font-medium text-foreground flex items-center gap-1"><FileText className="h-3 w-3" /> Documents</p>
+          <p className="text-xs text-muted-foreground">Attach proposals, contracts, or scanned documents to this task. Use the Documents tab in the linked Company or Contact record to upload files, then reference them here.</p>
+        </div>
+      </TabsContent>
+    </Tabs>
+  );
 
   return (
     <div className="space-y-5">
       <PageGuide {...pageGuides.tasks} />
+
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t("tasks")}</h1>
-          <p className="text-xs text-muted-foreground/70 mt-0.5 mb-1">Stay on top of follow-ups, calls, and to-dos. Link tasks to contacts or companies to keep everything connected.</p>
-          <p className="text-sm text-muted-foreground">
-            {pendingCount} pending · {completedCount} completed · {data?.total ?? 0} total
+          <p className="text-xs text-muted-foreground/70 mt-0.5 mb-1">
+            The heart of every client move — link tasks to companies, contacts, deals, campaigns, meetings, proposals, and revenue.
           </p>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <span>{pendingCount} pending</span>
+            <span>·</span>
+            <span>{completedCount} completed</span>
+            {overdueCount > 0 && <><span>·</span><span className="text-red-400 font-medium">{overdueCount} overdue</span></>}
+            <span>·</span>
+            <span>{data?.total ?? 0} total</span>
+          </div>
         </div>
-        <Button onClick={() => setShowCreate(true)} size="sm" className="gap-2">
+        <Button onClick={() => { setForm({ ...EMPTY_FORM }); setShowCreate(true); }} size="sm" className="gap-2">
           <Plus className="h-4 w-4" /> Add Task
         </Button>
       </div>
@@ -122,7 +642,7 @@ export default function Tasks() {
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[180px] max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search tasks..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 bg-secondary/30" />
+          <Input placeholder="Search tasks..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-secondary/30" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-36 bg-secondary/30"><SelectValue placeholder="Status" /></SelectTrigger>
@@ -140,6 +660,10 @@ export default function Tasks() {
             <SelectItem value="email">Email</SelectItem>
             <SelectItem value="to_do">To-do</SelectItem>
             <SelectItem value="follow_up">Follow-up</SelectItem>
+            <SelectItem value="meeting">Meeting</SelectItem>
+            <SelectItem value="demo">Demo</SelectItem>
+            <SelectItem value="proposal">Proposal</SelectItem>
+            <SelectItem value="whatsapp">WhatsApp</SelectItem>
           </SelectContent>
         </Select>
         <Select value={queueFilter} onValueChange={setQueueFilter}>
@@ -155,40 +679,69 @@ export default function Tasks() {
       <div className="space-y-2">
         {isLoading ? (
           Array.from({ length: 5 }).map((_, i) => (
-            <Card key={i} className="bg-card border-border"><CardContent className="p-4"><div className="h-5 w-full bg-muted rounded animate-pulse" /></CardContent></Card>
+            <Card key={i} className="bg-card border-border">
+              <CardContent className="p-4"><div className="h-5 w-full bg-muted rounded animate-pulse" /></CardContent>
+            </Card>
           ))
         ) : filteredTasks.length === 0 ? (
-          <Card className="bg-card border-border"><CardContent className="p-12 text-center text-muted-foreground">No tasks found. Create your first task to get started.</CardContent></Card>
+          <Card className="bg-card border-border">
+            <CardContent className="p-12 text-center">
+              <ClipboardList className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-muted-foreground font-medium">No tasks found</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">Create your first task to start tracking client activity</p>
+            </CardContent>
+          </Card>
         ) : (
-          filteredTasks.map((task) => {
+          filteredTasks.map(task => {
             const TypeIcon = TYPE_ICONS[task.taskType ?? "to_do"] || ClipboardList;
+            const typeColor = TYPE_COLORS[task.taskType ?? "to_do"] || "text-gray-400 bg-gray-500/10";
             const isOverdue = task.dueDate && task.status !== "completed" && task.dueDate < Date.now();
+            const contactName = getContactName(task.contactId ?? null);
+            const companyName = getCompanyName(task.companyId ?? null);
+            const dealName = getDealName(task.dealId ?? null);
+            const pipelineName = getPipelineName(task.pipelineId ?? null);
+            const campaignName = getCampaignName(task.campaignId ?? null);
+
             return (
-              <Card key={task.id} className={`bg-card border-border hover:border-primary/20 transition-colors ${isOverdue ? "border-red-500/30" : ""}`}>
+              <Card key={task.id} className={`bg-card border-border hover:border-primary/20 transition-all ${isOverdue ? "border-red-500/30 bg-red-500/3" : ""} ${task.status === "completed" ? "opacity-60" : ""}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <Checkbox
                       checked={task.status === "completed"}
-                      onCheckedChange={(checked) => updateMutation.mutate({
+                      onCheckedChange={checked => updateMutation.mutate({
                         id: task.id,
                         status: checked ? "completed" : "not_started",
                         completedAt: checked ? Date.now() : undefined,
                       })}
-                      className="mt-1"
+                      className="mt-1 shrink-0"
                     />
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <TypeIcon className="h-4 w-4 text-primary" />
+                    <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${typeColor}`}>
+                      <TypeIcon className="h-4 w-4" />
                     </div>
                     <div className="flex-1 min-w-0">
+                      {/* Title row */}
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className={`text-sm font-medium ${task.status === "completed" ? "line-through text-muted-foreground" : "text-foreground"}`}>{task.title}</p>
+                        <p className={`text-sm font-medium ${task.status === "completed" ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                          {task.title}
+                        </p>
                         <Badge variant="secondary" className={`text-[10px] ${PRIORITY_COLORS[task.priority] ?? ""}`}>{task.priority}</Badge>
-                        {task.taskType && <Badge variant="outline" className="text-[10px] capitalize">{task.taskType.replace("_", " ")}</Badge>}
+                        {task.taskType && (
+                          <Badge variant="outline" className={`text-[10px] capitalize ${typeColor}`}>
+                            {task.taskType.replace("_", " ")}
+                          </Badge>
+                        )}
                         {task.queue && <Badge variant="outline" className="text-[10px] bg-primary/5">{task.queue}</Badge>}
-                        {isOverdue && <Badge variant="destructive" className="text-[10px]">Overdue</Badge>}
+                        {isOverdue && <Badge variant="destructive" className="text-[10px]"><AlertCircle className="h-2.5 w-2.5 mr-1" />Overdue</Badge>}
                         {task.isRecurring && <Badge variant="outline" className="text-[10px]"><RefreshCw className="h-2.5 w-2.5 mr-1" />Recurring</Badge>}
+                        {task.forecastCategory && <Badge variant="outline" className="text-[10px] text-emerald-400 border-emerald-500/20">{task.forecastCategory}</Badge>}
+                        {task.businessCategory && <Badge variant="outline" className="text-[10px] text-blue-400 border-blue-500/20">{task.businessCategory}</Badge>}
                       </div>
-                      {task.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>}
+
+                      {task.description && (
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
+                      )}
+
+                      {/* Linked records row */}
                       <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                         {task.dueDate && (
                           <div className={`flex items-center gap-1 text-xs ${isOverdue ? "text-red-400" : "text-muted-foreground"}`}>
@@ -197,26 +750,96 @@ export default function Tasks() {
                             {task.dueTime && <span>at {task.dueTime}</span>}
                           </div>
                         )}
-                        {task.contactId && (
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <User className="h-3 w-3" /> Contact #{task.contactId}
+                        {task.followUpDate && (
+                          <div className="flex items-center gap-1 text-xs text-amber-400/80">
+                            <RefreshCw className="h-3 w-3" />
+                            <span>Follow-up {new Date(task.followUpDate).toLocaleDateString()}</span>
                           </div>
                         )}
-                        {task.companyId && (
+                        {companyName && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Building2 className="h-3 w-3" /> Company #{task.companyId}
+                            <Building2 className="h-3 w-3 text-blue-400" />
+                            <span>{companyName}</span>
+                          </div>
+                        )}
+                        {contactName && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <User className="h-3 w-3 text-purple-400" />
+                            <span>{contactName}</span>
+                          </div>
+                        )}
+                        {dealName && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Target className="h-3 w-3 text-green-400" />
+                            <span>{dealName}</span>
+                          </div>
+                        )}
+                        {pipelineName && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Layers className="h-3 w-3 text-cyan-400" />
+                            <span>{pipelineName}</span>
+                          </div>
+                        )}
+                        {campaignName && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Mail className="h-3 w-3 text-pink-400" />
+                            <span>{campaignName}</span>
+                          </div>
+                        )}
+                        {task.revenueAmount && (
+                          <div className="flex items-center gap-1 text-xs text-emerald-400">
+                            <DollarSign className="h-3 w-3" />
+                            <span>{(task.revenueAmount / 100).toLocaleString()} {task.revenueCurrency ?? "USD"}</span>
+                          </div>
+                        )}
+                        {task.meetingDate && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Video className="h-3 w-3 text-green-400" />
+                            <span>Meeting {new Date(task.meetingDate).toLocaleDateString()}</span>
+                          </div>
+                        )}
+                        {task.productName && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Briefcase className="h-3 w-3 text-amber-400" />
+                            <span>{task.productName}</span>
+                          </div>
+                        )}
+                        {task.whatsappNumber && (
+                          <div className="flex items-center gap-1 text-xs text-emerald-400">
+                            <MessageSquare className="h-3 w-3" />
+                            <span>{task.whatsappNumber}</span>
+                          </div>
+                        )}
+                        {task.touchCount != null && task.touchCount > 0 && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground/60">
+                            <Zap className="h-3 w-3" />
+                            <span>{task.touchCount} touch{task.touchCount !== 1 ? "es" : ""}</span>
                           </div>
                         )}
                       </div>
                     </div>
+
+                    {/* Actions */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => updateMutation.mutate({ id: task.id, status: "not_started" })}>Mark Not Started</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateMutation.mutate({ id: task.id, status: "completed", completedAt: Date.now() })}>Mark Completed</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate({ id: task.id })}>
+                        <DropdownMenuItem onClick={() => handleEdit(task)}>
+                          <Edit2 className="mr-2 h-4 w-4" /> Edit Task
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => updateMutation.mutate({ id: task.id, status: "completed", completedAt: Date.now() })}>
+                          Mark Completed
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => updateMutation.mutate({ id: task.id, status: "not_started" })}>
+                          Mark Not Started
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => deleteMutation.mutate({ id: task.id })}
+                        >
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -229,127 +852,43 @@ export default function Tasks() {
         )}
       </div>
 
-      {/* Create Task Dialog */}
+      {/* Create Dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="bg-card border-border max-w-lg max-h-[85vh]">
-          <DialogHeader><DialogTitle>Add New Task</DialogTitle></DialogHeader>
-          <ScrollArea className="max-h-[60vh] pr-4">
-            <Tabs defaultValue="details" className="w-full">
-              <TabsList className="bg-secondary/30 w-full">
-                <TabsTrigger value="details" className="text-xs">Details</TabsTrigger>
-                <TabsTrigger value="associations" className="text-xs">Associations</TabsTrigger>
-                <TabsTrigger value="scheduling" className="text-xs">Scheduling</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="details" className="mt-4 space-y-4">
-                <div className="space-y-2">
-                  <Label>Task Title *</Label>
-                  <Input value={form.title} onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Call shipping manager about new lane" className="bg-secondary/30" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Task Type</Label>
-                    <Select value={form.taskType} onValueChange={(v) => setForm(p => ({ ...p, taskType: v }))}>
-                      <SelectTrigger className="bg-secondary/30"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="call">Call</SelectItem>
-                        <SelectItem value="email">Email</SelectItem>
-                        <SelectItem value="to_do">To-do</SelectItem>
-                        <SelectItem value="follow_up">Follow-up</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Priority</Label>
-                    <Select value={form.priority} onValueChange={(v) => setForm(p => ({ ...p, priority: v }))}>
-                      <SelectTrigger className="bg-secondary/30"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Queue (optional)</Label>
-                  <Select value={form.queue || "none"} onValueChange={(v) => setForm(p => ({ ...p, queue: v === "none" ? "" : v }))}>
-                    <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select queue" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No queue</SelectItem>
-                      {QUEUES.map(q => <SelectItem key={q} value={q}>{q}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Notes / Description</Label>
-                  <Textarea value={form.description} onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))} placeholder="Lane, volume, pain point, next steps..." className="bg-secondary/30 min-h-[80px]" />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="associations" className="mt-4 space-y-4">
-                <p className="text-xs text-muted-foreground">Link this task to existing records for context and tracking.</p>
-                <div className="space-y-2">
-                  <Label>Associated Contact</Label>
-                  <Select value={form.contactId?.toString() ?? "none"} onValueChange={(v) => setForm(p => ({ ...p, contactId: v === "none" ? null : parseInt(v) }))}>
-                    <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select contact" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No contact</SelectItem>
-                      {contacts?.items?.map((c: any) => <SelectItem key={c.id} value={c.id.toString()}>{c.firstName} {c.lastName ?? ""}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Associated Company</Label>
-                  <Select value={form.companyId?.toString() ?? "none"} onValueChange={(v) => setForm(p => ({ ...p, companyId: v === "none" ? null : parseInt(v) }))}>
-                    <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select company" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No company</SelectItem>
-                      {companies?.items?.map((c: any) => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="scheduling" className="mt-4 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Due Date</Label>
-                    <Input type="date" value={form.dueDate} onChange={(e) => setForm(p => ({ ...p, dueDate: e.target.value }))} className="bg-secondary/30" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Due Time</Label>
-                    <Input type="time" value={form.dueTime} onChange={(e) => setForm(p => ({ ...p, dueTime: e.target.value }))} className="bg-secondary/30" />
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/20">
-                  <Switch checked={form.isRecurring} onCheckedChange={(checked) => setForm(p => ({ ...p, isRecurring: checked }))} />
-                  <div>
-                    <Label>Recurring Task</Label>
-                    <p className="text-xs text-muted-foreground">Auto-regenerate this task on a schedule</p>
-                  </div>
-                </div>
-                {form.isRecurring && (
-                  <div className="space-y-2">
-                    <Label>Frequency</Label>
-                    <Select value={form.recurringFrequency || "none"} onValueChange={(v) => setForm(p => ({ ...p, recurringFrequency: v === "none" ? "" : v }))}>
-                      <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select frequency" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Not set</SelectItem>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+        <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              Create New Task
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[70vh] pr-2">
+            <TaskForm />
           </ScrollArea>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
             <Button onClick={handleCreate} disabled={createMutation.isPending}>
               {createMutation.isPending ? "Creating..." : "Create Task"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingTask} onOpenChange={open => { if (!open) setEditingTask(null); }}>
+        <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit2 className="h-5 w-5 text-primary" />
+              Edit Task
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[70vh] pr-2">
+            <TaskForm />
+          </ScrollArea>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingTask(null)}>Cancel</Button>
+            <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>

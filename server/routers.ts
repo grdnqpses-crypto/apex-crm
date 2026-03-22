@@ -598,9 +598,11 @@ export const appRouter = router({
     }),
     create: protectedProcedure.input(z.object({
       title: z.string().min(1),
-      taskType: z.enum(["call", "email", "to_do", "follow_up"]).optional(),
+      taskType: z.enum(["call", "email", "to_do", "follow_up", "meeting", "demo", "proposal", "whatsapp", "sms"]).optional(),
       dueDate: z.number().optional(),
       dueTime: z.string().optional(),
+      startDate: z.number().optional(),
+      followUpDate: z.number().optional(),
       assignedTo: z.number().optional(),
       priority: z.enum(["low", "medium", "high"]).optional(),
       description: z.string().optional(),
@@ -609,10 +611,35 @@ export const appRouter = router({
       contactId: z.number().optional(),
       companyId: z.number().optional(),
       dealId: z.number().optional(),
+      campaignId: z.number().optional(),
+      pipelineId: z.number().optional(),
+      workflowId: z.number().optional(),
+      sequenceId: z.number().optional(),
       isRecurring: z.boolean().optional(),
       recurringFrequency: z.string().optional(),
+      // Meeting
+      meetingDate: z.number().optional(),
+      meetingLocation: z.string().optional(),
+      meetingAgenda: z.string().optional(),
+      meetingAttendees: z.string().optional(),
+      // Commercial
+      productName: z.string().optional(),
+      proposalUrl: z.string().optional(),
+      revenueAmount: z.number().optional(),
+      revenueCurrency: z.string().optional(),
+      // Channels
+      whatsappNumber: z.string().optional(),
+      // Business
+      businessCategory: z.string().optional(),
+      businessType: z.string().optional(),
+      // Forecast
+      forecastCategory: z.string().optional(),
+      forecastCloseDate: z.number().optional(),
+      // Documents (JSON string)
+      documents: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
-      const id = await db.createTask({ ...input, userId: ctx.user.id });
+      const now = Date.now();
+      const id = await db.createTask({ ...input, userId: ctx.user.id, lastTouchedAt: now, touchCount: 1 });
       return { id };
     }),
     update: protectedProcedure.input(z.object({
@@ -629,12 +656,35 @@ export const appRouter = router({
       contactId: z.number().nullable().optional(),
       companyId: z.number().nullable().optional(),
       dealId: z.number().nullable().optional(),
+      campaignId: z.number().nullable().optional(),
+      pipelineId: z.number().nullable().optional(),
+      workflowId: z.number().nullable().optional(),
+      sequenceId: z.number().nullable().optional(),
       completedAt: z.number().optional(),
       completedBy: z.number().optional(),
       outcome: z.string().optional(),
+      startDate: z.number().nullable().optional(),
+      followUpDate: z.number().nullable().optional(),
+      lastViewedAt: z.number().optional(),
+      meetingDate: z.number().nullable().optional(),
+      meetingLocation: z.string().nullable().optional(),
+      meetingAgenda: z.string().nullable().optional(),
+      meetingAttendees: z.string().nullable().optional(),
+      productName: z.string().nullable().optional(),
+      proposalUrl: z.string().nullable().optional(),
+      revenueAmount: z.number().nullable().optional(),
+      revenueCurrency: z.string().optional(),
+      whatsappNumber: z.string().nullable().optional(),
+      businessCategory: z.string().nullable().optional(),
+      businessType: z.string().nullable().optional(),
+      forecastCategory: z.string().nullable().optional(),
+      forecastCloseDate: z.number().nullable().optional(),
+      documents: z.string().nullable().optional(),
+      touchCount: z.number().optional(),
+      lastTouchedAt: z.number().optional(),
     })).mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
-      await db.updateTask(id, ctx.user.id, data);
+      await db.updateTask(id, ctx.user.id, { ...data, updatedAt: Date.now() });
       return { success: true };
     }),
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {

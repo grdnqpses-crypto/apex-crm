@@ -349,6 +349,54 @@ export const pageGuides: Record<string, PageGuideData> = {
     ],
   },
 
+  contactsPage: {
+    title: "Contacts Guide",
+    description: "Click to learn how to manage your contact database",
+    sections: [
+      { icon: "purpose", title: "What This Page Does", content: "Contacts is your master database of every individual person your business interacts with — prospects, customers, carriers, shippers, brokers, and partners. Every contact can be linked to a company, a deal, tasks, campaigns, and activities, creating a complete 360° relationship record." },
+      { icon: "expect", title: "What You'll See", content: "A searchable, filterable table of all contacts with key columns: name, email, phone, company, title, and last activity date. Use the search bar and filters to find any contact instantly. Click any row to open the full contact profile with activity timeline." },
+      { icon: "actions", title: "What You Can Do", content: "Create contacts with the '+ Add Contact' button — email and phone are required for every contact. Import contacts in bulk via CSV. Export your entire contact list. Log activities (calls, emails, meetings, notes) directly from the contact detail page. Link contacts to companies, deals, and campaigns." },
+      { icon: "outcomes", title: "Expected Outcomes", content: "A complete, searchable contact database means your team always knows who to call, when they were last contacted, and what was discussed. When every interaction is logged, you eliminate duplicate outreach and conflicting messages — your entire team shares one source of truth." },
+      { icon: "tips", title: "Pro Tips", content: "Always require email AND phone — a contact without both is incomplete. Link every contact to their company immediately. Log every call, email, and meeting as an activity — even a 2-minute voicemail. The activity timeline becomes your most valuable asset when handing off accounts or reviewing history before a big call." },
+    ],
+  },
+
+  companiesPage: {
+    title: "Companies Guide",
+    description: "Click to learn how to manage your company accounts",
+    sections: [
+      { icon: "purpose", title: "What This Page Does", content: "Companies is your account-level intelligence hub. Every freight broker, carrier, shipper, 3PL, and partner your business works with lives here. Companies are the organizational parent of contacts — each company can have dozens of contacts, multiple deals, and a full activity history shared across your team." },
+      { icon: "expect", title: "What You'll See", content: "A searchable table of all companies with name, industry, employee count, website, and contact count. Click any company to open its full profile — overview, all associated contacts, activity timeline, linked deals, and tasks. The company record holds 40+ fields including logistics-specific data like MC/DOT numbers, fleet size, and equipment types." },
+      { icon: "actions", title: "What You Can Do", content: "Create companies with the '+ Add Company' button. Fill in firmographics (industry, revenue, employee count), location, lifecycle stage, social media, and logistics fields. Link contacts to companies. Log activities against the company record. Create deals and tasks directly from the company profile." },
+      { icon: "outcomes", title: "Expected Outcomes", content: "Account-based selling becomes possible when your company records are complete. Knowing a carrier's fleet size, equipment types, and lane preferences before a call transforms your pitch. When multiple reps sell into the same account, the shared activity history prevents duplicate outreach and conflicting messages." },
+      { icon: "tips", title: "Pro Tips", content: "Fill in MC/DOT numbers and fleet size for every carrier — these are your most powerful prospecting filters. Always link contacts to their company immediately after creating them. Review the company activity timeline before any major outreach. Use the company record as your pre-call research hub." },
+    ],
+  },
+
+  dealsPage: {
+    title: "Deals Pipeline Guide",
+    description: "Click to learn how to manage your sales pipeline",
+    sections: [
+      { icon: "purpose", title: "What This Page Does", content: "The Deals pipeline is your visual revenue engine. Every active sales opportunity lives here as a card on a Kanban board, organized by stage. You can drag deals between stages, track values, link to companies and contacts, and forecast revenue. Multiple pipelines let you separate different business lines — freight brokerage, carrier sales, warehouse, etc." },
+      { icon: "expect", title: "What You'll See", content: "A Kanban board with columns for each pipeline stage. Each deal card shows the deal name, value, linked company, linked contact, priority, and days in stage. The header shows total pipeline value and deal count. Use the pipeline selector to switch between different sales pipelines." },
+      { icon: "actions", title: "What You Can Do", content: "Create deals with the '+ Add Deal' button — link each deal to a company AND a specific contact. Drag deal cards between stages to update progress. Click the ⋮ menu on any card to edit, mark won/lost, or delete. Create new pipelines with custom stages and probability percentages for accurate forecasting." },
+      { icon: "outcomes", title: "Expected Outcomes", content: "A well-maintained pipeline gives you accurate revenue forecasts and clear visibility into where deals are stalling. When every deal is linked to a company and contact, your team can see the full context — activity history, last touch, open tasks — without switching screens." },
+      { icon: "tips", title: "Pro Tips", content: "Always link deals to both a company AND a contact. Move deals through stages promptly — stale deals distort your forecast. Create tasks directly from deal cards for follow-ups. Use the 'Lost' reason field to track why deals fall through — this data drives your win/loss analysis in Analytics." },
+    ],
+  },
+
+  sequencesPage: {
+    title: "Ghost Sequences Guide",
+    description: "Click to learn how to automate your outreach sequences",
+    sections: [
+      { icon: "purpose", title: "What This Page Does", content: "Ghost Sequences are automated multi-step outreach campaigns that run on autopilot. Each sequence is a series of emails (and optionally calls/tasks) sent over days or weeks. Enroll prospects and the system handles the timing, personalization, and sending — you focus on replies." },
+      { icon: "expect", title: "What You'll See", content: "A list of all your sequences with name, status (Active/Draft/Paused), number of steps, enrolled count, and reply rate. Click any sequence to view its steps, enrolled prospects, and performance metrics. Each step shows the email template, delay, and send conditions." },
+      { icon: "actions", title: "What You Can Do", content: "Create sequences with multiple steps — each step is an email template with a delay (e.g., Day 1, Day 3, Day 7). Enroll individual contacts or bulk-enroll from segments. Pause or stop sequences at any time. The system automatically skips contacts who reply, unsubscribe, or bounce." },
+      { icon: "outcomes", title: "Expected Outcomes", content: "Automated follow-up means no prospect falls through the cracks. A well-crafted 5-step sequence can generate 3-5x more replies than a single email. Your team focuses on responding to interested prospects while the system handles the initial outreach and follow-up cadence." },
+      { icon: "tips", title: "Pro Tips", content: "Keep sequences to 5-7 steps maximum. Space steps 2-4 days apart. Vary your approach — email 1 introduces, email 2 adds value, email 3 asks a question, email 4 shares a case study, email 5 is a breakup email. Always test sequences on small batches before enrolling your full list." },
+    ],
+  },
+
   smtpAccounts: {
     title: "SMTP Accounts Guide",
     description: "Click to learn about managing your email sending accounts",

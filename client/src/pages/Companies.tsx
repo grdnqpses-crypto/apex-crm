@@ -12,6 +12,8 @@ import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { useSkin } from "@/contexts/SkinContext";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
 
 export default function Companies() {
   const { t } = useSkin();
@@ -48,6 +50,7 @@ export default function Companies() {
 
   return (
     <div className="space-y-6">
+      <PageGuide {...pageGuides.companiesPage} />
       {/* ─── Header ─── */}
       <div className="flex items-center justify-between">
         <div>

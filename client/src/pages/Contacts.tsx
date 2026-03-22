@@ -15,6 +15,8 @@ import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { useSkin } from "@/contexts/SkinContext";
+import PageGuide from "@/components/PageGuide";
+import { pageGuides } from "@/lib/pageGuides";
 
 const STAGES = ["subscriber", "lead", "mql", "sql", "opportunity", "customer", "evangelist"] as const;
 const STAGE_COLORS: Record<string, string> = {
@@ -164,6 +166,7 @@ export default function Contacts() {
 
   return (
     <div className="space-y-6">
+      <PageGuide {...pageGuides.contactsPage} />
       {/* ─── Header ─── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

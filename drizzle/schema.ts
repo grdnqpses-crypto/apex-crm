@@ -414,6 +414,48 @@ export const tasks = mysqlTable("tasks", {
   // Recurring
   isRecurring: boolean("isRecurring").default(false),
   recurringFrequency: varchar("recurringFrequency", { length: 32 }),
+  // Extended date fields
+  startDate: bigint("startDate", { mode: "number" }),
+  followUpDate: bigint("followUpDate", { mode: "number" }),
+  lastViewedAt: bigint("lastViewedAt", { mode: "number" }),
+  // Additional associations
+  campaignId: int("campaignId"),
+  pipelineId: int("pipelineId"),
+  workflowId: int("workflowId"),
+  sequenceId: int("sequenceId"),
+  // Meeting details
+  meetingDate: bigint("meetingDate", { mode: "number" }),
+  meetingLocation: varchar("meetingLocation", { length: 512 }),
+  meetingAgenda: text("meetingAgenda"),
+  meetingAttendees: text("meetingAttendees"),
+  calendarEventId: varchar("calendarEventId", { length: 256 }),
+  // Product & commercial
+  productName: varchar("productName", { length: 256 }),
+  proposalUrl: varchar("proposalUrl", { length: 1024 }),
+  revenueAmount: bigint("revenueAmount", { mode: "number" }),
+  revenueCurrency: varchar("revenueCurrency", { length: 8 }).default("USD"),
+  // Contact channels
+  whatsappNumber: varchar("whatsappNumber", { length: 32 }),
+  dialerCallId: varchar("dialerCallId", { length: 256 }),
+  emailThreadId: varchar("emailThreadId", { length: 256 }),
+  // Business classification
+  businessCategory: varchar("businessCategory", { length: 128 }),
+  businessType: varchar("businessType", { length: 128 }),
+  // Intelligence flags
+  visitorTracked: boolean("visitorTracked").default(false),
+  battleCardId: int("battleCardId"),
+  // Documents (JSON array of {name, url, type})
+  documents: text("documents"),
+  // Smart notification
+  notificationSentAt: bigint("notificationSentAt", { mode: "number" }),
+  notificationMessage: varchar("notificationMessage", { length: 512 }),
+  // Touch tracking (JSON array of touch events)
+  touchLog: text("touchLog"),
+  touchCount: int("touchCount").default(0),
+  lastTouchedAt: bigint("lastTouchedAt", { mode: "number" }),
+  // Forecast
+  forecastCategory: varchar("forecastCategory", { length: 64 }),
+  forecastCloseDate: bigint("forecastCloseDate", { mode: "number" }),
   // System
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),

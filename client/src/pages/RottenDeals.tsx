@@ -14,11 +14,10 @@ export default function RottenDeals() {
   const { t } = useSkin();
   const [thresholdDays, setThresholdDays] = useState(14);
 
-  const { data: rottenDeals, isLoading, refetch } = trpc.rottenDeals.list.useQuery({
-    thresholdDays,
-  });
+  const { data: rottenDealsData, isLoading, refetch } = trpc.rottenDeals.list.useQuery();
+  const rottenDeals = rottenDealsData?.deals ?? [];
 
-  const totalValue = rottenDeals?.reduce((s, d) => s + (d.value ?? 0), 0) ?? 0;
+  const totalValue = rottenDeals.reduce((s: number, d: any) => s + (d.value ?? 0), 0);
 
   function rottenColor(days: number) {
     if (days >= 30) return "destructive";
@@ -94,7 +93,7 @@ export default function RottenDeals() {
           <CardContent>
             {isLoading ? (
               <div className="text-center py-12 text-muted-foreground">Loading rotten deals…</div>
-            ) : !rottenDeals?.length ? (
+            ) : !rottenDeals.length ? (
               <div className="text-center py-12">
                 <Skull className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-30" />
                 <p className="text-muted-foreground">No rotten deals — great work keeping your pipeline fresh!</p>
@@ -112,7 +111,7 @@ export default function RottenDeals() {
                     </tr>
                   </thead>
                   <tbody>
-                    {rottenDeals.map(deal => (
+                    {rottenDeals.map((deal: any) => (
                       <tr key={deal.id} className="border-b hover:bg-muted/30 transition-colors">
                         <td className="py-3 pr-4 font-medium">{deal.name}</td>
                         <td className="py-3 pr-4">${(deal.value ?? 0).toLocaleString()}</td>
