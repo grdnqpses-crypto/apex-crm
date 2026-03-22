@@ -618,7 +618,7 @@ const TASKS: AITask[] = [
       log("Updating competitive intelligence battle cards...");
 
       const hotProspects = await (await getDb())!.execute(sql.raw(
-        `SELECT p.id, p.firstName, p.lastName, p.companyName, p.engagementStage,
+        `SELECT p.id, p.userId, p.firstName, p.lastName, p.companyName, p.engagementStage,
                 p.psychographicProfile, bc.id as battle_card_id
          FROM prospects p
          LEFT JOIN battle_cards bc ON bc.prospectId = p.id
@@ -678,7 +678,7 @@ const TASKS: AITask[] = [
         if (prospect.battle_card_id) {
           await (await getDb())!.execute(sql.raw(`UPDATE battle_cards SET talkingPoints = '${talkingPointsJson}', objectionHandlers = '${objectionHandlersJson}', recommendedApproach = '${recommendedApproach}', generatedAt = ${now} WHERE id = ${prospect.battle_card_id}`));
         } else {
-          await (await getDb())!.execute(sql.raw(`INSERT INTO battle_cards (prospectId, title, talkingPoints, objectionHandlers, recommendedApproach, createdAt, generatedAt) VALUES (${prospect.id}, 'Battle Card: ${escapedName}', '${talkingPointsJson}', '${objectionHandlersJson}', '${recommendedApproach}', ${now}, ${now})`));
+          await (await getDb())!.execute(sql.raw(`INSERT INTO battle_cards (userId, prospectId, title, talkingPoints, objectionHandlers, recommendedApproach, createdAt, generatedAt) VALUES (${prospect.userId}, ${prospect.id}, 'Battle Card: ${escapedName}', '${talkingPointsJson}', '${objectionHandlersJson}', '${recommendedApproach}', ${now}, ${now})`));
         }
         updated++;
       }

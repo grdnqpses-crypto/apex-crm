@@ -1984,19 +1984,23 @@ export const appRouter = router({
     // AXIOM Owner+: update company
     update: axiomOwnerProcedure.input(z.object({
       id: z.number(),
-      name: z.string().optional(),
-      industry: z.string().optional(),
-      website: z.string().optional(),
-      contactEmail: z.string().optional(),
-      phone: z.string().optional(),
-      address: z.string().optional(),
-      maxUsers: z.number().optional(),
-      subscriptionTier: z.enum(["trial", "success_starter", "growth_foundation", "fortune_foundation", "fortune", "fortune_plus"]).optional(),
-      subscriptionStatus: z.enum(["active", "suspended", "cancelled", "expired"]).optional(),
-      enabledFeatures: z.array(z.string()).optional(),
+      name: z.string().nullable().optional(),
+      industry: z.string().nullable().optional(),
+      website: z.string().nullable().optional(),
+      contactEmail: z.string().nullable().optional(),
+      phone: z.string().nullable().optional(),
+      address: z.string().nullable().optional(),
+      maxUsers: z.number().nullable().optional(),
+      subscriptionTier: z.enum(["trial", "success_starter", "growth_foundation", "fortune_foundation", "fortune", "fortune_plus"]).nullable().optional(),
+      subscriptionStatus: z.enum(["active", "suspended", "cancelled", "expired"]).nullable().optional(),
+      enabledFeatures: z.array(z.string()).nullable().optional(),
     })).mutation(async ({ input }) => {
       const { id, ...data } = input;
-      await db.updateTenantCompany(id, { ...data, updatedAt: Date.now() } as any);
+      // Convert null to undefined so DB helper ignores empty fields gracefully
+      const cleanData = Object.fromEntries(
+        Object.entries(data).map(([k, v]) => [k, v === null ? undefined : v])
+      );
+      await db.updateTenantCompany(id, { ...cleanData, updatedAt: Date.now() } as any);
       return { success: true };
     }),
 

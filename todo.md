@@ -2125,3 +2125,4 @@
 - [x] Fix "unexpected error occurred" on Custom Objects tab
 - [x] Remove logo generation limits for Developer and Axiom Admin roles (unlimited logos)
 - [x] Logo generation paywall: 1 free logo per user company, then $9.99 to unlock more (Developer/Axiom Admin always unlimited free)
+- [x] Fix Platform Dashboard "Manage" save error: industry/website/phone null values fail Zod validation
