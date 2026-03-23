@@ -2,7 +2,7 @@
  * SkinQAPanel — Full-featured skin QA switcher for developers and AXIOM owners
  *
  * Features:
- * - Live color swatch + font preview for all 7 skins
+ * - Live color swatch + font preview for all 19 skins
  * - One-click skin switch with instant CSS variable application
  * - "QA Mode" indicator badge when viewing a non-default skin
  * - Shows which skin a client is using when impersonating
@@ -16,13 +16,25 @@ import { Check, Palette, Eye, RotateCcw, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SKIN_META: Record<SkinId, { description: string; userBase: string; colorLabel: string }> = {
-  axiom:        { description: "Native AXIOM experience — full feature set", userBase: "New users", colorLabel: "AXIOM Orange" },
-  hubspot:     { description: "Mirrors HubSpot CRM — familiar layout & terms", userBase: "HubSpot migrants", colorLabel: "HubSpot Orange-Red" },
-  salesforce:  { description: "Mirrors Salesforce — Opportunities, Accounts, Leads", userBase: "Salesforce migrants", colorLabel: "Salesforce Blue" },
-  pipedrive:   { description: "Mirrors Pipedrive — pipeline-first deal view", userBase: "Pipedrive migrants", colorLabel: "Pipedrive Green" },
-  zoho:        { description: "Mirrors Zoho CRM — familiar module structure", userBase: "Zoho migrants", colorLabel: "Zoho Blue" },
-  gohighlevel: { description: "Mirrors GoHighLevel — dark mode, agency feel", userBase: "GHL migrants", colorLabel: "GHL Dark Purple" },
-  close:       { description: "Mirrors Close CRM — inbox-first, activity-heavy", userBase: "Close migrants", colorLabel: "Close Purple" },
+  axiom:           { description: "Native AXIOM experience — full feature set",                   userBase: "New users",                    colorLabel: "AXIOM Orange" },
+  hubspot:         { description: "Mirrors HubSpot CRM — familiar layout & terms",               userBase: "HubSpot migrants",             colorLabel: "HubSpot Orange-Red (#FF7A59)" },
+  salesforce:      { description: "Mirrors Salesforce — Opportunities, Accounts, Leads",         userBase: "Salesforce migrants",          colorLabel: "Salesforce Blue (#0070D2)" },
+  pipedrive:       { description: "Mirrors Pipedrive — pipeline-first deal view",                userBase: "Pipedrive migrants",           colorLabel: "Pipedrive Green (#217A4B)" },
+  zoho:            { description: "Mirrors Zoho CRM — familiar module structure",                userBase: "Zoho migrants",               colorLabel: "Zoho Red (#E42527)" },
+  gohighlevel:     { description: "Mirrors GoHighLevel — dark mode, agency feel",                userBase: "GHL migrants",                colorLabel: "GHL Blue (#2563EB) dark" },
+  close:           { description: "Mirrors Close CRM — inbox-first, activity-heavy",             userBase: "Close migrants",              colorLabel: "Close Indigo (#4C5FD5)" },
+  apollo:          { description: "Mirrors Apollo.io — prospecting & sequences",                 userBase: "Apollo migrants",             colorLabel: "Apollo Blue (#4285F4)" },
+  constantcontact: { description: "Mirrors Constant Contact — email-marketing CRM",             userBase: "Constant Contact migrants",   colorLabel: "CC Blue (#0062EA)" },
+  monday:          { description: "Mirrors Monday CRM — colorful board-style layout",           userBase: "Monday migrants",             colorLabel: "Monday Indigo (#6161FF)" },
+  freshsales:      { description: "Mirrors Freshsales — Freddy AI, Freshworks suite",           userBase: "Freshsales migrants",         colorLabel: "Freshsales Blue (#0B5FFF)" },
+  activecampaign:  { description: "Mirrors ActiveCampaign — automation-first CRM",              userBase: "ActiveCampaign migrants",     colorLabel: "AC Blue (#356AE6)" },
+  keap:            { description: "Mirrors Keap / Infusionsoft — SMB automation",               userBase: "Keap / Infusionsoft migrants",colorLabel: "Keap Green (#36A635)" },
+  copper:          { description: "Mirrors Copper CRM — Google Workspace native",               userBase: "Copper migrants",             colorLabel: "Copper Pink (#FF3465)" },
+  nutshell:        { description: "Mirrors Nutshell CRM — simple sales pipeline",               userBase: "Nutshell migrants",           colorLabel: "Nutshell Orange (#F37021)" },
+  insightly:       { description: "Mirrors Insightly — project + CRM hybrid",                   userBase: "Insightly migrants",          colorLabel: "Insightly Red (#E8392C)" },
+  sugarcrm:        { description: "Mirrors SugarCRM — enterprise open-source CRM",              userBase: "SugarCRM migrants",           colorLabel: "Sugar Red (#E61718)" },
+  streak:          { description: "Mirrors Streak — Gmail-native CRM with pipelines",           userBase: "Streak migrants",             colorLabel: "Streak Blue (#4285F4)" },
+  nimble:          { description: "Mirrors Nimble CRM — social-enrichment focused",             userBase: "Nimble migrants",             colorLabel: "Nimble Sky Blue (#00AEEF)" },
 };
 
 interface SkinQAPanelProps {

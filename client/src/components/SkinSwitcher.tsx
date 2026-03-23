@@ -1,6 +1,7 @@
 /**
  * SkinSwitcher — lets users switch between competitor UI modes
  * Shows as a compact dropdown in the sidebar footer
+ * Supports all 19 competitor skins grouped by category
  */
 import { useSkin, SkinId, SKINS } from "@/contexts/SkinContext";
 import { Button } from "@/components/ui/button";
@@ -15,14 +16,34 @@ import {
 import { Palette, Check } from "lucide-react";
 
 const SKIN_DESCRIPTIONS: Record<SkinId, string> = {
-  axiom: "Native AXIOM experience",
-  hubspot: "Migrating from HubSpot",
-  salesforce: "Migrating from Salesforce",
-  pipedrive: "Migrating from Pipedrive",
-  zoho: "Migrating from Zoho CRM",
-  gohighlevel: "Migrating from GoHighLevel",
-  close: "Migrating from Close",
+  axiom:           "Native AXIOM experience",
+  hubspot:         "Migrating from HubSpot",
+  salesforce:      "Migrating from Salesforce",
+  pipedrive:       "Migrating from Pipedrive",
+  zoho:            "Migrating from Zoho CRM",
+  gohighlevel:     "Migrating from GoHighLevel",
+  close:           "Migrating from Close CRM",
+  apollo:          "Migrating from Apollo.io",
+  constantcontact: "Migrating from Constant Contact",
+  monday:          "Migrating from Monday CRM",
+  freshsales:      "Migrating from Freshsales",
+  activecampaign:  "Migrating from ActiveCampaign",
+  keap:            "Migrating from Keap / Infusionsoft",
+  copper:          "Migrating from Copper CRM",
+  nutshell:        "Migrating from Nutshell CRM",
+  insightly:       "Migrating from Insightly",
+  sugarcrm:        "Migrating from SugarCRM",
+  streak:          "Migrating from Streak CRM",
+  nimble:          "Migrating from Nimble CRM",
 };
+
+const SKIN_GROUPS: { label: string; ids: SkinId[] }[] = [
+  { label: "Native",              ids: ["axiom"] },
+  { label: "Enterprise CRMs",     ids: ["salesforce", "sugarcrm"] },
+  { label: "Mid-Market CRMs",     ids: ["hubspot", "zoho", "freshsales", "activecampaign", "insightly"] },
+  { label: "Sales-Focused CRMs",  ids: ["pipedrive", "close", "apollo", "copper", "nutshell"] },
+  { label: "SMB & Marketing",     ids: ["keap", "constantcontact", "monday", "gohighlevel", "streak", "nimble"] },
+];
 
 export function SkinSwitcher() {
   const { skin, skinId, setSkin, allSkins } = useSkin();
@@ -39,28 +60,43 @@ export function SkinSwitcher() {
           <span>{skin.logo} {skin.name}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent side="top" align="start" className="w-64">
+      <DropdownMenuContent side="top" align="start" className="w-72 max-h-[480px] overflow-y-auto">
         <DropdownMenuLabel className="text-xs text-gray-500">
-          UI Mode — match your previous CRM
+          UI Mode — match your previous CRM ({allSkins.length} available)
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {allSkins.map((s) => (
-          <DropdownMenuItem
-            key={s.id}
-            onClick={() => setSkin(s.id)}
-            className="flex items-start gap-3 py-2 cursor-pointer"
-          >
-            <span className="text-base mt-0.5">{s.logo}</span>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-sm">{s.name}</span>
-                {skinId === s.id && <Check className="w-3.5 h-3.5 text-emerald-600" />}
-              </div>
-              <div className="text-xs text-gray-400 truncate">{SKIN_DESCRIPTIONS[s.id]}</div>
+        {SKIN_GROUPS.map((group) => (
+          <div key={group.label}>
+            <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+              {group.label}
             </div>
-          </DropdownMenuItem>
+            {group.ids.map((id) => {
+              const s = SKINS[id];
+              if (!s) return null;
+              return (
+                <DropdownMenuItem
+                  key={s.id}
+                  onClick={() => setSkin(s.id)}
+                  className="flex items-start gap-3 py-2 cursor-pointer"
+                >
+                  <span className="text-base mt-0.5">{s.logo}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-sm">{s.name}</span>
+                      {skinId === s.id && <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />}
+                    </div>
+                    <div className="text-xs text-gray-400 truncate">{SKIN_DESCRIPTIONS[s.id]}</div>
+                  </div>
+                  <div
+                    className="w-3 h-3 rounded-full shrink-0 mt-1 border border-gray-200"
+                    style={{ backgroundColor: s.primaryColor }}
+                  />
+                </DropdownMenuItem>
+              );
+            })}
+            <DropdownMenuSeparator />
+          </div>
         ))}
-        <DropdownMenuSeparator />
         <div className="px-2 py-1.5 text-xs text-gray-400">
           Switching modes changes navigation labels and terminology to match your previous CRM. Your data is never affected.
         </div>

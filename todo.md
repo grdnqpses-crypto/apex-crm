@@ -2221,3 +2221,20 @@
 - [x] Admin queue: Permanently Purge button (hard delete) and Restore button per batch with admin note field
 - [x] Purge Queue auto-refreshes every 15 seconds
 - [x] Write vitest tests for the two-stage delete flow (7 tests passing)
+
+## Session 13: All Competitor Skins
+- [ ] Research all major CRM competitors (colors, fonts, sidebar, terminology)
+- [ ] Add Apollo.io skin
+- [ ] Add Constant Contact skin
+- [ ] Add Monday CRM skin
+- [ ] Add Freshsales skin
+- [ ] Add ActiveCampaign skin
+- [ ] Add Keap (Infusionsoft) skin
+- [ ] Add Copper CRM skin
+- [ ] Add Nutshell CRM skin
+- [ ] Add Insightly skin
+- [ ] Add SugarCRM skin
+- [ ] Add Streak CRM skin
+- [ ] Add Nimble CRM skin
+- [ ] Update SkinSwitcher with all new skins
+- [ ] Update SkinQAPanel with all new skins

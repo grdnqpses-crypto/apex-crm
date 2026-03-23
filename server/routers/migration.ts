@@ -72,7 +72,11 @@ export const migrationRouter = router({
   // ─── Set skin preference ──────────────────────────────────────────────────
   setSkin: companyAdminProcedure
     .input(z.object({
-      skin: z.enum(["axiom", "hubspot", "salesforce", "pipedrive", "zoho", "gohighlevel", "close"]),
+      skin: z.enum([
+        "axiom", "hubspot", "salesforce", "pipedrive", "zoho", "gohighlevel", "close",
+        "apollo", "constantcontact", "monday", "freshsales", "activecampaign",
+        "keap", "copper", "nutshell", "insightly", "sugarcrm", "streak", "nimble",
+      ]),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
