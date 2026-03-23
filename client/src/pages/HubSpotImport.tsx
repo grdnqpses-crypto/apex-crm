@@ -67,6 +67,19 @@ const HUBSPOT_CONTACT_MAPPINGS: PropertyMapping[] = [
   { hubspot: "decision_maker_role", axiom: "decisionMakerRole", label: "Decision Maker Role", group: "Freight/Logistics", auto: true },
   { hubspot: "payment_responsibility", axiom: "paymentResponsibility", label: "Payment Responsibility", group: "Freight/Logistics", auto: true },
   { hubspot: "preferred_contact_method", axiom: "preferredContactMethod", label: "Preferred Contact Method", group: "Freight/Logistics", auto: true },
+  // Activity & Date Fields
+  { hubspot: "hs_last_logged_outgoing_email_date", axiom: "lastLoggedOutgoingEmailDate", label: "Last Logged Outgoing Email Date", group: "Activity Dates", auto: true },
+  { hubspot: "notes_last_updated", axiom: "lastModifiedDate", label: "Last Modified Date", group: "Activity Dates", auto: true },
+  { hubspot: "closedate", axiom: "closeDate", label: "Close Date", group: "Activity Dates", auto: true },
+  { hubspot: "createdate", axiom: "firstContactCreateDate", label: "First Contact Create Date", group: "Activity Dates", auto: true },
+  { hubspot: "hs_date_entered_lead", axiom: "firstDealCreatedDate", label: "First Deal Created Date", group: "Activity Dates", auto: true },
+  { hubspot: "notes_last_contacted", axiom: "lastActivityDate", label: "Last Activity Date", group: "Activity Dates", auto: true },
+  { hubspot: "hs_last_booked_meeting_from_form_submission", axiom: "lastBookedMeetingDate", label: "Last Booked Meeting Date", group: "Activity Dates", auto: true },
+  { hubspot: "hs_next_open_task_date", axiom: "nextActivityDate", label: "Next Activity Date", group: "Activity Dates", auto: true },
+  { hubspot: "hubspot_owner_assigneddate", axiom: "ownerAssignedDate", label: "Owner Assigned Date", group: "Activity Dates", auto: true },
+  { hubspot: "first_conversion_date", axiom: "firstConversionDate", label: "First Conversion Date", group: "Activity Dates", auto: true },
+  { hubspot: "recent_conversion_date", axiom: "recentConversionDate", label: "Recent Conversion Date", group: "Activity Dates", auto: true },
+  { hubspot: "hs_lead_status_updated_at", axiom: "dateOfLastLeadStatusChange", label: "Date of Last Lead Status Change", group: "Activity Dates", auto: true },
 ];
 
 const HUBSPOT_COMPANY_MAPPINGS: PropertyMapping[] = [
@@ -91,6 +104,14 @@ const HUBSPOT_COMPANY_MAPPINGS: PropertyMapping[] = [
   { hubspot: "credit_terms", axiom: "creditTerms", label: "Credit Terms", group: "Freight", auto: true },
   { hubspot: "lane_preferences", axiom: "lanePreferences", label: "Lane Preferences", group: "Freight", auto: true },
   { hubspot: "tms_integration_status", axiom: "tmsIntegrationStatus", label: "TMS Integration", group: "Freight", auto: true },
+  // Activity & Date Fields
+  { hubspot: "notes_last_updated", axiom: "lastModifiedDate", label: "Last Modified Date", group: "Activity Dates", auto: true },
+  { hubspot: "createdate", axiom: "firstContactCreateDate", label: "Create Date", group: "Activity Dates", auto: true },
+  { hubspot: "notes_last_contacted", axiom: "lastActivityDate", label: "Last Activity Date", group: "Activity Dates", auto: true },
+  { hubspot: "hs_last_booked_meeting_from_form_submission", axiom: "lastBookedMeetingDate", label: "Last Booked Meeting Date", group: "Activity Dates", auto: true },
+  { hubspot: "hs_next_open_task_date", axiom: "nextActivityDate", label: "Next Activity Date", group: "Activity Dates", auto: true },
+  { hubspot: "hubspot_owner_assigneddate", axiom: "ownerAssignedDate", label: "Owner Assigned Date", group: "Activity Dates", auto: true },
+  { hubspot: "hs_lead_status_updated_at", axiom: "dateOfLastLeadStatusChange", label: "Date of Last Lead Status Change", group: "Activity Dates", auto: true },
 ];
 
 interface PropertyMapping {

@@ -664,6 +664,19 @@ function applyMapping(row: Record<string, string>, mapping: Record<string, strin
 }
 
 // ─── Helper: Import a contact ─────────────────────────────────────────────────
+// ─── Helper: parse a date string or timestamp to epoch ms ────────────────────
+function parseDateToMs(val: string | undefined | null): number | null {
+  if (!val || val.trim() === "") return null;
+  // Already a number (epoch ms or seconds)
+  const num = Number(val);
+  if (!isNaN(num) && num > 0) {
+    // If it looks like epoch seconds (< year 3000 in seconds), convert to ms
+    return num < 9999999999 ? num * 1000 : num;
+  }
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d.getTime();
+}
+
 async function importContact(
   db: any, tenantCompanyId: number, userId: number,
   data: Record<string, string>, sourceSystem: string, sourceId: string
@@ -673,18 +686,39 @@ async function importContact(
     firstName: data.firstName || data.name?.split(" ")[0] || "Unknown",
     lastName: data.lastName || data.name?.split(" ").slice(1).join(" ") || "",
     email: data.email || null,
-    phone: data.phone || null,
+    directPhone: data.directPhone || data.phone || null,
+    mobilePhone: data.mobilePhone || null,
     jobTitle: data.jobTitle || null,
-    address: data.address || null,
+    streetAddress: data.streetAddress || data.address || null,
     city: data.city || null,
-    state: data.state || null,
-    zip: data.zip || null,
+    stateRegion: data.stateRegion || data.state || null,
+    postalCode: data.postalCode || data.zip || null,
     country: data.country || null,
-    website: data.website || null,
+    websiteUrl: data.websiteUrl || data.website || null,
+    linkedinUrl: data.linkedinUrl || null,
+    twitterHandle: data.twitterHandle || null,
     notes: data.notes || null,
+    lifecycleStage: data.lifecycleStage || null,
+    leadStatus: data.leadStatus || null,
+    leadSource: data.leadSource || null,
+    leadScore: data.leadScore ? parseInt(data.leadScore) || null : null,
+    companyName: data.companyName || data.company || null,
     ownerId: userId,
     status: "active",
-    createdAt: Date.now(),
+    // ── Activity & Date Fields ──────────────────────────────────────────────
+    lastLoggedOutgoingEmailDate: parseDateToMs(data.lastLoggedOutgoingEmailDate),
+    lastModifiedDate: parseDateToMs(data.lastModifiedDate),
+    closeDate: parseDateToMs(data.closeDate),
+    firstContactCreateDate: parseDateToMs(data.firstContactCreateDate),
+    firstDealCreatedDate: parseDateToMs(data.firstDealCreatedDate),
+    lastActivityDate: parseDateToMs(data.lastActivityDate),
+    lastBookedMeetingDate: parseDateToMs(data.lastBookedMeetingDate),
+    nextActivityDate: parseDateToMs(data.nextActivityDate),
+    ownerAssignedDate: parseDateToMs(data.ownerAssignedDate),
+    firstConversionDate: parseDateToMs(data.firstConversionDate),
+    recentConversionDate: parseDateToMs(data.recentConversionDate),
+    dateOfLastLeadStatusChange: parseDateToMs(data.dateOfLastLeadStatusChange),
+    createdAt: parseDateToMs(data.firstContactCreateDate) || Date.now(),
     updatedAt: Date.now(),
   } as any);
 }
@@ -700,15 +734,28 @@ async function importCompany(
     domain: data.domain || data.website || null,
     phone: data.phone || null,
     industry: data.industry || null,
-    address: data.address || null,
+    streetAddress: data.streetAddress || data.address || null,
     city: data.city || null,
-    state: data.state || null,
-    zip: data.zip || null,
+    stateRegion: data.stateRegion || data.state || null,
+    postalCode: data.postalCode || data.zip || null,
     country: data.country || null,
     website: data.website || null,
     description: data.description || null,
+    numberOfEmployees: data.numberOfEmployees ? parseInt(data.numberOfEmployees) || null : null,
+    annualRevenue: data.annualRevenue ? parseFloat(data.annualRevenue.replace(/[^0-9.]/g, "")) || null : null,
+    linkedinUrl: data.linkedinUrl || null,
+    twitterHandle: data.twitterHandle || null,
+    facebookPage: data.facebookPage || null,
     ownerId: userId,
-    createdAt: Date.now(),
+    // ── Activity & Date Fields ──────────────────────────────────────────────
+    lastModifiedDate: parseDateToMs(data.lastModifiedDate),
+    firstContactCreateDate: parseDateToMs(data.firstContactCreateDate),
+    lastActivityDate: parseDateToMs(data.lastActivityDate),
+    lastBookedMeetingDate: parseDateToMs(data.lastBookedMeetingDate),
+    nextActivityDate: parseDateToMs(data.nextActivityDate),
+    ownerAssignedDate: parseDateToMs(data.ownerAssignedDate),
+    dateOfLastLeadStatusChange: parseDateToMs(data.dateOfLastLeadStatusChange),
+    createdAt: parseDateToMs(data.firstContactCreateDate) || Date.now(),
     updatedAt: Date.now(),
   } as any);
 }
