@@ -2153,3 +2153,36 @@
 - [x] Task detail shows touch history / activity log
 - [x] Redesign Dashboard task widget: Today's Tasks / Overdue / Upcoming sections (HubSpot/Pipedrive pattern)
 - [x] Dashboard task widget: quick-complete checkbox, priority badge, due date countdown, linked record chip
+
+## Session 6: Boss Email Roadmap Items
+- [x] Account creation: show specific field-level validation errors (not just generic toast)
+- [x] Account creation: auto-populate username from email address (email prefix)
+- [ ] Add missing contact activity dates: lastLoggedOutgoingEmailDate, ownerAssignedDate, firstDealCreatedDate, dateOfLastLeadStatusChange
+- [ ] Add missing company activity dates: closeDate, firstContactCreateDate, firstDealCreatedDate, ownerAssignedDate, firstConversionDate, recentConversionDate, dateOfLastLeadStatusChange
+- [ ] Bulk Actions: move select-all checkboxes INTO Contacts and Companies list pages (not just /bulk-actions page)
+- [ ] Bulk Actions: add Enrich, Fill Smart Properties, Assign Owner, Edit, Delete, Review Associations, Create Tasks, Add to Segment, Enroll in Workflow, Check Enrichment Coverage, Track Activity
+- [ ] Lead Enrichment: build paid-service enrichment feature (company + contact info fill from external data)
+- [ ] Delete all companies/contacts from a specific user (admin-level purge by user)
+- [ ] HubSpot import: verify the existing HubSpotImport page works end-to-end with a real HubSpot CSV export
+- [ ] Skin persistence: save imported CRM skins to DB so they don't need re-importing each session
+- [ ] ChatGPT/OpenAI: wire up AI chat to use OpenAI GPT-4 as the AI provider (currently uses built-in Forge API)
+- [ ] Server migration note: document for boss that Manus provides built-in hosting with custom domain support
+
+## Session 7: 360° Bi-Directional Relationship Panel
+- [ ] Build shared RelationshipPanel component (Companies, Contacts, Deals, Tasks, Campaigns, Activities as clickable cards)
+- [ ] Integrate RelationshipPanel into ContactDetail page
+- [ ] Integrate RelationshipPanel into CompanyDetail page
+- [ ] Integrate RelationshipPanel into DealDetail page (create DealDetail page if missing)
+- [ ] Ensure one-click navigation between all linked records from any detail page
+
+## Session 8: Data Integrity + Record Completeness
+- [x] Backend: Deals require companyId (reject creation without it)
+- [x] Backend: Tasks require companyId (reject creation without it)
+- [x] Deal create form: Company selector is required Step 1; Contact selector filters by chosen company Step 2
+- [x] Task create form: Company selector is required Step 1; Contact selector filters by chosen company Step 2
+- [ ] Tasks framed as "next step / next stage" for that company's information gathering
+- [x] Expand Company create/edit form with rich fields: revenue potential, campaign, pipeline, deal, products, forecast category, business type, WhatsApp, proposal
+- [x] Record Completeness Score (0-100%) on Company, Contact, and Deal cards
+- [x] "Incomplete" filter tab on Companies, Contacts, and Deals list pages showing records with missing key fields
+- [ ] Deal detail page (DealDetail.tsx) with bi-directional links to Company and Contact
+- [ ] 360° relationship panel: from any record, see and click into all linked records

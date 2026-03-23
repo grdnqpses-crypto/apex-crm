@@ -85,14 +85,16 @@ export default function Deals() {
   const [pipelineForm, setPipelineForm] = useState({ name: "", stages: [...DEFAULT_STAGES] });
 
   const handleCreateDeal = () => {
-    if (!dealForm.name.trim() || !activePipelineId || !stages?.length) { toast.error("Fill in deal name and ensure pipeline exists"); return; }
+    if (!dealForm.name.trim()) { toast.error("Deal name is required"); return; }
+    if (!dealForm.companyId) { toast.error("A deal must be linked to a company — please select one"); return; }
+    if (!activePipelineId || !stages?.length) { toast.error("Please select a pipeline first"); return; }
     createDeal.mutate({
       name: dealForm.name,
       pipelineId: activePipelineId,
       stageId: stages[0].id,
       value: dealForm.value ? parseFloat(dealForm.value) : undefined,
       priority: dealForm.priority as "low" | "medium" | "high" | "urgent",
-      companyId: dealForm.companyId ?? undefined,
+      companyId: dealForm.companyId,
       contactId: dealForm.contactId ?? undefined,
     });
   };
@@ -116,6 +118,15 @@ export default function Deals() {
 
   const totalPipelineValue = dealData?.items?.filter(d => d.status === "open").reduce((sum, d) => sum + (d.value ?? 0), 0) ?? 0;
   const totalOpenDeals = dealData?.items?.filter(d => d.status === "open").length ?? 0;
+
+  // Completeness score for deals
+  const getDealScore = (d: any): number => {
+    const fields = [d.name, d.value, d.companyId, d.contactId, d.closedAt, d.priority];
+    const filled = fields.filter(f => f != null && String(f).trim() !== "").length;
+    return Math.round((filled / fields.length) * 100);
+  };
+  const incompleteDeals = dealData?.items?.filter(d => d.status === "open" && getDealScore(d) < 67) ?? [];
+  const [showIncomplete, setShowIncomplete] = useState(false);
 
   // Build company/contact lookup maps for deal cards
   const companyMap = useMemo(() => {
@@ -169,7 +180,49 @@ export default function Deals() {
         </div>
       </div>
 
-      {!pipelines?.length ? (
+      {/* ─── Completeness Filter Tabs ─── */}
+      <div className="flex gap-2">
+        <button onClick={() => setShowIncomplete(false)} className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-colors ${!showIncomplete ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
+          Kanban View <span className="ml-1 opacity-70">{totalOpenDeals}</span>
+        </button>
+        <button onClick={() => setShowIncomplete(true)} className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-colors ${showIncomplete ? "bg-amber-500 text-white" : "bg-amber-50 text-amber-700 hover:bg-amber-100"}`}>
+          ⚠ Incomplete <span className="ml-1 opacity-70">{incompleteDeals.length}</span>
+        </button>
+      </div>
+
+      {showIncomplete ? (
+        <Card className="rounded-2xl border-amber-200/60 shadow-sm">
+          <CardContent className="p-4">
+            <p className="text-xs text-amber-700 font-semibold mb-3">These deals are missing company, contact, value, or close date. Click a deal to complete it.</p>
+            <div className="space-y-2">
+              {incompleteDeals.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">All deals are complete ✅</p>
+              ) : incompleteDeals.map(deal => {
+                const s = getDealScore(deal);
+                return (
+                  <div key={deal.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/30">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{deal.name}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        {!deal.companyId && <span className="text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded-md">No company</span>}
+                        {!deal.contactId && <span className="text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded-md">No contact</span>}
+                        {!deal.value && <span className="text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded-md">No value</span>}
+                        {!deal.closedAt && <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-md">No close date</span>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div className={`h-full rounded-full ${s >= 80 ? 'bg-emerald-500' : s >= 60 ? 'bg-blue-400' : s >= 40 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${s}%` }} />
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">{s}%</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      ) : !pipelines?.length ? (
         <Card className="rounded-2xl border-border/40 shadow-sm">
           <CardContent className="p-16 text-center">
             <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -292,38 +345,51 @@ export default function Deals() {
                 </SelectContent>
               </Select>
             </div>
-            {/* Company link */}
+            {/* Company link — REQUIRED */}
             <div className="space-y-2">
-              <Label className="text-xs font-semibold flex items-center gap-1"><Building2 className="h-3.5 w-3.5" /> Link to Company</Label>
+              <Label className="text-xs font-semibold flex items-center gap-1">
+                <Building2 className="h-3.5 w-3.5 text-orange-500" />
+                Company <span className="text-red-500 ml-0.5">*</span>
+                <span className="text-[10px] font-normal text-muted-foreground ml-1">(required)</span>
+              </Label>
               <Select
-                value={dealForm.companyId?.toString() ?? "none"}
+                value={dealForm.companyId?.toString() ?? ""}
                 onValueChange={(v) => {
-                  const id = v === "none" ? null : parseInt(v);
+                  const id = parseInt(v);
                   setDealForm(p => ({ ...p, companyId: id, contactId: null }));
                   setSelectedCompanyId(id);
                 }}
               >
-                <SelectTrigger className="rounded-xl bg-muted/30 border-border/50"><SelectValue placeholder="Select company (optional)" /></SelectTrigger>
+                <SelectTrigger className={`rounded-xl bg-muted/30 border-border/50 ${!dealForm.companyId ? 'border-orange-300' : 'border-emerald-300'}`}>
+                  <SelectValue placeholder="⚠ Select a company first..." />
+                </SelectTrigger>
                 <SelectContent className="rounded-xl max-h-48">
-                  <SelectItem value="none">— No company —</SelectItem>
                   {companiesData?.items?.map(c => (
                     <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {!dealForm.companyId && <p className="text-[11px] text-orange-500 font-medium">Every deal must be linked to a company</p>}
             </div>
-            {/* Contact link */}
+            {/* Contact link — filters by selected company */}
             <div className="space-y-2">
-              <Label className="text-xs font-semibold flex items-center gap-1"><User className="h-3.5 w-3.5" /> Link to Contact</Label>
+              <Label className="text-xs font-semibold flex items-center gap-1">
+                <User className="h-3.5 w-3.5 text-blue-500" />
+                Contact
+                {dealForm.companyId && <span className="text-[10px] font-normal text-muted-foreground ml-1">(filtered by company)</span>}
+              </Label>
               <Select
                 value={dealForm.contactId?.toString() ?? "none"}
                 onValueChange={(v) => setDealForm(p => ({ ...p, contactId: v === "none" ? null : parseInt(v) }))}
+                disabled={!dealForm.companyId}
               >
-                <SelectTrigger className="rounded-xl bg-muted/30 border-border/50"><SelectValue placeholder="Select contact (optional)" /></SelectTrigger>
+                <SelectTrigger className="rounded-xl bg-muted/30 border-border/50">
+                  <SelectValue placeholder={dealForm.companyId ? "Select contact..." : "Select a company first"} />
+                </SelectTrigger>
                 <SelectContent className="rounded-xl max-h-48">
-                  <SelectItem value="none">— No contact —</SelectItem>
+                  <SelectItem value="none">— No specific contact —</SelectItem>
                   {contactsData?.items
-                    ?.filter(c => !dealForm.companyId || c.companyId === dealForm.companyId)
+                    ?.filter(c => c.companyId === dealForm.companyId)
                     .map(c => (
                       <SelectItem key={c.id} value={c.id.toString()}>
                         {c.firstName} {c.lastName ?? ""} {c.jobTitle ? `· ${c.jobTitle}` : ""}
@@ -331,8 +397,8 @@ export default function Deals() {
                     ))}
                 </SelectContent>
               </Select>
-              {dealForm.companyId && (
-                <p className="text-[11px] text-muted-foreground">Showing contacts linked to selected company</p>
+              {dealForm.companyId && contactsData?.items?.filter(c => c.companyId === dealForm.companyId).length === 0 && (
+                <p className="text-[11px] text-amber-500">No contacts found for this company — add a contact first</p>
               )}
             </div>
           </div>

@@ -491,6 +491,19 @@ export const appRouter = router({
   }),
 
   deals: router({
+    get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      const visibleIds = await db.getVisibleUserIds(ctx.user);
+      // Try owner lookup first
+      const deal = await db.getDeal(input.id, ctx.user.id);
+      if (deal) return deal;
+      // Role-based fallback: check all visible user IDs
+      for (const uid of visibleIds) {
+        if (uid === ctx.user.id) continue;
+        const d = await db.getDeal(input.id, uid);
+        if (d) return d;
+      }
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Deal not found' });
+    }),
     list: protectedProcedure.input(z.object({
       pipelineId: z.number().optional(),
       status: z.string().optional(),
@@ -504,7 +517,7 @@ export const appRouter = router({
       pipelineId: z.number(),
       stageId: z.number(),
       contactId: z.number().optional(),
-      companyId: z.number().optional(),
+      companyId: z.number({ required_error: 'A deal must be linked to a company' }).min(1, 'A deal must be linked to a company'),
       value: z.number().optional(),
       currency: z.string().optional(),
       priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
@@ -609,7 +622,7 @@ export const appRouter = router({
       queue: z.string().optional(),
       reminderDate: z.number().optional(),
       contactId: z.number().optional(),
-      companyId: z.number().optional(),
+      companyId: z.number({ required_error: 'A task must be linked to a company' }).min(1, 'A task must be linked to a company'),
       dealId: z.number().optional(),
       campaignId: z.number().optional(),
       pipelineId: z.number().optional(),

@@ -188,10 +188,18 @@ export const contacts = mysqlTable("contacts", {
   tags: json("tags").$type<string[]>(),
   avatarUrl: varchar("avatarUrl", { length: 512 }),
   notes: text("notes"),
+  // ─── Activity Date Fields (Boss Email Requirements) ───
+  lastLoggedOutgoingEmailDate: bigint("lastLoggedOutgoingEmailDate", { mode: "number" }),
+  lastModifiedDate: bigint("lastModifiedDate", { mode: "number" }),
+  closeDate: bigint("closeDate", { mode: "number" }),
+  firstContactCreateDate: bigint("firstContactCreateDate", { mode: "number" }),
+  firstDealCreatedDate: bigint("firstDealCreatedDate", { mode: "number" }),
+  lastBookedMeetingDate: bigint("lastBookedMeetingDate", { mode: "number" }),
+  ownerAssignedDate: bigint("ownerAssignedDate", { mode: "number" }),
+  dateOfLastLeadStatusChange: bigint("dateOfLastLeadStatusChange", { mode: "number" }),
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
 });
-
 export type Contact = typeof contacts.$inferSelect;
 export type InsertContact = typeof contacts.$inferInsert;
 
@@ -255,6 +263,17 @@ export const companies = mysqlTable("companies", {
   parentId: int("parentId"),
   website: varchar("website", { length: 512 }),
   tags: json("tags").$type<string[]>(),
+  // ─── Activity Date Fields (Boss Email Requirements) ───
+  lastLoggedOutgoingEmailDate: bigint("lastLoggedOutgoingEmailDate", { mode: "number" }),
+  lastModifiedDate: bigint("lastModifiedDate", { mode: "number" }),
+  closeDate: bigint("closeDate", { mode: "number" }),
+  firstContactCreateDate: bigint("firstContactCreateDate", { mode: "number" }),
+  firstDealCreatedDate: bigint("firstDealCreatedDate", { mode: "number" }),
+  lastBookedMeetingDate: bigint("lastBookedMeetingDate", { mode: "number" }),
+  ownerAssignedDate: bigint("ownerAssignedDate", { mode: "number" }),
+  firstConversionDate: bigint("firstConversionDate", { mode: "number" }),
+  recentConversionDate: bigint("recentConversionDate", { mode: "number" }),
+  dateOfLastLeadStatusChange: bigint("dateOfLastLeadStatusChange", { mode: "number" }),
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
 });

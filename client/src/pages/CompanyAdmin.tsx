@@ -88,8 +88,34 @@ export default function CompanyAdmin() {
     username: "", password: "", name: "", email: "", systemRole: "account_manager" as "axiom_admin" | "company_admin" | "sales_manager" | "office_manager" | "account_manager" | "coordinator",
     jobTitle: "", phone: "",
   });
+  const [createUserErrors, setCreateUserErrors] = useState<Record<string, string>>({});
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [newUserFeatures, setNewUserFeatures] = useState<string[]>([]);
+
+  // Auto-derive username from email prefix
+  function handleEmailChange(email: string) {
+    const prefix = email.split("@")[0].replace(/[^a-zA-Z0-9._-]/g, ".").toLowerCase();
+    setNewUser(p => ({
+      ...p,
+      email,
+      username: p.username === "" || p.username === (p.email.split("@")[0].replace(/[^a-zA-Z0-9._-]/g, ".").toLowerCase()) ? prefix : p.username,
+    }));
+    setCreateUserErrors(prev => ({ ...prev, email: "", username: "" }));
+  }
+
+  function validateCreateUser() {
+    const errors: Record<string, string> = {};
+    if (!newUser.name.trim()) errors.name = "Full name is required";
+    if (!newUser.email.trim()) errors.email = "Email is required";
+    else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(newUser.email)) errors.email = "Enter a valid email address";
+    if (!newUser.username.trim()) errors.username = "Username is required";
+    else if (newUser.username.length < 3) errors.username = "Username must be at least 3 characters";
+    else if (!/^[a-zA-Z0-9._-]+$/.test(newUser.username)) errors.username = "Only letters, numbers, dots, hyphens, underscores allowed";
+    if (!newUser.password) errors.password = "Password is required";
+    else if (newUser.password.length < 8) errors.password = "Password must be at least 8 characters";
+    setCreateUserErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
 
   // Invite state
   const [showInvite, setShowInvite] = useState(false);
@@ -113,9 +139,22 @@ export default function CompanyAdmin() {
       setShowCreateUser(false);
       setNewUser({ username: "", password: "", name: "", email: "", systemRole: "account_manager", jobTitle: "", phone: "" });
       setNewUserFeatures([]);
+      setCreateUserErrors({});
       toast.success("User created", { description: `Username: ${data.username}` });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => {
+      // Surface specific field errors from backend
+      const msg = e.message;
+      if (msg.toLowerCase().includes("username")) {
+        setCreateUserErrors(prev => ({ ...prev, username: msg }));
+      } else if (msg.toLowerCase().includes("email")) {
+        setCreateUserErrors(prev => ({ ...prev, email: msg }));
+      } else if (msg.toLowerCase().includes("password")) {
+        setCreateUserErrors(prev => ({ ...prev, password: msg }));
+      } else {
+        toast.error(msg);
+      }
+    },
   });
 
   const createInviteMutation = trpc.invites.create.useMutation({
@@ -215,11 +254,34 @@ export default function CompanyAdmin() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="col-span-2">
                       <Label>Full Name *</Label>
-                      <Input value={newUser.name} onChange={e => setNewUser(p => ({ ...p, name: e.target.value }))} placeholder="John Smith" />
+                      <Input
+                        value={newUser.name}
+                        onChange={e => { setNewUser(p => ({ ...p, name: e.target.value })); setCreateUserErrors(prev => ({ ...prev, name: "" })); }}
+                        placeholder="John Smith"
+                        className={createUserErrors.name ? "border-destructive" : ""}
+                      />
+                      {createUserErrors.name && <p className="text-xs text-destructive mt-1">{createUserErrors.name}</p>}
+                    </div>
+                    <div className="col-span-2">
+                      <Label>Email Address * <span className="text-xs text-muted-foreground">(username auto-filled from email)</span></Label>
+                      <Input
+                        type="email"
+                        value={newUser.email}
+                        onChange={e => handleEmailChange(e.target.value)}
+                        placeholder="john@company.com"
+                        className={createUserErrors.email ? "border-destructive" : ""}
+                      />
+                      {createUserErrors.email && <p className="text-xs text-destructive mt-1">{createUserErrors.email}</p>}
                     </div>
                     <div>
                       <Label>Username *</Label>
-                      <Input value={newUser.username} onChange={e => setNewUser(p => ({ ...p, username: e.target.value }))} placeholder="john.smith" />
+                      <Input
+                        value={newUser.username}
+                        onChange={e => { setNewUser(p => ({ ...p, username: e.target.value })); setCreateUserErrors(prev => ({ ...prev, username: "" })); }}
+                        placeholder="john.smith"
+                        className={createUserErrors.username ? "border-destructive" : ""}
+                      />
+                      {createUserErrors.username && <p className="text-xs text-destructive mt-1">{createUserErrors.username}</p>}
                     </div>
                     <div>
                       <Label>Password *</Label>
@@ -227,18 +289,15 @@ export default function CompanyAdmin() {
                         <Input
                           type={showNewPassword ? "text" : "password"}
                           value={newUser.password}
-                          onChange={e => setNewUser(p => ({ ...p, password: e.target.value }))}
+                          onChange={e => { setNewUser(p => ({ ...p, password: e.target.value })); setCreateUserErrors(prev => ({ ...prev, password: "" })); }}
                           placeholder="Min 8 characters"
-                          className="pr-9"
+                          className={`pr-9 ${createUserErrors.password ? "border-destructive" : ""}`}
                         />
                         <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                           {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
-                    </div>
-                    <div>
-                      <Label>Email</Label>
-                      <Input type="email" value={newUser.email} onChange={e => setNewUser(p => ({ ...p, email: e.target.value }))} placeholder="john@company.com" />
+                      {createUserErrors.password && <p className="text-xs text-destructive mt-1">{createUserErrors.password}</p>}
                     </div>
                     <div>
                       <Label>Role</Label>
@@ -296,18 +355,21 @@ export default function CompanyAdmin() {
 
                   <Button
                     className="w-full"
-                    onClick={() => createUserMutation.mutate({
-                      username: newUser.username,
-                      password: newUser.password,
-                      name: newUser.name,
-                      email: newUser.email || undefined,
-                      systemRole: newUser.systemRole,
-                      tenantCompanyId: companyId!,
-                      jobTitle: newUser.jobTitle || undefined,
-                      phone: newUser.phone || undefined,
-                      features: newUserFeatures.length > 0 ? newUserFeatures : undefined,
-                    })}
-                    disabled={!newUser.username || !newUser.password || !newUser.name || newUser.password.length < 8 || createUserMutation.isPending}
+                    onClick={() => {
+                      if (!validateCreateUser()) return;
+                      createUserMutation.mutate({
+                        username: newUser.username,
+                        password: newUser.password,
+                        name: newUser.name,
+                        email: newUser.email || undefined,
+                        systemRole: newUser.systemRole,
+                        tenantCompanyId: companyId!,
+                        jobTitle: newUser.jobTitle || undefined,
+                        phone: newUser.phone || undefined,
+                        features: newUserFeatures.length > 0 ? newUserFeatures : undefined,
+                      });
+                    }}
+                    disabled={createUserMutation.isPending}
                   >
                     {createUserMutation.isPending ? "Creating..." : "Create User"}
                   </Button>

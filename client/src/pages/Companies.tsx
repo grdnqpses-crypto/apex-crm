@@ -6,8 +6,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Building2, Globe, MoreHorizontal, Trash2, Users, ChevronRight, AlertTriangle, MapPin, Phone as PhoneIcon, DollarSign, Kanban } from "lucide-react";
+import { Plus, Search, Building2, Globe, MoreHorizontal, Trash2, Users, ChevronRight, AlertTriangle, MapPin, Phone as PhoneIcon, DollarSign, Kanban, Tag, Briefcase, TrendingUp, MessageSquare } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -33,7 +36,27 @@ export default function Companies() {
     onSuccess: () => { utils.companies.list.invalidate(); utils.companies.listWithMetrics.invalidate(); setDeleteTarget(null); toast.success("Company and all contacts deleted"); },
   });
 
-  const [form, setForm] = useState({ name: "", domain: "", industry: "", numberOfEmployees: "", phone: "", website: "", description: "" });
+  // Completeness score: count how many key fields are filled
+  const getCompanyScore = (c: any): number => {
+    const fields = [c.name, c.domain, c.industry, c.phone, c.website, c.companyEmail,
+      c.streetAddress, c.city, c.country, c.annualRevenue, c.leadStatus, c.leadSource,
+      c.businessClassification, c.numberOfEmployees, c.description];
+    const filled = fields.filter(f => f && String(f).trim() !== "").length;
+    return Math.round((filled / fields.length) * 100);
+  };
+  const [activeTab, setActiveTab] = useState<"all" | "incomplete">("all");
+
+  const emptyForm = {
+    name: "", domain: "", industry: "", numberOfEmployees: "", phone: "", website: "", description: "",
+    companyType: "", companyEmail: "", streetAddress: "", city: "", stateRegion: "", postalCode: "", country: "",
+    annualRevenue: "", businessClassification: "", foundedYear: "", leadSource: "", leadStatus: "",
+    creditTerms: "", paymentStatus: "", lanePreferences: "",
+    facebookPage: "", twitterHandle: "", linkedinUrl: "", youtubeUrl: "",
+    // Commercial / Pipeline
+    revenueAmount: "", forecastCategory: "", businessCategory: "", whatsappNumber: "", proposalUrl: "",
+  };
+  const [form, setForm] = useState(emptyForm);
+  const setF = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
 
   const handleCreate = () => {
     if (!form.name.trim()) { toast.error("Company name is required"); return; }
@@ -45,6 +68,25 @@ export default function Companies() {
       phone: form.phone || undefined,
       website: form.website || undefined,
       description: form.description || undefined,
+      companyType: form.companyType || undefined,
+      companyEmail: form.companyEmail || undefined,
+      streetAddress: form.streetAddress || undefined,
+      city: form.city || undefined,
+      stateRegion: form.stateRegion || undefined,
+      postalCode: form.postalCode || undefined,
+      country: form.country || undefined,
+      annualRevenue: form.annualRevenue || undefined,
+      businessClassification: form.businessClassification || undefined,
+      foundedYear: form.foundedYear || undefined,
+      leadSource: form.leadSource || undefined,
+      leadStatus: form.leadStatus || undefined,
+      creditTerms: form.creditTerms || undefined,
+      paymentStatus: form.paymentStatus || undefined,
+      lanePreferences: form.lanePreferences || undefined,
+      facebookPage: form.facebookPage || undefined,
+      twitterHandle: form.twitterHandle || undefined,
+      linkedinUrl: form.linkedinUrl || undefined,
+      youtubeUrl: form.youtubeUrl || undefined,
     });
   };
 
@@ -67,6 +109,16 @@ export default function Companies() {
         <Button onClick={() => setShowCreate(true)} className="gap-2 rounded-xl shadow-sm">
           <Plus className="h-4 w-4" /> Add Company
         </Button>
+      </div>
+
+      {/* ─── Filter Tabs ─── */}
+      <div className="flex gap-2">
+        <button onClick={() => setActiveTab("all")} className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-colors ${activeTab === "all" ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
+          All Companies <span className="ml-1 opacity-70">{data?.total ?? 0}</span>
+        </button>
+        <button onClick={() => setActiveTab("incomplete")} className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-colors ${activeTab === "incomplete" ? "bg-amber-500 text-white" : "bg-amber-50 text-amber-700 hover:bg-amber-100"}`}>
+          ⚠ Incomplete <span className="ml-1 opacity-70">{data?.items?.filter(c => getCompanyScore(c) < 60).length ?? 0}</span>
+        </button>
       </div>
 
       {/* ─── Search ─── */}
@@ -123,7 +175,7 @@ export default function Companies() {
                   </TableCell>
                 </TableRow>
               ) : (
-                data?.items.map((company) => (
+                (activeTab === "incomplete" ? data?.items.filter(c => getCompanyScore(c) < 60) : data?.items)?.map((company) => (
                   <TableRow
                     key={company.id}
                     className="border-border/30 cursor-pointer hover:bg-accent/30 transition-colors group"
@@ -185,15 +237,25 @@ export default function Companies() {
                       ) : <span className="text-xs text-muted-foreground/40">&mdash;</span>}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className={`text-[10px] font-semibold rounded-lg ${
-                        company.leadStatus === "Hot" ? "bg-red-50 text-red-600" :
-                        company.leadStatus === "Warm" ? "bg-amber-50 text-amber-600" :
-                        company.leadStatus === "Customer" ? "bg-emerald-50 text-emerald-600" :
-                        company.leadStatus === "Qualified" ? "bg-blue-50 text-blue-600" :
-                        "bg-muted/60 text-muted-foreground"
-                      }`}>
-                        {company.leadStatus || "Cold"}
-                      </Badge>
+                      <div className="space-y-1">
+                        <Badge variant="secondary" className={`text-[10px] font-semibold rounded-lg ${
+                          company.leadStatus === "Hot" ? "bg-red-50 text-red-600" :
+                          company.leadStatus === "Warm" ? "bg-amber-50 text-amber-600" :
+                          company.leadStatus === "Customer" ? "bg-emerald-50 text-emerald-600" :
+                          company.leadStatus === "Qualified" ? "bg-blue-50 text-blue-600" :
+                          "bg-muted/60 text-muted-foreground"
+                        }`}>
+                          {company.leadStatus || "Cold"}
+                        </Badge>
+                        {(() => { const s = getCompanyScore(company); return (
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-16 h-1 rounded-full bg-muted overflow-hidden">
+                              <div className={`h-full rounded-full transition-all ${s >= 80 ? 'bg-emerald-500' : s >= 60 ? 'bg-blue-400' : s >= 40 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${s}%` }} />
+                            </div>
+                            <span className="text-[9px] text-muted-foreground">{s}%</span>
+                          </div>
+                        ); })()}
+                      </div>
                     </TableCell>
 
                     <TableCell>
@@ -223,8 +285,8 @@ export default function Companies() {
       </Card>
 
       {/* ─── Create Company Dialog ─── */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="bg-card border-border/50 rounded-2xl max-w-lg">
+      <Dialog open={showCreate} onOpenChange={(o) => { setShowCreate(o); if (!o) setForm(emptyForm); }}>
+        <DialogContent className="bg-card border-border/50 rounded-2xl max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center">
@@ -232,42 +294,220 @@ export default function Companies() {
               </div>
               Add New Company
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              Companies are the primary entity. Contacts, deals, and activities are organized under companies.
+            <DialogDescription className="text-muted-foreground text-xs">
+              Fill in as much as you know now. Incomplete fields will appear in the <strong>Incomplete</strong> tab for follow-up.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 mt-2">
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">Company Name *</Label>
-              <Input value={form.name} onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Acme Logistics" className="rounded-xl bg-muted/30 border-border/50" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">Domain</Label>
-              <Input value={form.domain} onChange={(e) => setForm(p => ({ ...p, domain: e.target.value }))} placeholder="acme.com" className="rounded-xl bg-muted/30 border-border/50" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">Industry</Label>
-              <Input value={form.industry} onChange={(e) => setForm(p => ({ ...p, industry: e.target.value }))} placeholder="Freight & Logistics" className="rounded-xl bg-muted/30 border-border/50" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">Employees</Label>
-              <Input value={form.numberOfEmployees} onChange={(e) => setForm(p => ({ ...p, numberOfEmployees: e.target.value }))} placeholder="51-200" className="rounded-xl bg-muted/30 border-border/50" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">Phone</Label>
-              <Input value={form.phone} onChange={(e) => setForm(p => ({ ...p, phone: e.target.value }))} placeholder="+1 555 0123" className="rounded-xl bg-muted/30 border-border/50" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">Website</Label>
-              <Input value={form.website} onChange={(e) => setForm(p => ({ ...p, website: e.target.value }))} placeholder="https://acme.com" className="rounded-xl bg-muted/30 border-border/50" />
-            </div>
-            <div className="space-y-2 col-span-2">
-              <Label className="text-xs font-semibold">Description</Label>
-              <Input value={form.description} onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))} placeholder="Brief description of the company..." className="rounded-xl bg-muted/30 border-border/50" />
-            </div>
-          </div>
-          <DialogFooter className="mt-2">
-            <Button variant="outline" onClick={() => setShowCreate(false)} className="rounded-xl">Cancel</Button>
+          <Tabs defaultValue="identity" className="mt-2">
+            <TabsList className="grid grid-cols-5 w-full text-xs">
+              <TabsTrigger value="identity"><Building2 className="h-3 w-3 mr-1" />Identity</TabsTrigger>
+              <TabsTrigger value="address"><MapPin className="h-3 w-3 mr-1" />Address</TabsTrigger>
+              <TabsTrigger value="commercial"><TrendingUp className="h-3 w-3 mr-1" />Commercial</TabsTrigger>
+              <TabsTrigger value="status"><Tag className="h-3 w-3 mr-1" />Status</TabsTrigger>
+              <TabsTrigger value="social"><Globe className="h-3 w-3 mr-1" />Social</TabsTrigger>
+            </TabsList>
+
+            {/* IDENTITY */}
+            <TabsContent value="identity" className="mt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1 col-span-2">
+                  <Label className="text-xs font-semibold">Company Name <span className="text-red-500">*</span></Label>
+                  <Input value={form.name} onChange={e => setF("name", e.target.value)} placeholder="Acme Logistics" className="rounded-xl bg-muted/30" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Domain</Label>
+                  <Input value={form.domain} onChange={e => setF("domain", e.target.value)} placeholder="acme.com" className="rounded-xl bg-muted/30" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Company Email</Label>
+                  <Input value={form.companyEmail} onChange={e => setF("companyEmail", e.target.value)} placeholder="info@acme.com" className="rounded-xl bg-muted/30" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Phone</Label>
+                  <Input value={form.phone} onChange={e => setF("phone", e.target.value)} placeholder="+1 555 0123" className="rounded-xl bg-muted/30" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">WhatsApp #</Label>
+                  <Input value={form.whatsappNumber} onChange={e => setF("whatsappNumber", e.target.value)} placeholder="+1 555 0123" className="rounded-xl bg-muted/30" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Website</Label>
+                  <Input value={form.website} onChange={e => setF("website", e.target.value)} placeholder="https://acme.com" className="rounded-xl bg-muted/30" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Industry</Label>
+                  <Input value={form.industry} onChange={e => setF("industry", e.target.value)} placeholder="Freight & Logistics" className="rounded-xl bg-muted/30" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Business Category</Label>
+                  <Select value={form.businessCategory || ""} onValueChange={v => setF("businessCategory", v)}>
+                    <SelectTrigger className="rounded-xl bg-muted/30"><SelectValue placeholder="Select category" /></SelectTrigger>
+                    <SelectContent>
+                      {["Freight Broker","Carrier","Shipper","3PL","Warehouse","Technology","Manufacturing","Retail","Healthcare","Finance","Other"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Business Classification</Label>
+                  <Select value={form.businessClassification || ""} onValueChange={v => setF("businessClassification", v)}>
+                    <SelectTrigger className="rounded-xl bg-muted/30"><SelectValue placeholder="Select type" /></SelectTrigger>
+                    <SelectContent>
+                      {["LLC","S-Corp","C-Corp","Sole Proprietor","Partnership","Non-Profit","Government"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Employees</Label>
+                  <Select value={form.numberOfEmployees || ""} onValueChange={v => setF("numberOfEmployees", v)}>
+                    <SelectTrigger className="rounded-xl bg-muted/30"><SelectValue placeholder="Select range" /></SelectTrigger>
+                    <SelectContent>
+                      {["1-10","11-50","51-200","201-500","501-1000","1001-5000","5000+"].map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Founded Year</Label>
+                  <Input value={form.foundedYear} onChange={e => setF("foundedYear", e.target.value)} placeholder="2005" className="rounded-xl bg-muted/30" />
+                </div>
+                <div className="space-y-1 col-span-2">
+                  <Label className="text-xs font-semibold">Description</Label>
+                  <Textarea value={form.description} onChange={e => setF("description", e.target.value)} placeholder="Brief description of what this company does..." className="rounded-xl bg-muted/30 resize-none" rows={2} />
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* ADDRESS */}
+            <TabsContent value="address" className="mt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1 col-span-2">
+                  <Label className="text-xs font-semibold">Street Address</Label>
+                  <Input value={form.streetAddress} onChange={e => setF("streetAddress", e.target.value)} placeholder="123 Main St" className="rounded-xl bg-muted/30" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">City</Label>
+                  <Input value={form.city} onChange={e => setF("city", e.target.value)} placeholder="Chicago" className="rounded-xl bg-muted/30" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">State / Region</Label>
+                  <Input value={form.stateRegion} onChange={e => setF("stateRegion", e.target.value)} placeholder="IL" className="rounded-xl bg-muted/30" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Postal Code</Label>
+                  <Input value={form.postalCode} onChange={e => setF("postalCode", e.target.value)} placeholder="60601" className="rounded-xl bg-muted/30" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Country</Label>
+                  <Input value={form.country} onChange={e => setF("country", e.target.value)} placeholder="United States" className="rounded-xl bg-muted/30" />
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* COMMERCIAL */}
+            <TabsContent value="commercial" className="mt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Annual Revenue</Label>
+                  <Input value={form.annualRevenue} onChange={e => setF("annualRevenue", e.target.value)} placeholder="$5M" className="rounded-xl bg-muted/30" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Revenue Potential</Label>
+                  <Input value={form.revenueAmount} onChange={e => setF("revenueAmount", e.target.value)} placeholder="$250,000" className="rounded-xl bg-muted/30" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Forecast Category</Label>
+                  <Select value={form.forecastCategory || ""} onValueChange={v => setF("forecastCategory", v)}>
+                    <SelectTrigger className="rounded-xl bg-muted/30"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      {["Pipeline","Best Case","Commit","Closed Won","Closed Lost"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Proposal URL</Label>
+                  <Input value={form.proposalUrl} onChange={e => setF("proposalUrl", e.target.value)} placeholder="https://docs.google.com/..." className="rounded-xl bg-muted/30" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Credit Terms</Label>
+                  <Select value={form.creditTerms || ""} onValueChange={v => setF("creditTerms", v)}>
+                    <SelectTrigger className="rounded-xl bg-muted/30"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      {["Net 15","Net 30","Net 45","Net 60","Net 90","COD","Prepaid"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Payment Status</Label>
+                  <Select value={form.paymentStatus || ""} onValueChange={v => setF("paymentStatus", v)}>
+                    <SelectTrigger className="rounded-xl bg-muted/30"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      {["Current","Overdue","Credit Hold","Collections","Closed"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1 col-span-2">
+                  <Label className="text-xs font-semibold">Lane Preferences</Label>
+                  <Input value={form.lanePreferences} onChange={e => setF("lanePreferences", e.target.value)} placeholder="Chicago to Dallas, Southeast corridor..." className="rounded-xl bg-muted/30" />
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* STATUS */}
+            <TabsContent value="status" className="mt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Lead Status</Label>
+                  <Select value={form.leadStatus || ""} onValueChange={v => setF("leadStatus", v)}>
+                    <SelectTrigger className="rounded-xl bg-muted/30"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      {["New","Open","In Progress","Open Deal","Unqualified","Attempted Contact","Connected","Bad Timing"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Lead Source</Label>
+                  <Select value={form.leadSource || ""} onValueChange={v => setF("leadSource", v)}>
+                    <SelectTrigger className="rounded-xl bg-muted/30"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      {["Website","Referral","Cold Call","Email Campaign","LinkedIn","Trade Show","Partner","Other"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Company Type</Label>
+                  <Select value={form.companyType || ""} onValueChange={v => setF("companyType", v)}>
+                    <SelectTrigger className="rounded-xl bg-muted/30"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      {["Prospect","Customer","Partner","Vendor","Competitor","Other"].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* SOCIAL */}
+            <TabsContent value="social" className="mt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">LinkedIn URL</Label>
+                  <Input value={form.linkedinUrl} onChange={e => setF("linkedinUrl", e.target.value)} placeholder="https://linkedin.com/company/..." className="rounded-xl bg-muted/30" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Twitter / X</Label>
+                  <Input value={form.twitterHandle} onChange={e => setF("twitterHandle", e.target.value)} placeholder="@acmelogistics" className="rounded-xl bg-muted/30" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Facebook Page</Label>
+                  <Input value={form.facebookPage} onChange={e => setF("facebookPage", e.target.value)} placeholder="https://facebook.com/..." className="rounded-xl bg-muted/30" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">YouTube</Label>
+                  <Input value={form.youtubeUrl} onChange={e => setF("youtubeUrl", e.target.value)} placeholder="https://youtube.com/..." className="rounded-xl bg-muted/30" />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => { setShowCreate(false); setForm(emptyForm); }} className="rounded-xl">Cancel</Button>
             <Button onClick={handleCreate} disabled={createMutation.isPending} className="rounded-xl shadow-sm">
               {createMutation.isPending ? "Creating..." : "Create Company"}
             </Button>

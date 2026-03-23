@@ -157,6 +157,15 @@ export default function Contacts() {
     createMutation.mutate(payload as any);
   };
 
+  // Completeness score for contacts
+  const getContactScore = (c: any): number => {
+    const fields = [c.firstName, c.lastName, c.email, c.directPhone || c.mobilePhone,
+      c.jobTitle, c.companyId, c.lifecycleStage, c.leadStatus, c.linkedinUrl, c.city];
+    const filled = fields.filter(f => f && String(f).trim() !== "").length;
+    return Math.round((filled / fields.length) * 100);
+  };
+  const [contactTab, setContactTab] = useState<"all" | "incomplete">("all");
+
   // Build a lookup for company names
   const companyMap = useMemo(() => {
     const map: Record<number, string> = {};
@@ -189,6 +198,16 @@ export default function Contacts() {
             <UserPlus className="h-4 w-4" /> Add Contact
           </Button>
         </div>
+      </div>
+
+      {/* ─── Completeness Filter Tabs ─── */}
+      <div className="flex gap-2">
+        <button onClick={() => setContactTab("all")} className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-colors ${contactTab === "all" ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
+          All Contacts <span className="ml-1 opacity-70">{data?.total ?? 0}</span>
+        </button>
+        <button onClick={() => setContactTab("incomplete")} className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-colors ${contactTab === "incomplete" ? "bg-amber-500 text-white" : "bg-amber-50 text-amber-700 hover:bg-amber-100"}`}>
+          ⚠ Incomplete <span className="ml-1 opacity-70">{data?.items?.filter(c => getContactScore(c) < 70).length ?? 0}</span>
+        </button>
       </div>
 
       {/* ─── Filters ─── */}
@@ -255,7 +274,7 @@ export default function Contacts() {
                   </TableCell>
                 </TableRow>
               ) : (
-                data?.items.map((contact) => (
+                (contactTab === "incomplete" ? data?.items.filter(c => getContactScore(c) < 70) : data?.items)?.map((contact) => (
                   <TableRow key={contact.id} className="border-border/30 cursor-pointer hover:bg-accent/30 transition-colors group" onClick={() => setLocation(`/contacts/${contact.id}`)}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -296,9 +315,19 @@ export default function Contacts() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className={`text-[10px] font-semibold rounded-lg ${STATUS_COLORS[contact.leadStatus as string] ?? "bg-muted/60 text-muted-foreground"}`}>
-                        {contact.leadStatus}
-                      </Badge>
+                      <div className="space-y-1">
+                        <Badge variant="secondary" className={`text-[10px] font-semibold rounded-lg ${STATUS_COLORS[contact.leadStatus as string] ?? "bg-muted/60 text-muted-foreground"}`}>
+                          {contact.leadStatus}
+                        </Badge>
+                        {(() => { const s = getContactScore(contact); return (
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-16 h-1 rounded-full bg-muted overflow-hidden">
+                              <div className={`h-full rounded-full transition-all ${s >= 80 ? 'bg-emerald-500' : s >= 60 ? 'bg-blue-400' : s >= 40 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${s}%` }} />
+                            </div>
+                            <span className="text-[9px] text-muted-foreground">{s}%</span>
+                          </div>
+                        ); })()}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>

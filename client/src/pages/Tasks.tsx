@@ -204,6 +204,7 @@ export default function Tasks() {
 
   const handleCreate = () => {
     if (!form.title.trim()) { toast.error("Task title is required"); return; }
+    if (!form.companyId) { toast.error("A task must be linked to a company — please select one"); return; }
     createMutation.mutate(buildPayload(form));
   };
 
@@ -385,22 +386,32 @@ export default function Tasks() {
         <p className="text-xs text-muted-foreground">Link this task to any record in the CRM. Every linked record creates a traceable touchpoint.</p>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
-            <Label className="flex items-center gap-1"><Building2 className="h-3 w-3" /> Company</Label>
-            <Select value={form.companyId?.toString() ?? "none"} onValueChange={v => setF("companyId", v === "none" ? null : parseInt(v))}>
-              <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select company" /></SelectTrigger>
+            <Label className="flex items-center gap-1">
+              <Building2 className="h-3 w-3 text-orange-500" />
+              Company <span className="text-red-500 ml-0.5">*</span>
+            </Label>
+            <Select value={form.companyId?.toString() ?? ""} onValueChange={v => { setF("companyId", parseInt(v)); setF("contactId", null); }}>
+              <SelectTrigger className={`bg-secondary/30 ${!form.companyId ? 'border-orange-300' : 'border-emerald-300'}`}>
+                <SelectValue placeholder="⚠ Select company (required)" />
+              </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No company</SelectItem>
                 {companies?.items?.map((c: any) => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
+            {!form.companyId && <p className="text-[10px] text-orange-500">Tasks must be linked to a company</p>}
           </div>
           <div className="space-y-2">
-            <Label className="flex items-center gap-1"><User className="h-3 w-3" /> Contact</Label>
-            <Select value={form.contactId?.toString() ?? "none"} onValueChange={v => setF("contactId", v === "none" ? null : parseInt(v))}>
-              <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select contact" /></SelectTrigger>
+            <Label className="flex items-center gap-1">
+              <User className="h-3 w-3 text-blue-500" /> Contact
+              {form.companyId && <span className="text-[10px] text-muted-foreground ml-1">(filtered by company)</span>}
+            </Label>
+            <Select value={form.contactId?.toString() ?? "none"} onValueChange={v => setF("contactId", v === "none" ? null : parseInt(v))} disabled={!form.companyId}>
+              <SelectTrigger className="bg-secondary/30">
+                <SelectValue placeholder={form.companyId ? "Select contact" : "Select company first"} />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">No contact</SelectItem>
-                {contacts?.items?.filter((c: any) => !form.companyId || c.companyId === form.companyId).map((c: any) => (
+                {contacts?.items?.filter((c: any) => c.companyId === form.companyId).map((c: any) => (
                   <SelectItem key={c.id} value={c.id.toString()}>{c.firstName} {c.lastName ?? ""}</SelectItem>
                 ))}
               </SelectContent>
