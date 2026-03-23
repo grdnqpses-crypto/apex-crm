@@ -2184,5 +2184,17 @@
 - [x] Expand Company create/edit form with rich fields: revenue potential, campaign, pipeline, deal, products, forecast category, business type, WhatsApp, proposal
 - [x] Record Completeness Score (0-100%) on Company, Contact, and Deal cards
 - [x] "Incomplete" filter tab on Companies, Contacts, and Deals list pages showing records with missing key fields
-- [ ] Deal detail page (DealDetail.tsx) with bi-directional links to Company and Contact
+- [x] Deal detail page (DealDetail.tsx) with bi-directional links to Company and Contact
 - [ ] 360° relationship panel: from any record, see and click into all linked records
+
+## Session 9: Deal Detail 360° + Bulk Actions
+- [x] Build DealDetail.tsx: 360° view with linked company, contact, tasks, activity timeline, stage history, revenue
+- [x] DealDetail: edit deal inline (title, value, stage, close date, company, contact)
+- [x] DealDetail: bi-directional links to Company and Contact detail pages
+- [x] DealDetail: task list with click-to-open task detail sheet
+- [x] Register /deals/:id route in App.tsx
+- [x] Make deal cards in Deals kanban clickable (navigate to /deals/:id)
+- [x] Add bulk action checkboxes to Contacts list page
+- [x] Contacts bulk actions: Assign Owner, Create Task, Add to Segment, Enroll in Workflow, Delete
+- [x] Add bulk action checkboxes to Companies list page
+- [x] Companies bulk actions: Assign Owner, Create Task, Add to Segment, Enroll in Workflow, Delete

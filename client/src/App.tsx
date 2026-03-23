@@ -25,6 +25,7 @@ const ApiKeys = lazy(() => import("./pages/ApiKeys"));
 const Webhooks = lazy(() => import("./pages/Webhooks"));
 const SmtpAccounts = lazy(() => import("./pages/SmtpAccounts"));
 const CompanyDetail = lazy(() => import("./pages/CompanyDetail"));
+const DealDetail = lazy(() => import("./pages/DealDetail"));
 const ParadigmPulse = lazy(() => import("./pages/ParadigmPulse"));
 const Prospects = lazy(() => import("./pages/Prospects"));
 const ProspectDetail = lazy(() => import("./pages/ProspectDetail"));
@@ -172,6 +173,7 @@ function Router() {
           <Route path="/webhooks" component={Webhooks} />
           <Route path="/smtp-accounts" component={SmtpAccounts} />
           <Route path="/companies/:id" component={CompanyDetail} />
+          <Route path="/deals/:id" component={DealDetail} />
           <Route path="/paradigm" component={ParadigmPulse} />
           <Route path="/paradigm/prospects" component={Prospects} />
           <Route path="/paradigm/prospects/:id" component={ProspectDetail} />

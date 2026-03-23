@@ -58,6 +58,7 @@ describe("Company-First Architecture", () => {
       lastName: "Test",
       companyId: company.id,
       email: "withcompany@test.com",
+      mobilePhone: "555-0001",
     });
     expect(contact.id).toBeDefined();
 
@@ -81,11 +82,15 @@ describe("Company-First Architecture", () => {
       firstName: "Alice",
       lastName: "Cascade",
       companyId: company.id,
+      email: "alice@cascade.com",
+      mobilePhone: "555-0002",
     });
     const contact2 = await caller.contacts.create({
       firstName: "Bob",
       lastName: "Cascade",
       companyId: company.id,
+      email: "bob@cascade.com",
+      mobilePhone: "555-0003",
     });
 
     // Verify contacts exist
@@ -118,9 +123,9 @@ describe("Company-First Architecture", () => {
     expect(countBefore).toBe(0);
 
     // Add contacts
-    await caller.contacts.create({ firstName: "One", companyId: company.id });
-    await caller.contacts.create({ firstName: "Two", companyId: company.id });
-    await caller.contacts.create({ firstName: "Three", companyId: company.id });
+    await caller.contacts.create({ firstName: "One", companyId: company.id, email: "one@count.com", mobilePhone: "555-0010" });
+    await caller.contacts.create({ firstName: "Two", companyId: company.id, email: "two@count.com", mobilePhone: "555-0011" });
+    await caller.contacts.create({ firstName: "Three", companyId: company.id, email: "three@count.com", mobilePhone: "555-0012" });
 
     // Should now have 3 contacts
     const countAfter = await caller.companies.contactCount({ companyId: company.id });
@@ -136,9 +141,9 @@ describe("Company-First Architecture", () => {
     const companyB = await caller.companies.create({ name: "Company B" });
 
     // Add contacts to each
-    await caller.contacts.create({ firstName: "AliceA", companyId: companyA.id });
-    await caller.contacts.create({ firstName: "BobA", companyId: companyA.id });
-    await caller.contacts.create({ firstName: "CharlieB", companyId: companyB.id });
+    await caller.contacts.create({ firstName: "AliceA", companyId: companyA.id, email: "alicea@compa.com", mobilePhone: "555-0020" });
+    await caller.contacts.create({ firstName: "BobA", companyId: companyA.id, email: "boba@compa.com", mobilePhone: "555-0021" });
+    await caller.contacts.create({ firstName: "CharlieB", companyId: companyB.id, email: "charlieb@compb.com", mobilePhone: "555-0022" });
 
     // byCompany should return only contacts for that company
     const contactsA = await caller.contacts.byCompany({ companyId: companyA.id });

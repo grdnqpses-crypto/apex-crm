@@ -6,7 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Building2, Globe, MoreHorizontal, Trash2, Users, ChevronRight, AlertTriangle, MapPin, Phone as PhoneIcon, DollarSign, Kanban, Tag, Briefcase, TrendingUp, MessageSquare } from "lucide-react";
+import { Plus, Search, Building2, Globe, MoreHorizontal, Trash2, Users, ChevronRight, AlertTriangle, MapPin, Phone as PhoneIcon, DollarSign, Kanban, Tag, Briefcase, TrendingUp, MessageSquare, UserCheck, CheckSquare, Workflow } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,8 +29,17 @@ export default function Companies() {
 
   const searchInput = useMemo(() => ({ search: search || undefined, limit: 50 }), [search]);
   const { data, isLoading } = trpc.companies.listWithMetrics.useQuery(searchInput);
+  const emptyForm = {
+    name: "", domain: "", industry: "", numberOfEmployees: "", phone: "", website: "", description: "",
+    companyType: "", companyEmail: "", streetAddress: "", city: "", stateRegion: "", postalCode: "", country: "",
+    annualRevenue: "", businessClassification: "", foundedYear: "", leadSource: "", leadStatus: "",
+    creditTerms: "", paymentStatus: "", lanePreferences: "",
+    facebookPage: "", twitterHandle: "", linkedinUrl: "", youtubeUrl: "",
+    // Commercial / Pipeline
+    revenueAmount: "", forecastCategory: "", businessCategory: "", whatsappNumber: "", proposalUrl: "",
+  };
   const createMutation = trpc.companies.create.useMutation({
-    onSuccess: () => { utils.companies.list.invalidate(); utils.companies.listWithMetrics.invalidate(); setShowCreate(false); toast.success("Company created"); setForm({ name: "", domain: "", industry: "", numberOfEmployees: "", phone: "", website: "", description: "" }); },
+    onSuccess: () => { utils.companies.list.invalidate(); utils.companies.listWithMetrics.invalidate(); setShowCreate(false); toast.success("Company created"); setForm(emptyForm); },
     onError: (e) => toast.error(e.message),
   });
   const deleteMutation = trpc.companies.delete.useMutation({
@@ -45,16 +55,14 @@ export default function Companies() {
     return Math.round((filled / fields.length) * 100);
   };
   const [activeTab, setActiveTab] = useState<"all" | "incomplete">("all");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const bulkUpdateCompanies = trpc.bulkActions.updateCompanies.useMutation({
+    onSuccess: (d: any) => { utils.companies.listWithMetrics.invalidate(); setSelectedIds(new Set()); toast.success(`Updated ${d.updated} companies`); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const visibleCompanies = (activeTab === "incomplete" ? data?.items?.filter(c => getCompanyScore(c) < 60) : data?.items) ?? [];
+  const toggleSelectAll = () => { if (selectedIds.size === visibleCompanies.length && visibleCompanies.length > 0) { setSelectedIds(new Set()); } else { setSelectedIds(new Set(visibleCompanies.map((c: any) => c.id))); } };
 
-  const emptyForm = {
-    name: "", domain: "", industry: "", numberOfEmployees: "", phone: "", website: "", description: "",
-    companyType: "", companyEmail: "", streetAddress: "", city: "", stateRegion: "", postalCode: "", country: "",
-    annualRevenue: "", businessClassification: "", foundedYear: "", leadSource: "", leadStatus: "",
-    creditTerms: "", paymentStatus: "", lanePreferences: "",
-    facebookPage: "", twitterHandle: "", linkedinUrl: "", youtubeUrl: "",
-    // Commercial / Pipeline
-    revenueAmount: "", forecastCategory: "", businessCategory: "", whatsappNumber: "", proposalUrl: "",
-  };
   const [form, setForm] = useState(emptyForm);
   const setF = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
 
@@ -132,12 +140,45 @@ export default function Companies() {
         />
       </div>
 
+      {/* ─── Bulk Action Toolbar ─── */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-primary/5 border border-primary/20 rounded-xl">
+          <span className="text-sm font-semibold text-primary">{selectedIds.size} selected</span>
+          <div className="flex-1" />
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { toast.info("Assign Owner — coming soon"); }}>
+            <UserCheck className="h-3.5 w-3.5" /> Assign Owner
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { toast.info("Create Task for selected companies — coming soon"); }}>
+            <CheckSquare className="h-3.5 w-3.5" /> Create Task
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { toast.info("Add to Segment — coming soon"); }}>
+            <Tag className="h-3.5 w-3.5" /> Add to Segment
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { toast.info("Enroll in Workflow — coming soon"); }}>
+            <Workflow className="h-3.5 w-3.5" /> Enroll in Workflow
+          </Button>
+          <Button variant="destructive" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { if (confirm(`Delete ${selectedIds.size} companies and all their contacts? This cannot be undone.`)) { Array.from(selectedIds).forEach(id => deleteMutation.mutate({ id })); setSelectedIds(new Set()); } }}>
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </Button>
+          <Button variant="ghost" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => setSelectedIds(new Set())}>
+            Clear
+          </Button>
+        </div>
+      )}
+
       {/* ─── Companies Table ─── */}
       <Card className="rounded-2xl border-border/40 shadow-sm overflow-hidden">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow className="border-border/40 hover:bg-transparent bg-muted/30">
+                <TableHead className="w-10 py-3.5">
+                  <Checkbox
+                    checked={visibleCompanies.length > 0 && selectedIds.size === visibleCompanies.length}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Select all companies"
+                  />
+                </TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70 py-3.5">Company</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Domain</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Industry</TableHead>
@@ -178,9 +219,16 @@ export default function Companies() {
                 (activeTab === "incomplete" ? data?.items.filter(c => getCompanyScore(c) < 60) : data?.items)?.map((company) => (
                   <TableRow
                     key={company.id}
-                    className="border-border/30 cursor-pointer hover:bg-accent/30 transition-colors group"
+                    className={`border-border/30 cursor-pointer hover:bg-accent/30 transition-colors group ${selectedIds.has(company.id) ? 'bg-primary/5' : ''}`}
                     onClick={() => setLocation(`/companies/${company.id}`)}
                   >
+                    <TableCell onClick={(e) => e.stopPropagation()} className="w-10">
+                      <Checkbox
+                        checked={selectedIds.has(company.id)}
+                        onCheckedChange={() => setSelectedIds(prev => { const n = new Set(prev); n.has(company.id) ? n.delete(company.id) : n.add(company.id); return n; })}
+                        aria-label="Select company"
+                      />
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">

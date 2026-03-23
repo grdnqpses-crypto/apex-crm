@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Plus, DollarSign, MoreHorizontal, Trash2, Trophy, X, GripVertical, Kanban, TrendingUp, Building2, User } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
+import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { useSkin } from "@/contexts/SkinContext";
 import PageGuide from "@/components/PageGuide";
@@ -127,6 +128,7 @@ export default function Deals() {
   };
   const incompleteDeals = dealData?.items?.filter(d => d.status === "open" && getDealScore(d) < 67) ?? [];
   const [showIncomplete, setShowIncomplete] = useState(false);
+  const [, setLocation] = useLocation();
 
   // Build company/contact lookup maps for deal cards
   const companyMap = useMemo(() => {
@@ -252,13 +254,13 @@ export default function Deals() {
                 {/* Stage Body */}
                 <div className="flex-1 bg-muted/20 rounded-b-xl p-2.5 space-y-2 border border-border/30 border-t-0">
                   {stageDeals.map((deal) => (
-                    <Card key={deal.id} className="rounded-xl border-border/30 shadow-sm hover:shadow-md hover:border-primary/20 transition-all cursor-pointer">
+                    <Card key={deal.id} className="rounded-xl border-border/30 shadow-sm hover:shadow-md hover:border-primary/20 transition-all cursor-pointer" onClick={() => setLocation(`/deals/${deal.id}`)}>
                       <CardContent className="p-3.5 space-y-2.5">
                         <div className="flex items-start justify-between">
                           <p className="text-sm font-semibold text-foreground leading-tight pr-2">{deal.name}</p>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 shrink-0 rounded-lg"><MoreHorizontal className="h-3.5 w-3.5" /></Button>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 shrink-0 rounded-lg" onClick={(e) => e.stopPropagation()}><MoreHorizontal className="h-3.5 w-3.5" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="rounded-xl">
                               <DropdownMenuItem onClick={() => updateDeal.mutate({ id: deal.id, status: "won", closedAt: Date.now() })}>

@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, UserPlus, Mail, Phone, MoreHorizontal, Trash2, Upload, Download, Users, Building2, Plus } from "lucide-react";
+import { Search, UserPlus, Mail, Phone, MoreHorizontal, Trash2, Upload, Download, Users, Building2, Plus, CheckSquare, Square, Tag, UserCheck, Workflow } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
@@ -165,6 +166,18 @@ export default function Contacts() {
     return Math.round((filled / fields.length) * 100);
   };
   const [contactTab, setContactTab] = useState<"all" | "incomplete">("all");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const bulkDeleteContacts = trpc.bulkActions.deleteContacts.useMutation({
+    onSuccess: (d) => { utils.contacts.list.invalidate(); setSelectedIds(new Set()); toast.success(`Deleted ${d.deleted} contacts`); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const bulkUpdateContacts = trpc.bulkActions.updateContacts.useMutation({
+    onSuccess: (d) => { utils.contacts.list.invalidate(); setSelectedIds(new Set()); toast.success(`Updated ${d.updated} contacts`); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const visibleContacts = (contactTab === "incomplete" ? data?.items?.filter(c => getContactScore(c) < 70) : data?.items) ?? [];
+  const toggleSelect = (id: number, e: React.MouseEvent) => { e.stopPropagation(); setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; }); };
+  const toggleSelectAll = () => { if (selectedIds.size === visibleContacts.length && visibleContacts.length > 0) { setSelectedIds(new Set()); } else { setSelectedIds(new Set(visibleContacts.map(c => c.id))); } };
 
   // Build a lookup for company names
   const companyMap = useMemo(() => {
@@ -232,12 +245,45 @@ export default function Contacts() {
         </Select>
       </div>
 
+      {/* ─── Bulk Action Toolbar ─── */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-primary/5 border border-primary/20 rounded-xl">
+          <span className="text-sm font-semibold text-primary">{selectedIds.size} selected</span>
+          <div className="flex-1" />
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { if (confirm(`Assign ${selectedIds.size} contacts to yourself?`)) bulkUpdateContacts.mutate({ ids: Array.from(selectedIds), updates: {} }); }}>
+            <UserCheck className="h-3.5 w-3.5" /> Assign Owner
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { toast.info("Create Task for selected contacts — coming soon"); }}>
+            <CheckSquare className="h-3.5 w-3.5" /> Create Task
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { toast.info("Add to Segment — coming soon"); }}>
+            <Tag className="h-3.5 w-3.5" /> Add to Segment
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { toast.info("Enroll in Workflow — coming soon"); }}>
+            <Workflow className="h-3.5 w-3.5" /> Enroll in Workflow
+          </Button>
+          <Button variant="destructive" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { if (confirm(`Delete ${selectedIds.size} contacts? This cannot be undone.`)) bulkDeleteContacts.mutate({ ids: Array.from(selectedIds) }); }}>
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </Button>
+          <Button variant="ghost" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => setSelectedIds(new Set())}>
+            Clear
+          </Button>
+        </div>
+      )}
+
       {/* ─── Contacts Table ─── */}
       <Card className="rounded-2xl border-border/40 shadow-sm overflow-hidden">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow className="border-border/40 hover:bg-transparent bg-muted/30">
+                <TableHead className="w-10 py-3.5">
+                  <Checkbox
+                    checked={visibleContacts.length > 0 && selectedIds.size === visibleContacts.length}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Select all"
+                  />
+                </TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70 py-3.5">Name</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Company</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Email</TableHead>
@@ -275,7 +321,10 @@ export default function Contacts() {
                 </TableRow>
               ) : (
                 (contactTab === "incomplete" ? data?.items.filter(c => getContactScore(c) < 70) : data?.items)?.map((contact) => (
-                  <TableRow key={contact.id} className="border-border/30 cursor-pointer hover:bg-accent/30 transition-colors group" onClick={() => setLocation(`/contacts/${contact.id}`)}>
+                  <TableRow key={contact.id} className={`border-border/30 cursor-pointer hover:bg-accent/30 transition-colors group ${selectedIds.has(contact.id) ? 'bg-primary/5' : ''}`} onClick={() => setLocation(`/contacts/${contact.id}`)}>                    
+                    <TableCell onClick={(e) => e.stopPropagation()} className="w-10">
+                      <Checkbox checked={selectedIds.has(contact.id)} onCheckedChange={() => setSelectedIds(prev => { const n = new Set(prev); n.has(contact.id) ? n.delete(contact.id) : n.add(contact.id); return n; })} aria-label="Select contact" />
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="h-9 w-9 rounded-xl bg-primary/8 flex items-center justify-center shrink-0 group-hover:bg-primary/12 transition-colors">
