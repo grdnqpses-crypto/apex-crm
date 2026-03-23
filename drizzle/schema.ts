@@ -197,6 +197,12 @@ export const contacts = mysqlTable("contacts", {
   lastBookedMeetingDate: bigint("lastBookedMeetingDate", { mode: "number" }),
   ownerAssignedDate: bigint("ownerAssignedDate", { mode: "number" }),
   dateOfLastLeadStatusChange: bigint("dateOfLastLeadStatusChange", { mode: "number" }),
+  // ─── Soft-Delete Fields ───
+  isDeleted: tinyint("is_deleted").notNull().default(0),
+  deletedAt: bigint("deleted_at", { mode: "number" }),
+  deletedBy: int("deleted_by"),
+  deleteReason: text("delete_reason"),
+  deleteBatchId: varchar("delete_batch_id", { length: 36 }),
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
 });
@@ -274,6 +280,12 @@ export const companies = mysqlTable("companies", {
   firstConversionDate: bigint("firstConversionDate", { mode: "number" }),
   recentConversionDate: bigint("recentConversionDate", { mode: "number" }),
   dateOfLastLeadStatusChange: bigint("dateOfLastLeadStatusChange", { mode: "number" }),
+  // ─── Soft-Delete Fields ───
+  isDeleted: tinyint("is_deleted").notNull().default(0),
+  deletedAt: bigint("deleted_at", { mode: "number" }),
+  deletedBy: int("deleted_by"),
+  deleteReason: text("delete_reason"),
+  deleteBatchId: varchar("delete_batch_id", { length: 36 }),
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
 });
@@ -320,6 +332,12 @@ export const deals = mysqlTable("deals", {
   tags: json("tags").$type<string[]>(),
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+  // ─── Soft-Delete Fields ───
+  isDeleted: tinyint("is_deleted").notNull().default(0),
+  deletedAt: bigint("deleted_at", { mode: "number" }),
+  deletedBy: int("deleted_by"),
+  deleteReason: text("delete_reason"),
+  deleteBatchId: varchar("delete_batch_id", { length: 36 }),
 });
 
 export type Deal = typeof deals.$inferSelect;
@@ -478,6 +496,12 @@ export const tasks = mysqlTable("tasks", {
   // System
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+  // ─── Soft-Delete Fields ───
+  isDeleted: tinyint("is_deleted").notNull().default(0),
+  deletedAt: bigint("deleted_at", { mode: "number" }),
+  deletedBy: int("deleted_by"),
+  deleteReason: text("delete_reason"),
+  deleteBatchId: varchar("delete_batch_id", { length: 36 }),
 });
 
 export type Task = typeof tasks.$inferSelect;
@@ -3543,3 +3567,40 @@ export const whatsappBroadcasts = mysqlTable("whatsapp_broadcasts", {
   updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
 });
 export type WhatsappBroadcast = typeof whatsappBroadcasts.$inferSelect;
+
+// ─── Deletion Requests (Two-Stage Admin Authorization) ────────────────────────
+export const deletionRequests = mysqlTable("deletion_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  requestedBy: int("requested_by").notNull(),
+  requestedByName: varchar("requested_by_name", { length: 255 }).notNull(),
+  scope: mysqlEnum("dr_scope", ["all", "contacts", "companies"]).notNull(),
+  reason: text("reason"),
+  status: mysqlEnum("dr_status", ["pending", "approved", "rejected", "cancelled"]).notNull().default("pending"),
+  approvedBy: int("approved_by"),
+  approvedByName: varchar("approved_by_name", { length: 255 }),
+  adminNote: text("admin_note"),
+  estimatedRecordCount: int("estimated_record_count").notNull().default(0),
+  actualDeletedCount: int("actual_deleted_count"),
+  requestedAt: bigint("requested_at", { mode: "number" }).notNull(),
+  resolvedAt: bigint("resolved_at", { mode: "number" }),
+});
+export type DeletionRequest = typeof deletionRequests.$inferSelect;
+
+// ─── Delete Batches (soft-delete audit log) ───
+export const deleteBatches = mysqlTable("delete_batches", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantCompanyId: int("tenant_company_id").notNull(),
+  requestedById: int("requested_by_id").notNull(),
+  requestedByName: varchar("requested_by_name", { length: 255 }).notNull(),
+  scope: mysqlEnum("scope", ["contacts", "companies", "all"]).notNull(),
+  reason: text("reason").notNull(),
+  status: mysqlEnum("status", ["pending", "purged", "restored"]).notNull().default("pending"),
+  estimatedCount: int("estimated_count").notNull().default(0),
+  actualCount: int("actual_count"),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  resolvedAt: bigint("resolved_at", { mode: "number" }),
+  adminNote: text("admin_note"),
+});
+export type DeleteBatch = typeof deleteBatches.$inferSelect;
+export type NewDeleteBatch = typeof deleteBatches.$inferInsert;

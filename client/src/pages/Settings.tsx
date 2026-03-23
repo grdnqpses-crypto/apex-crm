@@ -130,6 +130,7 @@ const SETTINGS_SECTIONS = [
       { id: "import-export", label: "Import & Export", icon: Upload, description: "Import data from files or export your CRM data." },
       { id: "backup-restore", label: "Backup & Restore", icon: Archive, description: "Data backup and restore management." },
       { id: "danger-zone", label: "Danger Zone", icon: AlertTriangle, description: "Permanently delete all companies, contacts, deals, and tasks for your account." },
+      { id: "purge-queue", label: "Purge Authorization Queue", icon: Shield, description: "Admin only: review and permanently purge or restore soft-deleted data batches." },
     ],
   },
   {
@@ -1037,85 +1038,278 @@ function AISettingsPanel() {
 }
 
 // ─── Delete All Data Panel ───
+// ─── Status badge helper ───
+const DR_STATUS_BADGE: Record<string, { label: string; cls: string }> = {
+  pending:   { label: "Pending Admin Approval", cls: "bg-amber-100 text-amber-800 border-amber-300" },
+  approved:  { label: "Approved — Data Deleted", cls: "bg-green-100 text-green-800 border-green-300" },
+  rejected:  { label: "Rejected by Admin", cls: "bg-red-100 text-red-800 border-red-300" },
+  cancelled: { label: "Cancelled", cls: "bg-muted text-muted-foreground border-border" },
+};
+
 function DeleteAllDataPanel() {
+  const [scope, setScope] = useState<"all" | "contacts" | "companies" | null>(null);
+  const [reason, setReason] = useState("");
   const [confirmText, setConfirmText] = useState("");
-  const [mode, setMode] = useState<"all" | "contacts" | "companies" | null>(null);
   const utils = trpc.useUtils();
-  const deleteAll = trpc.adminData.deleteAllUserData.useMutation({
+
+  const CONFIRM_PHRASES = {
+    all: "DELETE ALL MY DATA",
+    contacts: "DELETE ALL CONTACTS",
+    companies: "DELETE ALL COMPANIES",
+  } as const;
+
+  const softDelete = trpc.adminData.softDeleteAll.useMutation({
     onSuccess: (d) => {
-      toast.success(`Deleted: ${d.deleted.companies} companies, ${d.deleted.contacts} contacts, ${d.deleted.deals} deals, ${d.deleted.tasks} tasks`);
+      toast.success(`Done. ${d.estimatedCount} records hidden from your view. An admin will review before permanent deletion.`);
+      setScope(null); setReason(""); setConfirmText("");
+      utils.contacts.list.invalidate();
       utils.companies.listWithMetrics.invalidate();
-      utils.contacts.list.invalidate();
-      setMode(null); setConfirmText("");
     },
     onError: (e) => toast.error(e.message),
   });
-  const deleteContacts = trpc.adminData.deleteAllContacts.useMutation({
-    onSuccess: (d) => {
-      toast.success(`Deleted ${d.deleted} contacts`);
-      utils.contacts.list.invalidate();
-      setMode(null); setConfirmText("");
-    },
-    onError: (e) => toast.error(e.message),
-  });
-  const deleteCompanies = trpc.adminData.deleteAllCompanies.useMutation({
-    onSuccess: (d) => {
-      toast.success(`Deleted ${d.deleted.companies} companies and ${d.deleted.contacts} contacts`);
-      utils.companies.listWithMetrics.invalidate();
-      utils.contacts.list.invalidate();
-      setMode(null); setConfirmText("");
-    },
-    onError: (e) => toast.error(e.message),
-  });
-  const CONFIRM_PHRASES = { all: "DELETE ALL MY DATA", contacts: "DELETE ALL CONTACTS", companies: "DELETE ALL COMPANIES" } as const;
-  const handleConfirm = () => {
-    if (!mode) return;
-    const phrase = CONFIRM_PHRASES[mode];
-    if (confirmText !== phrase) { toast.error(`Type exactly: ${phrase}`); return; }
-    if (mode === "all") deleteAll.mutate({ confirm: "DELETE ALL MY DATA" });
-    else if (mode === "contacts") deleteContacts.mutate({ confirm: "DELETE ALL CONTACTS" });
-    else if (mode === "companies") deleteCompanies.mutate({ confirm: "DELETE ALL COMPANIES" });
-  };
+
+  const SCOPE_OPTIONS = [
+    { key: "contacts" as const, label: "Delete All Contacts", desc: "Removes all contacts from your view. Companies, deals, and tasks remain.", cls: "border-amber-300 dark:border-amber-700" },
+    { key: "companies" as const, label: "Delete All Companies & Contacts", desc: "Removes all companies and their contacts from your view. Deals and tasks remain.", cls: "border-orange-300 dark:border-orange-700" },
+    { key: "all" as const, label: "Delete ALL Data", desc: "Removes all companies, contacts, deals, and tasks from your view. Account and settings are preserved.", cls: "border-destructive/50" },
+  ];
+
+  const canSubmit = scope && reason.length >= 10 && confirmText === CONFIRM_PHRASES[scope] && !softDelete.isPending;
+
   return (
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-destructive flex items-center gap-2">
           <AlertTriangle className="h-5 w-5" /> Danger Zone — Delete All Records
         </h3>
-        <p className="text-sm text-muted-foreground mt-1">Permanently delete all CRM records for your company. This cannot be undone. Your account and settings are preserved.</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Records will be <strong>immediately hidden</strong> from your view. However, they are <strong>not permanently deleted</strong> until an admin reviews your reason and authorizes the final purge. An admin can also restore the data if needed.
+        </p>
       </div>
-      <div className="grid gap-4">
-        {([
-          { key: "contacts" as const, label: "Delete All Contacts", desc: "Removes all contacts. Companies, deals, and tasks remain.", cls: "border-amber-200 bg-amber-50" },
-          { key: "companies" as const, label: "Delete All Companies & Contacts", desc: "Removes all companies and their contacts. Deals and tasks remain.", cls: "border-orange-200 bg-orange-50" },
-          { key: "all" as const, label: "Delete ALL Data", desc: "Removes all companies, contacts, deals, and tasks. Your account and settings are preserved.", cls: "border-destructive/30 bg-destructive/5" },
-        ]).map(({ key, label, desc, cls }) => (
-          <Card key={key} className={`border-2 ${cls}`}>
-            <CardContent className="pt-4">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="font-semibold text-sm">{label}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
-                </div>
-                <Button variant="destructive" size="sm" onClick={() => { setMode(key); setConfirmText(""); }}>{label}</Button>
-              </div>
-              {mode === key && (
-                <div className="mt-4 space-y-2 border-t pt-4">
-                  <p className="text-sm font-medium">Type <code className="bg-muted px-1 py-0.5 rounded text-xs">{CONFIRM_PHRASES[key]}</code> to confirm:</p>
-                  <div className="flex gap-2">
-                    <Input value={confirmText} onChange={e => setConfirmText(e.target.value)} placeholder={CONFIRM_PHRASES[key]} className="font-mono text-sm" />
-                    <Button variant="destructive" onClick={handleConfirm}
-                      disabled={confirmText !== CONFIRM_PHRASES[key] || deleteAll.isPending || deleteContacts.isPending || deleteCompanies.isPending}>
-                      Confirm Delete
-                    </Button>
-                    <Button variant="ghost" onClick={() => { setMode(null); setConfirmText(""); }}>Cancel</Button>
+
+      {/* Step 1: Choose scope */}
+      <div className="space-y-2">
+        <h4 className="text-sm font-semibold">Step 1 — What do you want to delete?</h4>
+        <div className="grid gap-2">
+          {SCOPE_OPTIONS.map(({ key, label, desc, cls }) => (
+            <Card key={key}
+              className={`border-2 cursor-pointer transition-all ${scope === key ? cls + " ring-2 ring-destructive/30" : "border-border hover:border-muted-foreground/40"}`}
+              onClick={() => { setScope(scope === key ? null : key); setConfirmText(""); }}>
+              <CardContent className="pt-3 pb-3">
+                <div className="flex items-start gap-3">
+                  <div className={`mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${scope === key ? "border-destructive bg-destructive" : "border-muted-foreground"}`}>
+                    {scope === key && <div className="w-2 h-2 rounded-full bg-white" />}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">{label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
                   </div>
                 </div>
-              )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {scope && (
+        <>
+          {/* Step 2: Reason (mandatory) */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold">Step 2 — Reason for deletion <span className="text-destructive">*</span></h4>
+            <p className="text-xs text-muted-foreground">Your admin will see this reason before deciding to permanently delete or restore the data. Required — no reason, no deletion.</p>
+            <textarea
+              value={reason}
+              onChange={e => setReason(e.target.value)}
+              placeholder="e.g. Removing test data before go-live, migrating to a new account, cleaning up duplicate imports…"
+              className="w-full min-h-[90px] text-sm rounded-md border border-input bg-background px-3 py-2 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+            />
+            {reason.length > 0 && reason.length < 10 && (
+              <p className="text-xs text-destructive">Please provide at least 10 characters.</p>
+            )}
+          </div>
+
+          {/* Step 3: Typed confirmation */}
+          {reason.length >= 10 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold">Step 3 — Confirm</h4>
+              <p className="text-sm text-muted-foreground">
+                Type <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">{CONFIRM_PHRASES[scope]}</code> to confirm:
+              </p>
+              <Input
+                value={confirmText}
+                onChange={e => setConfirmText(e.target.value)}
+                placeholder={CONFIRM_PHRASES[scope]}
+                className="font-mono text-sm"
+              />
+            </div>
+          )}
+
+          {/* Submit */}
+          {reason.length >= 10 && (
+            <div className="flex gap-2 pt-1">
+              <Button
+                variant="destructive"
+                onClick={() => softDelete.mutate({ scope, reason })}
+                disabled={!canSubmit}
+              >
+                {softDelete.isPending ? "Processing…" : "Delete Now (Pending Admin Purge)"}
+              </Button>
+              <Button variant="ghost" onClick={() => { setScope(null); setReason(""); setConfirmText(""); }}>
+                Cancel
+              </Button>
+            </div>
+          )}
+
+          <p className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1">
+            <Info className="h-3 w-3 shrink-0" />
+            Records will disappear from your view immediately. An admin must authorize permanent deletion.
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── Admin Purge Queue Panel (admin-only) ───
+const BATCH_STATUS_BADGE: Record<string, { label: string; cls: string }> = {
+  pending:  { label: "Awaiting Admin Action", cls: "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700" },
+  purged:   { label: "Permanently Deleted", cls: "bg-red-100 text-red-800 border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-700" },
+  restored: { label: "Restored", cls: "bg-green-100 text-green-800 border-green-300 dark:bg-green-950/40 dark:text-green-300 dark:border-green-700" },
+};
+
+function AdminPurgeQueuePanel() {
+  const utils = trpc.useUtils();
+  const { data: batches = [], refetch } = trpc.adminData.listPendingBatches.useQuery(undefined, { refetchInterval: 15000 });
+  const [adminNote, setAdminNote] = useState<Record<string, string>>({});
+
+  const hardPurge = trpc.adminData.hardPurgeBatch.useMutation({
+    onSuccess: (d) => {
+      toast.success(`Permanently deleted ${d.deleted} records.`);
+      refetch();
+      utils.contacts.list.invalidate();
+      utils.companies.listWithMetrics.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const restore = trpc.adminData.restoreBatch.useMutation({
+    onSuccess: (d) => {
+      toast.success(`Restored ${d.restored} records. They are visible again.`);
+      refetch();
+      utils.contacts.list.invalidate();
+      utils.companies.listWithMetrics.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const pending = batches.filter(b => b.status === "pending");
+  const resolved = batches.filter(b => b.status !== "pending");
+
+  const scopeLabel = (scope: string) =>
+    scope === "all" ? "ALL Data" : scope === "contacts" ? "All Contacts" : "All Companies & Contacts";
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Shield className="h-5 w-5 text-amber-500" /> Admin — Purge Authorization Queue
+        </h3>
+        <p className="text-sm text-muted-foreground mt-1">
+          These records have been soft-deleted by a team member and are <strong>hidden from their view</strong> but not yet permanently removed.
+          Review the reason and choose to <strong>permanently purge</strong> or <strong>restore</strong> the data.
+        </p>
+      </div>
+
+      {/* Pending queue */}
+      <div className="space-y-3">
+        <h4 className="text-sm font-semibold flex items-center gap-2">
+          Pending Authorization
+          {pending.length > 0 && (
+            <span className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">{pending.length}</span>
+          )}
+        </h4>
+        {pending.length === 0 ? (
+          <div className="text-sm text-muted-foreground py-8 text-center border rounded-md border-dashed">
+            No pending deletion batches. All clear.
+          </div>
+        ) : pending.map(batch => (
+          <Card key={batch.id} className="border-2 border-amber-300 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/20">
+            <CardContent className="pt-4 pb-4 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="font-semibold text-sm">
+                    <span className="text-foreground">{batch.requestedByName}</span>
+                    {" "}wants to delete{" "}
+                    <span className="text-destructive font-bold">{scopeLabel(batch.scope)}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    ~{batch.estimatedCount} records · Requested {new Date(batch.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              {/* Reason — prominently displayed */}
+              <div className="p-3 rounded-md bg-background border border-border">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Reason given</p>
+                <p className="text-sm text-foreground">{batch.reason}</p>
+              </div>
+
+              {/* Admin note + action buttons */}
+              <div className="space-y-2 pt-1 border-t">
+                <Label className="text-xs font-medium">Admin note (optional for purge, shown to requester):</Label>
+                <Input
+                  value={adminNote[batch.id] ?? ""}
+                  onChange={e => setAdminNote(prev => ({ ...prev, [batch.id]: e.target.value }))}
+                  placeholder="Add a note visible to the requester…"
+                  className="text-sm"
+                />
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => hardPurge.mutate({ batchId: batch.id, adminNote: adminNote[batch.id] })}
+                    disabled={hardPurge.isPending || restore.isPending}
+                  >
+                    🗑 Permanently Delete {batch.estimatedCount} Records
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-green-400 text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950/30"
+                    onClick={() => restore.mutate({ batchId: batch.id, adminNote: adminNote[batch.id] })}
+                    disabled={hardPurge.isPending || restore.isPending}
+                  >
+                    ↩ Restore Data
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {/* History */}
+      {resolved.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="text-sm font-semibold text-muted-foreground">Resolution History</h4>
+          {resolved.slice(0, 15).map(batch => {
+            const badge = BATCH_STATUS_BADGE[batch.status] ?? BATCH_STATUS_BADGE.pending;
+            return (
+              <div key={batch.id} className="flex items-start justify-between gap-3 py-3 px-3 rounded-md border text-sm">
+                <div className="space-y-0.5">
+                  <p>
+                    <span className="font-medium">{batch.requestedByName}</span>
+                    <span className="text-muted-foreground"> — {scopeLabel(batch.scope)} · {batch.actualCount ?? batch.estimatedCount} records</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">"{batch.reason}"</p>
+                  {batch.adminNote && <p className="text-xs text-muted-foreground">Admin: {batch.adminNote}</p>}
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full border font-medium whitespace-nowrap ${badge.cls}`}>{badge.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -1133,6 +1327,9 @@ function DataManagementPanel({ subsectionId }: { subsectionId: string }) {
   }
   if (subsectionId === "delete-data" || subsectionId === "danger-zone" || subsectionId === "backup-restore") {
     return <DeleteAllDataPanel />;
+  }
+  if (subsectionId === "purge-queue") {
+    return <AdminPurgeQueuePanel />;
   }
 
   // Default: show section info with link to relevant page

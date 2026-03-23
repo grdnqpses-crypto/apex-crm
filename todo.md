@@ -2207,3 +2207,17 @@
 - [ ] Admin: delete all companies + contacts for a specific user (Settings → Danger Zone)
 - [ ] HubSpot import: verify CSV import end-to-end and map all HubSpot activity date fields
 - [ ] OpenAI/ChatGPT: add OPENAI_API_KEY secret and wire AI chat to GPT-4o as primary provider
+
+## Session 11: Two-Stage Soft-Delete + Admin Purge Authorization
+- [x] Soft-delete columns added to contacts, companies, deals, tasks (is_deleted, deleted_at, deleted_by, delete_reason, delete_batch_id)
+- [x] delete_batches table tracks batchId, scope, reason, status, userId, timestamps
+- [x] Backend: adminData.softDeleteAll — instantly hides records from user view (soft-delete), requires mandatory reason (min 10 chars)
+- [x] Backend: adminData.listPendingBatches — admin sees all batches with reason, scope, record count, status
+- [x] Backend: adminData.hardPurgeBatch — admin permanently deletes all records in a batch
+- [x] Backend: adminData.restoreBatch — admin restores soft-deleted records (un-deletes)
+- [x] Danger Zone UI: reason textarea (required, min 10 chars) + typed confirmation phrase + instant soft-delete
+- [x] Danger Zone UI: button stays disabled until reason is filled and confirmation phrase matches
+- [x] Admin Purge Queue UI: Settings → Data Management → Purge Queue shows pending batches with reason, scope, record count
+- [x] Admin queue: Permanently Purge button (hard delete) and Restore button per batch with admin note field
+- [x] Purge Queue auto-refreshes every 15 seconds
+- [x] Write vitest tests for the two-stage delete flow (7 tests passing)

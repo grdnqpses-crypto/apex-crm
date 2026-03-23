@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS deletion_requests (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  tenant_company_id INT NOT NULL,\n  requested_by INT NOT NULL,\n  requested_by_name VARCHAR(255) NOT NULL,\n  dr_scope ENUM('all', 'contacts', 'companies') NOT NULL,\n  reason TEXT,\n  dr_status ENUM('pending', 'approved', 'rejected', 'cancelled') NOT NULL DEFAULT 'pending',\n  approved_by INT,\n  approved_by_name VARCHAR(255),\n  admin_note TEXT,\n  estimated_record_count INT NOT NULL DEFAULT 0,\n  actual_deleted_count INT,\n  requested_at BIGINT NOT NULL,\n  resolved_at BIGINT,\n  INDEX idx_dr_tenant (tenant_company_id),\n  INDEX idx_dr_status (dr_status),\n  INDEX idx_dr_requested_by (requested_by)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute CREATE TABLE IF NOT EXISTS deletion_requests (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  tenant_company_id INT NOT NULL,\n  requested_by INT NOT NULL,\n  requested_by_name VARCHAR(255) NOT NULL,\n  dr_scope ENUM('all', 'contacts', 'companies') NOT NULL,\n  reason TEXT,\n  dr_status ENUM('pending', 'approved', 'rejected', 'cancelled') NOT NULL DEFAULT 'pending',\n  approved_by INT,\n  approved_by_name VARCHAR(255),\n  admin_note TEXT,\n  estimated_record_count INT NOT NULL DEFAULT 0,\n  actual_deleted_count INT,\n  requested_at BIGINT NOT NULL,\n  resolved_at BIGINT,\n  INDEX idx_dr_tenant (tenant_company_id),\n  INDEX idx_dr_status (dr_status),\n  INDEX idx_dr_requested_by (requested_by)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 769
+}

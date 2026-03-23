@@ -6178,63 +6178,174 @@ export const appRouter = router({
     }),
   }),
 
-  // ─── Admin Data Management ─────────────────────────────────────────────────
+  // ─── Admin Data Management (Soft-Delete + Admin Hard-Purge) ─────────────────
   adminData: router({
-    deleteAllUserData: companyAdminProcedure
-      .input(z.object({ confirm: z.literal("DELETE ALL MY DATA") }))
-      .mutation(async ({ ctx }) => {
+    // ── User: soft-delete all records with mandatory reason (creates a batch record) ──
+    softDeleteAll: protectedProcedure
+      .input(z.object({
+        scope: z.enum(["all", "contacts", "companies"]),
+        reason: z.string().min(10, "Please provide at least 10 characters explaining why you are deleting this data"),
+      }))
+      .mutation(async ({ ctx, input }) => {
         const dbConn = await db.getDb();
         if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database unavailable' });
-        const { contacts: contactsTable, companies: companiesTable, deals: dealsTable, tasks: tasksTable } = await import('../drizzle/schema');
-        const { eq } = await import('drizzle-orm');
+        const { contacts: ct, companies: co, deals: de, tasks: ta, deleteBatches } = await import('../drizzle/schema');
+        const { eq, and, count } = await import('drizzle-orm');
         const tenantId = ctx.user.tenantCompanyId;
         if (!tenantId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No tenant company associated with this account' });
-        const deletedTasks = await dbConn.delete(tasksTable).where(eq(tasksTable.tenantCompanyId, tenantId));
-        const deletedDeals = await dbConn.delete(dealsTable).where(eq(dealsTable.tenantCompanyId, tenantId));
-        const deletedContacts = await dbConn.delete(contactsTable).where(eq(contactsTable.tenantCompanyId, tenantId));
-        const deletedCompanies = await dbConn.delete(companiesTable).where(eq(companiesTable.tenantCompanyId, tenantId));
-        return {
-          success: true,
-          deleted: {
-            tasks: (deletedTasks as any).rowsAffected ?? 0,
-            deals: (deletedDeals as any).rowsAffected ?? 0,
-            contacts: (deletedContacts as any).rowsAffected ?? 0,
-            companies: (deletedCompanies as any).rowsAffected ?? 0,
-          },
-        };
+        const now = Date.now();
+        const userId = ctx.user.id;
+        const batchId = crypto.randomUUID();
+        const reason = input.reason.trim();
+
+        // Count records before soft-deleting
+        let estimatedCount = 0;
+        if (input.scope === 'contacts' || input.scope === 'all') {
+          const [r] = await dbConn.select({ c: count() }).from(ct).where(and(eq(ct.tenantId, tenantId), eq(ct.isDeleted, 0)));
+          estimatedCount += r?.c ?? 0;
+        }
+        if (input.scope === 'companies' || input.scope === 'all') {
+          const [r] = await dbConn.select({ c: count() }).from(co).where(and(eq(co.tenantId, tenantId), eq(co.isDeleted, 0)));
+          estimatedCount += r?.c ?? 0;
+        }
+        if (input.scope === 'all') {
+          const [r1] = await dbConn.select({ c: count() }).from(de).where(and(eq(de.tenantId, tenantId), eq(de.isDeleted, 0)));
+          const [r2] = await dbConn.select({ c: count() }).from(ta).where(and(eq(ta.tenantId, tenantId), eq(ta.isDeleted, 0)));
+          estimatedCount += (r1?.c ?? 0) + (r2?.c ?? 0);
+        }
+
+        // Soft-delete records and tag with batchId + reason
+        if (input.scope === 'contacts' || input.scope === 'all') {
+          await dbConn.update(ct).set({ isDeleted: 1, deletedAt: now, deletedBy: userId, deleteReason: reason, deleteBatchId: batchId })
+            .where(and(eq(ct.tenantId, tenantId), eq(ct.isDeleted, 0)));
+        }
+        if (input.scope === 'companies' || input.scope === 'all') {
+          await dbConn.update(co).set({ isDeleted: 1, deletedAt: now, deletedBy: userId, deleteReason: reason, deleteBatchId: batchId })
+            .where(and(eq(co.tenantId, tenantId), eq(co.isDeleted, 0)));
+        }
+        if (input.scope === 'all') {
+          await dbConn.update(de).set({ isDeleted: 1, deletedAt: now, deletedBy: userId, deleteReason: reason, deleteBatchId: batchId })
+            .where(and(eq(de.tenantId, tenantId), eq(de.isDeleted, 0)));
+          await dbConn.update(ta).set({ isDeleted: 1, deletedAt: now, deletedBy: userId, deleteReason: reason, deleteBatchId: batchId })
+            .where(and(eq(ta.tenantId, tenantId), eq(ta.isDeleted, 0)));
+        }
+
+        // Create batch record for admin queue
+        await dbConn.insert(deleteBatches).values({
+          id: batchId,
+          tenantCompanyId: tenantId,
+          requestedById: userId,
+          requestedByName: ctx.user.name || ctx.user.email || 'Unknown',
+          scope: input.scope,
+          reason,
+          status: 'pending',
+          estimatedCount,
+          createdAt: now,
+        });
+
+        // Notify admin
+        try {
+          const scopeLabel = input.scope === 'all' ? 'ALL data' : `all ${input.scope}`;
+          await notifyOwner({
+            title: `🗑️ Deletion Request: ${ctx.user.name || ctx.user.email} deleted ${scopeLabel}`,
+            content: `${ctx.user.name || ctx.user.email} soft-deleted ${scopeLabel} (~${estimatedCount} records).\nReason: "${reason}"\n\nData is HIDDEN but NOT permanently deleted. Go to Settings → Admin → Purge Deleted Data to permanently remove or restore.`,
+          });
+        } catch { /* non-blocking */ }
+
+        return { success: true, batchId, estimatedCount };
       }),
-    deleteAllContacts: companyAdminProcedure
-      .input(z.object({ confirm: z.literal("DELETE ALL CONTACTS") }))
-      .mutation(async ({ ctx }) => {
+
+    // ── Admin: list all pending soft-delete batches ──
+    listPendingBatches: companyAdminProcedure
+      .query(async ({ ctx }) => {
         const dbConn = await db.getDb();
-        if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database unavailable' });
-        const { contacts: contactsTable } = await import('../drizzle/schema');
-        const { eq } = await import('drizzle-orm');
+        if (!dbConn) return [];
+        const { deleteBatches } = await import('../drizzle/schema');
+        const { eq, desc } = await import('drizzle-orm');
         const tenantId = ctx.user.tenantCompanyId;
-        if (!tenantId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No tenant company associated with this account' });
-        const result = await dbConn.delete(contactsTable).where(eq(contactsTable.tenantCompanyId, tenantId));
-        return { success: true, deleted: (result as any).rowsAffected ?? 0 };
+        if (!tenantId) return [];
+        return dbConn.select().from(deleteBatches)
+          .where(eq(deleteBatches.tenantCompanyId, tenantId))
+          .orderBy(desc(deleteBatches.createdAt));
       }),
-    deleteAllCompanies: companyAdminProcedure
-      .input(z.object({ confirm: z.literal("DELETE ALL COMPANIES") }))
-      .mutation(async ({ ctx }) => {
+
+    // ── Admin: permanently purge a specific batch ──
+    hardPurgeBatch: companyAdminProcedure
+      .input(z.object({
+        batchId: z.string(),
+        adminNote: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
         const dbConn = await db.getDb();
         if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database unavailable' });
-        const { contacts: contactsTable, companies: companiesTable } = await import('../drizzle/schema');
-        const { eq } = await import('drizzle-orm');
+        const { contacts: ct, companies: co, deals: de, tasks: ta, deleteBatches } = await import('../drizzle/schema');
+        const { eq, and } = await import('drizzle-orm');
         const tenantId = ctx.user.tenantCompanyId;
-        if (!tenantId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No tenant company associated with this account' });
-        const deletedContacts = await dbConn.delete(contactsTable).where(eq(contactsTable.tenantCompanyId, tenantId));
-        const deletedCompanies = await dbConn.delete(companiesTable).where(eq(companiesTable.tenantCompanyId, tenantId));
-        return { success: true, deleted: { contacts: (deletedContacts as any).rowsAffected ?? 0, companies: (deletedCompanies as any).rowsAffected ?? 0 } };
+        if (!tenantId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No tenant company' });
+
+        // Verify batch belongs to this tenant
+        const [batch] = await dbConn.select().from(deleteBatches)
+          .where(and(eq(deleteBatches.id, input.batchId), eq(deleteBatches.tenantCompanyId, tenantId)));
+        if (!batch) throw new TRPCError({ code: 'NOT_FOUND', message: 'Batch not found' });
+        if (batch.status !== 'pending') throw new TRPCError({ code: 'BAD_REQUEST', message: 'Batch already resolved' });
+
+        let totalDeleted = 0;
+        const r1 = await dbConn.delete(ct).where(and(eq(ct.tenantId, tenantId), eq(ct.deleteBatchId, input.batchId)));
+        const r2 = await dbConn.delete(co).where(and(eq(co.tenantId, tenantId), eq(co.deleteBatchId, input.batchId)));
+        const r3 = await dbConn.delete(de).where(and(eq(de.tenantId, tenantId), eq(de.deleteBatchId, input.batchId)));
+        const r4 = await dbConn.delete(ta).where(and(eq(ta.tenantId, tenantId), eq(ta.deleteBatchId, input.batchId)));
+        totalDeleted = ((r1 as any).rowsAffected ?? 0) + ((r2 as any).rowsAffected ?? 0) + ((r3 as any).rowsAffected ?? 0) + ((r4 as any).rowsAffected ?? 0);
+
+        await dbConn.update(deleteBatches).set({
+          status: 'purged',
+          actualCount: totalDeleted,
+          resolvedAt: Date.now(),
+          adminNote: input.adminNote ?? null,
+        }).where(eq(deleteBatches.id, input.batchId));
+
+        return { success: true, deleted: totalDeleted };
+      }),
+
+    // ── Admin: restore a specific batch (un-soft-delete) ──
+    restoreBatch: companyAdminProcedure
+      .input(z.object({
+        batchId: z.string(),
+        adminNote: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database unavailable' });
+        const { contacts: ct, companies: co, deals: de, tasks: ta, deleteBatches } = await import('../drizzle/schema');
+        const { eq, and } = await import('drizzle-orm');
+        const tenantId = ctx.user.tenantCompanyId;
+        if (!tenantId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No tenant company' });
+
+        const [batch] = await dbConn.select().from(deleteBatches)
+          .where(and(eq(deleteBatches.id, input.batchId), eq(deleteBatches.tenantCompanyId, tenantId)));
+        if (!batch) throw new TRPCError({ code: 'NOT_FOUND', message: 'Batch not found' });
+        if (batch.status !== 'pending') throw new TRPCError({ code: 'BAD_REQUEST', message: 'Batch already resolved' });
+
+        let totalRestored = 0;
+        const r1 = await dbConn.update(ct).set({ isDeleted: 0, deletedAt: null, deletedBy: null, deleteReason: null, deleteBatchId: null })
+          .where(and(eq(ct.tenantId, tenantId), eq(ct.deleteBatchId, input.batchId)));
+        const r2 = await dbConn.update(co).set({ isDeleted: 0, deletedAt: null, deletedBy: null, deleteReason: null, deleteBatchId: null })
+          .where(and(eq(co.tenantId, tenantId), eq(co.deleteBatchId, input.batchId)));
+        const r3 = await dbConn.update(de).set({ isDeleted: 0, deletedAt: null, deletedBy: null, deleteReason: null, deleteBatchId: null })
+          .where(and(eq(de.tenantId, tenantId), eq(de.deleteBatchId, input.batchId)));
+        const r4 = await dbConn.update(ta).set({ isDeleted: 0, deletedAt: null, deletedBy: null, deleteReason: null, deleteBatchId: null })
+          .where(and(eq(ta.tenantId, tenantId), eq(ta.deleteBatchId, input.batchId)));
+        totalRestored = ((r1 as any).rowsAffected ?? 0) + ((r2 as any).rowsAffected ?? 0) + ((r3 as any).rowsAffected ?? 0) + ((r4 as any).rowsAffected ?? 0);
+
+        await dbConn.update(deleteBatches).set({
+          status: 'restored',
+          actualCount: totalRestored,
+          resolvedAt: Date.now(),
+          adminNote: input.adminNote ?? null,
+        }).where(eq(deleteBatches.id, input.batchId));
+
+        return { success: true, restored: totalRestored };
       }),
   }),
-  // ─── Workflow Builder ─────────────────────────────────────────────────────────
-  workflowBuilder: router({
-    get: protectedProcedure.input(z.object({ id: z.number() })).query(async () => ({ workflow: null })),
-    create: protectedProcedure.input(z.object({ name: z.string(), trigger: z.string() })).mutation(async () => ({ success: true, id: Date.now() })),
-    save: protectedProcedure.input(z.object({ id: z.number(), nodes: z.array(z.any()), edges: z.array(z.any()) })).mutation(async () => ({ success: true })),
-    setStatus: protectedProcedure.input(z.object({ id: z.number(), isActive: z.boolean() })).mutation(async () => ({ success: true })),
-  }),
+
 });
 export type AppRouter = typeof appRouter;
