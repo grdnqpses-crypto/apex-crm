@@ -727,3 +727,893 @@ export async function fetchClose(
 
   return { contacts, companies, deals, activities };
 }
+
+
+// ─── Apollo.io ────────────────────────────────────────────────────────────────
+export async function fetchApollo(
+  credentials: { apiKey: string },
+  onProgress?: ProgressCallback
+): Promise<MigrationData> {
+  const headers = { "Content-Type": "application/json", "Cache-Control": "no-cache", "X-Api-Key": credentials.apiKey };
+  const base = "https://api.apollo.io/v1";
+
+  // Contacts (people)
+  const contacts: NormalizedContact[] = [];
+  let page = 1;
+  while (true) {
+    const res = await fetch(`${base}/mixed_people/search`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ page, per_page: 200, sort_by_field: "contact_updated_at", sort_ascending: false })
+    });
+    const json: any = await res.json();
+    const people = json.people || [];
+    if (!people.length) break;
+    for (const p of people) {
+      contacts.push({
+        firstName: p.first_name || "",
+        lastName: p.last_name || "",
+        email: p.email || undefined,
+        phone: p.phone_numbers?.[0]?.raw_number || undefined,
+        jobTitle: p.title || undefined,
+        company: p.organization?.name || undefined,
+        city: p.city || undefined,
+        state: p.state || undefined,
+        country: p.country || undefined,
+        linkedinUrl: p.linkedin_url || undefined,
+        sourceId: p.id,
+      });
+    }
+    await onProgress?.({ contacts: contacts.length });
+    if (people.length < 200) break;
+    page++;
+  }
+
+  // Companies (accounts)
+  const companies: NormalizedCompany[] = [];
+  page = 1;
+  while (true) {
+    const res = await fetch(`${base}/mixed_companies/search`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ page, per_page: 200 })
+    });
+    const json: any = await res.json();
+    const accts = json.accounts || [];
+    if (!accts.length) break;
+    for (const a of accts) {
+      companies.push({
+        name: a.name,
+        domain: a.domain || undefined,
+        phone: a.phone || undefined,
+        industry: a.industry || undefined,
+        city: a.city || undefined,
+        state: a.state || undefined,
+        country: a.country || undefined,
+        website: a.website_url || undefined,
+        employeeCount: a.estimated_num_employees || undefined,
+        annualRevenue: a.annual_revenue || undefined,
+        sourceId: a.id,
+      });
+    }
+    await onProgress?.({ companies: companies.length });
+    if (accts.length < 200) break;
+    page++;
+  }
+
+  return { contacts, companies, deals: [], activities: [] };
+}
+
+// ─── Freshsales ───────────────────────────────────────────────────────────────
+export async function fetchFreshsales(
+  credentials: { apiKey: string; subdomain: string },
+  onProgress?: ProgressCallback
+): Promise<MigrationData> {
+  const base = `https://${credentials.subdomain}.freshsales.io/api`;
+  const headers = { Authorization: `Token token=${credentials.apiKey}`, "Content-Type": "application/json" };
+
+  const contacts: NormalizedContact[] = [];
+  let page = 1;
+  while (true) {
+    const res = await fetch(`${base}/contacts?page=${page}&per_page=100`, { headers });
+    const json: any = await res.json();
+    const items = json.contacts || [];
+    if (!items.length) break;
+    for (const c of items) {
+      contacts.push({
+        firstName: c.first_name || "",
+        lastName: c.last_name || "",
+        email: c.email || undefined,
+        phone: c.work_number || c.mobile_number || undefined,
+        jobTitle: c.job_title || undefined,
+        company: c.company?.name || undefined,
+        city: c.city || undefined,
+        state: c.state || undefined,
+        country: c.country || undefined,
+        linkedinUrl: c.linkedin || undefined,
+        sourceId: String(c.id),
+      });
+    }
+    await onProgress?.({ contacts: contacts.length });
+    if (items.length < 100) break;
+    page++;
+  }
+
+  const companies: NormalizedCompany[] = [];
+  page = 1;
+  while (true) {
+    const res = await fetch(`${base}/accounts?page=${page}&per_page=100`, { headers });
+    const json: any = await res.json();
+    const items = json.accounts || [];
+    if (!items.length) break;
+    for (const a of items) {
+      companies.push({
+        name: a.name,
+        phone: a.phone || undefined,
+        industry: a.industry_type?.name || undefined,
+        city: a.city || undefined,
+        state: a.state || undefined,
+        country: a.country || undefined,
+        website: a.website || undefined,
+        employeeCount: a.number_of_employees || undefined,
+        annualRevenue: a.annual_revenue || undefined,
+        sourceId: String(a.id),
+      });
+    }
+    await onProgress?.({ companies: companies.length });
+    if (items.length < 100) break;
+    page++;
+  }
+
+  const deals: NormalizedDeal[] = [];
+  page = 1;
+  while (true) {
+    const res = await fetch(`${base}/deals?page=${page}&per_page=100`, { headers });
+    const json: any = await res.json();
+    const items = json.deals || [];
+    if (!items.length) break;
+    for (const d of items) {
+      deals.push({
+        title: d.name,
+        value: d.amount || undefined,
+        stage: d.deal_stage?.name || "Prospecting",
+        closeDate: d.expected_close ? new Date(d.expected_close).getTime() : undefined,
+        sourceId: String(d.id),
+      });
+    }
+    await onProgress?.({ deals: deals.length });
+    if (items.length < 100) break;
+    page++;
+  }
+
+  return { contacts, companies, deals, activities: [] };
+}
+
+// ─── ActiveCampaign ───────────────────────────────────────────────────────────
+export async function fetchActiveCampaign(
+  credentials: { apiKey: string; accountUrl: string },
+  onProgress?: ProgressCallback
+): Promise<MigrationData> {
+  const base = credentials.accountUrl.replace(/\/$/, "");
+  const headers = { "Api-Token": credentials.apiKey, "Content-Type": "application/json" };
+
+  const contacts: NormalizedContact[] = [];
+  let offset = 0;
+  while (true) {
+    const res = await fetch(`${base}/api/3/contacts?limit=100&offset=${offset}`, { headers });
+    const json: any = await res.json();
+    const items = json.contacts || [];
+    if (!items.length) break;
+    for (const c of items) {
+      contacts.push({
+        firstName: c.firstName || "",
+        lastName: c.lastName || "",
+        email: c.email || undefined,
+        phone: c.phone || undefined,
+        company: c.orgname || undefined,
+        city: c.city || undefined,
+        state: c.state || undefined,
+        country: c.country || undefined,
+        sourceId: String(c.id),
+      });
+    }
+    await onProgress?.({ contacts: contacts.length });
+    if (items.length < 100) break;
+    offset += 100;
+  }
+
+  const companies: NormalizedCompany[] = [];
+  offset = 0;
+  while (true) {
+    const res = await fetch(`${base}/api/3/accounts?limit=100&offset=${offset}`, { headers });
+    const json: any = await res.json();
+    const items = json.accounts || [];
+    if (!items.length) break;
+    for (const a of items) {
+      companies.push({
+        name: a.name,
+        phone: a.phone || undefined,
+        website: a.website || undefined,
+        sourceId: String(a.id),
+      });
+    }
+    await onProgress?.({ companies: companies.length });
+    if (items.length < 100) break;
+    offset += 100;
+  }
+
+  const deals: NormalizedDeal[] = [];
+  offset = 0;
+  while (true) {
+    const res = await fetch(`${base}/api/3/deals?limit=100&offset=${offset}`, { headers });
+    const json: any = await res.json();
+    const items = json.deals || [];
+    if (!items.length) break;
+    for (const d of items) {
+      deals.push({
+        title: d.title,
+        value: d.value ? d.value / 100 : undefined,
+        stage: d.stage || "Prospecting",
+        closeDate: d.edate ? new Date(d.edate).getTime() : undefined,
+        sourceId: String(d.id),
+      });
+    }
+    await onProgress?.({ deals: deals.length });
+    if (items.length < 100) break;
+    offset += 100;
+  }
+
+  return { contacts, companies, deals, activities: [] };
+}
+
+// ─── Keap / Infusionsoft ──────────────────────────────────────────────────────
+export async function fetchKeap(
+  credentials: { apiKey: string },
+  onProgress?: ProgressCallback
+): Promise<MigrationData> {
+  const base = "https://api.infusionsoft.com/crm/rest/v1";
+  const headers = { "X-Keap-API-Key": credentials.apiKey, "Content-Type": "application/json" };
+
+  const contacts: NormalizedContact[] = [];
+  let offset = 0;
+  while (true) {
+    const res = await fetch(`${base}/contacts?limit=1000&offset=${offset}&optional_properties=email_addresses,phone_numbers,addresses,job_title,company`, { headers });
+    const json: any = await res.json();
+    const items = json.contacts || [];
+    if (!items.length) break;
+    for (const c of items) {
+      contacts.push({
+        firstName: c.given_name || "",
+        lastName: c.family_name || "",
+        email: c.email_addresses?.[0]?.email || undefined,
+        phone: c.phone_numbers?.[0]?.number || undefined,
+        jobTitle: c.job_title || undefined,
+        company: c.company?.company_name || undefined,
+        city: c.addresses?.[0]?.locality || undefined,
+        state: c.addresses?.[0]?.region || undefined,
+        country: c.addresses?.[0]?.country_code || undefined,
+        sourceId: String(c.id),
+      });
+    }
+    await onProgress?.({ contacts: contacts.length });
+    if (items.length < 1000) break;
+    offset += 1000;
+  }
+
+  const companies: NormalizedCompany[] = [];
+  offset = 0;
+  while (true) {
+    const res = await fetch(`${base}/companies?limit=1000&offset=${offset}`, { headers });
+    const json: any = await res.json();
+    const items = json.companies || [];
+    if (!items.length) break;
+    for (const a of items) {
+      companies.push({
+        name: a.company_name,
+        phone: a.phone_number?.number || undefined,
+        website: a.website || undefined,
+        city: a.address?.locality || undefined,
+        state: a.address?.region || undefined,
+        country: a.address?.country_code || undefined,
+        sourceId: String(a.id),
+      });
+    }
+    await onProgress?.({ companies: companies.length });
+    if (items.length < 1000) break;
+    offset += 1000;
+  }
+
+  return { contacts, companies, deals: [], activities: [] };
+}
+
+// ─── Copper CRM ───────────────────────────────────────────────────────────────
+export async function fetchCopper(
+  credentials: { apiKey: string; userEmail: string },
+  onProgress?: ProgressCallback
+): Promise<MigrationData> {
+  const base = "https://api.copper.com/developer_api/v1";
+  const headers = {
+    "X-PW-AccessToken": credentials.apiKey,
+    "X-PW-Application": "developer_api",
+    "X-PW-UserEmail": credentials.userEmail,
+    "Content-Type": "application/json"
+  };
+
+  const contacts: NormalizedContact[] = [];
+  let page = 1;
+  while (true) {
+    const res = await fetch(`${base}/people/search`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ page_size: 200, page_number: page })
+    });
+    const items: any[] = await res.json();
+    if (!items.length) break;
+    for (const c of items) {
+      contacts.push({
+        firstName: (c.name || "").split(" ")[0] || "",
+        lastName: (c.name || "").split(" ").slice(1).join(" ") || "",
+        email: c.emails?.[0]?.email || undefined,
+        phone: c.phone_numbers?.[0]?.number || undefined,
+        jobTitle: c.title || undefined,
+        company: c.company_name || undefined,
+        city: c.address?.city || undefined,
+        state: c.address?.state || undefined,
+        country: c.address?.country || undefined,
+        website: c.websites?.[0]?.url || undefined,
+        sourceId: String(c.id),
+      });
+    }
+    await onProgress?.({ contacts: contacts.length });
+    if (items.length < 200) break;
+    page++;
+  }
+
+  const companies: NormalizedCompany[] = [];
+  page = 1;
+  while (true) {
+    const res = await fetch(`${base}/companies/search`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ page_size: 200, page_number: page })
+    });
+    const items: any[] = await res.json();
+    if (!items.length) break;
+    for (const a of items) {
+      companies.push({
+        name: a.name,
+        phone: a.phone_numbers?.[0]?.number || undefined,
+        website: a.websites?.[0]?.url || undefined,
+        city: a.address?.city || undefined,
+        state: a.address?.state || undefined,
+        country: a.address?.country || undefined,
+        employeeCount: a.details?.num_employees || undefined,
+        annualRevenue: a.details?.annual_revenue || undefined,
+        sourceId: String(a.id),
+      });
+    }
+    await onProgress?.({ companies: companies.length });
+    if (items.length < 200) break;
+    page++;
+  }
+
+  const deals: NormalizedDeal[] = [];
+  page = 1;
+  while (true) {
+    const res = await fetch(`${base}/opportunities/search`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ page_size: 200, page_number: page })
+    });
+    const items: any[] = await res.json();
+    if (!items.length) break;
+    for (const d of items) {
+      deals.push({
+        title: d.name,
+        value: d.monetary_value || undefined,
+        stage: d.pipeline_stage?.name || "Prospecting",
+        closeDate: d.close_date ? d.close_date * 1000 : undefined,
+        sourceId: String(d.id),
+      });
+    }
+    await onProgress?.({ deals: deals.length });
+    if (items.length < 200) break;
+    page++;
+  }
+
+  return { contacts, companies, deals, activities: [] };
+}
+
+// ─── Nutshell CRM ─────────────────────────────────────────────────────────────
+export async function fetchNutshell(
+  credentials: { username: string; apiKey: string },
+  onProgress?: ProgressCallback
+): Promise<MigrationData> {
+  const base = "https://app.nutshell.com/api/v1/json";
+  const auth = Buffer.from(`${credentials.username}:${credentials.apiKey}`).toString("base64");
+  const headers = { Authorization: `Basic ${auth}`, "Content-Type": "application/json" };
+
+  const rpc = async (method: string, params: Record<string, unknown>) => {
+    const res = await fetch(base, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ jsonrpc: "2.0", method, params, id: Date.now() })
+    });
+    const json: any = await res.json();
+    return json.result;
+  };
+
+  const contacts: NormalizedContact[] = [];
+  let page = 1;
+  while (true) {
+    const result = await rpc("findContacts", { query: {}, page, perPage: 200, orderBy: "name", orderDirection: "ASC" });
+    const items = result || [];
+    if (!items.length) break;
+    for (const c of items) {
+      contacts.push({
+        firstName: c.name?.givenName || "",
+        lastName: c.name?.familyName || "",
+        email: c.email?.[0]?.value || undefined,
+        phone: c.phone?.[0]?.value || undefined,
+        jobTitle: c.jobTitle || undefined,
+        city: c.address?.city || undefined,
+        state: c.address?.state || undefined,
+        country: c.address?.country || undefined,
+        sourceId: String(c.id),
+      });
+    }
+    await onProgress?.({ contacts: contacts.length });
+    if (items.length < 200) break;
+    page++;
+  }
+
+  const companies: NormalizedCompany[] = [];
+  page = 1;
+  while (true) {
+    const result = await rpc("findAccounts", { query: {}, page, perPage: 200, orderBy: "name", orderDirection: "ASC" });
+    const items = result || [];
+    if (!items.length) break;
+    for (const a of items) {
+      companies.push({
+        name: a.name,
+        phone: a.phone?.[0]?.value || undefined,
+        website: a.url?.[0]?.value || undefined,
+        city: a.address?.city || undefined,
+        state: a.address?.state || undefined,
+        country: a.address?.country || undefined,
+        sourceId: String(a.id),
+      });
+    }
+    await onProgress?.({ companies: companies.length });
+    if (items.length < 200) break;
+    page++;
+  }
+
+  const deals: NormalizedDeal[] = [];
+  page = 1;
+  while (true) {
+    const result = await rpc("findLeads", { query: {}, page, perPage: 200, orderBy: "name", orderDirection: "ASC" });
+    const items = result || [];
+    if (!items.length) break;
+    for (const d of items) {
+      deals.push({
+        title: d.name || `Lead #${d.id}`,
+        value: d.value?.amount || undefined,
+        stage: d.stage?.name || "Prospecting",
+        closeDate: d.estimatedClose ? new Date(d.estimatedClose).getTime() : undefined,
+        sourceId: String(d.id),
+      });
+    }
+    await onProgress?.({ deals: deals.length });
+    if (items.length < 200) break;
+    page++;
+  }
+
+  return { contacts, companies, deals, activities: [] };
+}
+
+// ─── Insightly ────────────────────────────────────────────────────────────────
+export async function fetchInsightly(
+  credentials: { apiKey: string },
+  onProgress?: ProgressCallback
+): Promise<MigrationData> {
+  const base = "https://api.insightly.com/v3.1";
+  const auth = Buffer.from(`${credentials.apiKey}:`).toString("base64");
+  const headers = { Authorization: `Basic ${auth}`, "Content-Type": "application/json" };
+
+  const contacts: NormalizedContact[] = [];
+  let skip = 0;
+  while (true) {
+    const res = await fetch(`${base}/Contacts?top=500&skip=${skip}&brief=false`, { headers });
+    const items: any[] = await res.json();
+    if (!items.length) break;
+    for (const c of items) {
+      contacts.push({
+        firstName: c.FIRST_NAME || "",
+        lastName: c.LAST_NAME || "",
+        email: c.EMAIL_ADDRESS || undefined,
+        phone: c.PHONE || undefined,
+        jobTitle: c.TITLE || undefined,
+        company: c.ORGANISATION_NAME || undefined,
+        city: c.CITY || undefined,
+        state: c.STATE || undefined,
+        country: c.COUNTRY || undefined,
+        website: c.WEBSITE || undefined,
+        sourceId: String(c.CONTACT_ID),
+      });
+    }
+    await onProgress?.({ contacts: contacts.length });
+    if (items.length < 500) break;
+    skip += 500;
+  }
+
+  const companies: NormalizedCompany[] = [];
+  skip = 0;
+  while (true) {
+    const res = await fetch(`${base}/Organisations?top=500&skip=${skip}&brief=false`, { headers });
+    const items: any[] = await res.json();
+    if (!items.length) break;
+    for (const a of items) {
+      companies.push({
+        name: a.ORGANISATION_NAME,
+        phone: a.PHONE || undefined,
+        website: a.WEBSITE || undefined,
+        city: a.CITY || undefined,
+        state: a.STATE || undefined,
+        country: a.COUNTRY || undefined,
+        industry: a.INDUSTRY || undefined,
+        employeeCount: a.NUMBER_OF_EMPLOYEES || undefined,
+        annualRevenue: a.ANNUAL_REVENUE || undefined,
+        sourceId: String(a.ORGANISATION_ID),
+      });
+    }
+    await onProgress?.({ companies: companies.length });
+    if (items.length < 500) break;
+    skip += 500;
+  }
+
+  const deals: NormalizedDeal[] = [];
+  skip = 0;
+  while (true) {
+    const res = await fetch(`${base}/Opportunities?top=500&skip=${skip}&brief=false`, { headers });
+    const items: any[] = await res.json();
+    if (!items.length) break;
+    for (const d of items) {
+      deals.push({
+        title: d.OPPORTUNITY_NAME,
+        value: d.BID_AMOUNT || undefined,
+        stage: d.STAGE_ID ? String(d.STAGE_ID) : "Prospecting",
+        closeDate: d.CLOSE_DATE ? new Date(d.CLOSE_DATE).getTime() : undefined,
+        sourceId: String(d.OPPORTUNITY_ID),
+      });
+    }
+    await onProgress?.({ deals: deals.length });
+    if (items.length < 500) break;
+    skip += 500;
+  }
+
+  return { contacts, companies, deals, activities: [] };
+}
+
+// ─── SugarCRM ─────────────────────────────────────────────────────────────────
+export async function fetchSugarCRM(
+  credentials: { username: string; password: string; instanceUrl: string },
+  onProgress?: ProgressCallback
+): Promise<MigrationData> {
+  const base = credentials.instanceUrl.replace(/\/$/, "");
+
+  // Authenticate
+  const authRes = await fetch(`${base}/rest/v11_1/oauth2/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      grant_type: "password",
+      client_id: "sugar",
+      client_secret: "",
+      username: credentials.username,
+      password: credentials.password,
+      platform: "base"
+    })
+  });
+  const authJson: any = await authRes.json();
+  const token = authJson.access_token;
+  if (!token) throw new Error("SugarCRM authentication failed. Check your credentials.");
+
+  const headers = { "OAuth-Token": token, "Content-Type": "application/json" };
+
+  const contacts: NormalizedContact[] = [];
+  let offset = 0;
+  while (true) {
+    const res = await fetch(`${base}/rest/v11_1/Contacts?max_num=200&offset=${offset}`, { headers });
+    const json: any = await res.json();
+    const items = json.records || [];
+    if (!items.length) break;
+    for (const c of items) {
+      contacts.push({
+        firstName: c.first_name || "",
+        lastName: c.last_name || "",
+        email: c.email?.[0]?.email_address || undefined,
+        phone: c.phone_work || c.phone_mobile || undefined,
+        jobTitle: c.title || undefined,
+        company: c.account_name || undefined,
+        city: c.primary_address_city || undefined,
+        state: c.primary_address_state || undefined,
+        country: c.primary_address_country || undefined,
+        website: c.website || undefined,
+        sourceId: c.id,
+      });
+    }
+    await onProgress?.({ contacts: contacts.length });
+    if (items.length < 200) break;
+    offset += 200;
+  }
+
+  const companies: NormalizedCompany[] = [];
+  offset = 0;
+  while (true) {
+    const res = await fetch(`${base}/rest/v11_1/Accounts?max_num=200&offset=${offset}`, { headers });
+    const json: any = await res.json();
+    const items = json.records || [];
+    if (!items.length) break;
+    for (const a of items) {
+      companies.push({
+        name: a.name,
+        phone: a.phone_office || undefined,
+        website: a.website || undefined,
+        industry: a.industry || undefined,
+        city: a.billing_address_city || undefined,
+        state: a.billing_address_state || undefined,
+        country: a.billing_address_country || undefined,
+        employeeCount: a.employees || undefined,
+        annualRevenue: a.annual_revenue ? parseFloat(a.annual_revenue) : undefined,
+        sourceId: a.id,
+      });
+    }
+    await onProgress?.({ companies: companies.length });
+    if (items.length < 200) break;
+    offset += 200;
+  }
+
+  const deals: NormalizedDeal[] = [];
+  offset = 0;
+  while (true) {
+    const res = await fetch(`${base}/rest/v11_1/Opportunities?max_num=200&offset=${offset}`, { headers });
+    const json: any = await res.json();
+    const items = json.records || [];
+    if (!items.length) break;
+    for (const d of items) {
+      deals.push({
+        title: d.name,
+        value: d.amount ? parseFloat(d.amount) : undefined,
+        stage: d.sales_stage || "Prospecting",
+        closeDate: d.date_closed ? new Date(d.date_closed).getTime() : undefined,
+        sourceId: d.id,
+      });
+    }
+    await onProgress?.({ deals: deals.length });
+    if (items.length < 200) break;
+    offset += 200;
+  }
+
+  return { contacts, companies, deals, activities: [] };
+}
+
+// ─── Streak (Gmail CRM) ───────────────────────────────────────────────────────
+export async function fetchStreak(
+  credentials: { apiKey: string },
+  onProgress?: ProgressCallback
+): Promise<MigrationData> {
+  const base = "https://www.streak.com/api/v2";
+  const auth = Buffer.from(`${credentials.apiKey}:`).toString("base64");
+  const headers = { Authorization: `Basic ${auth}`, "Content-Type": "application/json" };
+
+  const contacts: NormalizedContact[] = [];
+  const companies: NormalizedCompany[] = [];
+  const deals: NormalizedDeal[] = [];
+
+  // Get all pipelines
+  const pipelinesRes = await fetch(`${base}/pipelines`, { headers });
+  const pipelinesJson: any = await pipelinesRes.json();
+  const pipelines: any[] = pipelinesJson.results || [];
+
+  for (const pipeline of pipelines) {
+    // Get boxes (deals) in this pipeline
+    const boxesRes = await fetch(`${base}/pipelines/${pipeline.key}/boxes`, { headers });
+    const boxesJson: any = await boxesRes.json();
+    const boxes: any[] = boxesJson.results || [];
+
+    for (const box of boxes) {
+      deals.push({
+        title: box.name || `Box #${box.key}`,
+        stage: box.stageKey || "Prospecting",
+        sourceId: box.key,
+      });
+
+      // Get contacts for this box
+      if (box.contacts?.length) {
+        for (const c of box.contacts) {
+          contacts.push({
+            firstName: (c.name || "").split(" ")[0] || "",
+            lastName: (c.name || "").split(" ").slice(1).join(" ") || "",
+            email: c.emailAddresses?.[0] || undefined,
+            phone: c.phoneNumbers?.[0] || undefined,
+            company: c.companies?.[0]?.name || undefined,
+            sourceId: c.key || String(Math.random()),
+          });
+        }
+      }
+    }
+    await onProgress?.({ deals: deals.length, contacts: contacts.length });
+  }
+
+  return { contacts, companies, deals, activities: [] };
+}
+
+// ─── Nimble ───────────────────────────────────────────────────────────────────
+export async function fetchNimble(
+  credentials: { apiKey: string },
+  onProgress?: ProgressCallback
+): Promise<MigrationData> {
+  const base = "https://api.nimble.com/api/v1";
+  const headers = { Authorization: `Bearer ${credentials.apiKey}`, "Content-Type": "application/json" };
+
+  const contacts: NormalizedContact[] = [];
+  let page = 1;
+  while (true) {
+    const res = await fetch(`${base}/contacts?per_page=300&page=${page}&record_type=person`, { headers });
+    const json: any = await res.json();
+    const items = json.resources || [];
+    if (!items.length) break;
+    for (const c of items) {
+      const fields = c.fields || {};
+      contacts.push({
+        firstName: fields["first name"]?.[0]?.value || "",
+        lastName: fields["last name"]?.[0]?.value || "",
+        email: fields.email?.[0]?.value || undefined,
+        phone: fields.phone?.[0]?.value || undefined,
+        jobTitle: fields["job title"]?.[0]?.value || undefined,
+        company: fields["company name"]?.[0]?.value || undefined,
+        city: fields.city?.[0]?.value || undefined,
+        state: fields.state?.[0]?.value || undefined,
+        country: fields.country?.[0]?.value || undefined,
+        website: fields.URL?.[0]?.value || undefined,
+        sourceId: c.id,
+      });
+    }
+    await onProgress?.({ contacts: contacts.length });
+    if (items.length < 300) break;
+    page++;
+  }
+
+  const companies: NormalizedCompany[] = [];
+  page = 1;
+  while (true) {
+    const res = await fetch(`${base}/contacts?per_page=300&page=${page}&record_type=company`, { headers });
+    const json: any = await res.json();
+    const items = json.resources || [];
+    if (!items.length) break;
+    for (const a of items) {
+      const fields = a.fields || {};
+      companies.push({
+        name: fields["company name"]?.[0]?.value || a.id,
+        phone: fields.phone?.[0]?.value || undefined,
+        website: fields.URL?.[0]?.value || undefined,
+        city: fields.city?.[0]?.value || undefined,
+        state: fields.state?.[0]?.value || undefined,
+        country: fields.country?.[0]?.value || undefined,
+        sourceId: a.id,
+      });
+    }
+    await onProgress?.({ companies: companies.length });
+    if (items.length < 300) break;
+    page++;
+  }
+
+  return { contacts, companies, deals: [], activities: [] };
+}
+
+// ─── Monday.com ───────────────────────────────────────────────────────────────
+export async function fetchMonday(
+  credentials: { apiToken: string },
+  onProgress?: ProgressCallback
+): Promise<MigrationData> {
+  const base = "https://api.monday.com/v2";
+  const headers = { Authorization: credentials.apiToken, "Content-Type": "application/json" };
+
+  const contacts: NormalizedContact[] = [];
+  const companies: NormalizedCompany[] = [];
+  const deals: NormalizedDeal[] = [];
+
+  // Get all boards
+  const boardsQuery = `{ boards(limit: 50) { id name board_kind columns { id title type } } }`;
+  const boardsRes = await fetch(base, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ query: boardsQuery })
+  });
+  const boardsJson: any = await boardsRes.json();
+  const boards: any[] = boardsJson.data?.boards || [];
+
+  for (const board of boards) {
+    const itemsQuery = `{ boards(ids: [${board.id}]) { items_page(limit: 500) { items { id name column_values { id text value } } } } }`;
+    const itemsRes = await fetch(base, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ query: itemsQuery })
+    });
+    const itemsJson: any = await itemsRes.json();
+    const items: any[] = itemsJson.data?.boards?.[0]?.items_page?.items || [];
+
+    const boardNameLower = board.name.toLowerCase();
+    const isContacts = boardNameLower.includes("contact") || boardNameLower.includes("lead") || boardNameLower.includes("people");
+    const isCompanies = boardNameLower.includes("compan") || boardNameLower.includes("account") || boardNameLower.includes("client");
+    const isDeals = boardNameLower.includes("deal") || boardNameLower.includes("opportunit") || boardNameLower.includes("pipeline") || boardNameLower.includes("sale");
+
+    for (const item of items) {
+      const colMap: Record<string, string> = {};
+      for (const col of item.column_values || []) {
+        if (col.text) colMap[col.id] = col.text;
+      }
+
+      if (isDeals) {
+        deals.push({ title: item.name, stage: "Prospecting", sourceId: item.id });
+      } else if (isCompanies) {
+        companies.push({ name: item.name, sourceId: item.id });
+      } else if (isContacts) {
+        const nameParts = item.name.split(" ");
+        contacts.push({
+          firstName: nameParts[0] || "",
+          lastName: nameParts.slice(1).join(" ") || "",
+          email: Object.values(colMap).find(v => v.includes("@")) || undefined,
+          sourceId: item.id,
+        });
+      }
+    }
+    await onProgress?.({ contacts: contacts.length, companies: companies.length, deals: deals.length });
+  }
+
+  return { contacts, companies, deals, activities: [] };
+}
+
+// ─── Constant Contact ─────────────────────────────────────────────────────────
+export async function fetchConstantContact(
+  credentials: { accessToken: string },
+  onProgress?: ProgressCallback
+): Promise<MigrationData> {
+  const base = "https://api.cc.email/v3";
+  const headers = { Authorization: `Bearer ${credentials.accessToken}`, "Content-Type": "application/json" };
+
+  const contacts: NormalizedContact[] = [];
+  let cursor: string | null = null;
+
+  while (true) {
+    const url = cursor
+      ? `${base}/contacts?limit=500&cursor=${cursor}&status=all&include=custom_fields,phone_numbers,street_addresses`
+      : `${base}/contacts?limit=500&status=all&include=custom_fields,phone_numbers,street_addresses`;
+    const res = await fetch(url, { headers });
+    const json: any = await res.json();
+    const items = json.contacts || [];
+
+    for (const c of items) {
+      const addr = c.street_addresses?.[0] || {};
+      contacts.push({
+        firstName: c.first_name || "",
+        lastName: c.last_name || "",
+        email: c.email_address?.address || undefined,
+        phone: c.phone_numbers?.[0]?.phone_number || undefined,
+        jobTitle: c.job_title || undefined,
+        company: c.company_name || undefined,
+        city: addr.city || undefined,
+        state: addr.state || undefined,
+        country: addr.country || undefined,
+        sourceId: c.contact_id,
+      });
+    }
+    await onProgress?.({ contacts: contacts.length });
+
+    cursor = json._links?.next?.href ? new URL(json._links.next.href).searchParams.get("cursor") : null;
+    if (!cursor || !items.length) break;
+  }
+
+  return { contacts, companies: [], deals: [], activities: [] };
+}

@@ -21,6 +21,9 @@ import {
 import {
   fetchHubSpot, fetchSalesforce, fetchPipedrive,
   fetchZoho, fetchGoHighLevel, fetchClose,
+  fetchApollo, fetchFreshsales, fetchActiveCampaign,
+  fetchKeap, fetchCopper, fetchNutshell, fetchInsightly,
+  fetchSugarCRM, fetchStreak, fetchNimble, fetchMonday, fetchConstantContact,
   type MigrationData, type NormalizedContact, type NormalizedCompany,
   type NormalizedDeal, type NormalizedActivity,
 } from "../migration-fetchers";
@@ -146,7 +149,9 @@ export const migrationRouter = router({
   // 5. Generates the cheat sheet
   startMigration: companyAdminProcedure
     .input(z.object({
-      sourceSystem: z.enum(["hubspot", "salesforce", "pipedrive", "zoho", "gohighlevel", "close", "spreadsheet", "other"]),
+      sourceSystem: z.enum(["hubspot", "salesforce", "pipedrive", "zoho", "gohighlevel", "close",
+        "apollo", "freshsales", "activecampaign", "keap", "copper", "nutshell", "insightly",
+        "sugarcrm", "streak", "nimble", "monday", "constantcontact", "spreadsheet", "other"]),
       apiKey: z.string().optional(),       // API key / token
       instanceUrl: z.string().optional(),  // For Salesforce/Zoho
       csvData: z.string().optional(),      // For CSV uploads (base64 or raw text)
@@ -457,6 +462,54 @@ async function runMigrationAsync(
         case "close":
           if (!input.apiKey) throw new Error("Close CRM API key is required");
           liveData = await fetchClose(input.apiKey, progressCb);
+          break;
+        case "apollo":
+          if (!input.apiKey) throw new Error("Apollo.io API key is required");
+          liveData = await fetchApollo(input.apiKey, progressCb);
+          break;
+        case "freshsales":
+          if (!input.apiKey) throw new Error("Freshsales API key and subdomain are required");
+          liveData = await fetchFreshsales(input.apiKey, progressCb);
+          break;
+        case "activecampaign":
+          if (!input.apiKey) throw new Error("ActiveCampaign API key and URL are required");
+          liveData = await fetchActiveCampaign(input.apiKey, progressCb);
+          break;
+        case "keap":
+          if (!input.apiKey) throw new Error("Keap API key is required");
+          liveData = await fetchKeap(input.apiKey, progressCb);
+          break;
+        case "copper":
+          if (!input.apiKey) throw new Error("Copper API key and email are required");
+          liveData = await fetchCopper(input.apiKey, progressCb);
+          break;
+        case "nutshell":
+          if (!input.apiKey) throw new Error("Nutshell email and API key are required");
+          liveData = await fetchNutshell(input.apiKey, progressCb);
+          break;
+        case "insightly":
+          if (!input.apiKey) throw new Error("Insightly API key is required");
+          liveData = await fetchInsightly(input.apiKey, progressCb);
+          break;
+        case "sugarcrm":
+          if (!input.apiKey) throw new Error("SugarCRM credentials are required");
+          liveData = await fetchSugarCRM(input.apiKey, progressCb);
+          break;
+        case "streak":
+          if (!input.apiKey) throw new Error("Streak API key is required");
+          liveData = await fetchStreak(input.apiKey, progressCb);
+          break;
+        case "nimble":
+          if (!input.apiKey) throw new Error("Nimble API token is required");
+          liveData = await fetchNimble(input.apiKey, progressCb);
+          break;
+        case "monday":
+          if (!input.apiKey) throw new Error("Monday.com API token is required");
+          liveData = await fetchMonday(input.apiKey, progressCb);
+          break;
+        case "constantcontact":
+          if (!input.apiKey) throw new Error("Constant Contact access token is required");
+          liveData = await fetchConstantContact(input.apiKey, progressCb);
           break;
         default:
           throw new Error(`Live API migration not supported for: ${input.sourceSystem}`);

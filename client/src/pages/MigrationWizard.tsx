@@ -1,24 +1,26 @@
 import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useSkin } from "@/contexts/SkinContext";
 import {
   CheckCircle2, ArrowRight, Upload, Zap, Users, Building2,
-  Briefcase, Activity, Star, ChevronRight, RefreshCw, Sparkles,
-  FileText, AlertCircle, Clock, TrendingUp
+  Briefcase, Activity, Puzzle, FileText, AlertCircle, RefreshCw,
+  Download, ExternalLink, ChevronRight, Key, Globe
 } from "lucide-react";
 
-type Step = "select" | "connect" | "migrating" | "complete";
+type ImportMode = "extension" | "csv" | "api";
+type Step = "mode" | "select" | "connect" | "migrating" | "complete";
 
 const STATUS_LABELS: Record<string, string> = {
   validating: "Validating connection...",
-  fetching: "Fetching your data from the API...",
+  fetching: "Fetching your data...",
   analyzing: "Analyzing your data structure...",
   mapping: "AI is mapping your fields...",
   importing: "Importing your data...",
@@ -27,19 +29,79 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_PROGRESS: Record<string, number> = {
-  validating: 10,
-  fetching: 30,
-  analyzing: 40,
-  mapping: 55,
-  importing: 75,
-  completed: 100,
-  failed: 0,
+  validating: 10, fetching: 30, analyzing: 40,
+  mapping: 55, importing: 75, completed: 100, failed: 0,
+};
+
+// Step-by-step guides for finding API keys per CRM
+const API_KEY_GUIDES: Record<string, { steps: string[]; link: string }> = {
+  hubspot: {
+    steps: ["Go to HubSpot → Settings (gear icon)", "Click 'Private Apps' in the left sidebar", "Click 'Create a private app'", "Name it 'Axiom Import', grant CRM read scopes", "Copy the token shown"],
+    link: "https://app.hubspot.com/private-apps",
+  },
+  pipedrive: {
+    steps: ["Go to Pipedrive → Your name (top right)", "Click 'Personal preferences'", "Click the 'API' tab", "Copy your Personal API Token"],
+    link: "https://app.pipedrive.com/settings/api",
+  },
+  gohighlevel: {
+    steps: ["Go to GoHighLevel → Settings", "Click 'Integrations'", "Click 'API Key'", "Copy your API key"],
+    link: "https://app.gohighlevel.com/settings/integrations",
+  },
+  close: {
+    steps: ["Go to Close CRM → Settings", "Click 'API Keys' in the left menu", "Click 'Generate API Key'", "Copy the key"],
+    link: "https://app.close.com/settings/api-keys/",
+  },
+  apollo: {
+    steps: ["Go to Apollo.io → Settings", "Click 'Integrations' in the left menu", "Click 'API' tab", "Copy your API Key"],
+    link: "https://app.apollo.io/#/settings/integrations/api",
+  },
+  freshsales: {
+    steps: ["Go to Freshsales → Profile picture (top right)", "Click 'Profile Settings'", "Click 'API Settings' tab", "Copy your API Key", "Also note your subdomain (e.g. 'mycompany' from mycompany.freshsales.io)", "Enter as: apikey:subdomain"],
+    link: "https://crm.freshworks.com/crm/sales/",
+  },
+  activecampaign: {
+    steps: ["Go to ActiveCampaign → Settings (gear icon)", "Click 'Developer'", "Copy your API Key and API URL", "Enter as: apikey:https://yoururl.api-us1.com"],
+    link: "https://www.activecampaign.com/login/",
+  },
+  keap: {
+    steps: ["Go to Keap → Settings", "Click 'Integrations'", "Click 'API Key'", "Copy your API key"],
+    link: "https://signin.infusionsoft.com/",
+  },
+  copper: {
+    steps: ["Go to Copper → Settings", "Click 'Integrations'", "Click 'API Keys'", "Generate a new key", "Enter as: apikey:youremail@company.com"],
+    link: "https://app.copper.com/",
+  },
+  nutshell: {
+    steps: ["Go to Nutshell → Your profile (top right)", "Click 'Profile Settings'", "Click 'API Keys' tab", "Generate a new API key", "Enter as: youremail@company.com:apikey"],
+    link: "https://app.nutshell.com/",
+  },
+  insightly: {
+    steps: ["Go to Insightly → User icon (top right)", "Click 'User Settings'", "Scroll to the bottom", "Copy your API Key"],
+    link: "https://crm.na1.insightly.com/",
+  },
+  sugarcrm: {
+    steps: ["Enter your SugarCRM username", "Enter your SugarCRM password", "Enter your instance URL (e.g. https://mycompany.sugarcrm.com)", "Format: username:password:https://yourinstance.sugarcrm.com"],
+    link: "https://www.sugarcrm.com/",
+  },
+  streak: {
+    steps: ["Open Gmail in Chrome", "Click the Streak icon in the toolbar", "Click 'Settings'", "Click 'API' tab", "Copy your API Key"],
+    link: "https://mail.google.com/",
+  },
+  nimble: {
+    steps: ["Go to Nimble → Settings (gear icon)", "Click 'API'", "Click 'Generate New Token'", "Copy your API token"],
+    link: "https://app.nimble.com/settings/api",
+  },
+  monday: {
+    steps: ["Go to Monday.com → Profile picture (top right)", "Click 'Developers'", "Click 'My Access Tokens'", "Copy your personal API token"],
+    link: "https://monday.com/",
+  },
 };
 
 export default function MigrationWizard() {
   const { t } = useSkin();
 
-  const [step, setStep] = useState<Step>("select");
+  const [mode, setMode] = useState<ImportMode | null>(null);
+  const [step, setStep] = useState<Step>("mode");
   const [selectedCRM, setSelectedCRM] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState("");
   const [instanceUrl, setInstanceUrl] = useState("");
@@ -47,10 +109,12 @@ export default function MigrationWizard() {
   const [csvType, setCsvType] = useState<"contacts" | "companies" | "deals">("contacts");
   const [jobId, setJobId] = useState<number | null>(null);
   const [cheatSheet, setCheatSheet] = useState<string | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: competitors = [] } = trpc.migration.getCompetitors.useQuery();
-  const { data: job, refetch: refetchJob } = trpc.migration.getJob.useQuery(
+  const { data: job } = trpc.migration.getJob.useQuery(
     { id: jobId! },
     { enabled: !!jobId, refetchInterval: jobId ? 2000 : false }
   );
@@ -66,29 +130,32 @@ export default function MigrationWizard() {
     },
   });
 
-  // Watch job status and transition to complete
   useEffect(() => {
     if (!job) return;
     if (job.status === "completed") {
-      // Extract cheat sheet from importLog
       const log = (job as any).importLog;
       if (Array.isArray(log) && log.length > 0) {
         setCheatSheet(log[0]?.message || null);
       }
       setStep("complete");
+      // Auto-switch skin to match the imported CRM
+      if (selectedCRM) {
+        setSkin.mutate({ skinId: selectedCRM as any });
+      }
     }
   }, [job?.status]);
 
   const selectedProfile = competitors.find(c => c.key === selectedCRM);
+  const guide = selectedCRM ? API_KEY_GUIDES[selectedCRM] : null;
+  const progress = job ? (STATUS_PROGRESS[job.status as string] || 0) : 0;
+  const statusLabel = job ? (STATUS_LABELS[job.status as string] || job.status) : "";
 
   const handleStartMigration = async () => {
     if (!selectedCRM) return;
-
     let csvData: string | undefined;
     if (selectedProfile?.authMethod === "csv_upload" && csvFile) {
       csvData = await csvFile.text();
     }
-
     startMigration.mutate({
       sourceSystem: selectedCRM as any,
       apiKey: apiKey || undefined,
@@ -98,25 +165,29 @@ export default function MigrationWizard() {
     });
   };
 
-  const progress = job ? (STATUS_PROGRESS[job.status as string] || 0) : 0;
-  const statusLabel = job ? (STATUS_LABELS[job.status as string] || job.status) : "";
+  const handleFileDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file && (file.name.endsWith(".csv") || file.name.endsWith(".xlsx"))) {
+      setCsvFile(file);
+    } else {
+      toast.error("Please upload a CSV file");
+    }
+  };
 
-  // ── Step 1: Select CRM ────────────────────────────────────────────────────
-  if (step === "select") {
+  // ── Step: Mode Picker ─────────────────────────────────────────────────────
+  if (step === "mode") {
     return (
       <div className="max-w-4xl mx-auto p-6 space-y-8">
-        {/* Header */}
         <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-full px-4 py-1.5 text-sm font-medium text-orange-700">
             <Zap className="w-4 h-4" />
             One-Button AI Migration
           </div>
-          <h1 className="text-4xl font-black text-gray-900">
-            Bring Your Entire CRM With You
-          </h1>
+          <h1 className="text-4xl font-black text-gray-900">Bring Your Entire CRM With You</h1>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            Our AI maps every field — standard and custom — and imports everything automatically.
-            You don't touch a single setting. It just works.
+            Choose how you want to import. All three methods import contacts, companies, deals, and activity history automatically.
           </p>
         </div>
 
@@ -138,35 +209,58 @@ export default function MigrationWizard() {
           ))}
         </div>
 
-        {/* CRM Picker */}
-        <div>
-          <h2 className="text-lg font-bold text-gray-800 mb-4">Where are you migrating from?</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {competitors.map((crm) => (
-              <button
-                key={crm.key}
-                onClick={() => setSelectedCRM(crm.key)}
-                className={`group relative p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
-                  selectedCRM === crm.key
-                    ? "border-orange-500 bg-orange-50 shadow-lg scale-[1.02]"
-                    : "border-gray-100 bg-white hover:border-orange-200 hover:shadow-md"
-                }`}
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-2xl">{crm.logo}</span>
-                  <span className="font-bold text-gray-900">{crm.name}</span>
-                </div>
-                <div className="text-xs text-gray-400">
-                  {crm.authMethod === "csv_upload" ? "Upload CSV file" : "Connect via API"}
-                </div>
-                {selectedCRM === crm.key && (
-                  <div className="absolute top-3 right-3 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
-                    <CheckCircle2 className="w-3 h-3 text-white" />
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
+        {/* Mode cards */}
+        <div className="grid md:grid-cols-3 gap-4">
+          {/* Extension */}
+          <button
+            onClick={() => { setMode("extension"); setStep("select"); }}
+            className="group relative p-6 rounded-2xl border-2 border-gray-100 bg-white hover:border-orange-400 hover:shadow-lg text-left transition-all duration-200"
+          >
+            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4">
+              <Puzzle className="w-6 h-6 text-orange-600" />
+            </div>
+            <div className="font-black text-gray-900 text-lg mb-1">Browser Extension</div>
+            <div className="text-sm text-gray-500 mb-3">
+              Install once. Click import while logged into your old CRM. No API keys, no passwords shared with us.
+            </div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 rounded-full px-3 py-1">
+              <CheckCircle2 className="w-3 h-3" /> Easiest — truly one click
+            </div>
+          </button>
+
+          {/* CSV */}
+          <button
+            onClick={() => { setMode("csv"); setStep("select"); }}
+            className="group relative p-6 rounded-2xl border-2 border-gray-100 bg-white hover:border-orange-400 hover:shadow-lg text-left transition-all duration-200"
+          >
+            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+              <FileText className="w-6 h-6 text-blue-600" />
+            </div>
+            <div className="font-black text-gray-900 text-lg mb-1">Upload CSV / Excel</div>
+            <div className="text-sm text-gray-500 mb-3">
+              Export from your old CRM and drag the file here. Our AI auto-maps every column — even custom fields.
+            </div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 rounded-full px-3 py-1">
+              <CheckCircle2 className="w-3 h-3" /> Works with any CRM
+            </div>
+          </button>
+
+          {/* API */}
+          <button
+            onClick={() => { setMode("api"); setStep("select"); }}
+            className="group relative p-6 rounded-2xl border-2 border-gray-100 bg-white hover:border-orange-400 hover:shadow-lg text-left transition-all duration-200"
+          >
+            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
+              <Key className="w-6 h-6 text-purple-600" />
+            </div>
+            <div className="font-black text-gray-900 text-lg mb-1">Direct API Connect</div>
+            <div className="text-sm text-gray-500 mb-3">
+              Connect via API key or OAuth. We pull everything live — contacts, deals, notes, and custom fields.
+            </div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-700 bg-purple-50 rounded-full px-3 py-1">
+              <CheckCircle2 className="w-3 h-3" /> Most complete import
+            </div>
+          </button>
         </div>
 
         {/* Previous migrations */}
@@ -191,23 +285,140 @@ export default function MigrationWizard() {
             </div>
           </div>
         )}
+      </div>
+    );
+  }
+
+  // ── Step: Select CRM ──────────────────────────────────────────────────────
+  if (step === "select") {
+    const isExtension = mode === "extension";
+    const isCsvMode = mode === "csv";
+
+    return (
+      <div className="max-w-4xl mx-auto p-6 space-y-8">
+        <button onClick={() => setStep("mode")} className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1">
+          ← Back
+        </button>
+
+        {/* Extension install guide */}
+        {isExtension && (
+          <Card className="border-2 border-orange-200 bg-orange-50">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Puzzle className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-black text-gray-900 mb-1">Axiom CRM Importer Extension</h2>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Install the extension, log into your old CRM in the same browser, then click the Axiom icon and hit <strong>Import</strong>. That's it — no API keys, no exports, no configuration.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <a
+                      href="https://d2xsxph8kpxj0f.cloudfront.net/310519663348315388/mLLZEfmfSEuH47dfeJgVGY/axiom-crm-importer_a8c955b3.zip"
+                      download
+                      className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download Extension (.zip)
+                    </a>
+                    <button
+                      onClick={() => setShowGuide(!showGuide)}
+                      className="inline-flex items-center gap-2 bg-white border border-orange-200 text-orange-700 font-semibold px-4 py-2 rounded-xl text-sm hover:bg-orange-50 transition-colors"
+                    >
+                      {showGuide ? "Hide" : "Show"} Install Instructions
+                    </button>
+                  </div>
+                  {showGuide && (
+                    <div className="mt-4 bg-white rounded-xl border border-orange-100 p-4 space-y-2">
+                      <p className="text-sm font-semibold text-gray-700">How to install an unpacked Chrome extension:</p>
+                      <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+                        <li>Download and unzip the extension file above</li>
+                        <li>Open Chrome and go to <code className="bg-gray-100 px-1 rounded">chrome://extensions</code></li>
+                        <li>Enable <strong>Developer mode</strong> (toggle in top right)</li>
+                        <li>Click <strong>Load unpacked</strong> and select the unzipped folder</li>
+                        <li>The Axiom icon will appear in your Chrome toolbar</li>
+                        <li>Log into your old CRM, click the Axiom icon, and hit <strong>Import</strong></li>
+                      </ol>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {isCsvMode && (
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
+            <div className="flex items-start gap-3">
+              <FileText className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-blue-900">How to export from your CRM</p>
+                <p className="text-sm text-blue-700 mt-1">
+                  In most CRMs: go to Contacts → All Contacts → Export → Download as CSV. Then select your CRM below so we know how to map the columns.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div>
+          <h2 className="text-lg font-bold text-gray-800 mb-4">
+            {isExtension ? "Which CRM are you logged into?" : isCsvMode ? "Which CRM did you export from?" : "Which CRM are you connecting?"}
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {competitors
+              .filter(crm => isCsvMode ? true : isExtension ? crm.key !== "spreadsheet" : crm.key !== "spreadsheet")
+              .map((crm) => (
+                <button
+                  key={crm.key}
+                  onClick={() => setSelectedCRM(crm.key)}
+                  className={`group relative p-4 rounded-2xl border-2 text-left transition-all duration-200 ${
+                    selectedCRM === crm.key
+                      ? "border-orange-500 bg-orange-50 shadow-lg scale-[1.02]"
+                      : "border-gray-100 bg-white hover:border-orange-200 hover:shadow-md"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xl">{crm.logo}</span>
+                    <span className="font-bold text-gray-900 text-sm leading-tight">{crm.name}</span>
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    {crm.authMethod === "oauth" ? "OAuth login" : crm.authMethod === "csv_upload" ? "Upload file" : "API key"}
+                  </div>
+                  {selectedCRM === crm.key && (
+                    <div className="absolute top-2 right-2 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
+                      <CheckCircle2 className="w-3 h-3 text-white" />
+                    </div>
+                  )}
+                </button>
+              ))}
+          </div>
+        </div>
 
         <Button
           size="lg"
           className="w-full h-14 text-lg font-bold bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-lg"
           disabled={!selectedCRM}
-          onClick={() => setStep("connect")}
+          onClick={() => {
+            if (isExtension) {
+              toast.success(`Extension ready! Log into ${selectedProfile?.name} and click the Axiom icon in your toolbar.`);
+            } else {
+              setStep("connect");
+            }
+          }}
         >
-          Continue with {selectedProfile?.name || "Selected CRM"}
+          {isExtension ? `I'm logged into ${selectedProfile?.name || "my CRM"} — ready!` : `Continue with ${selectedProfile?.name || "Selected CRM"}`}
           <ArrowRight className="ml-2 w-5 h-5" />
         </Button>
       </div>
     );
   }
 
-  // ── Step 2: Connect ───────────────────────────────────────────────────────
+  // ── Step: Connect / Upload ────────────────────────────────────────────────
   if (step === "connect" && selectedProfile) {
-    const isCsv = selectedProfile.authMethod === "csv_upload";
+    const isCsv = selectedProfile.authMethod === "csv_upload" || mode === "csv";
+    const isOAuth = selectedProfile.authMethod === "oauth";
 
     return (
       <div className="max-w-2xl mx-auto p-6 space-y-6">
@@ -230,156 +441,172 @@ export default function MigrationWizard() {
             {isCsv ? (
               <>
                 <div className="space-y-2">
-                  <Label className="font-semibold">What type of data is in your CSV?</Label>
+                  <Label className="font-semibold">What type of data is in your file?</Label>
                   <div className="grid grid-cols-3 gap-2">
-                    {(["contacts", "companies", "deals"] as const).map(t => (
+                    {(["contacts", "companies", "deals"] as const).map(type => (
                       <button
-                        key={t}
-                        onClick={() => setCsvType(t)}
+                        key={type}
+                        onClick={() => setCsvType(type)}
                         className={`p-3 rounded-xl border-2 text-sm font-medium capitalize transition-all ${
-                          csvType === t ? "border-orange-500 bg-orange-50 text-orange-700" : "border-gray-100 text-gray-600 hover:border-orange-200"
+                          csvType === type ? "border-orange-500 bg-orange-50 text-orange-700" : "border-gray-100 text-gray-600 hover:border-orange-200"
                         }`}
                       >
-                        {t}
+                        {type}
                       </button>
                     ))}
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="font-semibold">Upload your CSV file</Label>
+                  <Label className="font-semibold">Upload your CSV or Excel file</Label>
                   <div
-                    className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-orange-300 hover:bg-orange-50/50 transition-all"
-                    onClick={() => document.getElementById("csv-upload")?.click()}
+                    className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+                      dragOver ? "border-orange-400 bg-orange-50" : csvFile ? "border-green-400 bg-green-50" : "border-gray-200 hover:border-orange-300"
+                    }`}
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={handleFileDrop}
+                    onClick={() => fileInputRef.current?.click()}
                   >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".csv,.xlsx,.xls"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) setCsvFile(file);
+                      }}
+                    />
                     {csvFile ? (
-                      <div className="flex items-center justify-center gap-2 text-green-600">
-                        <CheckCircle2 className="w-5 h-5" />
-                        <span className="font-medium">{csvFile.name}</span>
-                        <span className="text-gray-400 text-sm">({(csvFile.size / 1024).toFixed(0)} KB)</span>
+                      <div className="space-y-1">
+                        <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto" />
+                        <p className="font-semibold text-green-700">{csvFile.name}</p>
+                        <p className="text-xs text-green-600">{(csvFile.size / 1024).toFixed(1)} KB — click to change</p>
                       </div>
                     ) : (
-                      <>
-                        <Upload className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                        <p className="text-gray-500 font-medium">Click to upload CSV</p>
-                        <p className="text-xs text-gray-400 mt-1">Any CSV exported from your CRM</p>
-                      </>
+                      <div className="space-y-2">
+                        <Upload className="w-8 h-8 text-gray-300 mx-auto" />
+                        <p className="text-gray-500 font-medium">Drag & drop your file here</p>
+                        <p className="text-xs text-gray-400">or click to browse — CSV, XLS, XLSX supported</p>
+                      </div>
                     )}
                   </div>
-                  <input
-                    id="csv-upload"
-                    type="file"
-                    accept=".csv"
-                    className="hidden"
-                    onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
-                  />
+                </div>
+                <div className="bg-blue-50 rounded-xl p-4 text-sm text-blue-700">
+                  <strong>AI field mapping:</strong> Our AI will automatically match your column headers to Axiom fields — even custom fields and non-standard column names. You'll see a preview before anything is imported.
                 </div>
               </>
+            ) : isOAuth ? (
+              <div className="text-center space-y-4 py-4">
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl mx-auto" style={{ backgroundColor: selectedProfile.color + "20" }}>
+                  {selectedProfile.logo}
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-800 text-lg">Connect with {selectedProfile.name}</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    You'll be redirected to {selectedProfile.name} to authorize Axiom. Log in with your normal credentials — we never see your password.
+                  </p>
+                </div>
+                <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-sm text-green-700">
+                  <CheckCircle2 className="w-4 h-4 inline mr-1" />
+                  Secure OAuth — your credentials stay on {selectedProfile.name}'s servers
+                </div>
+                <Button
+                  size="lg"
+                  className="w-full font-bold rounded-xl"
+                  style={{ backgroundColor: selectedProfile.color }}
+                  onClick={handleStartMigration}
+                  disabled={startMigration.isPending}
+                >
+                  <Globe className="w-4 h-4 mr-2" />
+                  Connect with {selectedProfile.name}
+                </Button>
+              </div>
             ) : (
               <>
-                {selectedProfile.authMethod === "oauth" && (
-                  <div className="space-y-2">
-                    <Label className="font-semibold">Instance URL</Label>
-                    <Input
-                      placeholder={selectedProfile.apiKeyPlaceholder || "https://yourcompany.salesforce.com"}
-                      value={instanceUrl}
-                      onChange={(e) => setInstanceUrl(e.target.value)}
-                      className="h-12 rounded-xl border-gray-200"
-                    />
-                  </div>
-                )}
                 <div className="space-y-2">
                   <Label className="font-semibold">{selectedProfile.apiKeyLabel}</Label>
                   <Input
-                    type="password"
-                    placeholder={selectedProfile.apiKeyPlaceholder}
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
-                    className="h-12 rounded-xl border-gray-200 font-mono text-sm"
+                    placeholder={selectedProfile.apiKeyPlaceholder}
+                    type="password"
+                    className="font-mono"
                   />
-                  <p className="text-xs text-gray-400 flex items-start gap-1.5">
-                    <span className="mt-0.5">💡</span>
-                    {selectedProfile.apiKeyHelp}
-                  </p>
                 </div>
+
+                {/* Step-by-step guide */}
+                {guide && (
+                  <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-gray-700">How to find your {selectedProfile.name} key:</p>
+                      {guide.link && (
+                        <a href={guide.link} target="_blank" rel="noopener noreferrer" className="text-xs text-orange-600 hover:underline flex items-center gap-1">
+                          Open {selectedProfile.name} <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                    <ol className="space-y-1.5">
+                      {guide.steps.map((step, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                          <span className="w-5 h-5 bg-orange-100 text-orange-700 rounded-full text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{i + 1}</span>
+                          {step}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+
+                {selectedProfile.authMethod === "api_key" && selectedCRM === "salesforce" && (
+                  <div className="space-y-2">
+                    <Label className="font-semibold">Salesforce Instance URL</Label>
+                    <Input
+                      value={instanceUrl}
+                      onChange={(e) => setInstanceUrl(e.target.value)}
+                      placeholder="https://yourcompany.salesforce.com"
+                    />
+                  </div>
+                )}
               </>
             )}
-
-            {/* What the AI will do */}
-            <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-100">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="w-4 h-4 text-orange-500" />
-                <span className="font-semibold text-gray-800 text-sm">What happens next</span>
-              </div>
-              <div className="space-y-2">
-                {[
-                  "AI analyzes your data structure",
-                  "Maps every field — standard and custom",
-                  "Creates any missing fields automatically",
-                  "Imports contacts, companies, deals & history",
-                  "Applies your familiar interface",
-                  "Generates your personal cheat sheet",
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm text-gray-600">
-                    <div className="w-4 h-4 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-                      <span className="text-orange-600 text-[10px] font-bold">{i + 1}</span>
-                    </div>
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
           </CardContent>
         </Card>
 
         <Button
           size="lg"
           className="w-full h-14 text-lg font-bold bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-lg"
-          disabled={startMigration.isPending || (isCsv ? !csvFile : !apiKey && selectedProfile.authMethod !== "oauth")}
+          disabled={
+            startMigration.isPending ||
+            (isCsv ? !csvFile : isOAuth ? false : !apiKey.trim())
+          }
           onClick={handleStartMigration}
         >
           {startMigration.isPending ? (
-            <>
-              <RefreshCw className="mr-2 w-5 h-5 animate-spin" />
-              Starting migration...
-            </>
+            <><RefreshCw className="w-5 h-5 mr-2 animate-spin" /> Starting import...</>
           ) : (
-            <>
-              <Zap className="mr-2 w-5 h-5" />
-              Start Migration — One Click
-            </>
+            <>{isCsv ? "Import File" : "Start Import"} <ArrowRight className="ml-2 w-5 h-5" /></>
           )}
         </Button>
-        <p className="text-center text-xs text-gray-400">
-          Your data is encrypted in transit. We never store your API credentials.
-        </p>
       </div>
     );
   }
 
-  // ── Step 3: Migrating ─────────────────────────────────────────────────────
+  // ── Step: Migrating ───────────────────────────────────────────────────────
   if (step === "migrating") {
-    const isFailed = job?.status === "failed";
+    const stages = ["validating", "fetching", "analyzing", "mapping", "importing", "completed"];
+    const currentIdx = stages.indexOf(job?.status || "validating");
 
     return (
       <div className="max-w-2xl mx-auto p-6 space-y-8">
         <div className="text-center space-y-2">
-          <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            {isFailed ? (
-              <AlertCircle className="w-10 h-10 text-red-500" />
-            ) : job?.status === "completed" ? (
-              <CheckCircle2 className="w-10 h-10 text-green-500" />
-            ) : (
-              <RefreshCw className="w-10 h-10 text-orange-500 animate-spin" />
-            )}
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl mx-auto" style={{ backgroundColor: (selectedProfile?.color || "#f97316") + "20" }}>
+            {selectedProfile?.logo || "📦"}
           </div>
-          <h1 className="text-3xl font-black text-gray-900">
-            {isFailed ? "Migration Error" : job?.status === "completed" ? "Done!" : "Migration in Progress"}
-          </h1>
+          <h1 className="text-2xl font-black text-gray-900">Importing from {selectedProfile?.name}</h1>
           <p className="text-gray-500">{statusLabel}</p>
         </div>
 
-        {/* Progress bar */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex justify-between text-sm text-gray-500">
             <span>{statusLabel}</span>
             <span>{progress}%</span>
@@ -387,162 +614,95 @@ export default function MigrationWizard() {
           <Progress value={progress} className="h-3 rounded-full" />
         </div>
 
-        {/* Live stats */}
-        {job && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[
-              { icon: Users, label: "Contacts", value: (job as any).contactsImported || 0 },
-              { icon: Building2, label: "Companies", value: (job as any).companiesImported || 0 },
-              { icon: Briefcase, label: "Deals", value: (job as any).dealsImported || 0 },
-              { icon: Activity, label: "Activities", value: (job as any).activitiesImported || 0 },
-            ].map(({ icon: Icon, label, value }) => (
-              <div key={label} className="bg-white border border-gray-100 rounded-xl p-4 text-center shadow-sm">
-                <Icon className="w-5 h-5 text-orange-400 mx-auto mb-1" />
-                <div className="text-2xl font-black text-gray-900">{value.toLocaleString()}</div>
-                <div className="text-xs text-gray-400">{label}</div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Steps timeline */}
-        <div className="space-y-3">
-          {["validating", "analyzing", "mapping", "importing", "completed"].map((s, i) => {
-            const currentIdx = ["validating", "analyzing", "mapping", "importing", "completed"].indexOf(job?.status || "validating");
-            const isDone = i < currentIdx || job?.status === "completed";
-            const isActive = i === currentIdx && job?.status !== "completed";
-            return (
-              <div key={s} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${isActive ? "bg-orange-50 border border-orange-200" : isDone ? "opacity-60" : "opacity-30"}`}>
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${isDone ? "bg-green-500" : isActive ? "bg-orange-500" : "bg-gray-200"}`}>
-                  {isDone ? <CheckCircle2 className="w-4 h-4 text-white" /> : isActive ? <RefreshCw className="w-3 h-3 text-white animate-spin" /> : <span className="text-gray-400 text-xs">{i + 1}</span>}
-                </div>
-                <span className={`text-sm font-medium ${isActive ? "text-orange-700" : isDone ? "text-gray-500" : "text-gray-300"}`}>
-                  {STATUS_LABELS[s] || s}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
-        <p className="text-center text-sm text-gray-400">
-          <Clock className="inline w-4 h-4 mr-1" />
-          This usually takes 1–5 minutes depending on your data size
-        </p>
-      </div>
-    );
-  }
-
-  // ── Step 4: Complete ──────────────────────────────────────────────────────
-  if (step === "complete" && job) {
-    const totalImported = ((job as any).contactsImported || 0) + ((job as any).companiesImported || 0) +
-      ((job as any).dealsImported || 0) + ((job as any).activitiesImported || 0);
-
-    return (
-      <div className="max-w-2xl mx-auto p-6 space-y-8">
-        {/* Success hero */}
-        <div className="text-center space-y-3">
-          <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-green-200">
-            <CheckCircle2 className="w-12 h-12 text-white" />
-          </div>
-          <h1 className="text-4xl font-black text-gray-900">You're In!</h1>
-          <p className="text-gray-500 text-lg">
-            {totalImported.toLocaleString()} records imported successfully.
-            Your AXIOM CRM is ready — and it already looks familiar.
-          </p>
-        </div>
-
-        {/* Import summary */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { icon: Users, label: "Contacts", value: (job as any).contactsImported || 0, color: "blue" },
-            { icon: Building2, label: "Companies", value: (job as any).companiesImported || 0, color: "purple" },
-            { icon: Briefcase, label: "Deals", value: (job as any).dealsImported || 0, color: "orange" },
-            { icon: Activity, label: "Activities", value: (job as any).activitiesImported || 0, color: "green" },
-          ].map(({ icon: Icon, label, value }) => (
-            <div key={label} className="bg-white border border-gray-100 rounded-xl p-4 text-center shadow-sm">
-              <Icon className="w-5 h-5 text-orange-400 mx-auto mb-1" />
-              <div className="text-2xl font-black text-gray-900">{value.toLocaleString()}</div>
-              <div className="text-xs text-gray-400">{label}</div>
+        <div className="space-y-2">
+          {stages.slice(0, -1).map((stage, i) => (
+            <div key={stage} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
+              i < currentIdx ? "bg-green-50" : i === currentIdx ? "bg-orange-50" : "bg-gray-50"
+            }`}>
+              {i < currentIdx ? (
+                <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+              ) : i === currentIdx ? (
+                <RefreshCw className="w-5 h-5 text-orange-500 animate-spin flex-shrink-0" />
+              ) : (
+                <div className="w-5 h-5 rounded-full border-2 border-gray-200 flex-shrink-0" />
+              )}
+              <span className={`text-sm font-medium capitalize ${
+                i < currentIdx ? "text-green-700" : i === currentIdx ? "text-orange-700" : "text-gray-400"
+              }`}>
+                {STATUS_LABELS[stage] || stage}
+              </span>
             </div>
           ))}
         </div>
 
-        {/* Duplicates merged */}
-        {(job as any).duplicatesMerged > 0 && (
-          <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-              <Users className="w-5 h-5 text-amber-600" />
-            </div>
+        {job?.status === "failed" && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
             <div>
-              <div className="font-semibold text-amber-800">
-                {(job as any).duplicatesMerged} duplicate{(job as any).duplicatesMerged !== 1 ? 's' : ''} merged automatically
-              </div>
-              <div className="text-sm text-amber-600 mt-0.5">
-                The AI detected and merged duplicate contacts before importing — your data is clean.
-              </div>
+              <p className="font-semibold text-red-800">Import failed</p>
+              <p className="text-sm text-red-600 mt-1">Please check your API key and try again. If the problem persists, try the CSV upload method instead.</p>
+              <Button variant="outline" size="sm" className="mt-3" onClick={() => setStep("connect")}>
+                Try Again
+              </Button>
             </div>
           </div>
         )}
+      </div>
+    );
+  }
 
-        {/* Custom fields created */}
-        {(job as any).customFieldsCreated > 0 && (
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
-            <Star className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <div className="font-semibold text-blue-800">
-                {(job as any).customFieldsCreated} custom fields created automatically
-              </div>
-              <div className="text-sm text-blue-600 mt-0.5">
-                The AI detected fields unique to your previous CRM and created them in AXIOM so nothing was lost.
-              </div>
-            </div>
-          </div>
-        )}
+  // ── Step: Complete ────────────────────────────────────────────────────────
+  if (step === "complete") {
+    const totalImported = ((job as any)?.contactsImported || 0) + ((job as any)?.companiesImported || 0) + ((job as any)?.dealsImported || 0);
 
-        {/* Cheat sheet */}
-        {cheatSheet && (
-          <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <FileText className="w-5 h-5 text-orange-500" />
-              <h3 className="font-bold text-gray-900">Your Personal Migration Guide</h3>
-              <Badge className="bg-orange-100 text-orange-700 border-0 text-xs">AI Generated</Badge>
-            </div>
-            <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{cheatSheet}</p>
+    return (
+      <div className="max-w-2xl mx-auto p-6 space-y-8 text-center">
+        <div className="space-y-4">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-10 h-10 text-green-500" />
           </div>
-        )}
-
-        {/* Skin info */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-5 flex items-start gap-4 shadow-sm">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ backgroundColor: (selectedProfile?.color || "#f97316") + "20" }}>
-            {selectedProfile?.logo || "🎨"}
-          </div>
-          <div className="flex-1">
-            <div className="font-bold text-gray-900">
-              Your interface now matches {selectedProfile?.name || "your previous CRM"}
-            </div>
-            <div className="text-sm text-gray-500 mt-1">
-              Same navigation, same terminology, same layout. You already know how to use this.
-              When you're ready, switch to the full AXIOM experience to unlock everything.
-            </div>
-          </div>
+          <h1 className="text-3xl font-black text-gray-900">Migration Complete! 🎉</h1>
+          <p className="text-gray-500">
+            Your {selectedProfile?.name} data is now in Axiom. We also switched your interface to match {selectedProfile?.name}'s layout so everything feels familiar.
+          </p>
         </div>
 
-        {/* CTA buttons */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            { icon: Users, label: "Contacts", value: (job as any)?.contactsImported || 0 },
+            { icon: Building2, label: "Companies", value: (job as any)?.companiesImported || 0 },
+            { icon: Briefcase, label: "Deals", value: (job as any)?.dealsImported || 0 },
+          ].map(({ icon: Icon, label, value }) => (
+            <div key={label} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+              <Icon className="w-6 h-6 text-orange-500 mx-auto mb-2" />
+              <div className="text-2xl font-black text-gray-900">{value.toLocaleString()}</div>
+              <div className="text-xs text-gray-400">{label} imported</div>
+            </div>
+          ))}
+        </div>
+
+        {cheatSheet && (
+          <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 text-left">
+            <p className="font-bold text-orange-800 mb-2">Your {selectedProfile?.name} → Axiom Cheat Sheet</p>
+            <pre className="text-xs text-orange-700 whitespace-pre-wrap font-mono">{cheatSheet}</pre>
+          </div>
+        )}
+
+        <div className="flex gap-3">
           <Button
-            variant="outline"
-            className="h-12 rounded-xl border-gray-200"
-            onClick={() => setSkin.mutate({ skin: "axiom" })}
+            size="lg"
+            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl"
+            onClick={() => window.location.href = "/contacts"}
           >
-            <TrendingUp className="mr-2 w-4 h-4" />
-            Switch to AXIOM UI
+            <Users className="w-4 h-4 mr-2" /> View Contacts
           </Button>
           <Button
-            className="h-12 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold"
-            onClick={() => window.location.href = "/dashboard"}
+            variant="outline"
+            size="lg"
+            className="flex-1 font-bold rounded-xl"
+            onClick={() => { setStep("mode"); setSelectedCRM(null); setApiKey(""); setCsvFile(null); setJobId(null); }}
           >
-            Go to Dashboard
-            <ChevronRight className="ml-2 w-4 h-4" />
+            Import Another CRM
           </Button>
         </div>
       </div>
