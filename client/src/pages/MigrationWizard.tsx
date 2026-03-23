@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,13 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useSkin } from "@/contexts/SkinContext";
 import {
   CheckCircle2, ArrowRight, Upload, Zap, Users, Building2,
   Briefcase, Activity, Puzzle, FileText, AlertCircle, RefreshCw,
-  Download, ExternalLink, ChevronRight, Key, Globe
+  Download, ExternalLink, Key, Globe, Lock
 } from "lucide-react";
 
 type ImportMode = "extension" | "csv" | "api";
@@ -111,7 +110,11 @@ export default function MigrationWizard() {
   const [cheatSheet, setCheatSheet] = useState<string | null>(null);
   const [showGuide, setShowGuide] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [oauthPending, setOauthPending] = useState(false);
+  const [oauthToken, setOauthToken] = useState<string | null>(null);
+  const [oauthInstanceUrl, setOauthInstanceUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const oauthPopupRef = useRef<Window | null>(null);
 
   const { data: competitors = [] } = trpc.migration.getCompetitors.useQuery();
   const { data: job } = trpc.migration.getJob.useQuery(
@@ -129,6 +132,74 @@ export default function MigrationWizard() {
       toast.error(`Migration failed to start: ${err.message}`);
     },
   });
+  const oauthCallback = trpc.migration.oauthCallback.useMutation({
+    onSuccess: (data) => {
+      setOauthToken(data.accessToken);
+      setOauthInstanceUrl(data.instanceUrl || null);
+      setOauthPending(false);
+      toast.success(`Connected to ${selectedCRM}! Starting import...`);
+      // Auto-start migration with the received token
+      startMigration.mutate({
+        sourceSystem: selectedCRM as any,
+        apiKey: data.accessToken,
+        instanceUrl: data.instanceUrl || undefined,
+      });
+    },
+    onError: (err) => {
+      setOauthPending(false);
+      toast.error(`OAuth failed: ${err.message}`);
+    },
+  });
+
+  // Listen for OAuth callback message from popup window
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "axiom_oauth_callback" && event.data?.code && event.data?.crm) {
+        oauthPopupRef.current?.close();
+        oauthCallback.mutate({
+          crm: event.data.crm as "salesforce" | "zoho" | "keap" | "constantcontact",
+          code: event.data.code,
+          redirectUri: `${window.location.origin}/oauth-callback`,
+        });
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
+  const utils = trpc.useUtils();
+
+  const handleOAuthConnect = useCallback(async (crm: string) => {
+    const redirectUri = `${window.location.origin}/oauth-callback`;
+    try {
+      setOauthPending(true);
+      const result = await utils.migration.getOAuthUrl.fetch({
+        crm: crm as "salesforce" | "zoho" | "keap" | "constantcontact",
+        redirectUri,
+      });
+      if (!result.url || result.url.includes("YOUR_")) {
+        // OAuth credentials not yet configured — show instructions
+        setOauthPending(false);
+        toast.info(
+          `OAuth for ${crm} requires OAuth client credentials to be configured. Please use the API key method or ask your admin to configure the ${crm.toUpperCase()}_CLIENT_ID and ${crm.toUpperCase()}_CLIENT_SECRET environment variables.`,
+          { duration: 8000 }
+        );
+        return;
+      }
+      const popup = window.open(result.url, "axiom_oauth", "width=600,height=700,scrollbars=yes");
+      oauthPopupRef.current = popup;
+      // Poll for popup closure (user cancelled without authorizing)
+      const pollTimer = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(pollTimer);
+          setOauthPending(false);
+        }
+      }, 500);
+    } catch (err) {
+      setOauthPending(false);
+      toast.error(`Could not get OAuth URL: ${String(err)}`);
+    }
+  }, [utils]);
 
   useEffect(() => {
     if (!job) return;
@@ -140,7 +211,7 @@ export default function MigrationWizard() {
       setStep("complete");
       // Auto-switch skin to match the imported CRM
       if (selectedCRM) {
-        setSkin.mutate({ skinId: selectedCRM as any });
+        setSkin.mutate({ skin: selectedCRM as any });
       }
     }
   }, [job?.status]);
@@ -497,30 +568,70 @@ export default function MigrationWizard() {
                 </div>
               </>
             ) : isOAuth ? (
-              <div className="text-center space-y-4 py-4">
+              <div className="text-center space-y-5 py-4">
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl mx-auto" style={{ backgroundColor: selectedProfile.color + "20" }}>
                   {selectedProfile.logo}
                 </div>
                 <div>
                   <p className="font-semibold text-gray-800 text-lg">Connect with {selectedProfile.name}</p>
                   <p className="text-sm text-gray-500 mt-1">
-                    You'll be redirected to {selectedProfile.name} to authorize Axiom. Log in with your normal credentials — we never see your password.
+                    A secure popup will open so you can log into {selectedProfile.name}. We never see your password — only a temporary access token.
                   </p>
                 </div>
-                <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-sm text-green-700">
-                  <CheckCircle2 className="w-4 h-4 inline mr-1" />
-                  Secure OAuth — your credentials stay on {selectedProfile.name}'s servers
+
+                {/* Security badges */}
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="bg-green-50 border border-green-100 rounded-xl p-2 text-green-700 flex flex-col items-center gap-1">
+                    <Lock className="w-4 h-4" />
+                    <span>OAuth 2.0</span>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-2 text-blue-700 flex flex-col items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>No password shared</span>
+                  </div>
+                  <div className="bg-purple-50 border border-purple-100 rounded-xl p-2 text-purple-700 flex flex-col items-center gap-1">
+                    <Globe className="w-4 h-4" />
+                    <span>Revocable anytime</span>
+                  </div>
                 </div>
-                <Button
-                  size="lg"
-                  className="w-full font-bold rounded-xl"
-                  style={{ backgroundColor: selectedProfile.color }}
-                  onClick={handleStartMigration}
-                  disabled={startMigration.isPending}
-                >
-                  <Globe className="w-4 h-4 mr-2" />
-                  Connect with {selectedProfile.name}
-                </Button>
+
+                {/* What we import */}
+                <div className="bg-gray-50 rounded-xl p-4 text-left space-y-2">
+                  <p className="text-sm font-semibold text-gray-700">What we'll import from {selectedProfile.name}:</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {["All contacts", "All companies", "Open & closed deals", "Activity history", "Custom fields", "Tags & segments"].map(item => (
+                      <div key={item} className="flex items-center gap-1.5 text-xs text-gray-600">
+                        <CheckCircle2 className="w-3 h-3 text-green-500 flex-shrink-0" />
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {oauthToken ? (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                    <CheckCircle2 className="w-6 h-6 text-green-500 mx-auto mb-1" />
+                    <p className="font-semibold text-green-800">Connected! Starting import...</p>
+                  </div>
+                ) : (
+                  <Button
+                    size="lg"
+                    className="w-full font-bold rounded-xl text-white"
+                    style={{ backgroundColor: selectedProfile.color }}
+                    onClick={() => handleOAuthConnect(selectedCRM!)}
+                    disabled={oauthPending || oauthCallback.isPending}
+                  >
+                    {oauthPending ? (
+                      <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Waiting for authorization...</>
+                    ) : (
+                      <><Globe className="w-4 h-4 mr-2" /> Connect with {selectedProfile.name}</>
+                    )}
+                  </Button>
+                )}
+
+                <p className="text-xs text-gray-400">
+                  After connecting, we'll automatically import everything and switch your interface to match {selectedProfile.name}'s layout.
+                </p>
               </div>
             ) : (
               <>
@@ -572,21 +683,23 @@ export default function MigrationWizard() {
           </CardContent>
         </Card>
 
-        <Button
-          size="lg"
-          className="w-full h-14 text-lg font-bold bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-lg"
-          disabled={
-            startMigration.isPending ||
-            (isCsv ? !csvFile : isOAuth ? false : !apiKey.trim())
-          }
-          onClick={handleStartMigration}
-        >
-          {startMigration.isPending ? (
-            <><RefreshCw className="w-5 h-5 mr-2 animate-spin" /> Starting import...</>
-          ) : (
-            <>{isCsv ? "Import File" : "Start Import"} <ArrowRight className="ml-2 w-5 h-5" /></>
-          )}
-        </Button>
+        {!isOAuth && (
+          <Button
+            size="lg"
+            className="w-full h-14 text-lg font-bold bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-lg"
+            disabled={
+              startMigration.isPending ||
+              (isCsv ? !csvFile : !apiKey.trim())
+            }
+            onClick={handleStartMigration}
+          >
+            {startMigration.isPending ? (
+              <><RefreshCw className="w-5 h-5 mr-2 animate-spin" /> Starting import...</>
+            ) : (
+              <>{isCsv ? "Import File" : "Start Import"} <ArrowRight className="ml-2 w-5 h-5" /></>
+            )}
+          </Button>
+        )}
       </div>
     );
   }

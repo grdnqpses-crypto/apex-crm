@@ -2687,8 +2687,8 @@ export type InsertApBill = typeof apBills.$inferInsert;
 export const skinPreferences = mysqlTable("skin_preferences", {
   id: int("id").autoincrement().primaryKey(),
   tenantCompanyId: int("tenantCompanyId").notNull(),
-  skin: mysqlEnum("skin", ["axiom", "hubspot", "salesforce", "pipedrive", "zoho", "gohighlevel", "close"]).default("axiom").notNull(),
-  migratedFrom: mysqlEnum("migratedFrom", ["hubspot", "salesforce", "pipedrive", "zoho", "gohighlevel", "close", "spreadsheet", "other"]),
+  skin: mysqlEnum("skin", ["axiom","hubspot","salesforce","pipedrive","zoho","gohighlevel","close","apollo","freshsales","activecampaign","keap","copper","nutshell","insightly","sugarcrm","streak","nimble","monday","constantcontact"]).default("axiom").notNull(),
+  migratedFrom: mysqlEnum("migratedFrom", ["hubspot","salesforce","pipedrive","zoho","gohighlevel","close","apollo","freshsales","activecampaign","keap","copper","nutshell","insightly","sugarcrm","streak","nimble","monday","constantcontact","spreadsheet","other"]),
   graduatedToAxiom: boolean("graduatedToAxiom").default(false).notNull(),
   graduatedAt: bigint("graduatedAt", { mode: "number" }),
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),

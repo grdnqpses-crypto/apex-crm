@@ -2238,3 +2238,13 @@
 - [ ] Add Nimble CRM skin
 - [ ] Update SkinSwitcher with all new skins
 - [ ] Update SkinQAPanel with all new skins
+
+## Session 13: OAuth Connect + Post-Migration Skin Auto-Switch
+
+- [x] OAuth Connect button for Salesforce (OAuth 2.0 PKCE flow)
+- [x] OAuth Connect button for Zoho CRM (OAuth 2.0)
+- [x] OAuth Connect button for Keap / Infusionsoft (OAuth 2.0)
+- [x] OAuth Connect button for Constant Contact (OAuth 2.0)
+- [x] Backend OAuth callback routes for all 4 CRMs
+- [x] Post-migration skin auto-switch: when migration completes, set skin to matching CRM (all 19 CRMs)
+- [x] MigrationWizard UI: show OAuth Connect button instead of API key field for OAuth CRMs

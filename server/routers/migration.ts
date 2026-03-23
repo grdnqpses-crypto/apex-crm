@@ -255,6 +255,100 @@ export const migrationRouter = router({
         .limit(100);
     }),
 
+  // ─── OAuth: Get authorization URL for OAuth-based CRMs ─────────────────────
+  // Supports: salesforce, zoho, keap, constantcontact
+  getOAuthUrl: protectedProcedure
+    .input(z.object({
+      crm: z.enum(["salesforce", "zoho", "keap", "constantcontact"]),
+      redirectUri: z.string().url(),
+    }))
+    .query(({ input }) => {
+      const { crm, redirectUri } = input;
+      let url = "";
+      switch (crm) {
+        case "salesforce":
+          url = `https://login.salesforce.com/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CLIENT_ID || "YOUR_SF_CLIENT_ID"}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=api%20refresh_token%20offline_access&state=${crm}`;
+          break;
+        case "zoho":
+          url = `https://accounts.zoho.com/oauth/v2/auth?response_type=code&client_id=${process.env.ZOHO_CLIENT_ID || "YOUR_ZOHO_CLIENT_ID"}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=ZohoCRM.modules.ALL,ZohoCRM.settings.ALL&access_type=offline&state=${crm}`;
+          break;
+        case "keap":
+          url = `https://accounts.infusionsoft.com/app/oauth/authorize?response_type=code&client_id=${process.env.KEAP_CLIENT_ID || "YOUR_KEAP_CLIENT_ID"}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=full&state=${crm}`;
+          break;
+        case "constantcontact":
+          url = `https://authz.constantcontact.com/oauth2/default/v1/authorize?response_type=code&client_id=${process.env.CONSTANTCONTACT_CLIENT_ID || "YOUR_CC_CLIENT_ID"}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=contact_data+campaign_data&state=${crm}`;
+          break;
+      }
+      return { url };
+    }),
+
+  // ─── OAuth: Exchange authorization code for access token ─────────────────
+  oauthCallback: protectedProcedure
+    .input(z.object({
+      crm: z.enum(["salesforce", "zoho", "keap", "constantcontact"]),
+      code: z.string(),
+      redirectUri: z.string().url(),
+    }))
+    .mutation(async ({ input }) => {
+      const { crm, code, redirectUri } = input;
+      let tokenUrl = "";
+      let body: Record<string, string> = {};
+      let clientId = "";
+      let clientSecret = "";
+
+      switch (crm) {
+        case "salesforce":
+          tokenUrl = "https://login.salesforce.com/services/oauth2/token";
+          clientId = process.env.SALESFORCE_CLIENT_ID || "";
+          clientSecret = process.env.SALESFORCE_CLIENT_SECRET || "";
+          body = { grant_type: "authorization_code", code, redirect_uri: redirectUri, client_id: clientId, client_secret: clientSecret };
+          break;
+        case "zoho":
+          tokenUrl = "https://accounts.zoho.com/oauth/v2/token";
+          clientId = process.env.ZOHO_CLIENT_ID || "";
+          clientSecret = process.env.ZOHO_CLIENT_SECRET || "";
+          body = { grant_type: "authorization_code", code, redirect_uri: redirectUri, client_id: clientId, client_secret: clientSecret };
+          break;
+        case "keap":
+          tokenUrl = "https://api.infusionsoft.com/token";
+          clientId = process.env.KEAP_CLIENT_ID || "";
+          clientSecret = process.env.KEAP_CLIENT_SECRET || "";
+          body = { grant_type: "authorization_code", code, redirect_uri: redirectUri, client_id: clientId, client_secret: clientSecret };
+          break;
+        case "constantcontact":
+          tokenUrl = "https://authz.constantcontact.com/oauth2/default/v1/token";
+          clientId = process.env.CONSTANTCONTACT_CLIENT_ID || "";
+          clientSecret = process.env.CONSTANTCONTACT_CLIENT_SECRET || "";
+          body = { grant_type: "authorization_code", code, redirect_uri: redirectUri, client_id: clientId, client_secret: clientSecret };
+          break;
+      }
+
+      if (!tokenUrl) throw new Error(`OAuth not configured for ${crm}`);
+
+      const resp = await fetch(tokenUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json" },
+        body: new URLSearchParams(body).toString(),
+      });
+
+      if (!resp.ok) {
+        const errText = await resp.text();
+        throw new Error(`OAuth token exchange failed for ${crm}: ${errText}`);
+      }
+
+      const tokenData = await resp.json() as Record<string, string>;
+      const accessToken = tokenData.access_token;
+      const instanceUrl = tokenData.instance_url; // Salesforce-specific
+
+      return {
+        accessToken,
+        instanceUrl: instanceUrl || null,
+        crm,
+        // Hint to the frontend: pass these as apiKey + instanceUrl to startMigration
+        ready: true,
+      };
+    }),
+
   // ─── Set / update a custom field value for a record ───────────────────────
   setCustomFieldValue: protectedProcedure
     .input(z.object({
@@ -583,7 +677,7 @@ async function runMigrationAsync(
   }
 
   // ── Step 5: Apply the matching skin ──────────────────────────────────────
-  const skinKey = profile.skinKey as "axiom" | "hubspot" | "salesforce" | "pipedrive" | "zoho" | "gohighlevel" | "close";
+  const skinKey = profile.skinKey as "axiom"|"hubspot"|"salesforce"|"pipedrive"|"zoho"|"gohighlevel"|"close"|"apollo"|"freshsales"|"activecampaign"|"keap"|"copper"|"nutshell"|"insightly"|"sugarcrm"|"streak"|"nimble"|"monday"|"constantcontact";
   const existingSkin = await db.select({ id: skinPreferences.id })
     .from(skinPreferences)
     .where(eq(skinPreferences.tenantCompanyId, tenantCompanyId))

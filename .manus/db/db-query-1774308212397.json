@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE skin_preferences MODIFY COLUMN skin ENUM('axiom','hubspot','salesforce','pipedrive','zoho','gohighlevel','close','apollo','freshsales','activecampaign','keap','copper','nutshell','insightly','sugarcrm','streak','nimble','monday','constantcontact') NOT NULL DEFAULT 'axiom';\nALTER TABLE skin_preferences MODIFY COLUMN migratedFrom ENUM('hubspot','salesforce','pipedrive','zoho','gohighlevel','close','apollo','freshsales','activecampaign','keap','copper','nutshell','insightly','sugarcrm','streak','nimble','monday','constantcontact','spreadsheet','other');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute ALTER TABLE skin_preferences MODIFY COLUMN skin ENUM('axiom','hubspot','salesforce','pipedrive','zoho','gohighlevel','close','apollo','freshsales','activecampaign','keap','copper','nutshell','insightly','sugarcrm','streak','nimble','monday','constantcontact') NOT NULL DEFAULT 'axiom';\nALTER TABLE skin_preferences MODIFY COLUMN migratedFrom ENUM('hubspot','salesforce','pipedrive','zoho','gohighlevel','close','apollo','freshsales','activecampaign','keap','copper','nutshell','insightly','sugarcrm','streak','nimble','monday','constantcontact','spreadsheet','other');",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 813
+}

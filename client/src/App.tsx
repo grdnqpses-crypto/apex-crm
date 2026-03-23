@@ -138,6 +138,7 @@ const BulkMerge = lazy(() => import("./pages/BulkMerge"));
 const WhatsAppBroadcasts = lazy(() => import("./pages/WhatsAppBroadcasts"));
 const AIPostWriter = lazy(() => import("./pages/AIPostWriter"));
 const ConditionalFields = lazy(() => import("./pages/ConditionalFields"));
+const OAuthCallback = lazy(() => import("./pages/OAuthCallback"));
 
 function PageLoader() {
   return (
@@ -316,6 +317,11 @@ function App() {
             <Route path="/reset-password">
               <Suspense fallback={<PageLoader />}>
                 <ResetPassword />
+              </Suspense>
+            </Route>
+            <Route path="/oauth-callback">
+              <Suspense fallback={<PageLoader />}>
+                <OAuthCallback />
               </Suspense>
             </Route>
             <Route path="/">
