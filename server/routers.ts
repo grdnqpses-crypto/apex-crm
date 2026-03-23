@@ -6178,6 +6178,57 @@ export const appRouter = router({
     }),
   }),
 
+  // ─── Admin Data Management ─────────────────────────────────────────────────
+  adminData: router({
+    deleteAllUserData: companyAdminProcedure
+      .input(z.object({ confirm: z.literal("DELETE ALL MY DATA") }))
+      .mutation(async ({ ctx }) => {
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database unavailable' });
+        const { contacts: contactsTable, companies: companiesTable, deals: dealsTable, tasks: tasksTable } = await import('../drizzle/schema');
+        const { eq } = await import('drizzle-orm');
+        const tenantId = ctx.user.tenantCompanyId;
+        if (!tenantId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No tenant company associated with this account' });
+        const deletedTasks = await dbConn.delete(tasksTable).where(eq(tasksTable.tenantCompanyId, tenantId));
+        const deletedDeals = await dbConn.delete(dealsTable).where(eq(dealsTable.tenantCompanyId, tenantId));
+        const deletedContacts = await dbConn.delete(contactsTable).where(eq(contactsTable.tenantCompanyId, tenantId));
+        const deletedCompanies = await dbConn.delete(companiesTable).where(eq(companiesTable.tenantCompanyId, tenantId));
+        return {
+          success: true,
+          deleted: {
+            tasks: (deletedTasks as any).rowsAffected ?? 0,
+            deals: (deletedDeals as any).rowsAffected ?? 0,
+            contacts: (deletedContacts as any).rowsAffected ?? 0,
+            companies: (deletedCompanies as any).rowsAffected ?? 0,
+          },
+        };
+      }),
+    deleteAllContacts: companyAdminProcedure
+      .input(z.object({ confirm: z.literal("DELETE ALL CONTACTS") }))
+      .mutation(async ({ ctx }) => {
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database unavailable' });
+        const { contacts: contactsTable } = await import('../drizzle/schema');
+        const { eq } = await import('drizzle-orm');
+        const tenantId = ctx.user.tenantCompanyId;
+        if (!tenantId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No tenant company associated with this account' });
+        const result = await dbConn.delete(contactsTable).where(eq(contactsTable.tenantCompanyId, tenantId));
+        return { success: true, deleted: (result as any).rowsAffected ?? 0 };
+      }),
+    deleteAllCompanies: companyAdminProcedure
+      .input(z.object({ confirm: z.literal("DELETE ALL COMPANIES") }))
+      .mutation(async ({ ctx }) => {
+        const dbConn = await db.getDb();
+        if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database unavailable' });
+        const { contacts: contactsTable, companies: companiesTable } = await import('../drizzle/schema');
+        const { eq } = await import('drizzle-orm');
+        const tenantId = ctx.user.tenantCompanyId;
+        if (!tenantId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No tenant company associated with this account' });
+        const deletedContacts = await dbConn.delete(contactsTable).where(eq(contactsTable.tenantCompanyId, tenantId));
+        const deletedCompanies = await dbConn.delete(companiesTable).where(eq(companiesTable.tenantCompanyId, tenantId));
+        return { success: true, deleted: { contacts: (deletedContacts as any).rowsAffected ?? 0, companies: (deletedCompanies as any).rowsAffected ?? 0 } };
+      }),
+  }),
   // ─── Workflow Builder ─────────────────────────────────────────────────────────
   workflowBuilder: router({
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async () => ({ workflow: null })),

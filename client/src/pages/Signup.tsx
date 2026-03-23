@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Check, ArrowRight, Play, Shield, Zap, Users, BarChart3, Brain, Truck, Crown, Star, ChevronDown } from "lucide-react";
+import { Check, ArrowRight, Play, Shield, Zap, Users, BarChart3, Brain, Truck, Crown, Star, ChevronDown, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 const PRICING_TIERS = [
   {
@@ -123,6 +123,16 @@ const TESTIMONIALS = [
   { name: "Lisa Park", role: "Director, FastShip Inc.", quote: "The onboarding was seamless. Our team was productive within hours, not weeks." },
 ];
 
+function FieldError({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return (
+    <p className="flex items-center gap-1 text-xs text-red-600 mt-1">
+      <AlertCircle className="w-3 h-3 shrink-0" />
+      {msg}
+    </p>
+  );
+}
+
 export default function Signup() {
   const [step, setStep] = useState<"landing" | "register">("landing");
   const [selectedTier, setSelectedTier] = useState("professional");
@@ -137,21 +147,62 @@ export default function Signup() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [usernameTouched, setUsernameTouched] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Auto-populate username from email prefix as user types
+  useEffect(() => {
+    if (!usernameTouched && formData.email) {
+      const prefix = formData.email.split("@")[0].toLowerCase().replace(/[^a-z0-9._-]/g, "");
+      setFormData(p => ({ ...p, username: prefix }));
+    }
+  }, [formData.email, usernameTouched]);
+
+  const clearFieldError = (field: string) => {
+    if (fieldErrors[field]) {
+      setFieldErrors(p => { const n = { ...p }; delete n[field]; return n; });
+    }
+  };
+
+  const validateFields = () => {
+    const errors: Record<string, string> = {};
+    if (!formData.companyName.trim()) errors.companyName = "Company name is required";
+    if (!formData.fullName.trim()) errors.fullName = "Full name is required";
+    if (!formData.email.trim()) {
+      errors.email = "Email address is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = "Please enter a valid email address (e.g. joe@company.com)";
+    }
+    if (!formData.username.trim()) {
+      errors.username = "Username is required";
+    } else if (formData.username.length < 3) {
+      errors.username = "Username must be at least 3 characters";
+    } else if (!/^[a-zA-Z0-9._-]+$/.test(formData.username)) {
+      errors.username = "Only letters, numbers, dots, hyphens, and underscores allowed";
+    }
+    if (!formData.password) {
+      errors.password = "Password is required";
+    } else if (formData.password.length < 8) {
+      errors.password = "Password must be at least 8 characters";
+    }
+    if (!formData.confirmPassword) {
+      errors.confirmPassword = "Please confirm your password";
+    } else if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = "Passwords do not match — please re-enter";
+    }
+    return errors;
+  };
 
   const handleRegister = async () => {
-    if (!formData.companyName || !formData.fullName || !formData.email || !formData.username || !formData.password) {
-      toast.error("Please fill in all required fields");
+    const errors = validateFields();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      toast.error("Please fix the highlighted errors before continuing");
       return;
     }
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-    if (formData.password.length < 8) {
-      toast.error("Password must be at least 8 characters");
-      return;
-    }
-
+    setFieldErrors({});
     setIsSubmitting(true);
     try {
       const res = await fetch("/api/auth/register-company", {
@@ -175,10 +226,16 @@ export default function Signup() {
           window.location.href = "/";
         }, 1500);
       } else {
-        toast.error(data.error || "Registration failed");
+        // Map server-side field errors if provided
+        if (data.fieldErrors) {
+          setFieldErrors(data.fieldErrors);
+        } else if (data.field) {
+          setFieldErrors({ [data.field]: data.error || "Invalid value" });
+        }
+        toast.error(data.error || "Registration failed. Please check the form and try again.");
       }
     } catch {
-      toast.error("Network error. Please try again.");
+      toast.error("Network error. Please check your connection and try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -217,6 +274,8 @@ export default function Signup() {
               <CardDescription>This creates your company account and your admin login</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+
+              {/* Step 1: Company */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-slate-900 flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold">1</div>
@@ -224,13 +283,20 @@ export default function Signup() {
                 </h3>
                 <div className="grid gap-4">
                   <div>
-                    <Label htmlFor="companyName">Company Name *</Label>
-                    <Input id="companyName" placeholder="e.g., Logistics Worldwide" value={formData.companyName}
-                      onChange={e => setFormData(p => ({ ...p, companyName: e.target.value }))} />
+                    <Label htmlFor="companyName">Company Name <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="companyName"
+                      placeholder="e.g., Logistics Worldwide"
+                      value={formData.companyName}
+                      className={fieldErrors.companyName ? "border-red-400 focus-visible:ring-red-400" : ""}
+                      onChange={e => { setFormData(p => ({ ...p, companyName: e.target.value })); clearFieldError("companyName"); }}
+                    />
+                    <FieldError msg={fieldErrors.companyName} />
                   </div>
                 </div>
               </div>
 
+              {/* Step 2: Admin Account */}
               <div className="border-t pt-4 space-y-4">
                 <h3 className="font-semibold text-slate-900 flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold">2</div>
@@ -238,28 +304,59 @@ export default function Signup() {
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="fullName">Full Name *</Label>
-                    <Input id="fullName" placeholder="John Smith" value={formData.fullName}
-                      onChange={e => setFormData(p => ({ ...p, fullName: e.target.value }))} />
+                    <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="fullName"
+                      placeholder="John Smith"
+                      value={formData.fullName}
+                      className={fieldErrors.fullName ? "border-red-400 focus-visible:ring-red-400" : ""}
+                      onChange={e => { setFormData(p => ({ ...p, fullName: e.target.value })); clearFieldError("fullName"); }}
+                    />
+                    <FieldError msg={fieldErrors.fullName} />
                   </div>
                   <div>
-                    <Label htmlFor="email">Email *</Label>
-                    <Input id="email" type="email" placeholder="john@company.com" value={formData.email}
-                      onChange={e => setFormData(p => ({ ...p, email: e.target.value }))} />
+                    <Label htmlFor="email">Email Address <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="joe@company.com"
+                      value={formData.email}
+                      className={fieldErrors.email ? "border-red-400 focus-visible:ring-red-400" : ""}
+                      onChange={e => { setFormData(p => ({ ...p, email: e.target.value })); clearFieldError("email"); }}
+                    />
+                    <FieldError msg={fieldErrors.email} />
                   </div>
                   <div>
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input id="phone" placeholder="+1 (555) 000-0000" value={formData.phone}
-                      onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))} />
+                    <Label htmlFor="phone">Phone <span className="text-slate-400 text-xs">(optional)</span></Label>
+                    <Input
+                      id="phone"
+                      placeholder="+1 (555) 000-0000"
+                      value={formData.phone}
+                      onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
+                    />
                   </div>
                   <div>
-                    <Label htmlFor="username">Username *</Label>
-                    <Input id="username" placeholder="jsmith" value={formData.username}
-                      onChange={e => setFormData(p => ({ ...p, username: e.target.value }))} />
+                    <Label htmlFor="username">
+                      Username <span className="text-red-500">*</span>
+                      <span className="text-slate-400 text-xs ml-1">(auto-filled from email)</span>
+                    </Label>
+                    <Input
+                      id="username"
+                      placeholder="jsmith"
+                      value={formData.username}
+                      className={fieldErrors.username ? "border-red-400 focus-visible:ring-red-400" : ""}
+                      onChange={e => {
+                        setUsernameTouched(true);
+                        setFormData(p => ({ ...p, username: e.target.value }));
+                        clearFieldError("username");
+                      }}
+                    />
+                    <FieldError msg={fieldErrors.username} />
                   </div>
                 </div>
               </div>
 
+              {/* Step 3: Password */}
               <div className="border-t pt-4 space-y-4">
                 <h3 className="font-semibold text-slate-900 flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold">3</div>
@@ -267,14 +364,48 @@ export default function Signup() {
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="password">Password *</Label>
-                    <Input id="password" type="password" placeholder="Min 8 characters" value={formData.password}
-                      onChange={e => setFormData(p => ({ ...p, password: e.target.value }))} />
+                    <Label htmlFor="password">Password <span className="text-red-500">*</span></Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Min 8 characters"
+                        value={formData.password}
+                        className={fieldErrors.password ? "border-red-400 focus-visible:ring-red-400 pr-10" : "pr-10"}
+                        onChange={e => { setFormData(p => ({ ...p, password: e.target.value })); clearFieldError("password"); clearFieldError("confirmPassword"); }}
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                        onClick={() => setShowPassword(v => !v)}
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <FieldError msg={fieldErrors.password} />
                   </div>
                   <div>
-                    <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                    <Input id="confirmPassword" type="password" placeholder="Confirm password" value={formData.confirmPassword}
-                      onChange={e => setFormData(p => ({ ...p, confirmPassword: e.target.value }))} />
+                    <Label htmlFor="confirmPassword">Confirm Password <span className="text-red-500">*</span></Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="Confirm password"
+                        value={formData.confirmPassword}
+                        className={fieldErrors.confirmPassword ? "border-red-400 focus-visible:ring-red-400 pr-10" : "pr-10"}
+                        onChange={e => { setFormData(p => ({ ...p, confirmPassword: e.target.value })); clearFieldError("confirmPassword"); }}
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                        onClick={() => setShowConfirmPassword(v => !v)}
+                        tabIndex={-1}
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <FieldError msg={fieldErrors.confirmPassword} />
                   </div>
                 </div>
               </div>
@@ -350,7 +481,7 @@ export default function Signup() {
             <span className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">Start Closing Them.</span>
           </h1>
           <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
-            The all-in-one CRM built for logistics and freight. AI-powered prospecting, email automation, 
+            The all-in-one CRM built for logistics and freight. AI-powered prospecting, email automation,
             and freight management — at a fraction of what Salesforce and HubSpot charge.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">

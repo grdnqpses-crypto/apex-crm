@@ -2198,3 +2198,12 @@
 - [x] Contacts bulk actions: Assign Owner, Create Task, Add to Segment, Enroll in Workflow, Delete
 - [x] Add bulk action checkboxes to Companies list page
 - [x] Companies bulk actions: Assign Owner, Create Task, Add to Segment, Enroll in Workflow, Delete
+
+## Session 10: Status Review + Bulk Actions + Signup + Import
+- [ ] Signup: per-field inline validation errors (red border + helper text under each field)
+- [ ] Signup: auto-populate username from email prefix as user types email
+- [ ] Bulk Actions Companies: add Enrich, Fill Smart Properties, Edit (inline), Review Associations, Check Enrichment Coverage, Track Activity
+- [ ] Bulk Actions Contacts: add Enrich, Fill Smart Properties, Edit (inline), Review Associations, Check Enrichment Coverage, Track Activity
+- [ ] Admin: delete all companies + contacts for a specific user (Settings → Danger Zone)
+- [ ] HubSpot import: verify CSV import end-to-end and map all HubSpot activity date fields
+- [ ] OpenAI/ChatGPT: add OPENAI_API_KEY secret and wire AI chat to GPT-4o as primary provider

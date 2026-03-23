@@ -129,6 +129,7 @@ const SETTINGS_SECTIONS = [
       { id: "data-enrichment", label: "Data Enrichment", icon: Sparkles, description: "Settings, conversational enrichment, and mapping." },
       { id: "import-export", label: "Import & Export", icon: Upload, description: "Import data from files or export your CRM data." },
       { id: "backup-restore", label: "Backup & Restore", icon: Archive, description: "Data backup and restore management." },
+      { id: "danger-zone", label: "Danger Zone", icon: AlertTriangle, description: "Permanently delete all companies, contacts, deals, and tasks for your account." },
     ],
   },
   {
@@ -1035,6 +1036,90 @@ function AISettingsPanel() {
   );
 }
 
+// ─── Delete All Data Panel ───
+function DeleteAllDataPanel() {
+  const [confirmText, setConfirmText] = useState("");
+  const [mode, setMode] = useState<"all" | "contacts" | "companies" | null>(null);
+  const utils = trpc.useUtils();
+  const deleteAll = trpc.adminData.deleteAllUserData.useMutation({
+    onSuccess: (d) => {
+      toast.success(`Deleted: ${d.deleted.companies} companies, ${d.deleted.contacts} contacts, ${d.deleted.deals} deals, ${d.deleted.tasks} tasks`);
+      utils.companies.listWithMetrics.invalidate();
+      utils.contacts.list.invalidate();
+      setMode(null); setConfirmText("");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteContacts = trpc.adminData.deleteAllContacts.useMutation({
+    onSuccess: (d) => {
+      toast.success(`Deleted ${d.deleted} contacts`);
+      utils.contacts.list.invalidate();
+      setMode(null); setConfirmText("");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteCompanies = trpc.adminData.deleteAllCompanies.useMutation({
+    onSuccess: (d) => {
+      toast.success(`Deleted ${d.deleted.companies} companies and ${d.deleted.contacts} contacts`);
+      utils.companies.listWithMetrics.invalidate();
+      utils.contacts.list.invalidate();
+      setMode(null); setConfirmText("");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const CONFIRM_PHRASES = { all: "DELETE ALL MY DATA", contacts: "DELETE ALL CONTACTS", companies: "DELETE ALL COMPANIES" } as const;
+  const handleConfirm = () => {
+    if (!mode) return;
+    const phrase = CONFIRM_PHRASES[mode];
+    if (confirmText !== phrase) { toast.error(`Type exactly: ${phrase}`); return; }
+    if (mode === "all") deleteAll.mutate({ confirm: "DELETE ALL MY DATA" });
+    else if (mode === "contacts") deleteContacts.mutate({ confirm: "DELETE ALL CONTACTS" });
+    else if (mode === "companies") deleteCompanies.mutate({ confirm: "DELETE ALL COMPANIES" });
+  };
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold text-destructive flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5" /> Danger Zone — Delete All Records
+        </h3>
+        <p className="text-sm text-muted-foreground mt-1">Permanently delete all CRM records for your company. This cannot be undone. Your account and settings are preserved.</p>
+      </div>
+      <div className="grid gap-4">
+        {([
+          { key: "contacts" as const, label: "Delete All Contacts", desc: "Removes all contacts. Companies, deals, and tasks remain.", cls: "border-amber-200 bg-amber-50" },
+          { key: "companies" as const, label: "Delete All Companies & Contacts", desc: "Removes all companies and their contacts. Deals and tasks remain.", cls: "border-orange-200 bg-orange-50" },
+          { key: "all" as const, label: "Delete ALL Data", desc: "Removes all companies, contacts, deals, and tasks. Your account and settings are preserved.", cls: "border-destructive/30 bg-destructive/5" },
+        ]).map(({ key, label, desc, cls }) => (
+          <Card key={key} className={`border-2 ${cls}`}>
+            <CardContent className="pt-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-semibold text-sm">{label}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+                </div>
+                <Button variant="destructive" size="sm" onClick={() => { setMode(key); setConfirmText(""); }}>{label}</Button>
+              </div>
+              {mode === key && (
+                <div className="mt-4 space-y-2 border-t pt-4">
+                  <p className="text-sm font-medium">Type <code className="bg-muted px-1 py-0.5 rounded text-xs">{CONFIRM_PHRASES[key]}</code> to confirm:</p>
+                  <div className="flex gap-2">
+                    <Input value={confirmText} onChange={e => setConfirmText(e.target.value)} placeholder={CONFIRM_PHRASES[key]} className="font-mono text-sm" />
+                    <Button variant="destructive" onClick={handleConfirm}
+                      disabled={confirmText !== CONFIRM_PHRASES[key] || deleteAll.isPending || deleteContacts.isPending || deleteCompanies.isPending}>
+                      Confirm Delete
+                    </Button>
+                    <Button variant="ghost" onClick={() => { setMode(null); setConfirmText(""); }}>Cancel</Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Data Management Panel ───
 function DataManagementPanel({ subsectionId }: { subsectionId: string }) {
   if (subsectionId === "properties") {
@@ -1045,6 +1130,9 @@ function DataManagementPanel({ subsectionId }: { subsectionId: string }) {
   }
   if (subsectionId === "import-export") {
     return <ImportExportPanel />;
+  }
+  if (subsectionId === "delete-data" || subsectionId === "danger-zone" || subsectionId === "backup-restore") {
+    return <DeleteAllDataPanel />;
   }
 
   // Default: show section info with link to relevant page

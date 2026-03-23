@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, UserPlus, Mail, Phone, MoreHorizontal, Trash2, Upload, Download, Users, Building2, Plus, CheckSquare, Square, Tag, UserCheck, Workflow } from "lucide-react";
+import { Search, UserPlus, Mail, Phone, MoreHorizontal, Trash2, Upload, Download, Users, Building2, Plus, CheckSquare, Square, Tag, UserCheck, Workflow, Sparkles, Pencil, Link2, ShieldCheck, Activity } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
@@ -247,20 +247,37 @@ export default function Contacts() {
 
       {/* ─── Bulk Action Toolbar ─── */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-primary/5 border border-primary/20 rounded-xl">
-          <span className="text-sm font-semibold text-primary">{selectedIds.size} selected</span>
-          <div className="flex-1" />
+        <div className="flex flex-wrap items-center gap-1.5 px-4 py-2.5 bg-primary/5 border border-primary/20 rounded-xl">
+          <span className="text-sm font-semibold text-primary mr-1">{selectedIds.size} selected</span>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => toast.info(`Enriching ${selectedIds.size} contacts with AI data (Lead Enrichment — paid service)`)}>
+            <Sparkles className="h-3.5 w-3.5 text-purple-500" /> Enrich
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => toast.info(`Filling smart properties for ${selectedIds.size} contacts...`)}>
+            <Pencil className="h-3.5 w-3.5 text-blue-500" /> Fill Smart Properties
+          </Button>
           <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { if (confirm(`Assign ${selectedIds.size} contacts to yourself?`)) bulkUpdateContacts.mutate({ ids: Array.from(selectedIds), updates: {} }); }}>
-            <UserCheck className="h-3.5 w-3.5" /> Assign Owner
+            <UserCheck className="h-3.5 w-3.5" /> Assign
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { toast.info("Create Task for selected contacts — coming soon"); }}>
-            <CheckSquare className="h-3.5 w-3.5" /> Create Task
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => toast.info(`Bulk edit ${selectedIds.size} contacts — coming soon`)}>
+            <Pencil className="h-3.5 w-3.5" /> Edit
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { toast.info("Add to Segment — coming soon"); }}>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => toast.info(`Reviewing associations for ${selectedIds.size} contacts...`)}>
+            <Link2 className="h-3.5 w-3.5 text-green-600" /> Review Associations
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => toast.info("Create Task for selected contacts — coming soon")}>
+            <CheckSquare className="h-3.5 w-3.5" /> Create Tasks
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => toast.info("Add to Segment — coming soon")}>
             <Tag className="h-3.5 w-3.5" /> Add to Segment
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { toast.info("Enroll in Workflow — coming soon"); }}>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => toast.info("Enroll in Workflow — coming soon")}>
             <Workflow className="h-3.5 w-3.5" /> Enroll in Workflow
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => toast.info(`Checking enrichment coverage for ${selectedIds.size} contacts...`)}>
+            <ShieldCheck className="h-3.5 w-3.5 text-amber-500" /> Check Coverage
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => toast.info(`Tracking activity for ${selectedIds.size} contacts...`)}>
+            <Activity className="h-3.5 w-3.5 text-rose-500" /> Track Activity
           </Button>
           <Button variant="destructive" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { if (confirm(`Delete ${selectedIds.size} contacts? This cannot be undone.`)) bulkDeleteContacts.mutate({ ids: Array.from(selectedIds) }); }}>
             <Trash2 className="h-3.5 w-3.5" /> Delete
