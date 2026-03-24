@@ -2355,3 +2355,91 @@
 - [x] Fix deals.create: make companyId optional in schema
 - [x] Fix domain health test timeout (60s → 90s)
 - [x] 720 tests passing across 36 test files
+
+## Session 21: Complete Missing Bulk Actions
+
+- [ ] Bulk "Fill Smart Properties" on Contacts page (AI-infer missing fields)
+- [ ] Bulk "Fill Smart Properties" on Companies page (AI-infer missing fields)
+- [ ] Bulk "Create Tasks" on Contacts page (create follow-up task for selected records)
+- [ ] Bulk "Create Tasks" on Companies page (create follow-up task for selected records)
+- [ ] Bulk "Track Activity" on Contacts page (log activity for selected records)
+- [ ] Bulk "Track Activity" on Companies page (log activity for selected records)
+- [ ] Backend tRPC procedures for all 3 bulk actions
+- [ ] Tests for new bulk action procedures
+
+## Session 21 (continued): Full Feature Completion Sprint
+
+### Phase 1 — Bulk Action Dialogs
+- [ ] Fill Smart Properties real mutation wired on Contacts page
+- [ ] Fill Smart Properties real mutation wired on Companies page
+- [ ] Create Tasks dialog on Contacts page (title, type, due date, priority, notes)
+- [ ] Create Tasks dialog on Companies page
+- [ ] Track Activity dialog on Contacts page (type, subject, body)
+- [ ] Track Activity dialog on Companies page
+
+### Phase 2 — Session 16 Completion
+- [ ] Migration Health widget on main Dashboard
+- [ ] Encrypted API credentials for auto-sync (AES-256)
+- [ ] Auto-sync runner using stored credentials
+- [ ] notifyOwner when auto-sync job is queued
+
+### Phase 3 — Sales Forecasting (P0)
+- [ ] Sales Forecasting page with weighted pipeline view
+- [ ] Quota overlay (set quota per user/period)
+- [ ] Best-case / commit / weighted forecast views
+- [ ] Forecast vs actual chart
+
+### Phase 4 — Quote/Proposal Generator (P1)
+- [ ] Quote builder page (add line items from deal)
+- [ ] Branded PDF generation from quote
+- [ ] E-sign link generation
+- [ ] Quote status tracking (draft/sent/accepted/declined)
+
+### Phase 5 — Agentic AI Command Execution (P1)
+- [ ] Natural language command input in AI panel
+- [ ] Command parser mapping plain-English to tRPC mutations
+- [ ] Supported commands: add contact, create deal, create task, send email, update stage
+
+### Phase 6 — Webhook/Zapier Integration (P1)
+- [ ] Webhook configuration page (URL, events, secret)
+- [ ] Webhook delivery engine with retry logic
+- [ ] Webhook event log (delivery history)
+- [ ] Test webhook button
+
+### Phase 7 — Migration Preview & Rollback (P1)
+- [x] Live field mapping preview with record counts before import
+- [x] Migration rollback (48-hour undo button)
+- [x] Rollback confirmation dialog
+
+### Phase 8 — P2 Features
+- [ ] FMCSA Carrier Verification (MC# lookup, safety rating, insurance on company records)
+- [ ] Revenue Intelligence page (call recording upload, AI transcription, objection surfacing)
+- [ ] Customer Portal (/portal/[token] — deal view, doc upload, comments)
+- [x] Migration Health Score (post-import data quality score)
+- [x] Freight Rate Confirmation PDF generator
+
+### Phase 9 — P3 Features
+- [x] Multi-Currency support (currency field on deals, conversion display)
+- [x] GDPR Compliance Tools (right-to-be-forgotten, consent tracking, data export)
+- [x] Keyboard Shortcuts (global hotkeys with help overlay)
+- [x] Compact Mode density toggle
+
+### Phase 10 — Polish
+- [ ] Empty states on all list pages
+- [ ] Loading skeletons on all data-heavy pages
+- [ ] Mobile responsiveness audit
+- [ ] Accessibility improvements (focus rings, ARIA labels)
+
+## Session 21 Final — Bulk Actions & Remaining Features
+- [x] Bulk Actions: Fill Smart Properties — backend procedure + UI dialog on Contacts and Companies
+- [x] Bulk Actions: Create Tasks — backend procedure + UI dialog on Contacts and Companies
+- [x] Bulk Actions: Track Activity — backend procedure + UI dialog on Contacts and Companies
+- [x] Removed duplicate inline bulkActions router in routers.ts that was shadowing batch1 router
+- [x] Fixed updateContacts/deleteContacts return values to include success: true
+- [x] Proposal PDF download via jsPDF — Download PDF button in proposal dropdown
+- [x] Migration Rollback UI — rollback tab in MigrationEngine with 48-hour undo
+- [x] Multi-Currency Settings page — full CRUD with live exchange rates
+- [x] Currency router registered in appRouter
+- [x] Freight Rate Confirmation PDF page — full form with jsPDF generation
+- [x] Compact mode wired into DashboardLayout via keyboard shortcut (Shift+K)
+- [x] All 724 tests passing across 37 test files

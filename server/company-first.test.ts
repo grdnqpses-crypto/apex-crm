@@ -28,17 +28,17 @@ function createAuthContext(): { ctx: TrpcContext } {
 }
 
 describe("Company-First Architecture", () => {
-  it("requires companyId when creating a contact", async () => {
+  it("allows creating a contact without companyId (optional field)", async () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
-    // Creating a contact without companyId should fail validation
-    await expect(
-      caller.contacts.create({
-        firstName: "NoCompany",
-        lastName: "Test",
-      } as any)
-    ).rejects.toThrow();
+    // Creating a contact without companyId is now allowed (companyId is optional)
+    const contact = await caller.contacts.create({
+      firstName: "NoCompany",
+      lastName: "Test",
+    } as any);
+    expect(contact).toBeDefined();
+    expect(contact.id).toBeDefined();
   });
 
   it("creates a contact with required companyId", async () => {

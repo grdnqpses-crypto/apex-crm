@@ -9,7 +9,7 @@ import { TRPCError } from "@trpc/server";
 import * as db from "../db";
 import { and, eq, lt, ne, inArray, desc, asc, sql, isNull } from "drizzle-orm";
 import {
-  deals, contacts, companies, auditLogs, smartViews, territories,
+  deals, contacts, companies, auditLogs, smartViews, territories, tasks, activityHistory,
 } from "../../drizzle/schema";
 
 // ─── Helper: write an audit log entry ───────────────────────────────────────
@@ -103,7 +103,7 @@ const bulkActionsRouter = router({
     await dbConn.update(contacts).set(updates as never)
       .where(and(inArray(contacts.id, input.ids), eq(contacts.tenantId, ctx.user.tenantCompanyId ?? 0)));
     await writeAuditLog({ tenantId: ctx.user.tenantCompanyId, userId: ctx.user.id, userEmail: ctx.user.email ?? undefined, userName: ctx.user.name ?? undefined, action: "bulk_update", entityType: "contacts", changes: { count: input.ids.length, updates: input.updates } });
-    return { updated: input.ids.length };
+    return { success: true, updated: input.ids.length };
   }),
 
   // Bulk delete contacts
@@ -115,7 +115,7 @@ const bulkActionsRouter = router({
     await dbConn.delete(contacts)
       .where(and(inArray(contacts.id, input.ids), eq(contacts.tenantId, ctx.user.tenantCompanyId ?? 0)));
     await writeAuditLog({ tenantId: ctx.user.tenantCompanyId, userId: ctx.user.id, userEmail: ctx.user.email ?? undefined, userName: ctx.user.name ?? undefined, action: "bulk_delete", entityType: "contacts", changes: { count: input.ids.length } });
-    return { deleted: input.ids.length };
+    return { success: true, deleted: input.ids.length };
   }),
 
   // Bulk update deals
@@ -175,6 +175,119 @@ const bulkActionsRouter = router({
       .where(and(inArray(companies.id, input.ids), eq(companies.tenantId, ctx.user.tenantCompanyId ?? 0)));
     await writeAuditLog({ tenantId: ctx.user.tenantCompanyId, userId: ctx.user.id, userEmail: ctx.user.email ?? undefined, userName: ctx.user.name ?? undefined, action: "bulk_update", entityType: "companies", changes: { count: input.ids.length, updates: input.updates } });
     return { updated: input.ids.length };
+  }),
+
+  // ── Fill Smart Properties (AI-infer missing fields) ──────────────────────
+  fillSmartProperties: protectedProcedure.input(z.object({
+    ids: z.array(z.number()).min(1).max(200),
+    entityType: z.enum(["contacts", "companies"]),
+  })).mutation(async ({ ctx, input }) => {
+    const dbConn = await db.getDb();
+    if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const now = Date.now();
+    const tenantId = ctx.user.tenantCompanyId ?? 0;
+    let filled = 0;
+    const hotStatuses = ["Hot", "Qualified", "Customer", "Under Contract", "Paperwork Received"];
+    const warmStatuses = ["Warm", "Attempted Contact", "DM Reached/Awaiting Quote", "Currently Quoting/Awaiting Business"];
+    if (input.entityType === "contacts") {
+      const rows = await dbConn.select().from(contacts)
+        .where(and(inArray(contacts.id, input.ids), eq(contacts.tenantId, tenantId)));
+      for (const row of rows) {
+        const updates: Record<string, unknown> = { updatedAt: now, lastModifiedDate: now };
+        if (!row.lifecycleStage && row.leadStatus) {
+          if (hotStatuses.includes(row.leadStatus)) updates.lifecycleStage = "opportunity";
+          else if (warmStatuses.includes(row.leadStatus)) updates.lifecycleStage = "lead";
+          else updates.lifecycleStage = "subscriber";
+          filled++;
+        }
+        await dbConn.update(contacts).set(updates as never)
+          .where(and(eq(contacts.id, row.id), eq(contacts.tenantId, tenantId)));
+      }
+    } else {
+      const rows = await dbConn.select().from(companies)
+        .where(and(inArray(companies.id, input.ids), eq(companies.tenantId, tenantId)));
+      for (const row of rows) {
+        const updates: Record<string, unknown> = { updatedAt: now, lastModifiedDate: now };
+        if (!row.lifecycleStage && row.leadStatus) {
+          if (hotStatuses.includes(row.leadStatus)) updates.lifecycleStage = "customer";
+          else if (warmStatuses.includes(row.leadStatus)) updates.lifecycleStage = "lead";
+          else updates.lifecycleStage = "prospect";
+          filled++;
+        }
+        await dbConn.update(companies).set(updates as never)
+          .where(and(eq(companies.id, row.id), eq(companies.tenantId, tenantId)));
+      }
+    }
+    await writeAuditLog({ tenantId, userId: ctx.user.id, userEmail: ctx.user.email ?? undefined, userName: ctx.user.name ?? undefined, action: "bulk_fill_smart_properties", entityType: input.entityType, changes: { count: input.ids.length, filled } });
+    return { processed: input.ids.length, filled };
+  }),
+
+  // ── Create Bulk Tasks ────────────────────────────────────────────────────
+  createBulkTasks: protectedProcedure.input(z.object({
+    ids: z.array(z.number()).min(1).max(200),
+    entityType: z.enum(["contacts", "companies"]),
+    title: z.string().min(1).max(512),
+    taskType: z.enum(["call", "email", "to_do", "follow_up"]).default("follow_up"),
+    dueDate: z.number().optional(),
+    priority: z.enum(["low", "medium", "high"]).default("medium"),
+    notes: z.string().optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const dbConn = await db.getDb();
+    if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const now = Date.now();
+    const tenantId = ctx.user.tenantCompanyId ?? 0;
+    const taskRows = input.ids.map(id => ({
+      userId: ctx.user.id,
+      tenantId,
+      title: input.title,
+      taskType: input.taskType,
+      dueDate: input.dueDate ?? (now + 86400000),
+      priority: input.priority,
+      description: input.notes ?? null,
+      status: "not_started" as const,
+      contactId: input.entityType === "contacts" ? id : null,
+      companyId: input.entityType === "companies" ? id : null,
+      createdAt: now,
+      updatedAt: now,
+    }));
+    await dbConn.insert(tasks).values(taskRows as never);
+    await writeAuditLog({ tenantId, userId: ctx.user.id, userEmail: ctx.user.email ?? undefined, userName: ctx.user.name ?? undefined, action: "bulk_create_tasks", entityType: input.entityType, changes: { count: input.ids.length, taskTitle: input.title } });
+    return { created: input.ids.length };
+  }),
+
+  // ── Track Bulk Activity ──────────────────────────────────────────────────
+  trackBulkActivity: protectedProcedure.input(z.object({
+    ids: z.array(z.number()).min(1).max(200),
+    entityType: z.enum(["contacts", "companies"]),
+    activityType: z.enum(["note", "call", "email_sent", "meeting"]).default("note"),
+    subject: z.string().min(1).max(512),
+    body: z.string().optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const dbConn = await db.getDb();
+    if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const now = Date.now();
+    const tenantId = ctx.user.tenantCompanyId ?? 0;
+    const activityRows = input.ids.map(id => ({
+      tenantCompanyId: tenantId,
+      activityType: input.activityType,
+      objectType: (input.entityType === "contacts" ? "contact" : "company") as "contact" | "company",
+      recordId: id,
+      userId: ctx.user.id,
+      subject: input.subject,
+      body: input.body ?? null,
+      occurredAt: now,
+      createdAt: now,
+    }));
+    await dbConn.insert(activityHistory).values(activityRows as never);
+    if (input.entityType === "contacts") {
+      await dbConn.update(contacts).set({ lastActivityDate: now, updatedAt: now } as never)
+        .where(and(inArray(contacts.id, input.ids), eq(contacts.tenantId, tenantId)));
+    } else {
+      await dbConn.update(companies).set({ lastActivityDate: now, updatedAt: now } as never)
+        .where(and(inArray(companies.id, input.ids), eq(companies.tenantId, tenantId)));
+    }
+    await writeAuditLog({ tenantId, userId: ctx.user.id, userEmail: ctx.user.email ?? undefined, userName: ctx.user.name ?? undefined, action: "bulk_track_activity", entityType: input.entityType, changes: { count: input.ids.length, activityType: input.activityType } });
+    return { logged: input.ids.length };
   }),
 });
 

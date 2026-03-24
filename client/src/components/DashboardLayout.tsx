@@ -49,6 +49,7 @@ import OnboardingTutorial from "./OnboardingTutorial";
 import PaymentFailedBanner from "./PaymentFailedBanner";
 import { trpc } from "@/lib/trpc";
 import { useSkin } from "@/contexts/SkinContext";
+import { useKeyboardShortcuts } from "@/components/KeyboardShortcutsProvider";
 
 // ─── Icon resolver for skin nav items ───
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -169,6 +170,7 @@ const standardSections = [
       { icon: Globe, label: "Customer Portal", path: "/portal" },
       { icon: UserPlus, label: "Onboarding", path: "/onboarding" },
       { icon: MailOpen, label: "Order Entry", path: "/order-entry" },
+      { icon: FileText, label: "Rate Confirmation", path: "/freight-rate-confirmation" },
     ],
   },
   {
@@ -218,6 +220,7 @@ const standardSections = [
       { icon: Paintbrush, label: "White Label", path: "/white-label" },
       { icon: ArrowRightLeft, label: "Migration", path: "/migration" },
       { icon: ArrowRightLeft, label: "Migration Wizard", path: "/migration/wizard" },
+      { icon: DollarSign, label: "Multi-Currency", path: "/multi-currency" },
       { icon: Crown, label: "Subscription", path: "/subscription" },
       { icon: CreditCard, label: "Billing & Plans", path: "/billing" },
       { icon: Receipt, label: "Billing History", path: "/billing-history" },
@@ -397,6 +400,7 @@ function DashboardLayoutContent({
   const isMobile = useIsMobile();
   const { devMode, handleLogoTap, disableDevMode } = useDevMode();
   const { canAccessSidebarItem, isAdmin, isAxiomOwner, isDeveloper } = useFeatureAccess();
+  const { compactMode } = useKeyboardShortcuts();
   const [aiOpen, setAiOpen] = useState(false);
   const { data: myCompany } = trpc.tenants.myCompany.useQuery(undefined, { enabled: !!user });
   // White-label: only Company Admin and above see "powered by AXIOM"
@@ -728,7 +732,7 @@ function DashboardLayoutContent({
           </div>
         </div>
         <PaymentFailedBanner />
-        <main className="flex-1 p-5 lg:p-7">{children}</main>
+        <main className={`flex-1 transition-all duration-200 ${compactMode ? 'p-2 lg:p-3' : 'p-5 lg:p-7'}`}>{children}</main>
       </SidebarInset>
 
       {/* AI Assistant floating button — bottom-right, just above Made with Manus tag */}

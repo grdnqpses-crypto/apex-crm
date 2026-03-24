@@ -1,0 +1,13 @@
+{
+  "query": "\nCREATE TABLE IF NOT EXISTS migration_rollback_log (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  jobId INT NOT NULL,\n  tenantId INT NOT NULL,\n  mrlEntityType ENUM('contact','company','deal','activity') NOT NULL,\n  entityId INT NOT NULL,\n  mrlCreatedAt BIGINT NOT NULL,\n  INDEX idx_mrl_job (jobId),\n  INDEX idx_mrl_tenant (tenantId)\n);\n\nCREATE TABLE IF NOT EXISTS currency_settings (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  csrTenantId INT NOT NULL,\n  baseCurrency VARCHAR(8) NOT NULL DEFAULT 'USD',\n  enabledCurrencies JSON DEFAULT ('[\"USD\"]'),\n  exchangeRates JSON DEFAULT ('{}'),\n  csrLastUpdated BIGINT,\n  csrUpdatedAt BIGINT NOT NULL,\n  UNIQUE KEY uq_currency_tenant (csrTenantId)\n);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute \nCREATE TABLE IF NOT EXISTS migration_rollback_log (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  jobId INT NOT NULL,\n  tenantId INT NOT NULL,\n  mrlEntityType ENUM('contact','company','deal','activity') NOT NULL,\n  entityId INT NOT NULL,\n  mrlCreatedAt BIGINT NOT NULL,\n  INDEX idx_mrl_job (jobId),\n  INDEX idx_mrl_tenant (tenantId)\n);\n\nCREATE TABLE IF NOT EXISTS currency_settings (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  csrTenantId INT NOT NULL,\n  baseCurrency VARCHAR(8) NOT NULL DEFAULT 'USD',\n  enabledCurrencies JSON DEFAULT ('[\"USD\"]'),\n  exchangeRates JSON DEFAULT ('{}'),\n  csrLastUpdated BIGINT,\n  csrUpdatedAt BIGINT NOT NULL,\n  UNIQUE KEY uq_currency_tenant (csrTenantId)\n);\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 13: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 5 column 44 near \"'[\"USD\"]'),",
+    "  exchangeRates JSON DEFAULT ('{}'),",
+    "  csrLastUpdated BIGINT,",
+    "  csrUpdatedAt BIGINT NOT NULL,",
+    "  UNIQUE KEY uq_currency_tenant (csrTenantId)",
+    ")\""
+  ]
+}

@@ -36,6 +36,7 @@ import { webFormsRouter, eSignatureRouter, reputationRouter, oooDetectionRouter 
 import { emailSequencesRouter, journeysRouter, whatsappRouter, socialSchedulerRouter, powerDialerRouter, anomalyDetectionRouter, pipelineInspectionRouter, domainHealthAutopilotRouter, abTestingRouter, featureGatingRouter } from "./routers/batch4";
 import { notificationPrefsRouter, scheduledReportsRouter, proposalAnalyticsRouter, customRolesRouter, ssoRouter, customFieldConditionsRouter, aiCreditUsageRouter, whatsappBroadcastsRouter, bulkMergeRouter, aiPostWriterRouter } from "./routers/gap-features";
 import { salesQuotasRouter, smsRouter, gdprRouter, publicBookingRouter, portalEnhancedRouter, agentCommandsRouter, revenueIntelRouter, userPrefsRouter, portalDocsRouter } from "./routers/competitive-features";
+import { currencyRouter } from "./routers/currency";
 
 export const appRouter = router({
   system: systemRouter,
@@ -100,6 +101,7 @@ export const appRouter = router({
   integrationHub: integrationHubRouter,
   onboarding: onboardingRouter,
   historyImporter: historyImporterRouter,
+  currency: currencyRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -237,7 +239,7 @@ export const appRouter = router({
       firstName: z.string().min(1),
       lastName: z.string().optional(),
       jobTitle: z.string().optional(),
-      companyId: z.number(),
+      companyId: z.number().optional(),
       email: z.string().optional(),
       companyPhone: z.string().optional(),
       directPhone: z.string().optional(),
@@ -5691,59 +5693,6 @@ export const appRouter = router({
       action: z.string().optional(),
     })).query(async ({ ctx }) => {
       return { logs: [], total: 0, page: 1, limit: 50 };
-    }),
-  }),
-
-  // ─── Bulk Actions ─────────────────────────────────────────────────────────────
-  bulkActions: router({
-    updateContacts: protectedProcedure.input(z.object({
-      ids: z.array(z.number()),
-      updates: z.record(z.string(), z.unknown()),
-    })).mutation(async ({ ctx, input }) => {
-      const dbConn = await db.getDb();
-      if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
-      const { contacts } = await import('../drizzle/schema');
-      const { inArray, and, eq } = await import('drizzle-orm');
-      const tenantId = ctx.user.tenantCompanyId;
-      if (tenantId) {
-        await dbConn.update(contacts).set({ ...input.updates, updatedAt: Date.now() })
-          .where(and(inArray(contacts.id, input.ids), eq(contacts.tenantCompanyId, tenantId)));
-      } else {
-        await dbConn.update(contacts).set({ ...input.updates, updatedAt: Date.now() })
-          .where(and(inArray(contacts.id, input.ids), eq(contacts.userId, ctx.user.id)));
-      }
-      return { success: true, updated: input.ids.length };
-    }),
-    deleteContacts: protectedProcedure.input(z.object({ ids: z.array(z.number()) })).mutation(async ({ ctx, input }) => {
-      const dbConn = await db.getDb();
-      if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
-      const { contacts } = await import('../drizzle/schema');
-      const { inArray, and, eq, or } = await import('drizzle-orm');
-      const tenantId = ctx.user.tenantCompanyId;
-      if (tenantId) {
-        await dbConn.delete(contacts).where(and(inArray(contacts.id, input.ids), eq(contacts.tenantCompanyId, tenantId)));
-      } else {
-        await dbConn.delete(contacts).where(and(inArray(contacts.id, input.ids), eq(contacts.userId, ctx.user.id)));
-      }
-      return { success: true, deleted: input.ids.length };
-    }),
-    updateCompanies: protectedProcedure.input(z.object({
-      ids: z.array(z.number()).min(1).max(500),
-      updates: z.object({
-        ownerId: z.number().optional(),
-        leadStatus: z.string().optional(),
-      }),
-    })).mutation(async ({ ctx, input }) => {
-      const dbConn = await db.getDb();
-      if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
-      const { companies } = await import('../drizzle/schema');
-      const { inArray, and, eq } = await import('drizzle-orm');
-      const updates: Record<string, unknown> = { updatedAt: Date.now() };
-      if (input.updates.ownerId !== undefined) updates.userId = input.updates.ownerId;
-      if (input.updates.leadStatus !== undefined) updates.leadStatus = input.updates.leadStatus;
-      await dbConn.update(companies).set(updates as never)
-        .where(and(inArray(companies.id, input.ids), eq(companies.tenantId, ctx.user.tenantCompanyId ?? 0)));
-      return { updated: input.ids.length };
     }),
   }),
 

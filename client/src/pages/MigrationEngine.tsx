@@ -6,10 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   ArrowRightLeft, CheckCircle, AlertCircle, Zap, RefreshCw,
   ShieldAlert, Lock, Users, Building2, Briefcase, Activity,
-  Clock, CalendarClock, Trash2, Plus,
+  Clock, CalendarClock, Trash2, Plus, RotateCcw, AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Link } from "wouter";
@@ -65,6 +68,21 @@ export default function MigrationEngine() {
       toast.success("Auto-sync removed.");
     },
     onError: (err) => toast.error(`Failed to remove: ${err.message}`),
+  });
+
+  // Rollback state
+  const [rollbackJobId, setRollbackJobId] = useState<number | null>(null);
+  const [rollbackOpen, setRollbackOpen] = useState(false);
+  const rollbackEligible = trpc.migration.getRollbackEligibleJobs.useQuery(undefined, { enabled: isAdmin });
+  const rollbackMigration = trpc.migration.rollback.useMutation({
+    onSuccess: (data: any) => {
+      toast.success(`Rollback complete: ${data.deletedContacts ?? 0} contacts, ${data.deletedCompanies ?? 0} companies, ${data.deletedDeals ?? 0} deals removed`);
+      setRollbackOpen(false);
+      setRollbackJobId(null);
+      jobs.refetch();
+      rollbackEligible.refetch();
+    },
+    onError: (err: any) => toast.error(`Rollback failed: ${err.message}`),
   });
 
   // Local state for the "Add auto-sync" form
@@ -396,6 +414,73 @@ export default function MigrationEngine() {
           <p className="text-sm mt-1">Click "Launch Wizard" above to import your first CRM.</p>
         </div>
       )}
+
+      {/* ── 48-Hour Rollback ──────────────────────────────────────────────── */}
+      {rollbackEligible.data && rollbackEligible.data.length >= 0 && (
+        <Card className="border-amber-200/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <RotateCcw className="w-4 h-4 text-amber-500" />
+              48-Hour Rollback
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Undo a completed migration within 48 hours. This permanently removes all records imported by that job.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {(rollbackEligible.data || []).map((job: any) => (
+              <div key={job.id} className="flex items-center justify-between p-3 bg-amber-50/50 rounded-xl border border-amber-100">
+                <div>
+                  <p className="font-medium text-sm capitalize">{job.sourcePlatform} import</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(Number(job.completedAt)).toLocaleString()} · {(job.contactsImported || 0) + (job.companiesImported || 0) + (job.dealsImported || 0)} records
+                  </p>
+                  <p className="text-xs text-amber-600 mt-0.5">Expires: {new Date(Number(job.expiresAt)).toLocaleString()}</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 border-red-200 hover:bg-red-50 rounded-xl"
+                  onClick={() => { setRollbackJobId(job.id); setRollbackOpen(true); }}
+                >
+                  <RotateCcw className="w-3.5 h-3.5 mr-1.5" /> Rollback
+                </Button>
+              </div>
+            ))}
+            {(rollbackEligible.data || []).length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-3">
+                No migrations within the 48-hour rollback window.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Rollback confirmation dialog */}
+      <Dialog open={rollbackOpen} onOpenChange={setRollbackOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" /> Confirm Rollback
+            </DialogTitle>
+          </DialogHeader>
+          <Alert className="border-red-200 bg-red-50">
+            <AlertDescription className="text-red-700 text-sm">
+              This will permanently delete all contacts, companies, deals, and activities imported by this migration job. This action cannot be undone.
+            </AlertDescription>
+          </Alert>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRollbackOpen(false)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={() => rollbackJobId && rollbackMigration.mutate({ jobId: rollbackJobId })}
+              disabled={rollbackMigration.isPending}
+            >
+              {rollbackMigration.isPending ? "Rolling back..." : "Yes, Rollback Migration"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

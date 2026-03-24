@@ -144,6 +144,8 @@ const GDPRTools = lazy(() => import("./pages/GDPRTools"));
 const PublicBookingPage = lazy(() => import("./pages/PublicBookingPage"));
 const ReschedulePage = lazy(() => import("./pages/ReschedulePage"));
 const CancelBookingPage = lazy(() => import("./pages/CancelBookingPage"));
+const MultiCurrencySettings = lazy(() => import("./pages/MultiCurrencySettings"));
+const FreightRateConfirmation = lazy(() => import("./pages/FreightRateConfirmation"));
 
 function PageLoader() {
   return (
@@ -291,6 +293,8 @@ function Router() {
           <Route path="/conditional-fields" component={ConditionalFields} />
           <Route path="/sms" component={SMSInbox} />
           <Route path="/gdpr" component={GDPRTools} />
+          <Route path="/multi-currency" component={MultiCurrencySettings} />
+          <Route path="/freight-rate-confirmation" component={FreightRateConfirmation} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import jsPDF from "jspdf";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Plus, FileText, Send, CheckCircle, Eye, Clock, XCircle, MoreHorizontal, Trash2, Sparkles, Loader2 } from "lucide-react";
+import { Plus, FileText, Send, CheckCircle, Eye, Clock, XCircle, MoreHorizontal, Trash2, Sparkles, Loader2, Download } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useSkin } from "@/contexts/SkinContext";
 
@@ -35,6 +36,145 @@ export default function Proposals() {
   const sendMutation = trpc.proposals.send.useMutation();
   const deleteMutation = trpc.proposals.delete.useMutation();
   const generateMutation = trpc.proposals.generateWithAI.useMutation();
+
+  const handleDownloadPDF = (proposal: any) => {
+    const doc = new jsPDF();
+    const pageW = doc.internal.pageSize.getWidth();
+    // Header bar
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, pageW, 28, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("PROPOSAL", 14, 18);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(new Date().toLocaleDateString(), pageW - 14, 18, { align: "right" });
+    // Title
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(proposal.title, 14, 44);
+    // Status badge
+    const statusColors: Record<string, [number, number, number]> = {
+      draft: [100, 100, 100], sent: [59, 130, 246], signed: [34, 197, 94], declined: [239, 68, 68], expired: [156, 163, 175]
+    };
+    const sc = statusColors[proposal.status] ?? [100, 100, 100];
+    doc.setFillColor(...sc);
+    doc.roundedRect(14, 48, 30, 7, 2, 2, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(7);
+    doc.text((proposal.status ?? "draft").toUpperCase(), 29, 53.5, { align: "center" });
+    // Amount
+    if (proposal.totalAmount) {
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(22);
+      doc.setFont("helvetica", "bold");
+      const formatted = new Intl.NumberFormat("en-US", { style: "currency", currency: proposal.currency ?? "USD" }).format(Number(proposal.totalAmount));
+      doc.text(formatted, pageW - 14, 53, { align: "right" });
+    }
+    // Divider
+    doc.setDrawColor(226, 232, 240);
+    doc.line(14, 60, pageW - 14, 60);
+    // Sections from templateJson
+    let y = 70;
+    const sections = (proposal.templateJson as any)?.sections ?? [];
+    for (const section of sections) {
+      if (y > 260) { doc.addPage(); y = 20; }
+      if (section.type === "header" || section.type === "intro") {
+        doc.setTextColor(15, 23, 42);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        const lines = doc.splitTextToSize(section.content ?? "", pageW - 28);
+        doc.text(lines, 14, y);
+        y += lines.length * 6 + 6;
+      } else if (section.type === "scope" && section.items) {
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(15, 23, 42);
+        doc.text(section.content ?? "Scope of Work", 14, y);
+        y += 8;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        for (const item of section.items as string[]) {
+          if (y > 270) { doc.addPage(); y = 20; }
+          doc.setFillColor(59, 130, 246);
+          doc.circle(17, y - 1.5, 1.5, "F");
+          doc.setTextColor(71, 85, 105);
+          doc.text(item, 22, y);
+          y += 7;
+        }
+        y += 4;
+      } else if (section.type === "pricing") {
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(15, 23, 42);
+        doc.text(section.content ?? "Investment", 14, y);
+        y += 8;
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(14, y - 4, pageW - 28, 14, 2, 2, "F");
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(71, 85, 105);
+        doc.text("Total Investment", 18, y + 4);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(15, 23, 42);
+        const amt = section.amount ? new Intl.NumberFormat("en-US", { style: "currency", currency: section.currency ?? "USD" }).format(Number(section.amount)) : "TBD";
+        doc.text(amt, pageW - 18, y + 4, { align: "right" });
+        y += 20;
+      } else if (section.type === "terms") {
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(15, 23, 42);
+        doc.text(section.content ?? "Terms & Conditions", 14, y);
+        y += 8;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        const lines = doc.splitTextToSize(section.text ?? "", pageW - 28);
+        doc.text(lines, 14, y);
+        y += lines.length * 5.5 + 8;
+      } else if (section.type === "signature") {
+        if (y > 230) { doc.addPage(); y = 20; }
+        doc.setDrawColor(226, 232, 240);
+        doc.line(14, y + 20, 80, y + 20);
+        doc.setFontSize(8);
+        doc.setTextColor(100, 116, 139);
+        doc.text("Authorized Signature", 14, y + 26);
+        if (proposal.signedByName) {
+          doc.setFontSize(9);
+          doc.setTextColor(34, 197, 94);
+          doc.text(`Signed by: ${proposal.signedByName}`, 14, y + 34);
+        }
+        y += 40;
+      }
+    }
+    // Notes
+    if (proposal.notes) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(15, 23, 42);
+      doc.text("Notes", 14, y);
+      y += 7;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      const noteLines = doc.splitTextToSize(proposal.notes, pageW - 28);
+      doc.text(noteLines, 14, y);
+    }
+    // Footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184);
+      doc.text(`Page ${i} of ${pageCount}`, pageW / 2, 290, { align: "center" });
+      doc.text("Generated by Axiom CRM", 14, 290);
+    }
+    doc.save(`${proposal.title.replace(/[^a-z0-9]/gi, "_")}_proposal.pdf`);
+    toast.success("PDF downloaded");
+  };
   const utils = trpc.useUtils();
 
   const handleCreate = async () => {
@@ -171,6 +311,9 @@ export default function Proposals() {
                               <Eye className="h-4 w-4 mr-2" />Copy Signature Link
                             </DropdownMenuItem>
                           )}
+                          <DropdownMenuItem onClick={() => handleDownloadPDF(proposal)}>
+                            <Download className="h-4 w-4 mr-2" />Download PDF
+                          </DropdownMenuItem>
                           <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(proposal.id)}>
                             <Trash2 className="h-4 w-4 mr-2" />Delete
                           </DropdownMenuItem>

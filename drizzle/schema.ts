@@ -3725,3 +3725,27 @@ export const portalComments = mysqlTable("portal_comments", {
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
 });
 export type PortalComment = typeof portalComments.$inferSelect;
+
+// ─── Migration Rollback Log ───────────────────────────────────────────────────
+// Tracks imported record IDs so a job can be rolled back within 48 hours
+export const migrationRollbackLog = mysqlTable("migration_rollback_log", {
+  id: int("id").autoincrement().primaryKey(),
+  jobId: int("jobId").notNull(),
+  tenantId: int("tenantId").notNull(),
+  entityType: mysqlEnum("mrlEntityType", ["contact", "company", "deal", "activity"]).notNull(),
+  entityId: int("entityId").notNull(),
+  createdAt: bigint("mrlCreatedAt", { mode: "number" }).notNull(),
+});
+export type MigrationRollbackLog = typeof migrationRollbackLog.$inferSelect;
+
+// ─── Multi-Currency Settings ──────────────────────────────────────────────────
+export const currencySettings = mysqlTable("currency_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("csrTenantId").notNull(),
+  baseCurrency: varchar("baseCurrency", { length: 8 }).notNull().default("USD"),
+  enabledCurrencies: json("enabledCurrencies").$type<string[]>().default(["USD"]),
+  exchangeRates: json("exchangeRates").$type<Record<string, number>>().default({}),
+  lastUpdated: bigint("csrLastUpdated", { mode: "number" }),
+  updatedAt: bigint("csrUpdatedAt", { mode: "number" }).notNull(),
+});
+export type CurrencySettings = typeof currencySettings.$inferSelect;

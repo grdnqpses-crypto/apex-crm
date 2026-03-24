@@ -10,8 +10,9 @@ import { encryptCredentials } from "../credential-vault";
 import {
   migrationJobs, skinPreferences, customFieldDefs, customFieldValues,
   activityHistory, contacts, companies, deals, users, migrationAutoSync,
+  migrationRollbackLog,
 } from "../../drizzle/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import {
   COMPETITOR_PROFILES, AXIOM_FIELDS,
   aiMapFields, generateCheatSheet, parseCSV,
@@ -523,6 +524,86 @@ export const migrationRouter = router({
           eq(migrationAutoSync.sourcePlatform, input.sourcePlatform),
         ));
       return { success: true };
+    }),
+
+  // ─── Migration Preview: count records + suggest field mapping ────────────
+  preview: companyAdminProcedure
+    .input(z.object({
+      sourcePlatform: z.string(),
+      csvData: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = ctx.user.tenantCompanyId!;
+      let contactCount = 0;
+      let fieldSample: Record<string, string[]> = {};
+      let suggestedMapping: Record<string, string> = {};
+      if (input.csvData) {
+        const rows = parseCSV(input.csvData);
+        contactCount = rows.length;
+        if (rows.length > 0) {
+          const headers = Object.keys(rows[0]);
+          for (const h of headers) {
+            fieldSample[h] = rows.slice(0, 3).map((r: Record<string, string>) => r[h] ?? "").filter(Boolean);
+          }
+          try { suggestedMapping = await aiMapFields(headers, input.sourcePlatform); } catch { /* fallback */ }
+        }
+      }
+      return { tenantId, sourcePlatform: input.sourcePlatform, contactCount, fieldSample, suggestedMapping, canImport: contactCount > 0 };
+    }),
+
+  // ─── Get jobs eligible for rollback (completed within last 48 hours) ─────
+  getRollbackEligibleJobs: companyAdminProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db || !ctx.user.tenantCompanyId) return [];
+    const cutoff = Date.now() - 48 * 60 * 60 * 1000;
+    const jobs = await db.select().from(migrationJobs)
+      .where(and(eq(migrationJobs.companyId, ctx.user.tenantCompanyId), eq(migrationJobs.status, "completed")))
+      .orderBy(desc(migrationJobs.createdAt)).limit(20);
+    return jobs
+      .filter(j => (j.completedAt ?? 0) > cutoff)
+      .map(j => ({
+        id: j.id,
+        sourcePlatform: j.sourcePlatform,
+        completedAt: j.completedAt,
+        contactsImported: j.contactsImported ?? 0,
+        companiesImported: j.companiesImported ?? 0,
+        dealsImported: j.dealsImported ?? 0,
+        expiresAt: (j.completedAt ?? 0) + 48 * 60 * 60 * 1000,
+      }));
+  }),
+
+  // ─── Rollback a completed migration (soft-delete all imported records) ────
+  rollback: companyAdminProcedure
+    .input(z.object({ jobId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db || !ctx.user.tenantCompanyId) throw new Error("No company context");
+      const tenantId = ctx.user.tenantCompanyId;
+      const cutoff = Date.now() - 48 * 60 * 60 * 1000;
+      const [job] = await db.select().from(migrationJobs)
+        .where(and(eq(migrationJobs.id, input.jobId), eq(migrationJobs.companyId, tenantId)));
+      if (!job) throw new Error("Job not found");
+      if ((job.completedAt ?? 0) < cutoff) throw new Error("Rollback window expired (48 hours)");
+      const logEntries = await db.select().from(migrationRollbackLog)
+        .where(and(eq(migrationRollbackLog.jobId, input.jobId), eq(migrationRollbackLog.tenantId, tenantId)));
+      let deletedContacts = 0, deletedCompanies = 0, deletedDeals = 0;
+      for (const entry of logEntries) {
+        try {
+          if (entry.entityType === "contact") {
+            await db.execute(sql`UPDATE contacts SET is_deleted=1, deleted_at=${Date.now()} WHERE id=${entry.entityId} AND tenantId=${tenantId}`);
+            deletedContacts++;
+          } else if (entry.entityType === "company") {
+            await db.execute(sql`UPDATE companies SET is_deleted=1, deleted_at=${Date.now()} WHERE id=${entry.entityId} AND tenantId=${tenantId}`);
+            deletedCompanies++;
+          } else if (entry.entityType === "deal") {
+            await db.execute(sql`DELETE FROM deals WHERE id=${entry.entityId} AND tenantId=${tenantId}`);
+            deletedDeals++;
+          }
+        } catch { /* continue on error */ }
+      }
+      await db.update(migrationJobs).set({ status: "failed", updatedAt: Date.now() } as any).where(eq(migrationJobs.id, input.jobId));
+      await db.delete(migrationRollbackLog).where(eq(migrationRollbackLog.jobId, input.jobId));
+      return { success: true, deletedContacts, deletedCompanies, deletedDeals };
     }),
 
 });

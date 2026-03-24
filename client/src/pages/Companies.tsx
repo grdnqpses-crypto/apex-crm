@@ -60,6 +60,22 @@ export default function Companies() {
     onSuccess: (d: any) => { utils.companies.listWithMetrics.invalidate(); setSelectedIds(new Set()); toast.success(`Updated ${d.updated} companies`); },
     onError: (e: any) => toast.error(e.message),
   });
+  const fillSmartPropsCompanies = trpc.bulkActions.fillSmartProperties.useMutation({
+    onSuccess: (d) => { utils.companies.listWithMetrics.invalidate(); setSelectedIds(new Set()); toast.success(`Smart properties filled for ${d.processed} companies (${d.filled} fields inferred)`); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const [bulkTaskDialog, setBulkTaskDialog] = useState(false);
+  const [bulkTaskForm, setBulkTaskForm] = useState({ title: "", taskType: "follow_up" as "call"|"email"|"to_do"|"follow_up", priority: "medium" as "low"|"medium"|"high", notes: "" });
+  const createBulkTasksMutation = trpc.bulkActions.createBulkTasks.useMutation({
+    onSuccess: (d) => { setSelectedIds(new Set()); setBulkTaskDialog(false); setBulkTaskForm({ title: "", taskType: "follow_up", priority: "medium", notes: "" }); toast.success(`Created ${d.created} tasks`); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const [bulkActivityDialog, setBulkActivityDialog] = useState(false);
+  const [bulkActivityForm, setBulkActivityForm] = useState({ activityType: "note" as "note"|"call"|"email_sent"|"meeting", subject: "", body: "" });
+  const trackActivityMutation = trpc.bulkActions.trackBulkActivity.useMutation({
+    onSuccess: (d) => { utils.companies.listWithMetrics.invalidate(); setSelectedIds(new Set()); setBulkActivityDialog(false); setBulkActivityForm({ activityType: "note", subject: "", body: "" }); toast.success(`Activity logged for ${d.logged} companies`); },
+    onError: (e: any) => toast.error(e.message),
+  });
   const visibleCompanies = (activeTab === "incomplete" ? data?.items?.filter(c => getCompanyScore(c) < 60) : data?.items) ?? [];
   const toggleSelectAll = () => { if (selectedIds.size === visibleCompanies.length && visibleCompanies.length > 0) { setSelectedIds(new Set()); } else { setSelectedIds(new Set(visibleCompanies.map((c: any) => c.id))); } };
 
@@ -147,8 +163,8 @@ export default function Companies() {
           <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => toast.info(`Enriching ${selectedIds.size} companies with AI data (Lead Enrichment — paid service)`)}>
             <Sparkles className="h-3.5 w-3.5 text-purple-500" /> Enrich
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => toast.info(`Filling smart properties for ${selectedIds.size} companies...`)}>
-            <Pencil className="h-3.5 w-3.5 text-blue-500" /> Fill Smart Properties
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" disabled={fillSmartPropsCompanies.isPending} onClick={() => fillSmartPropsCompanies.mutate({ ids: Array.from(selectedIds), entityType: "companies" })}>
+            <Pencil className="h-3.5 w-3.5 text-blue-500" /> {fillSmartPropsCompanies.isPending ? "Filling..." : "Fill Smart Properties"}
           </Button>
           <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => toast.info("Assign Owner — coming soon")}>
             <UserCheck className="h-3.5 w-3.5" /> Assign
@@ -159,7 +175,7 @@ export default function Companies() {
           <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => toast.info(`Reviewing associations for ${selectedIds.size} companies...`)}>
             <Link2 className="h-3.5 w-3.5 text-green-600" /> Review Associations
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => toast.info("Create Task for selected companies — coming soon")}>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => setBulkTaskDialog(true)}>
             <CheckSquare className="h-3.5 w-3.5" /> Create Tasks
           </Button>
           <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => toast.info("Add to Segment — coming soon")}>
@@ -171,7 +187,7 @@ export default function Companies() {
           <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => toast.info(`Checking enrichment coverage for ${selectedIds.size} companies...`)}>
             <ShieldCheck className="h-3.5 w-3.5 text-amber-500" /> Check Coverage
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => toast.info(`Tracking activity for ${selectedIds.size} companies...`)}>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => setBulkActivityDialog(true)}>
             <Activity className="h-3.5 w-3.5 text-rose-500" /> Track Activity
           </Button>
           <Button variant="destructive" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { if (confirm(`Delete ${selectedIds.size} companies and all their contacts? This cannot be undone.`)) { Array.from(selectedIds).forEach(id => deleteMutation.mutate({ id })); setSelectedIds(new Set()); } }}>
@@ -580,6 +596,79 @@ export default function Companies() {
         </DialogContent>
       </Dialog>
 
+      {/* Bulk Create Tasks Dialog */}
+      <Dialog open={bulkTaskDialog} onOpenChange={setBulkTaskDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Tasks for {selectedIds.size} Companies</DialogTitle>
+            <DialogDescription>A task will be created for each selected company.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Task Title *</Label>
+              <Input value={bulkTaskForm.title} onChange={e => setBulkTaskForm(p => ({ ...p, title: e.target.value }))} placeholder="Follow up with company" className="rounded-xl" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Task Type</Label>
+                <Select value={bulkTaskForm.taskType} onValueChange={v => setBulkTaskForm(p => ({ ...p, taskType: v as any }))}>
+                  <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="follow_up">Follow Up</SelectItem><SelectItem value="call">Call</SelectItem><SelectItem value="email">Email</SelectItem><SelectItem value="to_do">To Do</SelectItem></SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Priority</Label>
+                <Select value={bulkTaskForm.priority} onValueChange={v => setBulkTaskForm(p => ({ ...p, priority: v as any }))}>
+                  <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem></SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Notes (optional)</Label>
+              <Textarea value={bulkTaskForm.notes} onChange={e => setBulkTaskForm(p => ({ ...p, notes: e.target.value }))} placeholder="Additional context..." className="rounded-xl min-h-[80px]" />
+            </div>
+          </div>
+          <DialogFooter className="mt-2">
+            <Button variant="outline" onClick={() => setBulkTaskDialog(false)} className="rounded-xl">Cancel</Button>
+            <Button disabled={!bulkTaskForm.title.trim() || createBulkTasksMutation.isPending} onClick={() => createBulkTasksMutation.mutate({ ids: Array.from(selectedIds), entityType: "companies", title: bulkTaskForm.title, taskType: bulkTaskForm.taskType, priority: bulkTaskForm.priority, notes: bulkTaskForm.notes || undefined })} className="rounded-xl">
+              {createBulkTasksMutation.isPending ? "Creating..." : `Create ${selectedIds.size} Tasks`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Bulk Track Activity Dialog */}
+      <Dialog open={bulkActivityDialog} onOpenChange={setBulkActivityDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Log Activity for {selectedIds.size} Companies</DialogTitle>
+            <DialogDescription>An activity entry will be logged against each selected company.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Activity Type</Label>
+              <Select value={bulkActivityForm.activityType} onValueChange={v => setBulkActivityForm(p => ({ ...p, activityType: v as any }))}>
+                <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="note">Note</SelectItem><SelectItem value="call">Call</SelectItem><SelectItem value="email_sent">Email Sent</SelectItem><SelectItem value="meeting">Meeting</SelectItem></SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Subject *</Label>
+              <Input value={bulkActivityForm.subject} onChange={e => setBulkActivityForm(p => ({ ...p, subject: e.target.value }))} placeholder="e.g. Quarterly check-in call" className="rounded-xl" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Details (optional)</Label>
+              <Textarea value={bulkActivityForm.body} onChange={e => setBulkActivityForm(p => ({ ...p, body: e.target.value }))} placeholder="Notes about this activity..." className="rounded-xl min-h-[80px]" />
+            </div>
+          </div>
+          <DialogFooter className="mt-2">
+            <Button variant="outline" onClick={() => setBulkActivityDialog(false)} className="rounded-xl">Cancel</Button>
+            <Button disabled={!bulkActivityForm.subject.trim() || trackActivityMutation.isPending} onClick={() => trackActivityMutation.mutate({ ids: Array.from(selectedIds), entityType: "companies", activityType: bulkActivityForm.activityType, subject: bulkActivityForm.subject, body: bulkActivityForm.body || undefined })} className="rounded-xl">
+              {trackActivityMutation.isPending ? "Logging..." : `Log Activity for ${selectedIds.size} Companies`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* ─── Delete Confirmation Dialog (Cascade Warning) ─── */}
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <DialogContent className="bg-card border-border/50 rounded-2xl max-w-md">
