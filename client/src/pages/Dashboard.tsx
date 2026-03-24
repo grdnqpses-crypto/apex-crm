@@ -957,7 +957,11 @@ export default function Dashboard() {
       {showOnboarding && (
         <OnboardingWizard
           onClose={() => setShowOnboarding(false)}
-          onComplete={() => utils.dashboard.stats.invalidate()}
+          onComplete={() => {
+            utils.dashboard.stats.invalidate();
+            setShowOnboarding(false);
+            window.location.href = "/dashboard";
+          }}
         />
       )}
 

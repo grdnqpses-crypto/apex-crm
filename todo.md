@@ -2547,3 +2547,7 @@
 ## Session 29: Fix Logo Generator Colors
 
 - [x] Fix auto-generated company logos to use lighter, more vibrant colors instead of dark ones — changed prompt to specify pure white background, no dark backgrounds/shadows
+
+## Session 30: Fix "Go to My Dashboard" Button
+
+- [x] Fix "Go to My Dashboard" button in onboarding/setup completion screen to navigate to /dashboard
