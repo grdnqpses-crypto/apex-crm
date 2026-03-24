@@ -21,12 +21,18 @@ function EmulationBanner() {
     setTargetName(name);
   }, []);
 
-  const logoutMutation = trpc.auth.logout.useMutation({
-    onSuccess: () => {
+  const restoreSessionMutation = trpc.auth.restoreSession.useMutation({
+    onSuccess: (data) => {
       sessionStorage.removeItem("emulation_active");
       sessionStorage.removeItem("emulation_target");
-      toast.success("Exited emulation — redirecting to login");
-      setTimeout(() => { window.location.href = "/login"; }, 800);
+      if (data.restored) {
+        toast.success("Exited emulation — returning to your account");
+        setTimeout(() => { window.location.href = "/dashboard"; }, 800);
+      } else {
+        // No original session found — fall back to login
+        toast.success("Exited emulation");
+        setTimeout(() => { window.location.href = "/login"; }, 800);
+      }
     },
     onError: () => {
       sessionStorage.removeItem("emulation_active");
@@ -41,11 +47,11 @@ function EmulationBanner() {
     <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999, background: "#f59e0b", color: "#000", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 16px", fontSize: "13px", fontWeight: 600, boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
       <span>👁 You are emulating <strong>{targetName}</strong> — all actions are performed as this user</span>
       <button
-        onClick={() => logoutMutation.mutate()}
-        disabled={logoutMutation.isPending}
+        onClick={() => restoreSessionMutation.mutate()}
+        disabled={restoreSessionMutation.isPending}
         style={{ background: "#000", color: "#f59e0b", border: "none", borderRadius: 4, padding: "4px 12px", fontWeight: 700, cursor: "pointer" }}
       >
-        {logoutMutation.isPending ? "Exiting..." : "Exit Emulation"}
+        {restoreSessionMutation.isPending ? "Exiting..." : "Exit Emulation"}
       </button>
     </div>
   );

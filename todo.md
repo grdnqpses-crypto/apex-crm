@@ -2551,3 +2551,12 @@
 ## Session 30: Fix "Go to My Dashboard" Button
 
 - [x] Fix "Go to My Dashboard" button in onboarding/setup completion screen to navigate to /dashboard
+
+## Session 31: Fix Exit Emulation to Restore Original Session
+
+- [x] Save original app_session_id to app_session_id_pre_emulation cookie before emulating
+- [x] Add restoreSession tRPC procedure that swaps back the original cookie and clears pre_emulation cookie
+- [x] Update EmulationBanner to call restoreSession instead of logout
+- [x] On successful restore, redirect to /dashboard (not /login)
+- [x] On failed restore (no saved session), fall back to /login
+- [x] 10 new tests passing for emulation restore logic

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { bibleShares } from "../drizzle/schema";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -2459,13 +2459,31 @@ export const appRouter = router({
       const { sdk } = await import("./_core/sdk.js");
       const { getSessionCookieOptions } = await import("./_core/cookies.js");
       const { ONE_YEAR_MS } = await import("../shared/const.js");
+      // Save the original session token so we can restore it on exit
+      const originalToken = ctx.req.cookies?.["app_session_id"];
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      if (originalToken) {
+        ctx.res.cookie("app_session_id_pre_emulation", originalToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      }
       const sessionToken = await sdk.createSessionToken(target.openId, {
         name: target.name || "",
         expiresInMs: ONE_YEAR_MS,
       });
-      const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.cookie("app_session_id", sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
       return { success: true, userId: target.id, name: target.name, username: target.username };
+    }),
+    // Restore original session after exiting emulation
+    restoreSession: publicProcedure.mutation(({ ctx }) => {
+      const originalToken = ctx.req.cookies?.["app_session_id_pre_emulation"];
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      if (originalToken) {
+        ctx.res.cookie("app_session_id", originalToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+        ctx.res.clearCookie("app_session_id_pre_emulation", { ...cookieOptions, maxAge: -1 });
+        return { success: true, restored: true };
+      }
+      // Fallback: just clear session (logout)
+      ctx.res.clearCookie("app_session_id", { ...cookieOptions, maxAge: -1 });
+      return { success: true, restored: false };
     }),
     // Get company admin user for emulation from Platform Dashboard
     getCompanyAdmin: axiomOwnerProcedure.input(z.object({
