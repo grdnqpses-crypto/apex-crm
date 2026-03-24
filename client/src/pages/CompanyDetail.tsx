@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   ArrowLeft, Mail, Phone, MapPin, Building2, Globe, Linkedin,
   Clock, Users, FileText, Save, PhoneCall, Video, Target, Hash, User, Tag, DollarSign,
-  Kanban, ListChecks, Activity, TrendingUp,
+  Kanban, ListChecks, Activity, TrendingUp, Shield, RefreshCw, AlertTriangle, CheckCircle, XCircle,
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useParams } from "wouter";
@@ -58,6 +58,14 @@ export default function CompanyDetail() {
   const { data: activities } = trpc.activities.list.useQuery({ companyId });
   const { data: companyDeals } = trpc.crossFeature.dealsByCompany.useQuery({ companyId });
   const { data: companyTasks } = trpc.crossFeature.tasksByCompany.useQuery({ companyId });
+  const { data: fmcsaCache, refetch: refetchFmcsa } = trpc.fmcsa.getCached.useQuery({ companyId });
+  const fmcsaLookup = trpc.fmcsa.lookup.useMutation({
+    onSuccess: () => { refetchFmcsa(); toast.success("FMCSA data updated"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const fmcsaClear = trpc.fmcsa.clearCache.useMutation({
+    onSuccess: () => { refetchFmcsa(); toast.success("FMCSA cache cleared"); },
+  });
   const updateMutation = trpc.companies.update.useMutation({
     onSuccess: () => { utils.companies.get.invalidate({ id: companyId }); toast.success("Company updated"); },
     onError: (e: any) => toast.error(e.message),
@@ -225,6 +233,7 @@ export default function CompanyDetail() {
               <TabsTrigger value="deals" className="rounded-lg text-xs">Deals{companyDeals && companyDeals.length > 0 ? ` (${companyDeals.length})` : ''}</TabsTrigger>
               <TabsTrigger value="tasks" className="rounded-lg text-xs">Tasks{companyTasks && companyTasks.length > 0 ? ` (${companyTasks.length})` : ''}</TabsTrigger>
               <TabsTrigger value="activities" className="rounded-lg text-xs">{t("activities")}</TabsTrigger>
+              <TabsTrigger value="fmcsa" className="rounded-lg text-xs">FMCSA</TabsTrigger>
               <TabsTrigger value="edit" className="rounded-lg text-xs">Edit</TabsTrigger>
             </TabsList>
 
@@ -475,6 +484,117 @@ export default function CompanyDetail() {
                   );
                 })}
               </div>
+            </TabsContent>
+
+            {/* FMCSA Carrier Verification Tab */}
+            <TabsContent value="fmcsa" className="mt-4 space-y-4">
+              <Card className="rounded-2xl border-border/40 shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-primary" /> FMCSA Carrier Verification
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* MC# / DOT# display */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-xl bg-muted/30 border border-border/40 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-1">MC Number</p>
+                      <p className="text-sm font-semibold text-foreground">{(company as any).mcNumber || <span className="text-muted-foreground italic">Not set</span>}</p>
+                    </div>
+                    <div className="rounded-xl bg-muted/30 border border-border/40 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-1">DOT Number</p>
+                      <p className="text-sm font-semibold text-foreground">{(company as any).dotNumber || <span className="text-muted-foreground italic">Not set</span>}</p>
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex gap-2">
+                    <Button size="sm" disabled={fmcsaLookup.isPending} onClick={() => fmcsaLookup.mutate({ companyId })} className="gap-2 rounded-xl">
+                      <RefreshCw className={`h-3.5 w-3.5 ${fmcsaLookup.isPending ? 'animate-spin' : ''}`} />
+                      {fmcsaLookup.isPending ? 'Looking up...' : 'Verify with FMCSA'}
+                    </Button>
+                    {fmcsaCache?.fmcsaVerifiedAt && (
+                      <Button size="sm" variant="outline" disabled={fmcsaClear.isPending} onClick={() => fmcsaClear.mutate({ companyId })} className="gap-2 rounded-xl text-muted-foreground">
+                        Clear Cache
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Results */}
+                  {fmcsaCache?.fmcsaVerifiedAt && (
+                    <div className="space-y-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">
+                        Last verified {new Date(fmcsaCache.fmcsaVerifiedAt).toLocaleString()}
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {/* Authority Status */}
+                        <div className="rounded-xl bg-muted/30 border border-border/40 p-3">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-1">Authority Status</p>
+                          <div className="flex items-center gap-1.5">
+                            {fmcsaCache.fmcsaAuthorityStatus === 'AUTHORIZED'
+                              ? <CheckCircle className="h-4 w-4 text-emerald-500" />
+                              : <XCircle className="h-4 w-4 text-red-500" />}
+                            <span className={`text-sm font-semibold ${fmcsaCache.fmcsaAuthorityStatus === 'AUTHORIZED' ? 'text-emerald-600' : 'text-red-600'}`}>
+                              {fmcsaCache.fmcsaAuthorityStatus || 'Unknown'}
+                            </span>
+                          </div>
+                        </div>
+                        {/* Operating Status */}
+                        <div className="rounded-xl bg-muted/30 border border-border/40 p-3">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-1">Operating Status</p>
+                          <p className="text-sm font-semibold text-foreground">{fmcsaCache.fmcsaOperatingStatus || 'Unknown'}</p>
+                        </div>
+                        {/* Safety Rating */}
+                        <div className="rounded-xl bg-muted/30 border border-border/40 p-3">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-1">Safety Rating</p>
+                          <div className="flex items-center gap-1.5">
+                            {fmcsaCache.fmcsaSafetyRating === 'Satisfactory'
+                              ? <CheckCircle className="h-4 w-4 text-emerald-500" />
+                              : fmcsaCache.fmcsaSafetyRating === 'Unsatisfactory'
+                              ? <XCircle className="h-4 w-4 text-red-500" />
+                              : <AlertTriangle className="h-4 w-4 text-amber-500" />}
+                            <span className="text-sm font-semibold text-foreground">{fmcsaCache.fmcsaSafetyRating || 'Not Rated'}</span>
+                          </div>
+                        </div>
+                        {/* Insurance */}
+                        <div className="rounded-xl bg-muted/30 border border-border/40 p-3">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-1">Insurance on File</p>
+                          <div className="flex items-center gap-1.5">
+                            {fmcsaCache.fmcsaInsuranceOnFile
+                              ? <CheckCircle className="h-4 w-4 text-emerald-500" />
+                              : <XCircle className="h-4 w-4 text-red-500" />}
+                            <span className={`text-sm font-semibold ${fmcsaCache.fmcsaInsuranceOnFile ? 'text-emerald-600' : 'text-red-600'}`}>
+                              {fmcsaCache.fmcsaInsuranceOnFile ? 'Yes' : 'No'}
+                            </span>
+                          </div>
+                        </div>
+                        {/* Entity Type */}
+                        <div className="rounded-xl bg-muted/30 border border-border/40 p-3">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-1">Entity Type</p>
+                          <p className="text-sm font-semibold text-foreground">{fmcsaCache.fmcsaEntityType || 'Unknown'}</p>
+                        </div>
+                        {/* OOS % */}
+                        <div className="rounded-xl bg-muted/30 border border-border/40 p-3">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-1">Out-of-Service %</p>
+                          <p className={`text-sm font-semibold ${parseFloat(fmcsaCache.fmcsaOutOfServicePct || '0') > 30 ? 'text-red-600' : 'text-foreground'}`}>
+                            {fmcsaCache.fmcsaOutOfServicePct ? `${fmcsaCache.fmcsaOutOfServicePct}%` : 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {!fmcsaCache?.fmcsaVerifiedAt && !fmcsaLookup.isPending && (
+                    <div className="text-center py-8">
+                      <div className="h-12 w-12 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
+                        <Shield className="h-6 w-6 text-muted-foreground/40" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">No FMCSA data yet. Click "Verify with FMCSA" to look up this carrier.</p>
+                      <p className="text-xs text-muted-foreground/60 mt-1">Requires MC# or DOT# to be set on this company.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* Edit Tab */}

@@ -37,6 +37,8 @@ import { emailSequencesRouter, journeysRouter, whatsappRouter, socialSchedulerRo
 import { notificationPrefsRouter, scheduledReportsRouter, proposalAnalyticsRouter, customRolesRouter, ssoRouter, customFieldConditionsRouter, aiCreditUsageRouter, whatsappBroadcastsRouter, bulkMergeRouter, aiPostWriterRouter } from "./routers/gap-features";
 import { salesQuotasRouter, smsRouter, gdprRouter, publicBookingRouter, portalEnhancedRouter, agentCommandsRouter, revenueIntelRouter, userPrefsRouter, portalDocsRouter } from "./routers/competitive-features";
 import { currencyRouter } from "./routers/currency";
+import { fmcsaRouter } from "./routers/fmcsa";
+import { portalRouter } from "./routers/portal";
 
 export const appRouter = router({
   system: systemRouter,
@@ -102,6 +104,8 @@ export const appRouter = router({
   onboarding: onboardingRouter,
   historyImporter: historyImporterRouter,
   currency: currencyRouter,
+  fmcsa: fmcsaRouter,
+  portalTokens: portalRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

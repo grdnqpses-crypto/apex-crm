@@ -146,6 +146,7 @@ const ReschedulePage = lazy(() => import("./pages/ReschedulePage"));
 const CancelBookingPage = lazy(() => import("./pages/CancelBookingPage"));
 const MultiCurrencySettings = lazy(() => import("./pages/MultiCurrencySettings"));
 const FreightRateConfirmation = lazy(() => import("./pages/FreightRateConfirmation"));
+const PublicPortalView = lazy(() => import("./pages/PublicPortalView"));
 
 function PageLoader() {
   return (
@@ -348,6 +349,11 @@ function App() {
             <Route path="/cancel/:cancelToken">
               <Suspense fallback={<PageLoader />}>
                 <CancelBookingPage />
+              </Suspense>
+            </Route>
+            <Route path="/portal/:token">
+              <Suspense fallback={<PageLoader />}>
+                <PublicPortalView />
               </Suspense>
             </Route>
             <Route path="/">

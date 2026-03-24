@@ -36,6 +36,8 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  // Trust the first proxy (required for rate limiting behind reverse proxies)
+  app.set("trust proxy", 1);
   // Register Stripe webhook BEFORE express.json() so raw body is available for signature verification
   registerStripeWebhook(app);
   // Configure body parser with larger size limit for file uploads

@@ -279,7 +279,19 @@ export const companies = mysqlTable("companies", {
   ownerAssignedDate: bigint("ownerAssignedDate", { mode: "number" }),
   firstConversionDate: bigint("firstConversionDate", { mode: "number" }),
   recentConversionDate: bigint("recentConversionDate", { mode: "number" }),
-  dateOfLastLeadStatusChange: bigint("dateOfLastLeadStatusChange", { mode: "number" }),
+   dateOfLastLeadStatusChange: bigint("dateOfLastLeadStatusChange", { mode: "number" }),
+  // ─── FMCSA / Carrier Numbers ───
+  mcNumber: varchar("mcNumber", { length: 32 }),
+  dotNumber: varchar("dotNumber", { length: 32 }),
+  // ─── FMCSA Carrier Verification Cache ───
+  fmcsaVerifiedAt: bigint("fmcsaVerifiedAt", { mode: "number" }),
+  fmcsaSafetyRating: varchar("fmcsaSafetyRating", { length: 64 }),
+  fmcsaAuthorityStatus: varchar("fmcsaAuthorityStatus", { length: 64 }),
+  fmcsaInsuranceOnFile: tinyint("fmcsaInsuranceOnFile").default(0),
+  fmcsaOutOfServicePct: decimal("fmcsaOutOfServicePct", { precision: 5, scale: 2 }),
+  fmcsaOperatingStatus: varchar("fmcsaOperatingStatus", { length: 64 }),
+  fmcsaEntityType: varchar("fmcsaEntityType", { length: 64 }),
+  fmcsaRawData: json("fmcsaRawData"),
   // ─── Soft-Delete Fields ───
   isDeleted: tinyint("is_deleted").notNull().default(0),
   deletedAt: bigint("deleted_at", { mode: "number" }),
@@ -289,7 +301,6 @@ export const companies = mysqlTable("companies", {
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
 });
-
 export type Company = typeof companies.$inferSelect;
 export type InsertCompany = typeof companies.$inferInsert;
 
@@ -3702,6 +3713,7 @@ export const portalDocuments = mysqlTable("portal_documents", {
   id: int("id").autoincrement().primaryKey(),
   tenantId: int("tenantId").notNull(),
   portalAccessId: int("portalAccessId").notNull(),
+  portalTokenId: int("portalTokenId"),  // new token-based portal system
   contactId: int("contactId"),
   dealId: int("dealId"),
   fileName: varchar("fileName", { length: 256 }).notNull(),
@@ -3718,6 +3730,7 @@ export const portalComments = mysqlTable("portal_comments", {
   id: int("id").autoincrement().primaryKey(),
   tenantId: int("tenantId").notNull(),
   portalAccessId: int("portalAccessId").notNull(),
+  portalTokenId: int("portalTokenId"),  // new token-based portal system
   dealId: int("dealId"),
   body: text("body").notNull(),
   authorType: mysqlEnum("pcAuthorType", ["customer", "rep"]).notNull(),
@@ -3749,3 +3762,60 @@ export const currencySettings = mysqlTable("currency_settings", {
   updatedAt: bigint("csrUpdatedAt", { mode: "number" }).notNull(),
 });
 export type CurrencySettings = typeof currencySettings.$inferSelect;
+
+// ─── Customer Portal ─────────────────────────────────────────────────────────
+export const portalTokens = mysqlTable("portal_tokens", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  contactId: int("contactId"),
+  dealId: int("dealId"),
+  label: varchar("label", { length: 256 }),
+  expiresAt: bigint("expiresAt", { mode: "number" }),
+  lastAccessedAt: bigint("lastAccessedAt", { mode: "number" }),
+  accessCount: int("accessCount").default(0),
+  isActive: tinyint("isActive").notNull().default(1),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+export type PortalToken = typeof portalTokens.$inferSelect;
+
+// ─── Two-Way Email Sync ───────────────────────────────────────────────────────
+export const emailSyncAccounts = mysqlTable("email_sync_accounts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  provider: mysqlEnum("provider", ["gmail", "outlook"]).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  accessToken: text("esaAccessToken"),
+  refreshToken: text("esaRefreshToken"),
+  tokenExpiresAt: bigint("esaTokenExpiresAt", { mode: "number" }),
+  syncEnabled: tinyint("syncEnabled").notNull().default(1),
+  lastSyncedAt: bigint("lastSyncedAt", { mode: "number" }),
+  syncStatus: varchar("syncStatus", { length: 32 }).default("idle"),
+  errorMessage: text("errorMessage"),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type EmailSyncAccount = typeof emailSyncAccounts.$inferSelect;
+
+export const emailSyncMessages = mysqlTable("email_sync_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  accountId: int("accountId").notNull(),
+  userId: int("userId").notNull(),
+  contactId: int("contactId"),
+  companyId: int("companyId"),
+  messageId: varchar("messageId", { length: 512 }).notNull(),
+  threadId: varchar("threadId", { length: 512 }),
+  subject: varchar("subject", { length: 1024 }),
+  fromAddress: varchar("fromAddress", { length: 320 }),
+  toAddresses: json("toAddresses").$type<string[]>(),
+  ccAddresses: json("ccAddresses").$type<string[]>(),
+  bodyText: text("bodyText"),
+  bodyHtml: text("bodyHtml"),
+  direction: mysqlEnum("direction", ["inbound", "outbound"]).notNull(),
+  sentAt: bigint("sentAt", { mode: "number" }),
+  isRead: tinyint("isRead").default(0),
+  hasAttachments: tinyint("hasAttachments").default(0),
+  labels: json("labels").$type<string[]>(),
+  syncedAt: bigint("syncedAt", { mode: "number" }).notNull(),
+});
+export type EmailSyncMessage = typeof emailSyncMessages.$inferSelect;

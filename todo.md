@@ -2443,3 +2443,33 @@
 - [x] Freight Rate Confirmation PDF page — full form with jsPDF generation
 - [x] Compact mode wired into DashboardLayout via keyboard shortcut (Shift+K)
 - [x] All 724 tests passing across 37 test files
+
+## Session 22: Three Suggested Features
+
+### Phase 1 — FMCSA Carrier Verification
+- [x] Add mcNumber, dotNumber, fmcsaData fields to companies table in schema
+- [x] Create fmcsa router with lookup procedure (FMCSA API)
+- [x] Add FMCSA verification card to Company detail page
+- [x] Show safety rating, insurance status, authority type, and out-of-service percentage
+- [x] Cache FMCSA results in DB to avoid repeated lookups
+- [x] Write tests for fmcsa router
+
+### Phase 2 — Customer Portal
+- [x] Add portal_tokens table to schema (token, contactId, dealId, expiresAt)
+- [x] Add portal_comments table (portalTokenId, content, authorType, createdAt)
+- [x] Add portal_documents table (portalTokenId, fileName, fileUrl, uploadedAt)
+- [x] Create portalRouter with public procedures (getPortalData, addComment, uploadDoc)
+- [x] Build public /portal/:token page (deal view, doc upload, comments thread)
+- [x] Add "Generate Portal Link" UI on Customer Portal page
+- [x] Write tests for portal router
+
+### Phase 3 — Two-Way Email Sync
+- [ ] Add email_sync_accounts table (userId, provider, accessToken, refreshToken, syncedAt)
+- [ ] Add email_sync_messages table (accountId, contactId, messageId, subject, from, to, body, direction, sentAt)
+- [ ] Create emailSyncRouter with connect/disconnect/sync procedures
+- [ ] Build Gmail OAuth flow (server-side token exchange)
+- [ ] Build Outlook OAuth flow (server-side token exchange)
+- [ ] Auto-log synced emails to contact timeline as activities
+- [ ] Build Email Sync settings page (connect accounts, sync status, disconnect)
+- [ ] Show synced emails in contact timeline
+- [ ] Write tests for email sync router
