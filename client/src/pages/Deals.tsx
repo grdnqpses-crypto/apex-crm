@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Plus, DollarSign, MoreHorizontal, Trash2, Trophy, X, GripVertical, Kanban, TrendingUp, Building2, User } from "lucide-react";
+import { Plus, DollarSign, MoreHorizontal, Trash2, Trophy, X, GripVertical, Kanban, TrendingUp, Building2, User, List } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -78,6 +79,15 @@ export default function Deals() {
   const deleteDeal = trpc.deals.delete.useMutation({
     onSuccess: () => { utils.deals.list.invalidate(); utils.dashboard.stats.invalidate(); toast.success("Deal deleted"); },
   });
+  const bulkDeleteDeals = trpc.bulkActions.deleteDeals.useMutation({
+    onSuccess: (res) => { utils.deals.list.invalidate(); utils.dashboard.stats.invalidate(); setSelectedDealIds(new Set()); toast.success(`${res.deleted} deals deleted`); },
+    onError: (e) => toast.error(e.message),
+  });
+  const [selectedDealIds, setSelectedDealIds] = useState<Set<number>>(new Set());
+  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
+  const toggleDealSelect = (id: number) => setSelectedDealIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+  const allDealsFlat = dealData?.items ?? [];
+  const toggleSelectAllDeals = () => { if (selectedDealIds.size === allDealsFlat.length && allDealsFlat.length > 0) { setSelectedDealIds(new Set()); } else { setSelectedDealIds(new Set(allDealsFlat.map(d => d.id))); } };
 
   const [dealForm, setDealForm] = useState<{
     name: string; value: string; priority: string;
@@ -184,13 +194,27 @@ export default function Deals() {
 
       {/* ─── Completeness Filter Tabs ─── */}
       <div className="flex gap-2">
-        <button onClick={() => setShowIncomplete(false)} className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-colors ${!showIncomplete ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
-          Kanban View <span className="ml-1 opacity-70">{totalOpenDeals}</span>
+        <button onClick={() => { setViewMode("kanban"); setShowIncomplete(false); }} className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${viewMode === "kanban" && !showIncomplete ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
+          <Kanban className="h-3.5 w-3.5" /> Kanban <span className="ml-1 opacity-70">{totalOpenDeals}</span>
+        </button>
+        <button onClick={() => { setViewMode("list"); setShowIncomplete(false); setSelectedDealIds(new Set()); }} className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${viewMode === "list" && !showIncomplete ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
+          <List className="h-3.5 w-3.5" /> List <span className="ml-1 opacity-70">{allDealsFlat.length}</span>
         </button>
         <button onClick={() => setShowIncomplete(true)} className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-colors ${showIncomplete ? "bg-amber-500 text-white" : "bg-amber-50 text-amber-700 hover:bg-amber-100"}`}>
           ⚠ Incomplete <span className="ml-1 opacity-70">{incompleteDeals.length}</span>
         </button>
       </div>
+
+      {/* Bulk delete bar for list view */}
+      {viewMode === "list" && selectedDealIds.size > 0 && (
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-primary/5 border border-primary/20 rounded-xl">
+          <span className="text-sm font-semibold text-primary">{selectedDealIds.size} selected</span>
+          <Button variant="destructive" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { if (confirm(`Delete ${selectedDealIds.size} deals? This cannot be undone.`)) bulkDeleteDeals.mutate({ ids: Array.from(selectedDealIds) }); }} disabled={bulkDeleteDeals.isPending}>
+            <Trash2 className="h-3.5 w-3.5" />{bulkDeleteDeals.isPending ? "Deleting..." : "Delete Selected"}
+          </Button>
+          <Button variant="outline" size="sm" className="rounded-xl text-xs h-8" onClick={() => setSelectedDealIds(new Set())}>Clear</Button>
+        </div>
+      )}
 
       {showIncomplete ? (
         <Card className="rounded-2xl border-amber-200/60 shadow-sm">
@@ -221,6 +245,58 @@ export default function Deals() {
                   </div>
                 );
               })}
+            </div>
+          </CardContent>
+        </Card>
+      ) : viewMode === "list" ? (
+        <Card className="rounded-2xl border-border/40 shadow-sm">
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/30 bg-muted/20">
+                    <th className="w-10 px-4 py-3 text-left">
+                      <Checkbox checked={allDealsFlat.length > 0 && selectedDealIds.size === allDealsFlat.length} onCheckedChange={toggleSelectAllDeals} />
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-foreground">Deal Name</th>
+                    <th className="px-4 py-3 text-left font-semibold text-foreground">Value</th>
+                    <th className="px-4 py-3 text-left font-semibold text-foreground">Stage</th>
+                    <th className="px-4 py-3 text-left font-semibold text-foreground">Priority</th>
+                    <th className="px-4 py-3 text-left font-semibold text-foreground">Company</th>
+                    <th className="px-4 py-3 text-left font-semibold text-foreground">Status</th>
+                    <th className="px-4 py-3 text-right font-semibold text-foreground">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allDealsFlat.length === 0 ? (
+                    <tr><td colSpan={8} className="text-center py-12 text-muted-foreground">No deals yet</td></tr>
+                  ) : allDealsFlat.map(deal => {
+                    const stageName = stages?.find(s => s.id === deal.stageId)?.name ?? "—";
+                    return (
+                      <tr key={deal.id} className={`border-b border-border/20 hover:bg-accent/30 transition-colors cursor-pointer ${selectedDealIds.has(deal.id) ? 'bg-primary/5' : ''}`}>
+                        <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                          <Checkbox checked={selectedDealIds.has(deal.id)} onCheckedChange={() => toggleDealSelect(deal.id)} />
+                        </td>
+                        <td className="px-4 py-3 font-medium text-foreground" onClick={() => setLocation(`/deals/${deal.id}`)}>{deal.name}</td>
+                        <td className="px-4 py-3 text-emerald-600 font-semibold">{deal.value ? formatCurrency(deal.value) : '—'}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{stageName}</td>
+                        <td className="px-4 py-3">
+                          <Badge variant="secondary" className={`text-[10px] capitalize rounded-md ${PRIORITY_STYLES[deal.priority] ?? 'bg-muted/60 text-muted-foreground'}`}>{deal.priority}</Badge>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">{deal.companyId ? companyMap.get(deal.companyId) ?? '—' : '—'}</td>
+                        <td className="px-4 py-3">
+                          <Badge variant="secondary" className={`text-[10px] capitalize rounded-md ${deal.status === 'won' ? 'bg-emerald-50 text-emerald-600' : deal.status === 'lost' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-600'}`}>{deal.status}</Badge>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg" onClick={e => { e.stopPropagation(); if (confirm('Delete this deal?')) deleteDeal.mutate({ id: deal.id }); }}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </CardContent>
         </Card>

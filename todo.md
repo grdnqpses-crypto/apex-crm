@@ -2473,3 +2473,34 @@
 - [ ] Build Email Sync settings page (connect accounts, sync status, disconnect)
 - [ ] Show synced emails in contact timeline
 - [ ] Write tests for email sync router
+
+## Session 23: Emulate Feature + Password Column
+
+### Team Tab (Developer/Axiom Admin)
+- [x] Add "Password" column to Team tab showing each user's login password (or a reset/set password flow)
+- [x] Add "Emulate" button under Actions column in Team tab (developer/axiom_admin only)
+- [x] Implement emulation: clicking Emulate logs in as that user's company admin
+
+### Platform Dashboard
+- [x] Add "Emulate" button next to "Manage" button in Actions column (developer/axiom_admin only)
+- [x] Emulate button on Platform Dashboard impersonates the selected tenant company's admin
+
+### Backend
+- [x] Create emulation tRPC procedure (developer/axiom_admin only) that issues an impersonation session token
+- [x] Store emulation session state (original user, emulated user) so admin can exit emulation
+- [x] Add "Exit Emulation" banner/button when in emulated session
+
+## Session 23: Emulate + Bulk Delete
+
+- [x] Add plainTextPassword column to users table and store on create/reset
+- [x] Add emulate procedure to tenants router (axiom_admin+)
+- [x] Add getCompanyAdmin procedure to tenants router
+- [x] Add getPassword procedure to userManagement router
+- [x] Add Password column (reveal/copy) to Team tab — axiom_admin+ only
+- [x] Add Emulate button to Team tab Actions column
+- [x] Add Emulate button to Platform Dashboard next to Manage
+- [x] Add EmulationBanner component (exit emulation banner)
+- [x] Add bulk delete to Contacts list
+- [x] Add bulk delete to Companies list
+- [x] Add bulk delete to Deals list
+- [x] Add bulk delete to Tasks list

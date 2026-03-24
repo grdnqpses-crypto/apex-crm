@@ -107,6 +107,7 @@ export async function getUserById(id: number) {
 export async function createCredentialUser(data: {
   username: string;
   passwordHash: string;
+  plainTextPassword?: string;
   name: string;
   email?: string;
   systemRole: "axiom_owner" | "company_admin" | "sales_manager" | "office_manager" | "manager" | "account_manager" | "coordinator" | "user";
@@ -124,6 +125,7 @@ export async function createCredentialUser(data: {
     openId,
     username: data.username,
     passwordHash: data.passwordHash,
+    plainTextPassword: data.plainTextPassword ?? null,
     name: data.name,
     email: data.email ?? null,
     loginMethod: "credentials",
@@ -140,10 +142,12 @@ export async function createCredentialUser(data: {
   return result.insertId;
 }
 
-export async function updateUserPassword(userId: number, passwordHash: string) {
+export async function updateUserPassword(userId: number, passwordHash: string, plainTextPassword?: string) {
   const db = await getDb();
   if (!db) return;
-  await db.update(users).set({ passwordHash }).where(eq(users.id, userId));
+  const updateData: Record<string, unknown> = { passwordHash };
+  if (plainTextPassword !== undefined) updateData.plainTextPassword = plainTextPassword;
+  await db.update(users).set(updateData as any).where(eq(users.id, userId));
 }
 
 // ─── Password Reset Tokens ───

@@ -2444,10 +2444,45 @@ export const appRouter = router({
         } catch (_) { continue; }
       }
 
-      throw new TRPCError({ code: "NOT_FOUND", message: `Could not find a logo for ${urlObj.hostname}. Try uploading manually.` });
+       throw new TRPCError({ code: "NOT_FOUND", message: `Could not find a logo for ${urlObj.hostname}. Try uploading manually.` });
+    }),
+    // Emulate a user session (axiom_admin+ only)
+    emulate: axiomOwnerProcedure.input(z.object({
+      userId: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      const target = await db.getUserById(input.userId);
+      if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      // Prevent emulating a developer (safety guard)
+      if (target.systemRole === "developer" && ctx.user.systemRole !== "developer") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Cannot emulate a Developer account" });
+      }
+      const { sdk } = await import("./_core/sdk.js");
+      const { getSessionCookieOptions } = await import("./_core/cookies.js");
+      const { ONE_YEAR_MS } = await import("../shared/const.js");
+      const sessionToken = await sdk.createSessionToken(target.openId, {
+        name: target.name || "",
+        expiresInMs: ONE_YEAR_MS,
+      });
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.cookie("app_session_id", sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      return { success: true, userId: target.id, name: target.name, username: target.username };
+    }),
+    // Get company admin user for emulation from Platform Dashboard
+    getCompanyAdmin: axiomOwnerProcedure.input(z.object({
+      companyId: z.number(),
+    })).query(async ({ input }) => {
+      const companyUsers = await db.getUsersByCompany(input.companyId);
+      if (!companyUsers) return null;
+      // Prefer company_admin, then highest role available
+      const roleOrder = ["company_admin", "sales_manager", "office_manager", "account_manager", "coordinator"];
+      for (const role of roleOrder) {
+        const admin = (companyUsers as any[]).find((u: any) => u.systemRole === role && u.isActive !== false);
+        if (admin) return { id: admin.id, name: admin.name, username: admin.username, systemRole: admin.systemRole };
+      }
+      const first = (companyUsers as any[])[0];
+      return first ? { id: first.id, name: first.name, username: first.username, systemRole: first.systemRole } : null;
     }),
   }),
-
   userManagement: router({
     // Developer-only: get all users across all companies
     allUsers: adminProcedure.query(async () => {
@@ -2519,6 +2554,7 @@ export const appRouter = router({
       const userId = await db.createCredentialUser({
         username: input.username,
         passwordHash,
+        plainTextPassword: input.password,
         name: input.name,
         email: input.email,
         systemRole: input.systemRole,
@@ -2544,7 +2580,7 @@ export const appRouter = router({
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const passwordHash = await bcrypt.hash(input.newPassword, 12);
-      await db.updateUserPassword(input.userId, passwordHash);
+      await db.updateUserPassword(input.userId, passwordHash, input.newPassword);
       return { success: true };
     }),
 
@@ -2656,13 +2692,18 @@ export const appRouter = router({
     getFeatures: protectedProcedure.input(z.object({ userId: z.number() })).query(async ({ input }) => {
       return db.getUserFeatures(input.userId);
     }),
-
     // Get my features (for current user)
     myFeatures: protectedProcedure.query(async ({ ctx }) => {
       if (ctx.user.systemRole === "developer") {
         return db.ALL_FEATURES.map(f => f.key);
       }
       return db.getUserFeatures(ctx.user.id);
+    }),
+    // Get plaintext password for a user (axiom_admin+ only)
+    getPassword: axiomOwnerProcedure.input(z.object({ userId: z.number() })).query(async ({ input }) => {
+      const user = await db.getUserById(input.userId);
+      if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      return { password: user.plainTextPassword ?? null, username: user.username ?? null };
     }),
   }),
 

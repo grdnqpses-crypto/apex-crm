@@ -5,7 +5,51 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import DashboardLayout from "./components/DashboardLayout";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
+import { trpc } from "./lib/trpc";
+import { toast } from "sonner";
+
+// ─── Emulation Banner ─────────────────────────────────────────────────────────
+function EmulationBanner() {
+  const [active, setActive] = useState(false);
+  const [targetName, setTargetName] = useState("");
+
+  useEffect(() => {
+    const isEmulating = sessionStorage.getItem("emulation_active") === "true";
+    const name = sessionStorage.getItem("emulation_target") || "";
+    setActive(isEmulating);
+    setTargetName(name);
+  }, []);
+
+  const logoutMutation = trpc.auth.logout.useMutation({
+    onSuccess: () => {
+      sessionStorage.removeItem("emulation_active");
+      sessionStorage.removeItem("emulation_target");
+      toast.success("Exited emulation — redirecting to login");
+      setTimeout(() => { window.location.href = "/login"; }, 800);
+    },
+    onError: () => {
+      sessionStorage.removeItem("emulation_active");
+      sessionStorage.removeItem("emulation_target");
+      window.location.href = "/login";
+    },
+  });
+
+  if (!active) return null;
+
+  return (
+    <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999, background: "#f59e0b", color: "#000", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 16px", fontSize: "13px", fontWeight: 600, boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+      <span>👁 You are emulating <strong>{targetName}</strong> — all actions are performed as this user</span>
+      <button
+        onClick={() => logoutMutation.mutate()}
+        disabled={logoutMutation.isPending}
+        style={{ background: "#000", color: "#f59e0b", border: "none", borderRadius: 4, padding: "4px 12px", fontWeight: 700, cursor: "pointer" }}
+      >
+        {logoutMutation.isPending ? "Exiting..." : "Exit Emulation"}
+      </button>
+    </div>
+  );
+}
 
 // Lazy load pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -310,6 +354,7 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
+          <EmulationBanner />
           <Switch>
             <Route path="/login">
               <Suspense fallback={<PageLoader />}>

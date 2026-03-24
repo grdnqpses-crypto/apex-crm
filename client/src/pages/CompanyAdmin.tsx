@@ -12,9 +12,70 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Users, UserPlus, Shield, ShieldCheck, UserCog, User, Mail, Settings, ToggleLeft, ToggleRight, CheckCircle, KeyRound, Eye, EyeOff } from "lucide-react";
+import { Users, UserPlus, Shield, ShieldCheck, UserCog, User, Mail, Settings, ToggleLeft, ToggleRight, CheckCircle, KeyRound, Eye, EyeOff, Copy, LogIn } from "lucide-react";
 import PageGuide from "@/components/PageGuide";
 import { useSkin } from "@/contexts/SkinContext";
+
+// Sub-component: shows masked password with reveal/copy for axiom-level admins
+function PasswordCell({ userId, username }: { userId: number; username?: string | null }) {
+  const [revealed, setRevealed] = useState(false);
+  const { data, isFetching } = trpc.userManagement.getPassword.useQuery(
+    { userId },
+    { enabled: revealed }
+  );
+  if (!username) return <span className="text-xs text-muted-foreground">OAuth</span>;
+  return (
+    <div className="flex items-center gap-1">
+      <code className="text-xs bg-muted px-1.5 py-0.5 rounded min-w-[80px]">
+        {revealed ? (isFetching ? "..." : (data?.password ?? "—")) : "••••••••"}
+      </code>
+      <button
+        type="button"
+        className="text-muted-foreground hover:text-foreground"
+        onClick={() => setRevealed(r => !r)}
+        title={revealed ? "Hide password" : "Reveal password"}
+      >
+        {revealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+      </button>
+      {revealed && data?.password && (
+        <button
+          type="button"
+          className="text-muted-foreground hover:text-foreground"
+          onClick={() => { navigator.clipboard.writeText(data.password!); toast.success("Password copied"); }}
+          title="Copy password"
+        >
+          <Copy className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// Sub-component: Emulate button that swaps session to target user
+function EmulateButton({ userId, userName }: { userId: number; userName?: string | null }) {
+  const emulateMutation = trpc.tenants.emulate.useMutation({
+    onSuccess: (data) => {
+      // Store original session info so user can exit emulation
+      sessionStorage.setItem("emulation_active", "true");
+      sessionStorage.setItem("emulation_target", data.name || data.username || String(data.userId));
+      toast.success(`Entering session as ${data.name || data.username}...`);
+      setTimeout(() => { window.location.href = "/"; }, 800);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-7 text-xs text-amber-400 hover:text-amber-300"
+      onClick={() => emulateMutation.mutate({ userId })}
+      disabled={emulateMutation.isPending}
+      title={`Emulate ${userName || "user"}`}
+    >
+      <LogIn className="h-3 w-3 mr-1" />Emulate
+    </Button>
+  );
+}
 
 const roleColors: Record<string, string> = {
   developer:      "bg-red-500/10 text-red-400 border-red-500/20",
@@ -442,12 +503,13 @@ export default function CompanyAdmin() {
                     <TableHead>Role</TableHead>
                     <TableHead>Manager</TableHead>
                     <TableHead>Status</TableHead>
+                    {isAxiomLevel && <TableHead>Password</TableHead>}
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={isAxiomLevel ? 7 : 6} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
                   ) : (companyUsers || []).map((u: any) => {
                     const RoleIcon = roleIcons[u.systemRole || "user"] || User;
                     const manager = managers.find((m: any) => m.id === u.managerId);
@@ -498,6 +560,11 @@ export default function CompanyAdmin() {
                             {u.isActive !== false ? "Active" : "Inactive"}
                           </Badge>
                         </TableCell>
+                        {isAxiomLevel && (
+                          <TableCell>
+                            <PasswordCell userId={u.id} username={u.username} />
+                          </TableCell>
+                        )}
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
                             {(isAdmin || isManager) && (
@@ -509,6 +576,9 @@ export default function CompanyAdmin() {
                               <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setResetUserId(u.id); setResetPassword(""); }}>
                                 <KeyRound className="h-3 w-3 mr-1" />Reset PW
                               </Button>
+                            )}
+                            {isAxiomLevel && u.loginMethod === "credentials" && (
+                              <EmulateButton userId={u.id} userName={u.name} />
                             )}
                             {isAdmin && (
                               u.isActive !== false ? (

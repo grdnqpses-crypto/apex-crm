@@ -177,6 +177,30 @@ const bulkActionsRouter = router({
     return { updated: input.ids.length };
   }),
 
+  // Bulk delete companies
+  deleteCompanies: protectedProcedure.input(z.object({
+    ids: z.array(z.number()).min(1).max(500),
+  })).mutation(async ({ ctx, input }) => {
+    const dbConn = await db.getDb();
+    if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    await dbConn.delete(companies)
+      .where(and(inArray(companies.id, input.ids), eq(companies.tenantId, ctx.user.tenantCompanyId ?? 0)));
+    await writeAuditLog({ tenantId: ctx.user.tenantCompanyId, userId: ctx.user.id, userEmail: ctx.user.email ?? undefined, userName: ctx.user.name ?? undefined, action: "bulk_delete", entityType: "companies", changes: { count: input.ids.length } });
+    return { success: true, deleted: input.ids.length };
+  }),
+
+  // Bulk delete tasks
+  deleteTasks: protectedProcedure.input(z.object({
+    ids: z.array(z.number()).min(1).max(500),
+  })).mutation(async ({ ctx, input }) => {
+    const dbConn = await db.getDb();
+    if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    await dbConn.delete(tasks)
+      .where(and(inArray(tasks.id, input.ids), eq(tasks.tenantId, ctx.user.tenantCompanyId ?? 0)));
+    await writeAuditLog({ tenantId: ctx.user.tenantCompanyId, userId: ctx.user.id, userEmail: ctx.user.email ?? undefined, userName: ctx.user.name ?? undefined, action: "bulk_delete", entityType: "tasks", changes: { count: input.ids.length } });
+    return { success: true, deleted: input.ids.length };
+  }),
+
   // ── Fill Smart Properties (AI-infer missing fields) ──────────────────────
   fillSmartProperties: protectedProcedure.input(z.object({
     ids: z.array(z.number()).min(1).max(200),

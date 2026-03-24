@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Users, DollarSign, TrendingUp, Plus, Shield, Crown, Search, BarChart3 } from "lucide-react";
+import { Building2, Users, DollarSign, TrendingUp, Plus, Shield, Crown, Search, BarChart3, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import { useSkin } from "@/contexts/SkinContext";
 
@@ -410,6 +410,48 @@ export default function AxiomDashboard() {
   );
 }
 
+// Emulate a company's admin user from the Platform Dashboard
+function EmulateCompanyButton({ companyId, companyName }: { companyId: number; companyName: string }) {
+  const adminQuery = trpc.tenants.getCompanyAdmin.useQuery(
+    { companyId },
+    { enabled: false }
+  );
+  const emulateMutation = trpc.tenants.emulate.useMutation({
+    onSuccess: (data) => {
+      sessionStorage.setItem("emulation_active", "true");
+      sessionStorage.setItem("emulation_target", data.name || data.username || String(data.userId));
+      toast.success(`Entering session as ${data.name || data.username} (${companyName})...`);
+      setTimeout(() => { window.location.href = "/"; }, 800);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  async function handleEmulate() {
+    // Fetch the admin user for this company, then emulate them
+    const result = await adminQuery.refetch();
+    const admin = result.data;
+    if (!admin) {
+      toast.error("No credential users found for this company");
+      return;
+    }
+    emulateMutation.mutate({ userId: admin.id });
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="text-amber-400 hover:text-amber-300"
+      onClick={handleEmulate}
+      disabled={emulateMutation.isPending || adminQuery.isFetching}
+      title={`Emulate admin of ${companyName}`}
+    >
+      <LogIn className="h-4 w-4 mr-1" />
+      {emulateMutation.isPending || adminQuery.isFetching ? "..." : "Emulate"}
+    </Button>
+  );
+}
+
 function CompanyTable({ companies, onEdit, tierColors, tierLabels, tierPrices, statusColors }: {
   companies: any[];
   onEdit: (c: any) => void;
@@ -474,9 +516,12 @@ function CompanyTable({ companies, onEdit, tierColors, tierLabels, tierPrices, s
                     <span className="text-xs text-muted-foreground">/mo</span>
                   </td>
                   <td className="p-4 text-right">
-                    <Button variant="ghost" size="sm" onClick={() => onEdit(company)}>
-                      Manage
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => onEdit(company)}>
+                        Manage
+                      </Button>
+                      <EmulateCompanyButton companyId={company.id} companyName={company.name} />
+                    </div>
                   </td>
                 </tr>
               ))}

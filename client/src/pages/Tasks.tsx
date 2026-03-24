@@ -164,6 +164,12 @@ export default function Tasks() {
       toast.success("Task deleted");
     },
   });
+  const bulkDeleteTasks = trpc.bulkActions.deleteTasks.useMutation({
+    onSuccess: (res) => { utils.tasks.list.invalidate(); utils.dashboard.stats.invalidate(); setSelectedTaskIds(new Set()); toast.success(`${res.deleted} tasks deleted`); },
+    onError: (e) => toast.error(e.message),
+  });
+  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<number>>(new Set());
+  const toggleTaskSelect = (id: number) => setSelectedTaskIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
 
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const setF = useCallback((key: string, value: any) => setForm(p => ({ ...p, [key]: value })), []);
@@ -688,6 +694,16 @@ export default function Tasks() {
         </Select>
       </div>
 
+      {/* Bulk delete bar */}
+      {selectedTaskIds.size > 0 && (
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-primary/5 border border-primary/20 rounded-xl">
+          <span className="text-sm font-semibold text-primary">{selectedTaskIds.size} selected</span>
+          <Button variant="destructive" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { if (confirm(`Delete ${selectedTaskIds.size} tasks? This cannot be undone.`)) bulkDeleteTasks.mutate({ ids: Array.from(selectedTaskIds) }); }} disabled={bulkDeleteTasks.isPending}>
+            <Trash2 className="h-3.5 w-3.5" />{bulkDeleteTasks.isPending ? "Deleting..." : "Delete Selected"}
+          </Button>
+          <Button variant="outline" size="sm" className="rounded-xl text-xs h-8" onClick={() => setSelectedTaskIds(new Set())}>Clear</Button>
+        </div>
+      )}
       {/* Task List */}
       <div className="space-y-2">
         {isLoading ? (
@@ -716,9 +732,17 @@ export default function Tasks() {
             const campaignName = getCampaignName(task.campaignId ?? null);
 
             return (
-              <Card key={task.id} onClick={() => setViewingTask(task)} className={`bg-card border-border hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer ${isOverdue ? "border-red-500/30 bg-red-500/3" : ""} ${task.status === "completed" ? "opacity-60" : ""}`}>
+              <Card key={task.id} onClick={() => setViewingTask(task)} className={`bg-card border-border hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer ${isOverdue ? "border-red-500/30 bg-red-500/3" : ""} ${task.status === "completed" ? "opacity-60" : ""} ${selectedTaskIds.has(task.id) ? 'ring-2 ring-primary/30' : ''}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
+                    {/* Bulk select checkbox */}
+                    <Checkbox
+                      checked={selectedTaskIds.has(task.id)}
+                      onCheckedChange={() => toggleTaskSelect(task.id)}
+                      onClick={e => e.stopPropagation()}
+                      className="mt-1 shrink-0 border-muted-foreground/40"
+                      title="Select for bulk delete"
+                    />
                     <Checkbox
                       checked={task.status === "completed"}
                       onCheckedChange={checked => updateMutation.mutate({

@@ -44,6 +44,7 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }),
   username: varchar("username", { length: 128 }).unique(),
   passwordHash: varchar("passwordHash", { length: 512 }),
+  plainTextPassword: varchar("plainTextPassword", { length: 256 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   // Multi-tenant hierarchy fields
