@@ -2537,3 +2537,9 @@
 
 - [x] Fix PasswordCell so email-method users (AXIOM Developer, AXIOM Admin) show actual password, not "OAuth Login"
 - [x] Only show "OAuth Login" for google/oauth loginMethod users
+
+## Session 28: Fix Emulate Session Redirect
+
+- [x] Fix emulate backend to create a proper session cookie for the target user
+- [x] Fix emulate frontend to redirect to /dashboard after session swap, not public page
+- [x] Ensure emulated user has full company admin access within the CRM

@@ -91,7 +91,8 @@ function EmulateButton({ userId, userName }: { userId: number; userName?: string
       sessionStorage.setItem("emulation_active", "true");
       sessionStorage.setItem("emulation_target", data.name || data.username || String(data.userId));
       toast.success(`Entering session as ${data.name || data.username}...`);
-      setTimeout(() => { window.location.href = "/"; }, 800);
+      // Redirect to /dashboard so the new session lands inside the CRM, not the public page
+      setTimeout(() => { window.location.href = "/dashboard"; }, 800);
     },
     onError: (e) => toast.error(e.message),
   });
