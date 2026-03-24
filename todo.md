@@ -2520,3 +2520,10 @@
 - [x] Fix PasswordCell to show OAuth Login for OAuth users, Not Set + KeyRound reset button for credential users with no stored password
 - [x] Pass loginMethod from table row to PasswordCell so OAuth detection is accurate
 - [x] Inline Set/Reset password form in PasswordCell (min 8 chars, saves via resetPassword mutation)
+
+## Session 25: Force All Passwords Visible to Developer/Axiom Admin
+
+- [ ] Query all credential users in DB and check their plainTextPassword status
+- [ ] Backfill plainTextPassword for all existing credential users (reset to known value)
+- [ ] Fix PasswordCell to ALWAYS show password — no "Not set", no dash, no OAuth hiding
+- [ ] Ensure getPassword procedure returns plainTextPassword for ALL users regardless of loginMethod

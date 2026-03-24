@@ -1,0 +1,100 @@
+{
+  "query": "SELECT id, name, email, username, loginMethod, plainTextPassword, systemRole FROM users WHERE loginMethod = 'credentials' OR username IS NOT NULL ORDER BY id LIMIT 50;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, name, email, username, loginMethod, plainTextPassword, systemRole FROM users WHERE loginMethod = 'credentials' OR username IS NOT NULL ORDER BY id LIMIT 50;",
+  "rows": [
+    {
+      "id": "2610017",
+      "name": "James Lavallee",
+      "email": "jlavallee@shiplw.com",
+      "username": "jlavallee",
+      "loginMethod": "credentials",
+      "plainTextPassword": "NULL",
+      "systemRole": "developer"
+    },
+    {
+      "id": "2610020",
+      "name": "Mike Rodriguez",
+      "email": "mrodriguez@shiplw.com",
+      "username": "mrodriguez",
+      "loginMethod": "credentials",
+      "plainTextPassword": "NULL",
+      "systemRole": "sales_manager"
+    },
+    {
+      "id": "2610023",
+      "name": "Sarah Chen",
+      "email": "schen@shiplw.com",
+      "username": "schen",
+      "loginMethod": "credentials",
+      "plainTextPassword": "NULL",
+      "systemRole": "account_manager"
+    },
+    {
+      "id": "2610026",
+      "name": "David Thompson",
+      "email": "dthompson@shiplw.com",
+      "username": "dthompson",
+      "loginMethod": "credentials",
+      "plainTextPassword": "NULL",
+      "systemRole": "account_manager"
+    },
+    {
+      "id": "2640083",
+      "name": "Jerry",
+      "email": "glavallee@shiplw.com",
+      "username": "Lavallee",
+      "loginMethod": "credentials",
+      "plainTextPassword": "NULL",
+      "systemRole": "company_admin"
+    },
+    {
+      "id": "4410042",
+      "name": "Apex Platform Owner",
+      "email": "owner@apexcrm.com",
+      "username": "apexowner",
+      "loginMethod": "credentials",
+      "plainTextPassword": "NULL",
+      "systemRole": "axiom_admin"
+    },
+    {
+      "id": "4590001",
+      "name": "Joseph Lavallee",
+      "email": "grdn.qpses@gmail.com",
+      "username": "JoeLavallee",
+      "loginMethod": "credentials",
+      "plainTextPassword": "NULL",
+      "systemRole": "company_admin"
+    },
+    {
+      "id": "5520068",
+      "name": "AXIOM Developer",
+      "email": "dev@axiomcrm.com",
+      "username": "axiomdev",
+      "loginMethod": "email",
+      "plainTextPassword": "NULL",
+      "systemRole": "developer"
+    },
+    {
+      "id": "5520069",
+      "name": "AXIOM Admin",
+      "email": "admin@axiomcrm.com",
+      "username": "axiomadmin",
+      "loginMethod": "email",
+      "plainTextPassword": "NULL",
+      "systemRole": "user"
+    },
+    {
+      "id": "5520260",
+      "name": "Jeff Lavallee",
+      "email": "jlavallee@shiplw.com",
+      "username": "JeffLavallee",
+      "loginMethod": "credentials",
+      "plainTextPassword": "NULL",
+      "systemRole": "company_admin"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tusername\tloginMethod\tplainTextPassword\tsystemRole\n2610017\tJames Lavallee\tjlavallee@shiplw.com\tjlavallee\tcredentials\tNULL\tdeveloper\n2610020\tMike Rodriguez\tmrodriguez@shiplw.com\tmrodriguez\tcredentials\tNULL\tsales_manager\n2610023\tSarah Chen\tschen@shiplw.com\tschen\tcredentials\tNULL\taccount_manager\n2610026\tDavid Thompson\tdthompson@shiplw.com\tdthompson\tcredentials\tNULL\taccount_manager\n2640083\tJerry\tglavallee@shiplw.com\tLavallee\tcredentials\tNULL\tcompany_admin\n4410042\tApex Platform Owner\towner@apexcrm.com\tapexowner\tcredentials\tNULL\taxiom_admin\n4590001\tJoseph Lavallee\tgrdn.qpses@gmail.com\tJoeLavallee\tcredentials\tNULL\tcompany_admin\n5520068\tAXIOM Developer\tdev@axiomcrm.com\taxiomdev\temail\tNULL\tdeveloper\n5520069\tAXIOM Admin\tadmin@axiomcrm.com\taxiomadmin\temail\tNULL\tuser\n5520260\tJeff Lavallee\tjlavallee@shiplw.com\tJeffLavallee\tcredentials\tNULL\tcompany_admin\n",
+  "stderr": "",
+  "execution_time_ms": 410
+}
