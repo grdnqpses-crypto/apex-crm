@@ -2293,3 +2293,31 @@
 - [ ] Auto-sync runner uses stored encrypted credentials to run fully-automatic syncs
 - [ ] Migration Health widget on main dashboard (last sync time, total records imported, Sync Now button)
 - [ ] Competitive analysis document: what competitors have, what we can do better, what we have, what we're missing
+
+## Session 17: Full Competitive Gap Sprint
+
+### P0 — Critical (Disqualifiers)
+- [ ] Sales Forecasting: weighted pipeline view, quota overlay, best-case/commit/weighted views
+- [ ] Meeting / Calendar Scheduling: shareable /book/[username] page, Google Calendar sync, auto-create contact + activity
+- [ ] Two-Way Email Sync (Gmail + Outlook): OAuth per user, auto-log emails to contact timeline
+
+### P1 — High Impact
+- [ ] Quote / Proposal Generator: PDF from deal line items, branded template, e-sign link
+- [ ] Agentic AI Command Execution: plain-English task execution wired to tRPC mutations
+- [ ] Webhook / Zapier Integration: user-configurable webhooks per CRM event, retry logic
+- [ ] Two-Way SMS: Twilio send/receive from contact record, thread view in timeline
+- [ ] Migration Preview: live preview before import showing field mapping + record counts
+- [ ] Migration Rollback: 48-hour rollback button to undo a completed migration
+
+### P2 — Strategic Differentiators
+- [ ] FMCSA Carrier Verification: MC# lookup, safety rating, insurance status on company records
+- [ ] Revenue Intelligence: call recording in S3, AI transcription, objection/competitor surfacing in deal record
+- [ ] Customer Portal: /portal/[token] page with deal view, doc upload, comment thread
+- [ ] Migration Health Score: post-import data quality score with flagged records needing attention
+- [ ] Freight Rate Confirmation PDF: generate rate con from load record
+
+### P3 — Polish & Compliance
+- [ ] Multi-Currency Support: per-deal currency field, exchange rate conversion in reports
+- [ ] GDPR Compliance Tools: right-to-be-forgotten, consent tracking, audit log, data export
+- [ ] Keyboard Shortcuts: global hotkeys (N=new contact, D=new deal, T=new task, /=search)
+- [ ] Compact Mode: density toggle in user preferences

@@ -103,6 +103,7 @@ const standardSections = [
       { icon: Plane, label: "OOO Detection", path: "/ooo-detection" },
       { icon: ListOrdered, label: "Email Sequences", path: "/email-sequences" },
       { icon: Route, label: "Journey Orchestration", path: "/journey-orchestration" },
+      { icon: MessageSquare, label: "SMS Inbox", path: "/sms" },
       { icon: MessageCircle, label: "WhatsApp Messaging", path: "/whatsapp" },
       { icon: Share2, label: "Social Scheduler", path: "/social-scheduler" },
       { icon: MessageSquareDot, label: "WhatsApp Broadcasts", path: "/whatsapp-broadcasts" },
@@ -152,6 +153,7 @@ const standardSections = [
     label: "Compliance & Safety",
     items: [
       { icon: ShieldCheck, label: "Compliance Center", path: "/compliance" },
+      { icon: Lock, label: "GDPR Tools", path: "/gdpr" },
       { icon: ScrollText, label: "Audit Logs", path: "/audit-logs" },
       { icon: Ban, label: "Suppression List", path: "/suppression" },
       { icon: Settings, label: "Sender Settings", path: "/sender-settings" },

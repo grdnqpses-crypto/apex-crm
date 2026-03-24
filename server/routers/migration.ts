@@ -525,20 +525,6 @@ export const migrationRouter = router({
       return { success: true };
     }),
 
-  // ─── Auto-sync: get last synced timestamp for sidebar badge ──────────────
-  getLastSyncedAt: protectedProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db || !ctx.user.tenantCompanyId) return { lastSyncedAt: null };
-    const [latest] = await db.select({ lastSyncedAt: migrationJobs.lastSyncedAt })
-      .from(migrationJobs)
-      .where(and(
-        eq(migrationJobs.companyId, ctx.user.tenantCompanyId),
-        eq(migrationJobs.status, "completed"),
-      ))
-      .orderBy(desc(migrationJobs.lastSyncedAt))
-      .limit(1);
-    return { lastSyncedAt: latest?.lastSyncedAt ?? null };
-  }),
 });
 
 // ─── Async Migration Runner ───────────────────────────────────────────────────

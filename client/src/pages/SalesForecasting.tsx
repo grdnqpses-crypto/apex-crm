@@ -1,175 +1,257 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
-import { TrendingUp, DollarSign, Calendar, Target } from "lucide-react";
-import { useSkin } from "@/contexts/SkinContext";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { TrendingUp, DollarSign, Target, Users, CheckCircle2, Settings2 } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { toast } from "sonner";
+
+const fmt = (v: number) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v / 100);
+
+function getPeriod(offset = 0) {
+  const d = new Date();
+  d.setMonth(d.getMonth() + offset);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function getPeriodOffset(period: string): number {
+  const [y, m] = period.split("-").map(Number);
+  const now = new Date();
+  return (y - now.getFullYear()) * 12 + (m - (now.getMonth() + 1));
+}
+
+function MetricCard({ label, value, icon: Icon, color, sub }: { label: string; value: string; icon: any; color: string; sub?: string }) {
+  return (
+    <Card className="border-border/50">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-xs text-muted-foreground uppercase tracking-wide">{label}</p>
+          <Icon className={`w-4 h-4 ${color} opacity-60`} />
+        </div>
+        <p className="text-xl font-bold">{value}</p>
+        {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function SalesForecasting() {
-  const { t } = useSkin();
-  const [pipelineId, setPipelineId] = useState<string>("all");
+  const { user } = useAuth();
+  const [period, setPeriod] = useState(() => getPeriod(0));
+  const [quotaInput, setQuotaInput] = useState("");
+  const [quotaOpen, setQuotaOpen] = useState(false);
+  const [activeView, setActiveView] = useState<"weighted" | "commit" | "best_case">("weighted");
 
-  const { data: forecast, isLoading } = trpc.salesForecasting.getSummary.useQuery({
-    pipelineId: pipelineId !== "all" ? parseInt(pipelineId) : undefined,
+  const periodLabel = useMemo(() => {
+    const [y, m] = period.split("-");
+    return new Date(Number(y), Number(m) - 1).toLocaleString("en-US", { month: "long", year: "numeric" });
+  }, [period]);
+
+  const utils = trpc.useUtils();
+  const { data: forecast, isLoading } = trpc.salesQuotas.getForecastWithQuota.useQuery({ period });
+  const { data: teamData } = trpc.salesQuotas.listTeamQuotas.useQuery({ period });
+
+  const setQuota = trpc.salesQuotas.setQuota.useMutation({
+    onSuccess: () => {
+      toast.success("Quota updated");
+      setQuotaOpen(false);
+      utils.salesQuotas.getForecastWithQuota.invalidate();
+      utils.salesQuotas.listTeamQuotas.invalidate();
+    },
+    onError: () => toast.error("Failed to update quota"),
   });
-  const { data: closingDeals } = trpc.salesForecasting.getClosingThisMonth.useQuery();
-  // pipelines query removed — filter by pipeline not yet supported in UI
-  const pipelines: { id: number; name: string }[] = [];
 
-  const formatCurrency = (v: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
+  const handleSetQuota = () => {
+    const amount = Math.round(parseFloat(quotaInput) * 100);
+    if (isNaN(amount) || amount <= 0) { toast.error("Enter a valid amount"); return; }
+    setQuota.mutate({ period, targetAmount: amount });
+  };
 
-  const totalPipeline = forecast?.byStage?.reduce((s, r) => s + (r.totalValue ?? 0), 0) ?? 0;
-  const weightedForecast = forecast?.weightedTotal ?? 0;
+  const viewAmount = activeView === "weighted"
+    ? (forecast?.weightedAmount ?? 0)
+    : activeView === "commit"
+    ? (forecast?.commitAmount ?? 0)
+    : (forecast?.bestCaseAmount ?? 0);
+
+  const quota = forecast?.quota?.targetAmount ?? 0;
+  const won = forecast?.wonAmount ?? 0;
+  const attainment = quota > 0 ? Math.min(Math.round((won / quota) * 100), 100) : null;
+  const viewAttainment = quota > 0 ? Math.min(Math.round((viewAmount / quota) * 100), 100) : null;
+
+  const chartData = [
+    { name: "Won", value: won, color: "#22c55e" },
+    { name: "Commit", value: forecast?.commitAmount ?? 0, color: "#3b82f6" },
+    { name: "Weighted", value: forecast?.weightedAmount ?? 0, color: "#f97316" },
+    { name: "Best Case", value: forecast?.bestCaseAmount ?? 0, color: "#a855f7" },
+    ...(quota > 0 ? [{ name: "Quota", value: quota, color: "#ef4444" }] : []),
+  ];
 
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <TrendingUp className="w-6 h-6 text-primary" />
               Sales Forecasting
             </h1>
-            <p className="text-muted-foreground mt-1">AI-weighted revenue forecast based on deal probability</p>
+            <p className="text-muted-foreground mt-1">{periodLabel}</p>
           </div>
-          <Select value={pipelineId} onValueChange={setPipelineId}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="All Pipelines" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Pipelines</SelectItem>
-              {pipelines?.map((p: { id: number; name: string }) => (
-                <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPeriod(p => getPeriod(getPeriodOffset(p) - 1))}>‹ Prev</Button>
+            <span className="text-sm font-medium px-2">{periodLabel}</span>
+            <Button variant="outline" size="sm" onClick={() => setPeriod(p => getPeriod(getPeriodOffset(p) + 1))}>Next ›</Button>
+            <Dialog open={quotaOpen} onOpenChange={setQuotaOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <Settings2 className="w-4 h-4" /> Set Quota
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Set Monthly Quota — {periodLabel}</DialogTitle></DialogHeader>
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-1.5">
+                    <Label>Target Amount (USD)</Label>
+                    <Input type="number" placeholder="e.g. 50000" value={quotaInput} onChange={e => setQuotaInput(e.target.value)} />
+                    {quota > 0 && <p className="text-xs text-muted-foreground">Current quota: {fmt(quota)}</p>}
+                  </div>
+                  <Button className="w-full" onClick={handleSetQuota} disabled={setQuota.isPending}>
+                    {setQuota.isPending ? "Saving…" : "Save Quota"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                  <DollarSign className="w-5 h-5 text-blue-600" />
+        {/* Quota Progress Bar */}
+        {quota > 0 && (
+          <Card className="border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Target className="w-5 h-5 text-primary" />
+                  <span className="font-semibold">Quota Attainment</span>
+                  <Badge className={attainment !== null && attainment >= 100 ? "bg-green-500/20 text-green-400" : attainment !== null && attainment >= 70 ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}>
+                    {attainment !== null ? `${attainment}%` : "No quota"}
+                  </Badge>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Pipeline</p>
-                  <p className="text-2xl font-bold">{formatCurrency(totalPipeline)}</p>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Won vs Target</p>
+                  <p className="font-bold">{fmt(won)} / {fmt(quota)}</p>
                 </div>
+              </div>
+              <Progress value={attainment ?? 0} className="h-3" />
+              <div className="flex justify-between text-xs text-muted-foreground mt-1.5">
+                <span>$0</span>
+                <span>{fmt(quota)}</span>
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                  <Target className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Weighted Forecast</p>
-                  <p className="text-2xl font-bold text-green-600">{formatCurrency(weightedForecast)}</p>
-                </div>
+        )}
+
+        {/* Forecast Views */}
+        <Tabs value={activeView} onValueChange={v => setActiveView(v as any)}>
+          <TabsList className="grid grid-cols-3 w-full max-w-md">
+            <TabsTrigger value="weighted">Weighted</TabsTrigger>
+            <TabsTrigger value="commit">Commit</TabsTrigger>
+            <TabsTrigger value="best_case">Best Case</TabsTrigger>
+          </TabsList>
+          {(["weighted", "commit", "best_case"] as const).map(view => (
+            <TabsContent key={view} value={view} className="mt-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <MetricCard label="Won (Closed)" value={fmt(won)} icon={CheckCircle2} color="text-green-400" />
+                <MetricCard
+                  label={view === "weighted" ? "Weighted Forecast" : view === "commit" ? "Commit Forecast" : "Best Case"}
+                  value={fmt(viewAmount)} icon={TrendingUp} color="text-primary"
+                  sub={viewAttainment !== null ? `${viewAttainment}% of quota` : undefined}
+                />
+                <MetricCard label="Open Pipeline" value={fmt(forecast?.pipelineAmount ?? 0)} icon={DollarSign} color="text-blue-400" />
+                <MetricCard label="Quota" value={quota > 0 ? fmt(quota) : "Not set"} icon={Target} color="text-orange-400" />
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                  <Calendar className="w-5 h-5 text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Closing This Month</p>
-                  <p className="text-2xl font-bold">{closingDeals?.length ?? 0} deals</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            </TabsContent>
+          ))}
+        </Tabs>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Pipeline by Stage */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Pipeline by Stage</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="h-64 flex items-center justify-center text-muted-foreground">Loading...</div>
-              ) : (
-                <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={forecast?.byStage ?? []}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="stageId" tick={{ fontSize: 12 }} />
-                    <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 12 }} />
-                    <Tooltip formatter={(v: number) => formatCurrency(v)} />
-                    <Bar dataKey="totalValue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Total Value" />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Monthly Revenue Trend */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Revenue Trend (Last 6 Months)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="h-64 flex items-center justify-center text-muted-foreground">Loading...</div>
-              ) : (
-                <ResponsiveContainer width="100%" height={260}>
-                  <LineChart data={forecast?.trend ?? []}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                    <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 12 }} />
-                    <Tooltip formatter={(v: number) => formatCurrency(v)} />
-                    <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} name="Revenue" />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Closing This Month */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Deals Closing This Month</CardTitle>
-          </CardHeader>
+        {/* Chart */}
+        <Card className="border-border/50">
+          <CardHeader className="pb-2"><CardTitle className="text-base">Forecast Breakdown</CardTitle></CardHeader>
           <CardContent>
-            {!closingDeals?.length ? (
-              <p className="text-muted-foreground text-center py-8">No deals closing this month.</p>
-            ) : (
-              <div className="space-y-3">
-                {closingDeals.map((deal) => (
-                  <div key={deal.id} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={chartData} barSize={40}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis tickFormatter={v => `$${(v / 100 / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
+                <Tooltip formatter={(v: any) => fmt(v)} />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                  {chartData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Deals Closing This Period */}
+        {(forecast?.deals?.length ?? 0) > 0 && (
+          <Card className="border-border/50">
+            <CardHeader className="pb-2"><CardTitle className="text-base">Deals Closing This Period ({forecast!.deals.length})</CardTitle></CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y divide-border/30">
+                {forecast!.deals.slice(0, 10).map((deal: any) => (
+                  <div key={deal.id} className="flex items-center justify-between px-5 py-3 hover:bg-muted/30 transition-colors">
                     <div>
-                      <p className="font-medium">{deal.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Close: {deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toLocaleDateString() : "Not set"}
-                      </p>
+                      <p className="font-medium text-sm">{deal.name}</p>
+                      <p className="text-xs text-muted-foreground">{deal.stageName} · {deal.probability ?? 50}% probability</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-green-600">{formatCurrency(deal.value ?? 0)}</p>
-                      <Badge variant={deal.status === "won" ? "default" : deal.status === "lost" ? "destructive" : "secondary"}>
-                        {deal.status}
-                      </Badge>
+                      <p className="font-semibold text-sm">{fmt(Number(deal.dealValue ?? 0))}</p>
+                      <Badge className={deal.status === "won" ? "bg-green-500/20 text-green-400 text-xs" : "bg-blue-500/20 text-blue-400 text-xs"}>{deal.status}</Badge>
                     </div>
                   </div>
                 ))}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Team Leaderboard */}
+        {user?.role === "admin" && teamData && teamData.length > 0 && (
+          <Card className="border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2"><Users className="w-4 h-4" /> Team Leaderboard — {periodLabel}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y divide-border/30">
+                {[...teamData].sort((a: any, b: any) => b.wonAmount - a.wonAmount).map((rep: any, i: number) => (
+                  <div key={rep.userId} className="flex items-center gap-4 px-5 py-3 hover:bg-muted/30 transition-colors">
+                    <span className="text-lg font-bold text-muted-foreground w-6 text-center">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{rep.name ?? rep.email}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Progress value={rep.attainmentPct ?? 0} className="h-1.5 flex-1" />
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">{rep.attainmentPct ?? 0}%</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-sm">{fmt(rep.wonAmount)}</p>
+                      {rep.targetAmount > 0 && <p className="text-xs text-muted-foreground">of {fmt(rep.targetAmount)}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );

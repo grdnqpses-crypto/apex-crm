@@ -34,6 +34,7 @@ import { salesForecastingRouter, productCatalogRouter, leadScoringRouter, nextBe
 import { webFormsRouter, eSignatureRouter, reputationRouter, oooDetectionRouter } from "./routers/batch3";
 import { emailSequencesRouter, journeysRouter, whatsappRouter, socialSchedulerRouter, powerDialerRouter, anomalyDetectionRouter, pipelineInspectionRouter, domainHealthAutopilotRouter, abTestingRouter, featureGatingRouter } from "./routers/batch4";
 import { notificationPrefsRouter, scheduledReportsRouter, proposalAnalyticsRouter, customRolesRouter, ssoRouter, customFieldConditionsRouter, aiCreditUsageRouter, whatsappBroadcastsRouter, bulkMergeRouter, aiPostWriterRouter } from "./routers/gap-features";
+import { salesQuotasRouter, smsRouter, gdprRouter, publicBookingRouter, portalEnhancedRouter, agentCommandsRouter, revenueIntelRouter, userPrefsRouter, portalDocsRouter } from "./routers/competitive-features";
 
 export const appRouter = router({
   system: systemRouter,
@@ -77,6 +78,16 @@ export const appRouter = router({
   whatsappBroadcasts: whatsappBroadcastsRouter,
   bulkMerge: bulkMergeRouter,
   aiPostWriter: aiPostWriterRouter,
+  // competitive-features routers
+  salesQuotas: salesQuotasRouter,
+  sms: smsRouter,
+  gdpr: gdprRouter,
+  publicBooking: publicBookingRouter,
+  portalEnhanced: portalEnhancedRouter,
+  agentCommands: agentCommandsRouter,
+  revenueIntel: revenueIntelRouter,
+  userPrefs: userPrefsRouter,
+  portalDocs: portalDocsRouter,
   calendar: calendarRouter,
   emailSync: emailSyncRouter,
   scheduler: schedulerRouter,
@@ -3748,9 +3759,28 @@ export const appRouter = router({
       await db.updateCallRecording(input.id, ctx.user.id, { ...analysis, analyzed: true } as any);
       return analysis;
     }),
+    upload: protectedProcedure.input(z.object({
+      fileName: z.string(),
+      mimeType: z.string(),
+      base64Data: z.string(),
+      contactId: z.number().optional(),
+      dealId: z.number().optional(),
+      duration: z.number().optional(),
+      direction: z.enum(["inbound", "outbound"]).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { storagePut } = await import('./storage');
+      const buffer = Buffer.from(input.base64Data, 'base64');
+      const suffix = Math.random().toString(36).slice(2, 8);
+      const key = `call-recordings/${ctx.user.id}/${suffix}-${input.fileName}`;
+      const { url } = await storagePut(key, buffer, input.mimeType);
+      const id = await db.createCallRecording(ctx.user.id, {
+        recordingUrl: url, contactId: input.contactId, dealId: input.dealId,
+        duration: input.duration, direction: input.direction ?? 'outbound',
+      } as any);
+      return { success: true, id, url };
+    }),
   }),
-
-  // ─── B2B Contact Database ─────────────────────────────────────
+  // ─── B2B Contact Database ──────────────────────────────────────
   b2bDatabase: router({
     list: protectedProcedure.input(z.object({ search: z.string().optional(), industry: z.string().optional(), limit: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
       return db.listB2BContacts(ctx.user.id, input);

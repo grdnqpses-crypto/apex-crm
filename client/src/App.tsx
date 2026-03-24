@@ -139,6 +139,9 @@ const WhatsAppBroadcasts = lazy(() => import("./pages/WhatsAppBroadcasts"));
 const AIPostWriter = lazy(() => import("./pages/AIPostWriter"));
 const ConditionalFields = lazy(() => import("./pages/ConditionalFields"));
 const OAuthCallback = lazy(() => import("./pages/OAuthCallback"));
+const SMSInbox = lazy(() => import("./pages/SMSInbox"));
+const GDPRTools = lazy(() => import("./pages/GDPRTools"));
+const PublicBookingPage = lazy(() => import("./pages/PublicBookingPage"));
 
 function PageLoader() {
   return (
@@ -284,6 +287,8 @@ function Router() {
           <Route path="/whatsapp-broadcasts" component={WhatsAppBroadcasts} />
           <Route path="/ai-post-writer" component={AIPostWriter} />
           <Route path="/conditional-fields" component={ConditionalFields} />
+          <Route path="/sms" component={SMSInbox} />
+          <Route path="/gdpr" component={GDPRTools} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>
@@ -322,6 +327,11 @@ function App() {
             <Route path="/oauth-callback">
               <Suspense fallback={<PageLoader />}>
                 <OAuthCallback />
+              </Suspense>
+            </Route>
+            <Route path="/book/:profileId">
+              <Suspense fallback={<PageLoader />}>
+                <PublicBookingPage />
               </Suspense>
             </Route>
             <Route path="/">

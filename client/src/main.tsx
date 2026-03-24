@@ -7,6 +7,7 @@ import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
 import { SkinProvider } from "./contexts/SkinContext";
+import { KeyboardShortcutsProvider } from "./components/KeyboardShortcutsProvider";
 import "./index.css";
 
 // Force correct browser tab title (overrides any platform-injected VITE_APP_TITLE)
@@ -83,7 +84,9 @@ createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>
     <QueryClientProvider client={queryClient}>
       <SkinProvider>
-        <App />
+        <KeyboardShortcutsProvider>
+          <App />
+        </KeyboardShortcutsProvider>
       </SkinProvider>
     </QueryClientProvider>
   </trpc.Provider>

@@ -3635,3 +3635,92 @@ export const deleteBatches = mysqlTable("delete_batches", {
 });
 export type DeleteBatch = typeof deleteBatches.$inferSelect;
 export type NewDeleteBatch = typeof deleteBatches.$inferInsert;
+
+// ─── Sales Quotas ─────────────────────────────────────────────────────────────
+export const salesQuotas = mysqlTable("sales_quotas", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  tenantId: int("tenantId").notNull(),
+  period: varchar("period", { length: 16 }).notNull(),
+  periodType: mysqlEnum("sqPeriodType", ["monthly", "quarterly", "annual"]).notNull().default("monthly"),
+  targetAmount: bigint("targetAmount", { mode: "number" }).notNull().default(0),
+  currency: varchar("sqCurrency", { length: 8 }).default("USD"),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type SalesQuota = typeof salesQuotas.$inferSelect;
+
+// ─── SMS Messages ─────────────────────────────────────────────────────────────
+export const smsMessages = mysqlTable("sms_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  tenantId: int("tenantId").notNull(),
+  contactId: int("contactId"),
+  direction: mysqlEnum("smsDirection", ["outbound", "inbound"]).notNull(),
+  fromNumber: varchar("fromNumber", { length: 32 }).notNull(),
+  toNumber: varchar("toNumber", { length: 32 }).notNull(),
+  body: text("body").notNull(),
+  status: mysqlEnum("smsStatus", ["queued", "sent", "delivered", "failed", "received"]).notNull().default("queued"),
+  twilioSid: varchar("twilioSid", { length: 64 }),
+  errorCode: varchar("smsErrorCode", { length: 32 }),
+  sentAt: bigint("sentAt", { mode: "number" }),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+export type SmsMessage = typeof smsMessages.$inferSelect;
+
+// ─── GDPR Consent Records ─────────────────────────────────────────────────────
+export const gdprConsents = mysqlTable("gdpr_consents", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  contactId: int("contactId").notNull(),
+  consentType: varchar("consentType", { length: 64 }).notNull(),
+  granted: boolean("granted").notNull().default(false),
+  source: varchar("gdprSource", { length: 128 }),
+  ipAddress: varchar("ipAddress", { length: 64 }),
+  grantedAt: bigint("grantedAt", { mode: "number" }),
+  revokedAt: bigint("revokedAt", { mode: "number" }),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type GdprConsent = typeof gdprConsents.$inferSelect;
+
+export const gdprDeletionRequests = mysqlTable("gdpr_deletion_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  contactId: int("contactId").notNull(),
+  requestedBy: int("requestedBy"),
+  reason: text("reason"),
+  status: mysqlEnum("deletionStatus", ["pending", "processing", "completed", "rejected"]).notNull().default("pending"),
+  completedAt: bigint("completedAt", { mode: "number" }),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+export type GdprDeletionRequest = typeof gdprDeletionRequests.$inferSelect;
+
+// ─── Portal Documents & Comments ─────────────────────────────────────────────
+export const portalDocuments = mysqlTable("portal_documents", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  portalAccessId: int("portalAccessId").notNull(),
+  contactId: int("contactId"),
+  dealId: int("dealId"),
+  fileName: varchar("fileName", { length: 256 }).notNull(),
+  fileUrl: text("fileUrl").notNull(),
+  fileKey: varchar("fileKey", { length: 512 }).notNull(),
+  mimeType: varchar("mimeType", { length: 128 }),
+  fileSize: int("fileSize"),
+  uploadedBy: mysqlEnum("pdUploadedBy", ["customer", "rep"]).notNull().default("customer"),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+export type PortalDocument = typeof portalDocuments.$inferSelect;
+
+export const portalComments = mysqlTable("portal_comments", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  portalAccessId: int("portalAccessId").notNull(),
+  dealId: int("dealId"),
+  body: text("body").notNull(),
+  authorType: mysqlEnum("pcAuthorType", ["customer", "rep"]).notNull(),
+  authorName: varchar("authorName", { length: 256 }),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+export type PortalComment = typeof portalComments.$inferSelect;
