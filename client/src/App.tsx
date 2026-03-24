@@ -142,6 +142,7 @@ const OAuthCallback = lazy(() => import("./pages/OAuthCallback"));
 const SMSInbox = lazy(() => import("./pages/SMSInbox"));
 const GDPRTools = lazy(() => import("./pages/GDPRTools"));
 const PublicBookingPage = lazy(() => import("./pages/PublicBookingPage"));
+const ReschedulePage = lazy(() => import("./pages/ReschedulePage"));
 
 function PageLoader() {
   return (
@@ -332,6 +333,11 @@ function App() {
             <Route path="/book/:profileId">
               <Suspense fallback={<PageLoader />}>
                 <PublicBookingPage />
+              </Suspense>
+            </Route>
+            <Route path="/reschedule/:token">
+              <Suspense fallback={<PageLoader />}>
+                <ReschedulePage />
               </Suspense>
             </Route>
             <Route path="/">

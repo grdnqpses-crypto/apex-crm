@@ -2947,6 +2947,7 @@ export const meetingBookings = mysqlTable("meeting_bookings", {
   contactId: int("contactId"),
   calendarEventId: varchar("calendarEventId", { length: 512 }),
   cancelToken: varchar("cancelToken", { length: 128 }),
+  rescheduleToken: varchar("rescheduleToken", { length: 128 }),
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
 });

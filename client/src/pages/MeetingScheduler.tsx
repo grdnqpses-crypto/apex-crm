@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Calendar, Clock, Link, Plus, Copy, Users, Video, Phone, MapPin, Trash2, CheckCircle } from "lucide-react";
+import { Calendar, Clock, Link, Plus, Copy, Users, Video, Phone, MapPin, Trash2, CheckCircle, Zap, AlertCircle, RefreshCw } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useSkin } from "@/contexts/SkinContext";
 
@@ -36,8 +36,46 @@ export default function MeetingScheduler() {
   const { data: profileData, refetch } = trpc.scheduler.getProfile.useQuery();
   const meetingTypes = profileData?.meetingTypes ?? [];
   const { data: bookings = [] } = trpc.scheduler.getBookings.useQuery({});
-  const createTypeMutation = trpc.scheduler.addMeetingType.useMutation();
 
+  // Google Calendar connection status
+  const { data: calendarStatus, refetch: refetchCalendarStatus } = trpc.googleCalendarOAuth.getCalendarStatus.useQuery();
+
+  const getGoogleAuthUrlMutation = trpc.googleCalendarOAuth.getGoogleAuthUrl.useMutation({
+    onSuccess: (data) => {
+      if (data.configured) {
+        window.location.href = data.url;
+      } else {
+        toast.error("Google Calendar credentials not configured. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Settings → Secrets.");
+      }
+    },
+    onError: () => toast.error("Failed to start Google Calendar connection."),
+  });
+
+  const disconnectCalendarMutation = trpc.googleCalendarOAuth.disconnectCalendar.useMutation({
+    onSuccess: () => { toast.success("Google Calendar disconnected."); refetchCalendarStatus(); },
+    onError: () => toast.error("Failed to disconnect."),
+  });
+
+  // Handle OAuth callback query params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("calendarConnected") === "1") {
+      toast.success("Google Calendar connected! Your booking page now shows real availability.");
+      window.history.replaceState({}, "", window.location.pathname);
+      refetchCalendarStatus();
+    } else if (params.get("calendarError")) {
+      const errMap: Record<string, string> = {
+        not_configured: "Google Calendar credentials are not configured. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Settings → Secrets.",
+        token_exchange_failed: "Google Calendar connection failed. Please try again.",
+        server_error: "An unexpected error occurred. Please try again.",
+      };
+      const errMsg = errMap[params.get("calendarError")!] ?? "Google Calendar connection failed.";
+      toast.error(errMsg);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
+  const createTypeMutation = trpc.scheduler.addMeetingType.useMutation();
 
   const handleCreate = async () => {
     if (!form.name.trim()) return;
@@ -74,6 +112,70 @@ export default function MeetingScheduler() {
   return (
     <DashboardLayout>
       <div className="p-6 max-w-5xl mx-auto space-y-6">
+
+        {/* Google Calendar Connection Banner */}
+        <Card className={`border ${calendarStatus?.connected ? "border-green-200 bg-green-50/50" : "border-amber-200 bg-amber-50/50"}`}>
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                {calendarStatus?.connected ? (
+                  <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  </div>
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                    <AlertCircle className="h-5 w-5 text-amber-600" />
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {calendarStatus?.connected ? "Google Calendar Connected" : "Connect Google Calendar"}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {calendarStatus?.connected
+                      ? `Live availability from ${calendarStatus.email ?? "your calendar"} — guests only see real open slots`
+                      : "Connect to show real free/busy availability on your booking page instead of static slots"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {calendarStatus?.connected ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-1.5"
+                      onClick={() => refetchCalendarStatus()}
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      Refresh
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 border-red-200 hover:bg-red-50"
+                      onClick={() => disconnectCalendarMutation.mutate()}
+                      disabled={disconnectCalendarMutation.isPending}
+                    >
+                      Disconnect
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    size="sm"
+                    className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2 shadow-sm"
+                    onClick={() => getGoogleAuthUrlMutation.mutate({ origin: window.location.origin })}
+                    disabled={getGoogleAuthUrlMutation.isPending}
+                  >
+                    <Zap className="h-3.5 w-3.5 text-blue-500" />
+                    Connect Google Calendar
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Meeting Scheduler</h1>
@@ -165,7 +267,7 @@ export default function MeetingScheduler() {
                       <div>
                         <div className="font-semibold">{booking.guestName}</div>
                         <div className="text-sm text-muted-foreground">
-                          {new Date(booking.startTime).toLocaleString()} · {new Date(booking.endTime - booking.startTime).getMinutes()} min
+                          {new Date(booking.startTime).toLocaleString()} · {Math.round((booking.endTime - booking.startTime) / 60000)} min
                         </div>
                         {booking.guestEmail && <div className="text-xs text-muted-foreground">{booking.guestEmail}</div>}
                       </div>

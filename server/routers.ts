@@ -28,6 +28,7 @@ import {
   integrationHubRouter,
   onboardingRouter,
   historyImporterRouter,
+  googleCalendarOAuthRouter,
 } from "./routers/phase44";
 import { rottenDealsRouter, bulkActionsRouter, winLossRouter, auditLogsRouter, smartViewsRouter, territoriesRouter, accountHierarchyRouter } from "./routers/batch1";
 import { salesForecastingRouter, productCatalogRouter, leadScoringRouter, nextBestActionRouter } from "./routers/batch2";
@@ -91,6 +92,7 @@ export const appRouter = router({
   calendar: calendarRouter,
   emailSync: emailSyncRouter,
   scheduler: schedulerRouter,
+  googleCalendarOAuth: googleCalendarOAuthRouter,
   customObjects: customObjectsRouter,
   proposals: proposalsRouter,
   workflowBuilder: workflowBuilderRouter,

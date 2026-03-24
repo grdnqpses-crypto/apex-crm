@@ -189,4 +189,89 @@ export function registerOAuthRoutes(app: Express) {
       res.status(500).json({ error: "OAuth callback failed" });
     }
   });
+
+  // ─── Google Calendar OAuth Callback ───
+  app.get("/api/auth/google-calendar/callback", async (req: Request, res: Response) => {
+    const code = getQueryParam(req, "code");
+    const state = getQueryParam(req, "state");
+    const oauthError = getQueryParam(req, "error");
+    if (oauthError) {
+      console.error("[GoogleCalendar] OAuth error:", oauthError);
+      return res.redirect(302, "/meeting-scheduler?calendarError=" + encodeURIComponent(oauthError));
+    }
+    if (!code || !state) {
+      return res.redirect(302, "/meeting-scheduler?calendarError=missing_params");
+    }
+    try {
+      const stateData = JSON.parse(Buffer.from(state, "base64url").toString());
+      const { userId, tenantId, origin } = stateData;
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+      if (!clientId || !clientSecret) {
+        return res.redirect(302, "/meeting-scheduler?calendarError=not_configured");
+      }
+      const redirectUri = `${origin}/api/auth/google-calendar/callback`;
+      // Exchange code for tokens
+      const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          code,
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: redirectUri,
+          grant_type: "authorization_code",
+        }).toString(),
+      });
+      const tokenData = await tokenRes.json() as Record<string, unknown>;
+      if (!tokenData.access_token) {
+        console.error("[GoogleCalendar] Token exchange failed:", tokenData);
+        return res.redirect(302, "/meeting-scheduler?calendarError=token_exchange_failed");
+      }
+      // Get the user's calendar email
+      const profileRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+      });
+      const profileData = await profileRes.json() as Record<string, unknown>;
+      const calendarEmail = (profileData.email as string) ?? null;
+      // Store tokens in calendarConnections
+      const { getDb } = await import("../db");
+      const { calendarConnections } = await import("../../drizzle/schema");
+      const { eq, and } = await import("drizzle-orm");
+      const dbConn = await getDb();
+      if (dbConn) {
+        const now = Date.now();
+        const existing = await dbConn.select({ id: calendarConnections.id })
+          .from(calendarConnections)
+          .where(and(eq(calendarConnections.userId, userId), eq(calendarConnections.provider, "google")))
+          .limit(1);
+        if (existing.length > 0) {
+          await dbConn.update(calendarConnections).set({
+            accessToken: tokenData.access_token as string,
+            refreshToken: (tokenData.refresh_token as string) ?? undefined,
+            calendarEmail,
+            syncEnabled: true,
+            updatedAt: now,
+          }).where(eq(calendarConnections.id, existing[0].id));
+        } else {
+          await dbConn.insert(calendarConnections).values({
+            userId,
+            tenantCompanyId: tenantId,
+            provider: "google",
+            accessToken: tokenData.access_token as string,
+            refreshToken: (tokenData.refresh_token as string) ?? undefined,
+            calendarEmail,
+            syncEnabled: true,
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+      }
+      console.log(`[GoogleCalendar] Connected calendar for user ${userId}: ${calendarEmail}`);
+      res.redirect(302, "/meeting-scheduler?calendarConnected=1");
+    } catch (err) {
+      console.error("[GoogleCalendar] Callback error:", err);
+      res.redirect(302, "/meeting-scheduler?calendarError=server_error");
+    }
+  });
 }

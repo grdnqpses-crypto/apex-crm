@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Calendar, Clock, CheckCircle2, User, ChevronLeft, ChevronRight,
-  Shield, Wifi, WifiOff,
+  Shield, Wifi, WifiOff, RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -164,7 +164,19 @@ export default function PublicBookingPage() {
                 <span>{profile.displayName}</span>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">
+            {booked?.rescheduleToken && (
+              <div className="mt-4 pt-4 border-t border-border">
+                <p className="text-sm text-muted-foreground mb-2">Need to change the time?</p>
+                <a
+                  href={`${window.location.origin}/reschedule/${booked.rescheduleToken}`}
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Reschedule this meeting
+                </a>
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground mt-4">
               Your data is handled in accordance with our privacy policy. You may request deletion at any time.
             </p>
           </CardContent>

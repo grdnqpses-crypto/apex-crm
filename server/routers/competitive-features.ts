@@ -13,6 +13,7 @@ import { nanoid } from "nanoid";
 import { invokeLLM } from "../_core/llm";
 import { storagePut } from "../storage";
 import { getHostBusyIntervals, isSlotBusy } from "../google-calendar";
+import { sendBookingConfirmation } from "../booking-email";
 import { calendarConnections } from "../../drizzle/schema";
 import {
   salesQuotas, smsMessages, gdprConsents, gdprDeletionRequests,
@@ -567,6 +568,8 @@ export const publicBookingRouter = router({
     guestNotes: z.string().optional(),
     startTime: z.number(),
     timezone: z.string(),
+    gdprConsent: z.boolean().optional(),
+    origin: z.string().optional(),
   })).mutation(async ({ input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -574,6 +577,7 @@ export const publicBookingRouter = router({
     if (!type) throw new TRPCError({ code: "NOT_FOUND" });
     const endTime = input.startTime + type.durationMinutes * 60 * 1000;
     const cancelToken = nanoid(32);
+    const rescheduleToken = nanoid(32);
     const now = Date.now();
 
     // Check for conflicts
@@ -600,7 +604,7 @@ export const publicBookingRouter = router({
       contactId = (insertResult as any).insertId;
     }
 
-    await db.insert(meetingBookings).values({
+    const [bookingResult] = await db.insert(meetingBookings).values({
       meetingTypeId: input.meetingTypeId,
       schedulerProfileId: input.profileId,
       tenantCompanyId: type.tenantCompanyId,
@@ -614,9 +618,11 @@ export const publicBookingRouter = router({
       status: "confirmed",
       contactId,
       cancelToken,
+      rescheduleToken,
       createdAt: now,
       updatedAt: now,
     });
+    const bookingId = (bookingResult as any).insertId;
 
     // Log activity
     if (contactId) {
@@ -626,7 +632,31 @@ export const publicBookingRouter = router({
       `);
     }
 
-    return { success: true, cancelToken, contactId };
+    // Get host info for confirmation email
+    const [profile] = await db.select().from(meetingSchedulerProfiles)
+      .where(eq(meetingSchedulerProfiles.id, input.profileId)).limit(1);
+    const [host] = profile ? await db.select({ name: users.name, email: users.email })
+      .from(users).where(eq(users.id, profile.userId)).limit(1) : [undefined];
+
+    // Send confirmation email (non-blocking)
+    const origin = input.origin ?? "https://apexcrm.com";
+    sendBookingConfirmation({
+      bookingId,
+      guestName: input.guestName,
+      guestEmail: input.guestEmail,
+      hostName: host?.name ?? profile?.displayName ?? "Your Host",
+      hostEmail: host?.email ?? "",
+      meetingName: type.name,
+      startTime: input.startTime,
+      endTime,
+      timezone: input.timezone,
+      location: type.location ?? undefined,
+      cancelToken,
+      rescheduleToken,
+      origin,
+    }).catch(err => console.error("[Booking] Failed to send confirmation email:", err));
+
+    return { success: true, cancelToken, rescheduleToken, contactId, bookingId };
   }),
 
   cancelBooking: publicProcedure.input(z.object({ cancelToken: z.string() })).mutation(async ({ input }) => {
@@ -635,6 +665,71 @@ export const publicBookingRouter = router({
     await db.update(meetingBookings).set({ status: "cancelled", updatedAt: Date.now() })
       .where(eq(meetingBookings.cancelToken, input.cancelToken));
     return { success: true };
+  }),
+
+  // Get booking by rescheduleToken (public)
+  getBookingByRescheduleToken: publicProcedure.input(z.object({ token: z.string() })).query(async ({ input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const [booking] = await db.select().from(meetingBookings)
+      .where(eq(meetingBookings.rescheduleToken, input.token)).limit(1);
+    if (!booking) throw new TRPCError({ code: "NOT_FOUND" });
+    const [type] = await db.select().from(meetingTypes).where(eq(meetingTypes.id, booking.meetingTypeId)).limit(1);
+    return { booking, meetingType: type ?? null };
+  }),
+
+  // Reschedule a booking (public, using rescheduleToken)
+  rescheduleBooking: publicProcedure.input(z.object({
+    rescheduleToken: z.string(),
+    newStartTime: z.number(),
+    origin: z.string().optional(),
+  })).mutation(async ({ input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const [booking] = await db.select().from(meetingBookings)
+      .where(eq(meetingBookings.rescheduleToken, input.rescheduleToken)).limit(1);
+    if (!booking) throw new TRPCError({ code: "NOT_FOUND" });
+    const [type] = await db.select().from(meetingTypes).where(eq(meetingTypes.id, booking.meetingTypeId)).limit(1);
+    if (!type) throw new TRPCError({ code: "NOT_FOUND" });
+
+    const newEndTime = input.newStartTime + type.durationMinutes * 60 * 1000;
+    const now = Date.now();
+
+    // Check for conflicts
+    const conflict = await db.select({ id: meetingBookings.id }).from(meetingBookings)
+      .where(and(
+        eq(meetingBookings.schedulerProfileId, booking.schedulerProfileId),
+        sql`${meetingBookings.status} != 'cancelled'`,
+        sql`${meetingBookings.id} != ${booking.id}`,
+        lte(meetingBookings.startTime, input.newStartTime),
+        gte(meetingBookings.endTime, input.newStartTime),
+      )).limit(1);
+    if (conflict.length > 0) throw new TRPCError({ code: "CONFLICT", message: "This time slot is no longer available." });
+
+    await db.update(meetingBookings).set({
+      startTime: input.newStartTime,
+      endTime: newEndTime,
+      updatedAt: now,
+    }).where(eq(meetingBookings.id, booking.id));
+
+    // Send reschedule confirmation email (non-blocking)
+    const { sendRescheduleConfirmation } = await import("../booking-email");
+    const origin = input.origin ?? "https://apexcrm.com";
+    sendRescheduleConfirmation({
+      bookingId: booking.id,
+      guestName: booking.guestName,
+      guestEmail: booking.guestEmail,
+      hostName: "Your Host",
+      meetingName: type.name,
+      newStartTime: input.newStartTime,
+      newEndTime,
+      timezone: booking.timezone,
+      cancelToken: booking.cancelToken ?? "",
+      rescheduleToken: input.rescheduleToken,
+      origin,
+    }).catch(err => console.error("[Booking] Failed to send reschedule email:", err));
+
+    return { success: true, newStartTime: input.newStartTime, newEndTime };
   }),
 });
 

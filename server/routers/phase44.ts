@@ -1107,3 +1107,67 @@ export const historyImporterRouter = router({
       .limit(input.limit);
   }),
 });
+
+// ─── Google Calendar OAuth ────────────────────────────────────────────────────
+import { ENV } from "../_core/env";
+
+export const googleCalendarOAuthRouter = router({
+  // Returns the Google OAuth URL to redirect the user to
+  getAuthUrl: protectedProcedure.input(z.object({
+    origin: z.string(),
+  })).query(({ ctx, input }) => {
+    const clientId = ENV.googleClientId;
+    if (!clientId) {
+      return { url: null, configured: false };
+    }
+    const redirectUri = `${input.origin}/api/auth/google-calendar/callback`;
+    const state = Buffer.from(JSON.stringify({
+      userId: ctx.user.id,
+      tenantId: ctx.user.tenantCompanyId,
+      origin: input.origin,
+    })).toString("base64url");
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: [
+        "https://www.googleapis.com/auth/calendar.readonly",
+        "https://www.googleapis.com/auth/calendar.freebusy",
+      ].join(" "),
+      access_type: "offline",
+      prompt: "consent",
+      state,
+    });
+    return { url: `https://accounts.google.com/o/oauth2/v2/auth?${params}`, configured: true };
+  }),
+
+  // Check if the current user has a connected Google Calendar
+  getConnectionStatus: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return { connected: false };
+    const [conn] = await db.select({
+      id: calendarConnections.id,
+      provider: calendarConnections.provider,
+      syncEnabled: calendarConnections.syncEnabled,
+      lastSyncAt: calendarConnections.lastSyncAt,
+    }).from(calendarConnections)
+      .where(and(
+        eq(calendarConnections.userId, ctx.user.id),
+        eq(calendarConnections.provider, "google"),
+        eq(calendarConnections.tenantCompanyId, ctx.user.tenantCompanyId!),
+      )).limit(1);
+    return conn ? { connected: true, ...conn } : { connected: false };
+  }),
+
+  // Disconnect Google Calendar
+  disconnectGoogle: protectedProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    await db.delete(calendarConnections).where(and(
+      eq(calendarConnections.userId, ctx.user.id),
+      eq(calendarConnections.provider, "google"),
+      eq(calendarConnections.tenantCompanyId, ctx.user.tenantCompanyId!),
+    ));
+    return { success: true };
+  }),
+});

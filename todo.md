@@ -2328,3 +2328,14 @@
 - [x] Add getAvailableSlots backend procedure using stored Google OAuth token
 - [x] Add GDPR consent banner to public booking page (EU compliance)
 - [x] Tests for availability logic and GDPR consent validation
+
+## Session 19: Google Calendar OAuth + Booking Email + Reschedule Link
+
+- [x] Google Calendar OAuth connect/disconnect flow in Meeting Scheduler settings
+- [x] Google Calendar OAuth callback route (/api/google-calendar/callback)
+- [x] Booking confirmation email with HTML body and .ics calendar attachment
+- [x] Reschedule token generated on booking and stored in meeting_bookings table
+- [x] /reschedule/:token public page for guests to pick a new time
+- [x] Reschedule link shown on booking confirmation screen
+- [x] GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET added to env.ts
+- [x] 14 new tests: OAuth URL builder, ICS generation, reschedule token, GDPR consent validation
