@@ -367,6 +367,67 @@ function mapSignalType(type: string): string {
   return map[type] || "news_mention";
 }
 
+// ─── Auto-enrollment helper ──────────────────────────────────────────────────
+/**
+ * Upsert a website monitor for a company.
+ * - If a monitor already exists for this companyId+tenantId, update the URL/name.
+ * - If no monitor exists and the company has a website URL, create one.
+ * - If the website URL is empty/null, do nothing.
+ */
+export async function syncCompanyMonitor(opts: {
+  companyId: number;
+  companyName: string;
+  websiteUrl: string | null | undefined;
+  userId: number;
+  tenantId: number;
+}): Promise<void> {
+  const { companyId, companyName, websiteUrl, userId, tenantId } = opts;
+
+  // Normalise URL: skip if empty
+  const url = websiteUrl?.trim();
+  if (!url) return;
+
+  // Ensure it starts with http(s)
+  let normalised = url;
+  if (!/^https?:\/\//i.test(url)) normalised = `https://${url}`;
+
+  // Basic URL validity check
+  try { new URL(normalised); } catch { return; }
+
+  const db = await getDb();
+  if (!db) return;
+
+  // Check if a monitor already exists for this company in this tenant
+  const existing = await db.execute(
+    sql`SELECT id FROM website_monitors WHERE companyId = ${companyId} AND tenantId = ${tenantId} LIMIT 1`
+  ) as any[];
+  const rows = (existing[0] || []) as any[];
+
+  const now = Date.now();
+  if (rows.length > 0) {
+    // Update name/URL in case they changed
+    await db.update(websiteMonitors)
+      .set({ companyName, websiteUrl: normalised, updatedAt: now })
+      .where(eq(websiteMonitors.id, rows[0].id));
+  } else {
+    // Create a new auto-enrolled monitor
+    await db.insert(websiteMonitors).values({
+      userId,
+      tenantId,
+      companyId,
+      companyName,
+      websiteUrl: normalised,
+      isActive: 1,
+      checkFrequency: "daily",
+      autoEmailEnabled: 0,
+      signalFilters: [],
+      totalSignalsFound: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+}
+
 // ─── tRPC Router ──────────────────────────────────────────────────────────────
 async function getDbOrThrow() {
   const db = await getDb();
@@ -535,6 +596,49 @@ export const websiteMonitorRouter = router({
 
     return { totalMonitors, activeMonitors, totalSignals, autoEmailMonitors };
   }),
+
+  // Sync all companies with websites into monitors (backfill + upsert)
+  syncAllCompanies: protectedProcedure.mutation(async ({ ctx }) => {
+    const db = await getDbOrThrow();
+    const tenantId = ctx.user.tenantCompanyId ?? 0;
+
+    // Fetch all companies in this tenant that have a website URL
+    const companiesResult = await db.execute(
+      sql`SELECT id, name, website FROM companies WHERE userId = ${ctx.user.id} AND website IS NOT NULL AND website != '' LIMIT 500`
+    ) as any[];
+    const companies = (companiesResult[0] || []) as any[];
+
+    let synced = 0;
+    let skipped = 0;
+    for (const company of companies) {
+      try {
+        await syncCompanyMonitor({
+          companyId: company.id,
+          companyName: company.name,
+          websiteUrl: company.website,
+          userId: ctx.user.id,
+          tenantId,
+        });
+        synced++;
+      } catch {
+        skipped++;
+      }
+    }
+    return { synced, skipped, total: companies.length };
+  }),
+
+  // Remove monitor when a company is deleted
+  removeMonitorForCompany: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDbOrThrow();
+      await db.delete(websiteMonitors)
+        .where(and(
+          eq(websiteMonitors.companyId, input.companyId),
+          eq(websiteMonitors.tenantId, ctx.user.tenantCompanyId ?? 0)
+        ));
+      return { success: true };
+    }),
 
   // Run daily crawl for all active monitors in a tenant (called by AI Engine)
   runDailyCrawl: protectedProcedure.mutation(async ({ ctx }) => {

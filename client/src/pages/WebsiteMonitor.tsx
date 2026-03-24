@@ -14,7 +14,7 @@ import {
   Globe, Plus, Trash2, Play, Eye, CheckCircle2, XCircle,
   Mail, Zap, TrendingUp, Clock, AlertCircle, RefreshCw,
   Award, Building2, DollarSign, Users, Rocket, Star,
-  ChevronDown, ChevronRight, Loader2, Crown, Activity,
+  ChevronDown, ChevronRight, Loader2, Crown, Activity, Sparkles,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -51,6 +51,7 @@ export default function WebsiteMonitor() {
   const [form, setForm] = useState(emptyForm);
   const [expandedMonitor, setExpandedMonitor] = useState<number | null>(null);
   const [crawlingId, setCrawlingId] = useState<number | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const utils = trpc.useUtils();
 
@@ -83,6 +84,21 @@ export default function WebsiteMonitor() {
       toast.success("Monitor updated");
     },
     onError: (e) => toast.error(e.message),
+  });
+
+  const syncAllMut = trpc.websiteMonitor.syncAllCompanies.useMutation({
+    onMutate: () => setIsSyncing(true),
+    onSuccess: (data) => {
+      setIsSyncing(false);
+      utils.websiteMonitor.list.invalidate();
+      utils.websiteMonitor.stats.invalidate();
+      if (data.synced > 0) {
+        toast.success(`Synced ${data.synced} company website${data.synced !== 1 ? 's' : ''} into monitors!`);
+      } else {
+        toast.info("No companies with website URLs found to sync. Add website URLs to your companies first.");
+      }
+    },
+    onError: (e) => { setIsSyncing(false); toast.error(e.message); },
   });
 
   const crawlMut = trpc.websiteMonitor.triggerCrawl.useMutation({
@@ -136,9 +152,20 @@ export default function WebsiteMonitor() {
             Monitor client websites daily for positive signals — awards, expansions, funding, new hires — and auto-send congratulations emails.
           </p>
         </div>
-        <Button onClick={() => setShowCreate(true)} className="bg-violet-600 hover:bg-violet-700">
-          <Plus className="h-4 w-4 mr-2" /> Add Website Monitor
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => syncAllMut.mutate()}
+            disabled={isSyncing}
+            title="Auto-enroll all companies with website URLs"
+          >
+            {isSyncing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2 text-violet-400" />}
+            Sync All Companies
+          </Button>
+          <Button onClick={() => setShowCreate(true)} className="bg-violet-600 hover:bg-violet-700">
+            <Plus className="h-4 w-4 mr-2" /> Add Monitor
+          </Button>
+        </div>
       </div>
 
       {/* ─── Stats Bar ─── */}
@@ -163,16 +190,18 @@ export default function WebsiteMonitor() {
         ))}
       </div>
 
-      {/* ─── How It Works Banner ─── */}
+      {/* ─── Auto-Enrollment Banner ─── */}
       <Card className="border-violet-500/30 bg-violet-500/5">
         <CardContent className="pt-4 pb-4">
           <div className="flex items-start gap-3">
-            <Zap className="h-5 w-5 text-violet-400 mt-0.5 shrink-0" />
-            <div>
-              <p className="text-sm font-semibold text-violet-300">How Website Intelligence Monitor Works</p>
+            <Sparkles className="h-5 w-5 text-violet-400 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-violet-300">Fully Automatic — Zero Setup Required</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Each day, our AI crawls the websites you add, scans for positive announcements (awards, expansions, funding, new hires, partnerships, product launches, milestones), and creates signals in your feed.
-                With Auto-Email enabled, a personalized congratulations email is automatically drafted and sent to your contact at that company — keeping you top-of-mind at exactly the right moment.
+                Every company in your client base with a website URL is <strong className="text-violet-300">automatically enrolled</strong> and monitored daily.
+                When you add a new customer, their website is instantly added to the monitor. The AI scans for awards, expansions, funding, new hires, partnerships, product launches, and milestones — then creates signals in your feed.
+                Use <strong className="text-violet-300">"Sync All Companies"</strong> to backfill all existing clients at any time.
+                With Auto-Email enabled, a personalized congratulations email is sent automatically the moment good news is detected.
               </p>
             </div>
           </div>
@@ -187,12 +216,20 @@ export default function WebsiteMonitor() {
       ) : monitors.length === 0 ? (
         <Card className="border-dashed border-border/50">
           <CardContent className="py-16 text-center">
-            <Globe className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-            <p className="text-muted-foreground font-medium">No website monitors yet</p>
-            <p className="text-sm text-muted-foreground/60 mt-1 mb-4">Add your first client website to start detecting signals automatically</p>
-            <Button onClick={() => setShowCreate(true)} variant="outline">
-              <Plus className="h-4 w-4 mr-2" /> Add Your First Monitor
-            </Button>
+            <Sparkles className="h-12 w-12 text-violet-400/30 mx-auto mb-4" />
+            <p className="text-muted-foreground font-medium">No monitors yet</p>
+            <p className="text-sm text-muted-foreground/60 mt-1 mb-4">
+              Click <strong>"Sync All Companies"</strong> to auto-enroll all your clients, or add a website manually.
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <Button onClick={() => syncAllMut.mutate()} disabled={isSyncing} className="bg-violet-600 hover:bg-violet-700">
+                {isSyncing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                Sync All Companies
+              </Button>
+              <Button onClick={() => setShowCreate(true)} variant="outline">
+                <Plus className="h-4 w-4 mr-2" /> Add Manually
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (

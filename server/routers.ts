@@ -39,7 +39,7 @@ import { salesQuotasRouter, smsRouter, gdprRouter, publicBookingRouter, portalEn
 import { currencyRouter } from "./routers/currency";
 import { fmcsaRouter } from "./routers/fmcsa";
 import { portalRouter } from "./routers/portal";
-import { websiteMonitorRouter } from "./routers/website-monitor";
+import { websiteMonitorRouter, syncCompanyMonitor } from "./routers/website-monitor";
 
 export const appRouter = router({
   system: systemRouter,
@@ -437,6 +437,16 @@ export const appRouter = router({
     })).mutation(async ({ ctx, input }) => {
       const now = Date.now();
       const id = await db.createCompany({ ...input, userId: ctx.user.id, createdAt: now, updatedAt: now });
+      // Auto-enroll in Website Intelligence Monitor if website URL provided
+      if (input.website) {
+        syncCompanyMonitor({
+          companyId: id,
+          companyName: input.name,
+          websiteUrl: input.website,
+          userId: ctx.user.id,
+          tenantId: ctx.user.tenantCompanyId ?? 0,
+        }).catch(() => {});
+      }
       return { id };
     }),
     update: protectedProcedure.input(z.object({
@@ -475,6 +485,21 @@ export const appRouter = router({
     })).mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
       await db.updateCompanyByRole(id, ctx.user, data);
+      // Sync Website Intelligence Monitor if name or website changed
+      if (data.website !== undefined || data.name !== undefined) {
+        // Fetch the updated company to get latest name/website
+        const result = await db.listCompaniesByRole(ctx.user, { limit: 200, offset: 0 });
+        const company = result.items.find((c: any) => c.id === id);
+        if (company) {
+          syncCompanyMonitor({
+            companyId: id,
+            companyName: company.name,
+            websiteUrl: company.website,
+            userId: ctx.user.id,
+            tenantId: ctx.user.tenantCompanyId ?? 0,
+          }).catch(() => {});
+        }
+      }
       return { success: true };
     }),
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {

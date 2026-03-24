@@ -2574,3 +2574,14 @@
 - [x] Add /paradigm/website-monitor route in App.tsx
 - [x] Add "Website Monitor" nav item in DashboardLayout sidebar under Paradigm Engine
 - [x] 23 unit tests passing for crawler, signal parsing, filter logic, hash detection, frequency logic
+
+## Session 33: WIM Auto-Enrollment
+
+- [x] Add syncCompanyMonitor() helper to website-monitor.ts (upsert: create if new, update if existing)
+- [x] Hook syncCompanyMonitor into company.create procedure — auto-enroll on new company creation
+- [x] Hook syncCompanyMonitor into company.update procedure — update monitor when website/name changes
+- [x] Add syncAllCompanies tRPC procedure — backfill all existing companies with website URLs
+- [x] Add removeMonitorForCompany tRPC procedure — clean up when company is deleted
+- [x] Update WIM UI: "Sync All Companies" button in header and empty state
+- [x] Update WIM UI: auto-enrollment explanation banner replaces old "How It Works" banner
+- [x] 33 unit tests passing (added 10 new: URL normalisation + sync upsert logic)

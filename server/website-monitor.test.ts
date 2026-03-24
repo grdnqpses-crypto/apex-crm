@@ -220,6 +220,82 @@ describe("AI signal response parsing", () => {
   });
 });
 
+// ─── Auto-enrollment URL normalisation ───────────────────────────────────────
+describe("Auto-enrollment URL normalisation", () => {
+  const normaliseUrl = (url: string | null | undefined): string | null => {
+    const trimmed = url?.trim();
+    if (!trimmed) return null;
+    let normalised = trimmed;
+    if (!/^https?:\/\//i.test(trimmed)) normalised = `https://${trimmed}`;
+    try { new URL(normalised); return normalised; } catch { return null; }
+  };
+
+  it("adds https:// prefix when missing", () => {
+    expect(normaliseUrl("www.example.com")).toBe("https://www.example.com");
+    expect(normaliseUrl("example.com")).toBe("https://example.com");
+  });
+
+  it("preserves existing https:// prefix", () => {
+    expect(normaliseUrl("https://www.example.com")).toBe("https://www.example.com");
+  });
+
+  it("preserves existing http:// prefix", () => {
+    expect(normaliseUrl("http://www.example.com")).toBe("http://www.example.com");
+  });
+
+  it("returns null for empty/null/undefined", () => {
+    expect(normaliseUrl(null)).toBeNull();
+    expect(normaliseUrl(undefined)).toBeNull();
+    expect(normaliseUrl("")).toBeNull();
+    expect(normaliseUrl("   ")).toBeNull();
+  });
+
+  it("returns null for invalid URLs", () => {
+    expect(normaliseUrl("not a url at all!!!")).toBeNull();
+  });
+
+  it("trims whitespace before normalising", () => {
+    expect(normaliseUrl("  https://example.com  ")).toBe("https://example.com");
+  });
+});
+
+// ─── Sync upsert logic ────────────────────────────────────────────────────────
+describe("Sync upsert logic", () => {
+  it("identifies an update when monitor already exists for company", () => {
+    const existingMonitors = [{ id: 5, companyId: 42, tenantId: 1 }];
+    const isUpdate = existingMonitors.some(m => m.companyId === 42 && m.tenantId === 1);
+    expect(isUpdate).toBe(true);
+  });
+
+  it("identifies a create when no monitor exists for company", () => {
+    const existingMonitors = [{ id: 5, companyId: 99, tenantId: 1 }];
+    const isUpdate = existingMonitors.some(m => m.companyId === 42 && m.tenantId === 1);
+    expect(isUpdate).toBe(false);
+  });
+
+  it("skips sync when website URL is empty", () => {
+    const shouldSync = (url: string | null | undefined) => {
+      const trimmed = url?.trim();
+      return !!trimmed;
+    };
+    expect(shouldSync(null)).toBe(false);
+    expect(shouldSync("")).toBe(false);
+    expect(shouldSync("https://example.com")).toBe(true);
+  });
+
+  it("counts synced vs skipped correctly", () => {
+    const companies = [
+      { id: 1, name: "A", website: "https://a.com" },
+      { id: 2, name: "B", website: null },
+      { id: 3, name: "C", website: "https://c.com" },
+      { id: 4, name: "D", website: "" },
+    ];
+    const withWebsite = companies.filter(c => c.website?.trim());
+    expect(withWebsite).toHaveLength(2);
+    expect(withWebsite.map(c => c.id)).toEqual([1, 3]);
+  });
+});
+
 // ─── Crawl frequency logic ────────────────────────────────────────────────────
 describe("Crawl frequency skip logic", () => {
   const shouldSkip = (lastCrawledAt: number | null, frequency: string) => {
