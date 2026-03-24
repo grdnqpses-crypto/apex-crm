@@ -13,7 +13,7 @@ import { nanoid } from "nanoid";
 import { invokeLLM } from "../_core/llm";
 import { storagePut } from "../storage";
 import { getHostBusyIntervals, isSlotBusy } from "../google-calendar";
-import { sendBookingConfirmation } from "../booking-email";
+import { sendBookingConfirmation, sendHostNotification, sendCancellationNotification } from "../booking-email";
 import { calendarConnections } from "../../drizzle/schema";
 import {
   salesQuotas, smsMessages, gdprConsents, gdprDeletionRequests,
@@ -640,12 +640,14 @@ export const publicBookingRouter = router({
 
     // Send confirmation email (non-blocking)
     const origin = input.origin ?? "https://apexcrm.com";
+    const hostName = host?.name ?? profile?.displayName ?? "Your Host";
+    const hostEmail = host?.email ?? "";
     sendBookingConfirmation({
       bookingId,
       guestName: input.guestName,
       guestEmail: input.guestEmail,
-      hostName: host?.name ?? profile?.displayName ?? "Your Host",
-      hostEmail: host?.email ?? "",
+      hostName,
+      hostEmail,
       meetingName: type.name,
       startTime: input.startTime,
       endTime,
@@ -655,6 +657,24 @@ export const publicBookingRouter = router({
       rescheduleToken,
       origin,
     }).catch(err => console.error("[Booking] Failed to send confirmation email:", err));
+    // Send host notification email (non-blocking)
+    sendHostNotification({
+      bookingId,
+      hostName,
+      hostEmail,
+      guestName: input.guestName,
+      guestEmail: input.guestEmail,
+      guestPhone: input.guestPhone,
+      guestNotes: input.guestNotes,
+      meetingName: type.name,
+      startTime: input.startTime,
+      endTime,
+      timezone: input.timezone,
+      location: type.location ?? undefined,
+      cancelToken,
+      rescheduleToken,
+      origin,
+    }).catch(err => console.error("[Booking] Failed to send host notification:", err));
 
     return { success: true, cancelToken, rescheduleToken, contactId, bookingId };
   }),
@@ -662,8 +682,29 @@ export const publicBookingRouter = router({
   cancelBooking: publicProcedure.input(z.object({ cancelToken: z.string() })).mutation(async ({ input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    // Fetch booking before cancelling for notification
+    const [booking] = await db.select().from(meetingBookings)
+      .where(eq(meetingBookings.cancelToken, input.cancelToken)).limit(1);
     await db.update(meetingBookings).set({ status: "cancelled", updatedAt: Date.now() })
       .where(eq(meetingBookings.cancelToken, input.cancelToken));
+    // Send cancellation emails (non-blocking)
+    if (booking) {
+      const [type] = await db.select().from(meetingTypes)
+        .where(eq(meetingTypes.id, booking.meetingTypeId)).limit(1);
+      const [prof] = await db.select().from(meetingSchedulerProfiles)
+        .where(eq(meetingSchedulerProfiles.id, booking.schedulerProfileId)).limit(1);
+      const [host] = prof ? await db.select({ name: users.name, email: users.email })
+        .from(users).where(eq(users.id, prof.userId)).limit(1) : [undefined];
+      sendCancellationNotification({
+        guestName: booking.guestName,
+        guestEmail: booking.guestEmail,
+        hostName: host?.name ?? prof?.displayName ?? "Host",
+        hostEmail: host?.email ?? "",
+        meetingName: type?.name ?? "Meeting",
+        startTime: booking.startTime,
+        timezone: booking.timezone ?? "UTC",
+      }).catch(err => console.error("[Cancel] Failed to send cancellation emails:", err));
+    }
     return { success: true };
   }),
 

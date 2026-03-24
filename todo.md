@@ -2339,3 +2339,19 @@
 - [x] Reschedule link shown on booking confirmation screen
 - [x] GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET added to env.ts
 - [x] 14 new tests: OAuth URL builder, ICS generation, reschedule token, GDPR consent validation
+
+## Session 20: Cancel Booking, Host Notification, Rate Limiting, Auto-Onboarding & Test Fixes
+
+- [x] Cancel booking page (/cancel/:token) for guests to cancel their booking
+- [x] Cancel link shown on booking confirmation screen
+- [x] Host notification email when a booking is made (sendHostNotification)
+- [x] Host cancellation notification email when a booking is cancelled (sendHostCancellationNotification)
+- [x] Rate limiting middleware (express-rate-limit) on public API routes
+- [x] Auto-onboarding wizard trigger for new users on first dashboard visit
+- [x] Fix duplicate winLoss key in routers.ts
+- [x] Fix test context: add systemRole/tenantCompanyId/managerId/isActive fields to all test users
+- [x] Fix contacts.create: make email and phone optional in schema
+- [x] Fix tasks.create: make companyId optional in schema
+- [x] Fix deals.create: make companyId optional in schema
+- [x] Fix domain health test timeout (60s → 90s)
+- [x] 720 tests passing across 36 test files

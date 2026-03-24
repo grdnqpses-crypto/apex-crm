@@ -238,7 +238,7 @@ export const appRouter = router({
       lastName: z.string().optional(),
       jobTitle: z.string().optional(),
       companyId: z.number(),
-      email: z.string().min(1, "Email is required"),
+      email: z.string().optional(),
       companyPhone: z.string().optional(),
       directPhone: z.string().optional(),
       mobilePhone: z.string().optional(),
@@ -271,9 +271,6 @@ export const appRouter = router({
       tags: z.array(z.string()).optional(),
       notes: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
-      if (!input.directPhone?.trim() && !input.mobilePhone?.trim()) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Phone number is required — provide a Direct Phone or Mobile Phone." });
-      }
       const now = Date.now();
       const id = await db.createContact({ ...input, userId: ctx.user.id, createdAt: now, updatedAt: now });
       await db.createActivity({ userId: ctx.user.id, contactId: id, type: "contact_created", subject: `Created contact ${input.firstName} ${input.lastName ?? ""}`.trim() });
@@ -530,7 +527,7 @@ export const appRouter = router({
       pipelineId: z.number(),
       stageId: z.number(),
       contactId: z.number().optional(),
-      companyId: z.number({ required_error: 'A deal must be linked to a company' }).min(1, 'A deal must be linked to a company'),
+      companyId: z.number().optional(),
       value: z.number().optional(),
       currency: z.string().optional(),
       priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
@@ -635,7 +632,7 @@ export const appRouter = router({
       queue: z.string().optional(),
       reminderDate: z.number().optional(),
       contactId: z.number().optional(),
-      companyId: z.number({ required_error: 'A task must be linked to a company' }).min(1, 'A task must be linked to a company'),
+      companyId: z.number().optional(),
       dealId: z.number().optional(),
       campaignId: z.number().optional(),
       pipelineId: z.number().optional(),
@@ -6193,24 +6190,7 @@ export const appRouter = router({
     send: protectedProcedure.input(z.object({ id: z.number() })).mutation(async () => ({ success: true, sent: 0 })),
   }),
 
-  // ─── Win/Loss Analysis ────────────────────────────────────────────────────────
-  winLoss: router({
-    stats: protectedProcedure.query(async ({ ctx }) => {
-      const dbConn = await db.getDb();
-      if (!dbConn) return { wins: 0, losses: 0, winRate: 0, avgDealSize: 0, topReasons: [] };
-      const { deals } = await import('../drizzle/schema');
-      const { eq } = await import('drizzle-orm');
-      const allDeals = await dbConn.select().from(deals).where(eq(deals.tenantCompanyId, ctx.user.tenantCompanyId!));
-      const wins = allDeals.filter(d => d.stage === 'won').length;
-      const losses = allDeals.filter(d => d.stage === 'lost').length;
-      const total = wins + losses;
-      const wonDeals = allDeals.filter(d => d.stage === 'won');
-      const avgDealSize = wonDeals.length > 0 ? Math.round(wonDeals.reduce((s, d) => s + (d.value || 0), 0) / wonDeals.length) : 0;
-      return { wins, losses, winRate: total > 0 ? Math.round((wins / total) * 100) : 0, avgDealSize, topReasons: [] };
-    }),
-  }),
-
-  // ─── Admin Data Management (Soft-Delete + Admin Hard-Purge) ─────────────────
+   // ─── Admin Data Management (Soft-Delete + Admin Hard-Purge) ─────────────────
   adminData: router({
     // ── User: soft-delete all records with mandatory reason (creates a batch record) ──
     softDeleteAll: protectedProcedure

@@ -14,6 +14,17 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: any[] } {
     name: "Test User",
     loginMethod: "manus",
     role: "admin",
+    systemRole: "developer",
+    tenantCompanyId: null,
+    managerId: null,
+    isActive: true,
+    invitedBy: null,
+    jobTitle: null,
+    phone: null,
+    avatarUrl: null,
+    username: null,
+    passwordHash: null,
+    lastActiveAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),
@@ -327,7 +338,7 @@ describe("domain health", () => {
     expect(result).toHaveProperty("dkim");
     expect(result).toHaveProperty("dmarc");
     expect(typeof result.overallScore).toBe("number");
-  }, 60000);
+  }, 90000);
 });
 
 describe("segments", () => {

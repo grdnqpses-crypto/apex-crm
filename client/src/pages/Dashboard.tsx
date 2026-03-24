@@ -535,6 +535,17 @@ export default function Dashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const utils = trpc.useUtils();
 
+  // Auto-trigger onboarding for new users (first login, no data yet)
+  useEffect(() => {
+    if (!stats || isLoading) return;
+    const key = `onboarding_shown_${user?.id}`;
+    const alreadyShown = localStorage.getItem(key);
+    if (!alreadyShown && (stats.totalContacts ?? 0) === 0 && (stats.totalCompanies ?? 0) === 0) {
+      localStorage.setItem(key, "1");
+      setShowOnboarding(true);
+    }
+  }, [stats?.totalContacts, stats?.totalCompanies, isLoading, user?.id]);
+
   // Multi-step logo generation flow
   // Steps: 'idle' | 'generating' | 'preview' | 'customize-offer' | 'customize-input' | 'applying'
   type LogoStep = 'idle' | 'generating' | 'preview' | 'customize-offer' | 'customize-input' | 'applying';

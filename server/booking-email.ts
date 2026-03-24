@@ -248,3 +248,62 @@ export async function sendRescheduleConfirmation(params: {
 </div>`,
   });
 }
+
+// --- Send Host Notification ---
+export async function sendHostNotification(params: {
+  bookingId: number;
+  hostName: string;
+  hostEmail: string;
+  guestName: string;
+  guestEmail: string;
+  guestPhone?: string;
+  guestNotes?: string;
+  meetingName: string;
+  startTime: number;
+  endTime: number;
+  timezone: string;
+  location?: string;
+  cancelToken: string;
+  rescheduleToken: string;
+  origin: string;
+}): Promise<void> {
+  const cancelUrl = params.origin + "/cancel/" + params.cancelToken;
+  const rescheduleUrl = params.origin + "/reschedule/" + params.rescheduleToken;
+  const startDate = new Date(params.startTime);
+  const dateStr = startDate.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: params.timezone });
+  const timeStr = startDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", timeZone: params.timezone }) + " - " + new Date(params.endTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", timeZone: params.timezone }) + " (" + params.timezone + ")";
+  const transporter = getTransporter();
+  await transporter.sendMail({
+    from: ENV.smtpFrom,
+    to: params.hostName + " <" + params.hostEmail + ">",
+    subject: "New Booking: " + params.meetingName + " with " + params.guestName,
+    html: "<div style=font-family:sans-serif;padding:32px><h2 style=color:#f97316>New Meeting Booked</h2><p>Hi " + params.hostName + ",</p><p>" + params.guestName + " (" + params.guestEmail + ") booked: <strong>" + params.meetingName + "</strong></p><p>Date: " + dateStr + "</p><p>Time: " + timeStr + "</p>" + (params.guestPhone ? "<p>Phone: " + params.guestPhone + "</p>" : "") + (params.guestNotes ? "<p>Notes: " + params.guestNotes + "</p>" : "") + "<p><a href=" + cancelUrl + " style=color:#ef4444>Cancel</a> | <a href=" + rescheduleUrl + " style=color:#f97316>Reschedule</a></p></div>",
+  });
+}
+
+// --- Send Cancellation Notification ---
+export async function sendCancellationNotification(params: {
+  guestName: string;
+  guestEmail: string;
+  hostName: string;
+  hostEmail: string;
+  meetingName: string;
+  startTime: number;
+  timezone: string;
+}): Promise<void> {
+  const startDate = new Date(params.startTime);
+  const dateStr = startDate.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: params.timezone });
+  const transporter = getTransporter();
+  const recipients = [
+    { name: params.guestName, email: params.guestEmail },
+    ...(params.hostEmail ? [{ name: params.hostName, email: params.hostEmail }] : []),
+  ];
+  for (const recipient of recipients) {
+    await transporter.sendMail({
+      from: ENV.smtpFrom,
+      to: recipient.name + " <" + recipient.email + ">",
+      subject: "Cancelled: " + params.meetingName + " on " + dateStr,
+      html: "<div style=font-family:sans-serif;padding:32px><h2 style=color:#6b7280>Meeting Cancelled</h2><p>Hi " + recipient.name + ",</p><p>Your meeting <strong>" + params.meetingName + "</strong> on " + dateStr + " has been cancelled.</p></div>",
+    }).catch((err: any) => console.error("[CancelEmail] Failed:", err));
+  }
+}

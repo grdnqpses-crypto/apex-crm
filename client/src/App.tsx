@@ -143,6 +143,7 @@ const SMSInbox = lazy(() => import("./pages/SMSInbox"));
 const GDPRTools = lazy(() => import("./pages/GDPRTools"));
 const PublicBookingPage = lazy(() => import("./pages/PublicBookingPage"));
 const ReschedulePage = lazy(() => import("./pages/ReschedulePage"));
+const CancelBookingPage = lazy(() => import("./pages/CancelBookingPage"));
 
 function PageLoader() {
   return (
@@ -338,6 +339,11 @@ function App() {
             <Route path="/reschedule/:token">
               <Suspense fallback={<PageLoader />}>
                 <ReschedulePage />
+              </Suspense>
+            </Route>
+            <Route path="/cancel/:cancelToken">
+              <Suspense fallback={<PageLoader />}>
+                <CancelBookingPage />
               </Suspense>
             </Route>
             <Route path="/">

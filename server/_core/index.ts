@@ -12,6 +12,7 @@ import { extensionImportRouter } from "../extension-import";
 import { registerErrorInterceptor, startHealthMonitor } from "../self-healing";
 import { startAIEngine } from "../ai-engine";
 import { startAutoSyncRunner } from "../migration-autosync-runner";
+import rateLimit from "express-rate-limit";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -40,6 +41,33 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  // Rate limiting — protect API from abuse
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 500, // limit each IP to 500 requests per window
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many requests, please try again later." },
+    skip: (req) => process.env.NODE_ENV === "development" && req.ip === "127.0.0.1",
+  });
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20, // stricter limit for auth endpoints
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many authentication attempts, please try again later." },
+  });
+  const publicBookingLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 30, // max 30 bookings per hour per IP
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many booking attempts, please try again later." },
+  });
+  app.use("/api/trpc", apiLimiter);
+  app.use("/api/trpc/auth.forgotPassword", authLimiter);
+  app.use("/api/trpc/auth.resetPassword", authLimiter);
+  app.use("/api/trpc/publicBooking.bookMeeting", publicBookingLimiter);
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // Extension import API (before tRPC)
