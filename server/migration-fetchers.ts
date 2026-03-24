@@ -107,7 +107,8 @@ function sleep(ms: number) {
 // ─── HubSpot Live Fetcher ─────────────────────────────────────────────────────
 export async function fetchHubSpot(
   apiKey: string,
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  sinceDate?: Date
 ): Promise<MigrationData> {
   const headers = {
     Authorization: `Bearer ${apiKey}`,
@@ -137,10 +138,13 @@ export async function fetchHubSpot(
     });
   }
 
+  // Build sinceDate filter string for HubSpot (ISO 8601)
+  const sinceDateStr = sinceDate ? sinceDate.toISOString() : undefined;
+
   // Contacts
   const contacts = await hubspotPages<NormalizedContact>(
     "/crm/v3/objects/contacts",
-    { properties: "firstname,lastname,email,phone,jobtitle,company,address,city,state,zip,country,website,notes,hs_linkedin_url" },
+    { properties: "firstname,lastname,email,phone,jobtitle,company,address,city,state,zip,country,website,notes,hs_linkedin_url", ...(sinceDateStr ? { filterGroups: JSON.stringify([{ filters: [{ propertyName: "lastmodifieddate", operator: "GTE", value: sinceDateStr }] }]) } : {}) },
     (c) => ({
       firstName: c.properties.firstname || "",
       lastName: c.properties.lastname || "",
@@ -164,7 +168,7 @@ export async function fetchHubSpot(
   // Companies
   const companies = await hubspotPages<NormalizedCompany>(
     "/crm/v3/objects/companies",
-    { properties: "name,domain,phone,industry,address,city,state,zip,country,website,description,numberofemployees,annualrevenue" },
+    { properties: "name,domain,phone,industry,address,city,state,zip,country,website,description,numberofemployees,annualrevenue", ...(sinceDateStr ? { filterGroups: JSON.stringify([{ filters: [{ propertyName: "hs_lastmodifieddate", operator: "GTE", value: sinceDateStr }] }]) } : {}) },
     (c) => ({
       name: c.properties.name || "Unknown Company",
       domain: c.properties.domain || undefined,
@@ -187,7 +191,7 @@ export async function fetchHubSpot(
   // Deals
   const deals = await hubspotPages<NormalizedDeal>(
     "/crm/v3/objects/deals",
-    { properties: "dealname,amount,dealstage,closedate,description,pipeline" },
+    { properties: "dealname,amount,dealstage,closedate,description,pipeline", ...(sinceDateStr ? { filterGroups: JSON.stringify([{ filters: [{ propertyName: "hs_lastmodifieddate", operator: "GTE", value: sinceDateStr }] }]) } : {}) },
     (d) => ({
       title: d.properties.dealname || "Imported Deal",
       value: d.properties.amount ? parseFloat(d.properties.amount) : undefined,
@@ -232,7 +236,8 @@ export async function fetchHubSpot(
 export async function fetchSalesforce(
   accessToken: string,
   instanceUrl: string,
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  sinceDate?: Date
 ): Promise<MigrationData> {
   const headers = {
     Authorization: `Bearer ${accessToken}`,
@@ -331,7 +336,8 @@ export async function fetchSalesforce(
 // ─── Pipedrive Live Fetcher ───────────────────────────────────────────────────
 export async function fetchPipedrive(
   apiKey: string,
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  sinceDate?: Date
 ): Promise<MigrationData> {
   const BASE = "https://api.pipedrive.com/v1";
 
@@ -430,7 +436,8 @@ export async function fetchPipedrive(
 // ─── Zoho CRM Live Fetcher ────────────────────────────────────────────────────
 export async function fetchZoho(
   accessToken: string,
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  sinceDate?: Date
 ): Promise<MigrationData> {
   const BASE = "https://www.zohoapis.com/crm/v3";
   const headers = {
@@ -545,7 +552,8 @@ export async function fetchZoho(
 // ─── GoHighLevel Live Fetcher ─────────────────────────────────────────────────
 export async function fetchGoHighLevel(
   apiKey: string,
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  sinceDate?: Date
 ): Promise<MigrationData> {
   const BASE = "https://rest.gohighlevel.com/v1";
   const headers = {
@@ -628,7 +636,8 @@ export async function fetchGoHighLevel(
 // ─── Close CRM Live Fetcher ───────────────────────────────────────────────────
 export async function fetchClose(
   apiKey: string,
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  sinceDate?: Date
 ): Promise<MigrationData> {
   const BASE = "https://api.close.com/api/v1";
   const auth = Buffer.from(`${apiKey}:`).toString("base64");
@@ -732,7 +741,8 @@ export async function fetchClose(
 // ─── Apollo.io ────────────────────────────────────────────────────────────────
 export async function fetchApollo(
   credentials: { apiKey: string },
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  sinceDate?: Date
 ): Promise<MigrationData> {
   const headers = { "Content-Type": "application/json", "Cache-Control": "no-cache", "X-Api-Key": credentials.apiKey };
   const base = "https://api.apollo.io/v1";
@@ -807,7 +817,8 @@ export async function fetchApollo(
 // ─── Freshsales ───────────────────────────────────────────────────────────────
 export async function fetchFreshsales(
   credentials: { apiKey: string; subdomain: string },
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  sinceDate?: Date
 ): Promise<MigrationData> {
   const base = `https://${credentials.subdomain}.freshsales.io/api`;
   const headers = { Authorization: `Token token=${credentials.apiKey}`, "Content-Type": "application/json" };
@@ -892,7 +903,8 @@ export async function fetchFreshsales(
 // ─── ActiveCampaign ───────────────────────────────────────────────────────────
 export async function fetchActiveCampaign(
   credentials: { apiKey: string; accountUrl: string },
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  sinceDate?: Date
 ): Promise<MigrationData> {
   const base = credentials.accountUrl.replace(/\/$/, "");
   const headers = { "Api-Token": credentials.apiKey, "Content-Type": "application/json" };
@@ -969,7 +981,8 @@ export async function fetchActiveCampaign(
 // ─── Keap / Infusionsoft ──────────────────────────────────────────────────────
 export async function fetchKeap(
   credentials: { apiKey: string },
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  sinceDate?: Date
 ): Promise<MigrationData> {
   const base = "https://api.infusionsoft.com/crm/rest/v1";
   const headers = { "X-Keap-API-Key": credentials.apiKey, "Content-Type": "application/json" };
@@ -1029,7 +1042,8 @@ export async function fetchKeap(
 // ─── Copper CRM ───────────────────────────────────────────────────────────────
 export async function fetchCopper(
   credentials: { apiKey: string; userEmail: string },
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  sinceDate?: Date
 ): Promise<MigrationData> {
   const base = "https://api.copper.com/developer_api/v1";
   const headers = {
@@ -1127,7 +1141,8 @@ export async function fetchCopper(
 // ─── Nutshell CRM ─────────────────────────────────────────────────────────────
 export async function fetchNutshell(
   credentials: { username: string; apiKey: string },
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  sinceDate?: Date
 ): Promise<MigrationData> {
   const base = "https://app.nutshell.com/api/v1/json";
   const auth = Buffer.from(`${credentials.username}:${credentials.apiKey}`).toString("base64");
@@ -1215,7 +1230,8 @@ export async function fetchNutshell(
 // ─── Insightly ────────────────────────────────────────────────────────────────
 export async function fetchInsightly(
   credentials: { apiKey: string },
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  sinceDate?: Date
 ): Promise<MigrationData> {
   const base = "https://api.insightly.com/v3.1";
   const auth = Buffer.from(`${credentials.apiKey}:`).toString("base64");
@@ -1298,7 +1314,8 @@ export async function fetchInsightly(
 // ─── SugarCRM ─────────────────────────────────────────────────────────────────
 export async function fetchSugarCRM(
   credentials: { username: string; password: string; instanceUrl: string },
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  sinceDate?: Date
 ): Promise<MigrationData> {
   const base = credentials.instanceUrl.replace(/\/$/, "");
 
@@ -1401,7 +1418,8 @@ export async function fetchSugarCRM(
 // ─── Streak (Gmail CRM) ───────────────────────────────────────────────────────
 export async function fetchStreak(
   credentials: { apiKey: string },
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  sinceDate?: Date
 ): Promise<MigrationData> {
   const base = "https://www.streak.com/api/v2";
   const auth = Buffer.from(`${credentials.apiKey}:`).toString("base64");
@@ -1452,7 +1470,8 @@ export async function fetchStreak(
 // ─── Nimble ───────────────────────────────────────────────────────────────────
 export async function fetchNimble(
   credentials: { apiKey: string },
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  sinceDate?: Date
 ): Promise<MigrationData> {
   const base = "https://api.nimble.com/api/v1";
   const headers = { Authorization: `Bearer ${credentials.apiKey}`, "Content-Type": "application/json" };
@@ -1515,7 +1534,8 @@ export async function fetchNimble(
 // ─── Monday.com ───────────────────────────────────────────────────────────────
 export async function fetchMonday(
   credentials: { apiToken: string },
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  sinceDate?: Date
 ): Promise<MigrationData> {
   const base = "https://api.monday.com/v2";
   const headers = { Authorization: credentials.apiToken, "Content-Type": "application/json" };
@@ -1578,7 +1598,8 @@ export async function fetchMonday(
 // ─── Constant Contact ─────────────────────────────────────────────────────────
 export async function fetchConstantContact(
   credentials: { accessToken: string },
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  sinceDate?: Date
 ): Promise<MigrationData> {
   const base = "https://api.cc.email/v3";
   const headers = { Authorization: `Bearer ${credentials.accessToken}`, "Content-Type": "application/json" };

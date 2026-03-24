@@ -8,10 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { useSkin } from "@/contexts/SkinContext";
+import { useAuth } from "@/_core/hooks/useAuth";
 import {
   CheckCircle2, ArrowRight, Upload, Zap, Users, Building2,
   Briefcase, Activity, Puzzle, FileText, AlertCircle, RefreshCw,
-  Download, ExternalLink, Key, Globe, Lock
+  Download, ExternalLink, Key, Globe, Lock, ShieldAlert
 } from "lucide-react";
 
 type ImportMode = "extension" | "csv" | "api";
@@ -98,10 +99,17 @@ const API_KEY_GUIDES: Record<string, { steps: string[]; link: string }> = {
 
 export default function MigrationWizard() {
   const { t } = useSkin();
+  const { user, loading: authLoading } = useAuth();
+  const isAdmin = user?.role === "admin";
 
-  const [mode, setMode] = useState<ImportMode | null>(null);
-  const [step, setStep] = useState<Step>("mode");
-  const [selectedCRM, setSelectedCRM] = useState<string | null>(null);
+  // Read ?sync= and ?sinceDate= query params for incremental sync from MigrationEngine
+  const searchParams = new URLSearchParams(window.location.search);
+  const syncCRM = searchParams.get("sync");
+  const syncSinceDate = searchParams.get("sinceDate") ? Number(searchParams.get("sinceDate")) : null;
+
+  const [mode, setMode] = useState<ImportMode | null>(syncCRM ? "api" : null);
+  const [step, setStep] = useState<Step>(syncCRM ? "connect" : "mode");
+  const [selectedCRM, setSelectedCRM] = useState<string | null>(syncCRM || null);
   const [apiKey, setApiKey] = useState("");
   const [instanceUrl, setInstanceUrl] = useState("");
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -233,6 +241,9 @@ export default function MigrationWizard() {
       instanceUrl: instanceUrl || undefined,
       csvData,
       csvType: csvData ? csvType : undefined,
+      // Incremental sync: pass sinceDate if coming from MigrationEngine "Sync New Records"
+      sinceDate: syncSinceDate ?? undefined,
+      isIncrementalSync: !!syncSinceDate,
     });
   };
 
@@ -246,6 +257,47 @@ export default function MigrationWizard() {
       toast.error("Please upload a CSV file");
     }
   };
+
+  // ── Admin gate ────────────────────────────────────────────────────────────
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 gap-6 text-center">
+        <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center">
+          <Lock className="w-10 h-10 text-red-400" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Admin Access Required</h2>
+          <p className="text-gray-500 mt-2 max-w-md">
+            CRM migrations can only be initiated by company administrators. Please contact your admin to run a migration.
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => window.history.back()}>
+          Go Back
+        </Button>
+      </div>
+    );
+  }
+
+  // ── Incremental sync banner ───────────────────────────────────────────────
+  const IncrementalBanner = syncSinceDate ? (
+    <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4">
+      <RefreshCw className="w-5 h-5 text-blue-500 flex-shrink-0" />
+      <div>
+        <p className="font-semibold text-blue-800 text-sm">Incremental Sync Mode</p>
+        <p className="text-blue-600 text-xs mt-0.5">
+          Only records modified after {new Date(syncSinceDate).toLocaleString()} will be imported.
+        </p>
+      </div>
+    </div>
+  ) : null;
 
   // ── Step: Mode Picker ─────────────────────────────────────────────────────
   if (step === "mode") {
@@ -493,9 +545,18 @@ export default function MigrationWizard() {
 
     return (
       <div className="max-w-2xl mx-auto p-6 space-y-6">
-        <button onClick={() => setStep("select")} className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1">
-          ← Back
-        </button>
+        {!syncCRM && (
+          <button onClick={() => setStep("select")} className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1">
+            ← Back
+          </button>
+        )}
+        {syncCRM && (
+          <button onClick={() => window.history.back()} className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1">
+            ← Back to Migration History
+          </button>
+        )}
+
+        {IncrementalBanner}
 
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl" style={{ backgroundColor: selectedProfile.color + "20" }}>

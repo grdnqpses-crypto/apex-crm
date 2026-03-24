@@ -2106,10 +2106,22 @@ export const migrationJobs = mysqlTable("migration_jobs", {
   fieldMapping: json("fieldMapping").$type<Record<string, string>>(),
   importLog: json("importLog").$type<{ timestamp: number; message: string; level: string }[]>(),
   errorDetails: json("errorDetails").$type<{ record: string; error: string }[]>(),
+  // Counts (for display)
+  contactsImported: int("contactsImported").default(0),
+  companiesImported: int("companiesImported").default(0),
+  dealsImported: int("dealsImported").default(0),
+  activitiesImported: int("activitiesImported").default(0),
+  customFieldsCreated: int("customFieldsCreated").default(0),
+  duplicatesMerged: int("duplicatesMerged").default(0),
+  // Incremental sync
+  isIncrementalSync: boolean("isIncrementalSync").default(false),
+  sinceDate: bigint("sinceDate", { mode: "number" }), // UTC ms — only import records modified after this
+  lastSyncedAt: bigint("lastSyncedAt", { mode: "number" }), // Set to completedAt after successful sync
   // Timing
   startedAt: bigint("mjStartedAt", { mode: "number" }),
   completedAt: bigint("mjCompletedAt", { mode: "number" }),
   estimatedTimeRemaining: int("estimatedTimeRemaining"), // seconds
+  updatedAt: bigint("updatedAt", { mode: "number" }),
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
 });
 export type MigrationJob = typeof migrationJobs.$inferSelect;

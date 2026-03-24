@@ -114,7 +114,7 @@ export const migrationRouter = router({
   }),
 
   // ─── List migration jobs ──────────────────────────────────────────────────
-  listJobs: protectedProcedure.query(async ({ ctx }) => {
+  listJobs: adminProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db || !ctx.user.tenantCompanyId) return [];
     return db.select()
@@ -125,7 +125,7 @@ export const migrationRouter = router({
   }),
 
   // ─── Get single migration job ─────────────────────────────────────────────
-  getJob: protectedProcedure
+  getJob: adminProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
       const db = await getDb();
@@ -147,7 +147,8 @@ export const migrationRouter = router({
   // 3. Imports all data
   // 4. Applies the matching skin
   // 5. Generates the cheat sheet
-  startMigration: companyAdminProcedure
+  // ADMIN ONLY — only company admins and above can trigger migrations
+  startMigration: adminProcedure
     .input(z.object({
       sourceSystem: z.enum(["hubspot", "salesforce", "pipedrive", "zoho", "gohighlevel", "close",
         "apollo", "freshsales", "activecampaign", "keap", "copper", "nutshell", "insightly",
@@ -156,6 +157,8 @@ export const migrationRouter = router({
       instanceUrl: z.string().optional(),  // For Salesforce/Zoho
       csvData: z.string().optional(),      // For CSV uploads (base64 or raw text)
       csvType: z.enum(["contacts", "companies", "deals"]).optional(),
+      sinceDate: z.number().optional(),    // UTC ms — incremental sync: only import records modified after this
+      isIncrementalSync: z.boolean().optional(), // Flag to mark this as a re-sync
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
@@ -175,8 +178,11 @@ export const migrationRouter = router({
         failedRecords: 0,
         skippedRecords: 0,
         entityTypes: ["contacts", "companies", "deals", "activities"],
+        isIncrementalSync: input.isIncrementalSync ?? false,
+        sinceDate: input.sinceDate ?? null,
         startedAt: Date.now(),
         createdAt: Date.now(),
+        updatedAt: Date.now(),
       } as any);
 
       const jobId = (jobResult as any).insertId as number;
@@ -257,7 +263,8 @@ export const migrationRouter = router({
 
   // ─── OAuth: Get authorization URL for OAuth-based CRMs ─────────────────────
   // Supports: salesforce, zoho, keap, constantcontact
-  getOAuthUrl: protectedProcedure
+  // ADMIN ONLY — OAuth connect is part of the migration flow
+  getOAuthUrl: adminProcedure
     .input(z.object({
       crm: z.enum(["salesforce", "zoho", "keap", "constantcontact"]),
       redirectUri: z.string().url(),
@@ -283,7 +290,8 @@ export const migrationRouter = router({
     }),
 
   // ─── OAuth: Exchange authorization code for access token ─────────────────
-  oauthCallback: protectedProcedure
+  // ADMIN ONLY
+  oauthCallback: adminProcedure
     .input(z.object({
       crm: z.enum(["salesforce", "zoho", "keap", "constantcontact"]),
       code: z.string(),
@@ -425,6 +433,8 @@ async function runMigrationAsync(
     instanceUrl?: string;
     csvData?: string;
     csvType?: string;
+    sinceDate?: number;      // UTC ms — incremental sync filter
+    isIncrementalSync?: boolean;
   },
   profile: typeof COMPETITOR_PROFILES[string]
 ) {
@@ -532,78 +542,81 @@ async function runMigrationAsync(
     };
 
     try {
+      // sinceDate: if set, fetchers should only return records modified after this timestamp
+      const sinceDate = input.sinceDate ? new Date(input.sinceDate) : undefined;
+
       switch (input.sourceSystem) {
         case "hubspot":
           if (!input.apiKey) throw new Error("HubSpot API key is required");
-          liveData = await fetchHubSpot(input.apiKey, progressCb);
+          liveData = await fetchHubSpot(input.apiKey, progressCb, sinceDate);
           break;
         case "salesforce":
           if (!input.apiKey || !input.instanceUrl) throw new Error("Salesforce access token and instance URL are required");
-          liveData = await fetchSalesforce(input.apiKey, input.instanceUrl, progressCb);
+          liveData = await fetchSalesforce(input.apiKey, input.instanceUrl, progressCb, sinceDate);
           break;
         case "pipedrive":
           if (!input.apiKey) throw new Error("Pipedrive API key is required");
-          liveData = await fetchPipedrive(input.apiKey, progressCb);
+          liveData = await fetchPipedrive(input.apiKey, progressCb, sinceDate);
           break;
         case "zoho":
           if (!input.apiKey) throw new Error("Zoho access token is required");
-          liveData = await fetchZoho(input.apiKey, progressCb);
+          liveData = await fetchZoho(input.apiKey, progressCb, sinceDate);
           break;
         case "gohighlevel":
           if (!input.apiKey) throw new Error("GoHighLevel API key is required");
-          liveData = await fetchGoHighLevel(input.apiKey, progressCb);
+          liveData = await fetchGoHighLevel(input.apiKey, progressCb, sinceDate);
           break;
         case "close":
           if (!input.apiKey) throw new Error("Close CRM API key is required");
-          liveData = await fetchClose(input.apiKey, progressCb);
+          liveData = await fetchClose(input.apiKey, progressCb, sinceDate);
           break;
         case "apollo":
           if (!input.apiKey) throw new Error("Apollo.io API key is required");
-          liveData = await fetchApollo(input.apiKey, progressCb);
+          liveData = await fetchApollo(input.apiKey, progressCb, sinceDate);
           break;
         case "freshsales":
           if (!input.apiKey) throw new Error("Freshsales API key and subdomain are required");
-          liveData = await fetchFreshsales(input.apiKey, progressCb);
+          liveData = await fetchFreshsales(input.apiKey, progressCb, sinceDate);
           break;
         case "activecampaign":
           if (!input.apiKey) throw new Error("ActiveCampaign API key and URL are required");
-          liveData = await fetchActiveCampaign(input.apiKey, progressCb);
+          liveData = await fetchActiveCampaign(input.apiKey, progressCb, sinceDate);
           break;
         case "keap":
           if (!input.apiKey) throw new Error("Keap API key is required");
-          liveData = await fetchKeap(input.apiKey, progressCb);
+          liveData = await fetchKeap(input.apiKey, progressCb, sinceDate);
           break;
         case "copper":
           if (!input.apiKey) throw new Error("Copper API key and email are required");
-          liveData = await fetchCopper(input.apiKey, progressCb);
+          liveData = await fetchCopper(input.apiKey, progressCb, sinceDate);
           break;
         case "nutshell":
           if (!input.apiKey) throw new Error("Nutshell email and API key are required");
-          liveData = await fetchNutshell(input.apiKey, progressCb);
+          liveData = await fetchNutshell(input.apiKey, progressCb, sinceDate);
           break;
         case "insightly":
           if (!input.apiKey) throw new Error("Insightly API key is required");
-          liveData = await fetchInsightly(input.apiKey, progressCb);
+          liveData = await fetchInsightly(input.apiKey, progressCb, sinceDate);
           break;
         case "sugarcrm":
           if (!input.apiKey) throw new Error("SugarCRM credentials are required");
-          liveData = await fetchSugarCRM(input.apiKey, progressCb);
+          liveData = await fetchSugarCRM(input.apiKey, progressCb, sinceDate);
           break;
         case "streak":
           if (!input.apiKey) throw new Error("Streak API key is required");
-          liveData = await fetchStreak(input.apiKey, progressCb);
+          liveData = await fetchStreak(input.apiKey, progressCb, sinceDate);
           break;
         case "nimble":
           if (!input.apiKey) throw new Error("Nimble API token is required");
-          liveData = await fetchNimble(input.apiKey, progressCb);
+          liveData = await fetchNimble(input.apiKey, progressCb, sinceDate);
           break;
         case "monday":
           if (!input.apiKey) throw new Error("Monday.com API token is required");
-          liveData = await fetchMonday(input.apiKey, progressCb);
+          liveData = await fetchMonday(input.apiKey, progressCb, sinceDate);
           break;
         case "constantcontact":
           if (!input.apiKey) throw new Error("Constant Contact access token is required");
-          liveData = await fetchConstantContact(input.apiKey, progressCb);
+          liveData = await fetchConstantContact(input.apiKey, progressCb, sinceDate);
           break;
         default:
           throw new Error(`Live API migration not supported for: ${input.sourceSystem}`);
@@ -704,7 +717,8 @@ async function runMigrationAsync(
     { contacts: contactsImported, companies: companiesImported, deals: dealsImported, activities: activitiesImported }
   );
 
-  // ── Step 7: Mark complete ─────────────────────────────────────────────────
+   // ── Step 7: Mark complete ───────────────────────────────────────────────
+  const completedAt = Date.now();
   await db.update(migrationJobs).set({
     status: "completed",
     importedRecords: contactsImported + companiesImported + dealsImported + activitiesImported,
@@ -715,11 +729,12 @@ async function runMigrationAsync(
     activitiesImported,
     customFieldsCreated,
     duplicatesMerged,
-    completedAt: Date.now(),
-    updatedAt: Date.now(),
-    importLog: [{ timestamp: Date.now(), message: cheatSheet, level: "info" }] as any,
+    completedAt,
+    lastSyncedAt: completedAt,  // Track when we last synced for incremental sync
+    updatedAt: completedAt,
+    importLog: [{ timestamp: completedAt, message: cheatSheet, level: "info" }] as any,
     errorDetails: errors as any,
-  } as any).where(eq(migrationJobs.id, jobId));
+  } as any).where(eq(migrationJobs.id, jobId));;
 }
 
 // ─── Helpers: Import normalized records from live API fetchers ───────────────

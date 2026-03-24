@@ -1,0 +1,9 @@
+{
+  "query": "\nALTER TABLE migration_jobs\n  ADD COLUMN IF NOT EXISTS contactsImported INT DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS companiesImported INT DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS dealsImported INT DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS activitiesImported INT DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS customFieldsCreated INT DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS duplicatesMerged INT DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS isIncrementalSync BOOLEAN DEFAULT FALSE,\n  ADD COLUMN IF NOT EXISTS sinceDate BIGINT,\n  ADD COLUMN IF NOT EXISTS lastSyncedAt BIGINT,\n  ADD COLUMN IF NOT EXISTS updatedAt BIGINT;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute \nALTER TABLE migration_jobs\n  ADD COLUMN IF NOT EXISTS contactsImported INT DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS companiesImported INT DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS dealsImported INT DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS activitiesImported INT DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS customFieldsCreated INT DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS duplicatesMerged INT DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS isIncrementalSync BOOLEAN DEFAULT FALSE,\n  ADD COLUMN IF NOT EXISTS sinceDate BIGINT,\n  ADD COLUMN IF NOT EXISTS lastSyncedAt BIGINT,\n  ADD COLUMN IF NOT EXISTS updatedAt BIGINT;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2806
+}

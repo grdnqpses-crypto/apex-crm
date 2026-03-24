@@ -2248,3 +2248,30 @@
 - [x] Backend OAuth callback routes for all 4 CRMs
 - [x] Post-migration skin auto-switch: when migration completes, set skin to matching CRM (all 19 CRMs)
 - [x] MigrationWizard UI: show OAuth Connect button instead of API key field for OAuth CRMs
+
+## Session 14: OAuth Credentials, Incremental Sync, Admin-Only Migration
+
+- [ ] Add OAuth secrets: SALESFORCE_CLIENT_ID, SALESFORCE_CLIENT_SECRET, ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET, KEAP_CLIENT_ID, KEAP_CLIENT_SECRET, CONSTANTCONTACT_CLIENT_ID, CONSTANTCONTACT_CLIENT_SECRET
+- [ ] Add incremental sync: track lastSyncedAt per migration job, allow re-running with sinceDate filter
+- [ ] Backend: add sinceDate param to startMigration procedure, pass to migration engine
+- [ ] MigrationWizard UI: show "Sync New Records" button on completed migrations
+- [ ] Restrict all migration tRPC procedures to admin-only (adminProcedure)
+- [ ] Restrict /migration and /migration/wizard routes in frontend to admin-only (redirect non-admins)
+- [ ] Hide migration sidebar nav item from non-admin users
+- [ ] Tests for admin-only enforcement and incremental sync logic
+
+## Session 14: Incremental Sync + Admin-Only Migration
+
+- [x] Add sinceDate, isIncrementalSync, lastSyncedAt, contactsImported, companiesImported, dealsImported, activitiesImported columns to migration_jobs table
+- [x] Upgrade startMigration, listJobs, getJob, getOAuthUrl, oauthCallback to adminProcedure (admin-only)
+- [x] Pass sinceDate to all 18 migration fetchers (sinceDate?: Date parameter)
+- [x] Apply sinceDate filtering in HubSpot fetcher (contacts, companies, deals)
+- [x] Store lastSyncedAt on migration completion for incremental sync tracking
+- [x] MigrationEngine.tsx: admin-only guard with Lock icon and friendly message
+- [x] MigrationEngine.tsx: "Sync New Records" button on completed jobs, links to wizard with ?sync=&sinceDate= params
+- [x] MigrationWizard.tsx: admin-only guard (authLoading spinner + Lock icon block for non-admins)
+- [x] MigrationWizard.tsx: read ?sync= and ?sinceDate= query params, pre-fill CRM and skip to connect step
+- [x] MigrationWizard.tsx: IncrementalBanner shows date range when in incremental sync mode
+- [x] MigrationWizard.tsx: pass sinceDate and isIncrementalSync to startMigration
+- [x] useFeatureAccess.ts: add /migration/wizard to ADMIN_ROUTES
+- [x] 22 new tests for incremental sync, admin-only enforcement, and schema fields

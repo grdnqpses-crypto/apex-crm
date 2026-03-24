@@ -87,6 +87,7 @@ const MANAGER_ROUTES = [
 // Admin+ routes (company_admin, axiom_owner, developer)
 const ADMIN_ROUTES = [
   "/team", "/white-label", "/subscription", "/migration",
+  "/migration/wizard",  // Migration wizard is admin-only
   "/settings", "/import/hubspot",
 ];
 
