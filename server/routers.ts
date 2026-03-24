@@ -39,6 +39,7 @@ import { salesQuotasRouter, smsRouter, gdprRouter, publicBookingRouter, portalEn
 import { currencyRouter } from "./routers/currency";
 import { fmcsaRouter } from "./routers/fmcsa";
 import { portalRouter } from "./routers/portal";
+import { websiteMonitorRouter } from "./routers/website-monitor";
 
 export const appRouter = router({
   system: systemRouter,
@@ -106,6 +107,7 @@ export const appRouter = router({
   currency: currencyRouter,
   fmcsa: fmcsaRouter,
   portalTokens: portalRouter,
+  websiteMonitor: websiteMonitorRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

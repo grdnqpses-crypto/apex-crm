@@ -144,6 +144,7 @@ const standardSections = [
       { icon: Brain, label: "Pulse Dashboard", path: "/paradigm" },
       { icon: Target, label: "Prospects", path: "/paradigm/prospects" },
       { icon: Radar, label: "Signals", path: "/paradigm/signals" },
+      { icon: Globe, label: "Website Monitor", path: "/paradigm/website-monitor" },
       { icon: Ghost, label: "Ghost Sequences", path: "/paradigm/sequences" },
       { icon: Flame, label: "Battle Cards", path: "/paradigm/battle-cards" },
       { icon: Plug, label: "Integrations", path: "/paradigm/integrations" },

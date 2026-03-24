@@ -80,6 +80,7 @@ const ParadigmPulse = lazy(() => import("./pages/ParadigmPulse"));
 const Prospects = lazy(() => import("./pages/Prospects"));
 const ProspectDetail = lazy(() => import("./pages/ProspectDetail"));
 const Signals = lazy(() => import("./pages/Signals"));
+const WebsiteMonitor = lazy(() => import("./pages/WebsiteMonitor"));
 const GhostSequences = lazy(() => import("./pages/GhostSequences"));
 const BattleCards = lazy(() => import("./pages/BattleCards"));
 const Integrations = lazy(() => import("./pages/Integrations"));
@@ -237,6 +238,7 @@ function Router() {
           <Route path="/paradigm/prospects" component={Prospects} />
           <Route path="/paradigm/prospects/:id" component={ProspectDetail} />
           <Route path="/paradigm/signals" component={Signals} />
+          <Route path="/paradigm/website-monitor" component={WebsiteMonitor} />
           <Route path="/paradigm/sequences" component={GhostSequences} />
           <Route path="/paradigm/battle-cards" component={BattleCards} />
           <Route path="/paradigm/integrations" component={Integrations} />

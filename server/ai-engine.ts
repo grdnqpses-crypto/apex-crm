@@ -924,6 +924,90 @@ const TASKS: AITask[] = [
         actionsTaken
       };
     }
+  },
+
+  // ── Website Intelligence Monitor ─────────────────────────────────────────
+  {
+    key: "website_intelligence_monitor",
+    name: "Website Intelligence Monitor",
+    description: "Daily crawl of monitored client websites to detect positive signals (awards, expansions, funding, new hires) and optionally auto-send congratulations emails.",
+    category: "intelligence" as any,
+    priority: "medium" as any,
+    intervalMinutes: 1440, // once per day
+    async run({ log }) {
+      const db = await getDb();
+      if (!db) return { success: false, summary: "Database unavailable", error: "No DB connection" };
+      log("Scanning active website monitors for daily crawl...");
+
+      // Get all active monitors across all tenants
+      const monitorsResult = await db.execute(sql.raw(
+        `SELECT id, userId, tenantId, companyName, websiteUrl, autoEmailEnabled,
+                autoEmailFromName, autoEmailFromAddress, signalFilters, checkFrequency, lastCrawledAt
+         FROM website_monitors
+         WHERE isActive = 1`
+      ));
+      const monitors = ((monitorsResult as any[])[0] || []) as any[];
+
+      if (monitors.length === 0) {
+        return { success: true, summary: "No active website monitors configured.", actionsTaken: [] };
+      }
+
+      log(`Found ${monitors.length} active monitor(s). Starting crawls...`);
+      const actionsTaken: string[] = [];
+      let totalSignals = 0;
+      let crawled = 0;
+
+      // Import crawlMonitor dynamically to avoid circular deps
+      const { crawlMonitor } = await import("./routers/website-monitor");
+
+      for (const monitor of monitors) {
+        // Check if daily monitor should run today (skip if crawled in last 20h)
+        const lastCrawled = monitor.lastCrawledAt ? Number(monitor.lastCrawledAt) : 0;
+        const hoursSinceCrawl = (Date.now() - lastCrawled) / (1000 * 60 * 60);
+        const minHours = monitor.checkFrequency === "weekly" ? 160 : 20;
+        if (hoursSinceCrawl < minHours) {
+          log(`Skipping ${monitor.companyName} — crawled ${Math.round(hoursSinceCrawl)}h ago`);
+          continue;
+        }
+
+        try {
+          log(`Crawling ${monitor.companyName} (${monitor.websiteUrl})...`);
+          const result = await crawlMonitor({
+            id: monitor.id,
+            userId: monitor.userId,
+            tenantId: monitor.tenantId,
+            companyName: monitor.companyName,
+            websiteUrl: monitor.websiteUrl,
+            autoEmailEnabled: monitor.autoEmailEnabled,
+            autoEmailFromName: monitor.autoEmailFromName,
+            autoEmailFromAddress: monitor.autoEmailFromAddress,
+            signalFilters: monitor.signalFilters ? JSON.parse(monitor.signalFilters) : null,
+          });
+          crawled++;
+          totalSignals += result.signalsFound;
+          if (result.signalsFound > 0) {
+            actionsTaken.push(`${monitor.companyName}: ${result.signalsFound} signal(s) detected`);
+          }
+        } catch (e: any) {
+          log(`Error crawling ${monitor.companyName}: ${e.message}`);
+          actionsTaken.push(`${monitor.companyName}: crawl failed — ${e.message}`);
+        }
+      }
+
+      if (totalSignals > 0) {
+        await notifyOwner({
+          title: `🔍 Website Monitor: ${totalSignals} new signal(s) detected`,
+          content: `Daily website intelligence crawl complete.\n\nCrawled: ${crawled} site(s)\nSignals found: ${totalSignals}\n\n${actionsTaken.join('\n')}`
+        }).catch(() => {});
+      }
+
+      return {
+        success: true,
+        summary: `Crawled ${crawled} website(s), detected ${totalSignals} positive signal(s).`,
+        reasoning: "Daily website monitoring keeps users informed of client milestones for timely outreach.",
+        actionsTaken
+      };
+    }
   }
 ];
 

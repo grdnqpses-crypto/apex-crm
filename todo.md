@@ -2560,3 +2560,17 @@
 - [x] On successful restore, redirect to /dashboard (not /login)
 - [x] On failed restore (no saved session), fall back to /login
 - [x] 10 new tests passing for emulation restore logic
+
+## Session 32: Website Intelligence Monitor (Premium)
+
+- [x] Create website_monitors and website_crawl_results database tables
+- [x] Build server-side website crawler (fetch + HTML stripping)
+- [x] Build AI signal detector (LLM-powered, 10 signal types)
+- [x] Build auto-congratulations email generator and sender (nodemailer)
+- [x] Create websiteMonitorRouter with list/get/create/update/delete/triggerCrawl/crawlHistory/stats/runDailyCrawl procedures
+- [x] Register websiteMonitorRouter in main routers.ts
+- [x] Add website_intelligence_monitor task to AI Engine (daily, 1440min interval)
+- [x] Build WebsiteMonitor.tsx page with stats bar, monitor cards, crawl history, signal display
+- [x] Add /paradigm/website-monitor route in App.tsx
+- [x] Add "Website Monitor" nav item in DashboardLayout sidebar under Paradigm Engine
+- [x] 23 unit tests passing for crawler, signal parsing, filter logic, hash detection, frequency logic

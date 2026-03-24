@@ -3820,3 +3820,56 @@ export const emailSyncMessages = mysqlTable("email_sync_messages", {
   syncedAt: bigint("syncedAt", { mode: "number" }).notNull(),
 });
 export type EmailSyncMessage = typeof emailSyncMessages.$inferSelect;
+
+// ─── Website Intelligence Monitor (Premium) ───────────────────────────────────
+export const websiteMonitors = mysqlTable("website_monitors", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  tenantId: int("tenantId").notNull(),
+  // Linked CRM entity
+  companyId: int("companyId"),          // optional link to companies table
+  companyName: varchar("companyName", { length: 256 }).notNull(),
+  websiteUrl: varchar("websiteUrl", { length: 1024 }).notNull(),
+  // Monitor settings
+  isActive: tinyint("isActive").default(1).notNull(),
+  checkFrequency: varchar("checkFrequency", { length: 32 }).default("daily").notNull(), // daily, weekly
+  // Auto-email settings
+  autoEmailEnabled: tinyint("autoEmailEnabled").default(0).notNull(),
+  autoEmailToContactId: int("autoEmailToContactId"),  // contact to email when signal found
+  autoEmailFromName: varchar("autoEmailFromName", { length: 256 }),
+  autoEmailFromAddress: varchar("autoEmailFromAddress", { length: 320 }),
+  // Signal type filters (which signal types trigger auto-email)
+  signalFilters: json("signalFilters").$type<string[]>(), // e.g. ["award","expansion","funding","new_hire"]
+  // Stats
+  lastCrawledAt: bigint("lastCrawledAt", { mode: "number" }),
+  totalSignalsFound: int("totalSignalsFound").default(0),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
+});
+export type WebsiteMonitor = typeof websiteMonitors.$inferSelect;
+
+export const websiteCrawlResults = mysqlTable("website_crawl_results", {
+  id: int("id").autoincrement().primaryKey(),
+  monitorId: int("monitorId").notNull(),
+  userId: int("userId").notNull(),
+  tenantId: int("tenantId").notNull(),
+  // Crawl metadata
+  crawledAt: bigint("crawledAt", { mode: "number" }).notNull(),
+  pageUrl: varchar("pageUrl", { length: 1024 }).notNull(),
+  crawlStatus: varchar("crawlStatus", { length: 32 }).default("success").notNull(), // success, failed, timeout
+  errorMessage: text("errorMessage"),
+  // AI analysis
+  signalsDetected: int("signalsDetected").default(0),
+  rawContentHash: varchar("rawContentHash", { length: 64 }), // to detect changes
+  // Detected signals (stored as JSON array of signal objects)
+  detectedSignals: json("detectedSignals").$type<Array<{
+    type: string;       // award, expansion, funding, new_hire, partnership, product_launch, milestone, other_positive
+    title: string;
+    summary: string;
+    confidence: number; // 0-1
+    sourceText: string; // excerpt from page
+    autoEmailSent: boolean;
+  }>>(),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+export type WebsiteCrawlResult = typeof websiteCrawlResults.$inferSelect;
