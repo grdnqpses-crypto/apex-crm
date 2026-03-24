@@ -2135,6 +2135,8 @@ export const migrationAutoSync = mysqlTable("migration_auto_sync", {
   sourcePlatform: varchar("masPlatform", { length: 64 }).notNull(), // hubspot, salesforce, etc.
   enabled: boolean("masEnabled").default(true),
   frequency: varchar("masFrequency", { length: 16 }).default("daily"), // hourly, daily, weekly
+  encryptedCredentials: text("masEncryptedCreds"), // AES-256-GCM encrypted JSON {apiKey, ...}
+  credentialsUpdatedAt: bigint("masCredsUpdatedAt", { mode: "number" }),
   lastRunAt: bigint("masLastRunAt", { mode: "number" }),
   nextRunAt: bigint("masNextRunAt", { mode: "number" }),
   createdAt: bigint("masCreatedAt", { mode: "number" }).notNull(),

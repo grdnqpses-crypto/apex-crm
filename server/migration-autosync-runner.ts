@@ -4,9 +4,11 @@
  * when nextRunAt has passed and the config is enabled.
  */
 
-import { getDb } from "./db";
+import { getDb, createSmartNotification } from "./db";
 import { migrationAutoSync, migrationJobs } from "../drizzle/schema";
 import { eq, and, lte, desc } from "drizzle-orm";
+import { notifyOwner } from "./_core/notification";
+import { decryptCredentials } from "./credential-vault";
 
 let runnerInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -47,15 +49,23 @@ export async function runAutoSyncCheck() {
 
       const sinceDate = lastJob?.lastSyncedAt || lastJob?.completedAt || null;
 
-      // Create a new migration job for the incremental sync
-      // Note: we don't have the API key stored (by design — security). We create a "scheduled"
-      // job that will be picked up by the admin the next time they visit the Migration page.
-      // The job is created in "pending_credentials" status so the admin knows to re-enter their key.
+      // Decrypt stored credentials if available
+      const storedCreds = cfg.encryptedCredentials
+        ? decryptCredentials(cfg.encryptedCredentials)
+        : null;
+      const hasStoredCreds = !!storedCreds?.apiKey;
+
+      // If we have stored credentials, run the sync automatically (status: pending → will be picked up by migration engine)
+      // If not, create a job in pending_credentials status so the admin knows to re-enter their key
+      const jobStatus = hasStoredCreds ? "pending" : "pending_credentials";
+
       await db.insert(migrationJobs).values({
         userId: cfg.userId,
         companyId: cfg.companyId,
         sourcePlatform: cfg.sourcePlatform,
-        status: "pending_credentials",
+        // Store encrypted credentials in the job so the engine can use them
+        sourceCredentials: hasStoredCreds ? cfg.encryptedCredentials : null,
+        status: jobStatus,
         isIncrementalSync: true,
         sinceDate: sinceDate ?? undefined,
         totalRecords: 0,
@@ -74,6 +84,28 @@ export async function runAutoSyncCheck() {
         .where(eq(migrationAutoSync.id, cfg.id));
 
       console.log(`[AutoSync] Scheduled incremental sync for company ${cfg.companyId} / ${cfg.sourcePlatform} (${freq})`);
+
+      // Notify the admin who set up the sync
+      const nextRunFormatted = new Date(nextRunAt).toLocaleString();
+      const platformLabel = cfg.sourcePlatform.charAt(0).toUpperCase() + cfg.sourcePlatform.slice(1);
+
+      // In-app smart notification
+      await createSmartNotification(cfg.userId, {
+        type: "migration_sync_queued",
+        title: `${platformLabel} Sync Ready`,
+        message: `An incremental sync from ${platformLabel} has been queued. Open the Migration Wizard to complete it by entering your API credentials.`,
+        urgencyScore: 60,
+        actionUrl: `/migration/wizard?sync=${cfg.sourcePlatform}&sinceDate=${sinceDate || ""}`,
+        actionLabel: "Open Wizard",
+        isRead: false,
+        isDismissed: false,
+      }).catch(() => {});
+
+      // Owner push notification
+      await notifyOwner({
+        title: `[Auto-Sync Queued] ${platformLabel}`,
+        content: `A scheduled incremental sync from ${platformLabel} is ready for company #${cfg.companyId}. The admin needs to open the Migration Wizard to enter credentials and complete the sync.\n\nNext scheduled run: ${nextRunFormatted}`,
+      }).catch(() => {}); // Non-blocking
     } catch (err: any) {
       console.error(`[AutoSync] Failed to schedule sync for config ${cfg.id}:`, err.message);
     }

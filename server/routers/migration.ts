@@ -6,6 +6,7 @@
 import { z } from "zod";
 import { router, protectedProcedure, companyAdminProcedure, adminProcedure } from "../_core/trpc";
 import { getDb } from "../db";
+import { encryptCredentials } from "../credential-vault";
 import {
   migrationJobs, skinPreferences, customFieldDefs, customFieldValues,
   activityHistory, contacts, companies, deals, users, migrationAutoSync,
@@ -140,7 +141,29 @@ export const migrationRouter = router({
       return job || null;
     }),
 
-  // ─── ONE-BUTTON MIGRATION — The main event ────────────────────────────────
+  // ─── Get last synced timestamp for the dashboard widget ─────────────────────────
+  getLastSyncedAt: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db || !ctx.user.tenantCompanyId) return { lastSyncedAt: null, sourcePlatform: null };
+    const [job] = await db.select({
+      lastSyncedAt: migrationJobs.lastSyncedAt,
+      completedAt: migrationJobs.completedAt,
+      sourcePlatform: migrationJobs.sourcePlatform,
+    })
+      .from(migrationJobs)
+      .where(and(
+        eq(migrationJobs.companyId, ctx.user.tenantCompanyId),
+        eq(migrationJobs.status, "completed"),
+      ))
+      .orderBy(desc(migrationJobs.createdAt))
+      .limit(1);
+    return {
+      lastSyncedAt: job?.lastSyncedAt || job?.completedAt || null,
+      sourcePlatform: job?.sourcePlatform || null,
+    };
+  }),
+
+  // ─── ONE-BUTTON MIGRATION — The main event ─────────────────────────────────────────────────
   // This is the single procedure that does everything:
   // 1. Creates a job record
   // 2. Runs AI field mapping
@@ -423,8 +446,14 @@ export const migrationRouter = router({
   getAutoSync: adminProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db || !ctx.user.tenantCompanyId) return [];
-    return db.select().from(migrationAutoSync)
+    const rows = await db.select().from(migrationAutoSync)
       .where(eq(migrationAutoSync.companyId, ctx.user.tenantCompanyId));
+    // Never expose encrypted credentials to the frontend — just a boolean flag
+    return rows.map(r => ({
+      ...r,
+      encryptedCredentials: undefined,
+      hasCredentials: !!r.encryptedCredentials,
+    }));
   }),
 
   // ─── Auto-sync: upsert config for a source platform ──────────────────────
@@ -433,6 +462,7 @@ export const migrationRouter = router({
       sourcePlatform: z.string(),
       enabled: z.boolean(),
       frequency: z.enum(["hourly", "daily", "weekly"]),
+      apiKey: z.string().optional(), // If provided, encrypt and store for fully-automatic syncs
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
@@ -441,6 +471,11 @@ export const migrationRouter = router({
       // Compute nextRunAt based on frequency
       const frequencyMs = { hourly: 3600_000, daily: 86400_000, weekly: 604800_000 };
       const nextRunAt = input.enabled ? now + frequencyMs[input.frequency] : null;
+
+      // Encrypt credentials if provided
+      const encryptedCreds = input.apiKey
+        ? encryptCredentials({ apiKey: input.apiKey, platform: input.sourcePlatform })
+        : undefined;
 
       const [existing] = await db.select({ id: migrationAutoSync.id })
         .from(migrationAutoSync)
@@ -456,6 +491,7 @@ export const migrationRouter = router({
             enabled: input.enabled,
             frequency: input.frequency,
             nextRunAt: nextRunAt ?? undefined,
+            ...(encryptedCreds && { encryptedCredentials: encryptedCreds, credentialsUpdatedAt: now }),
             updatedAt: now,
           })
           .where(eq(migrationAutoSync.id, existing.id));
@@ -467,11 +503,12 @@ export const migrationRouter = router({
           enabled: input.enabled,
           frequency: input.frequency,
           nextRunAt: nextRunAt ?? undefined,
+          ...(encryptedCreds && { encryptedCredentials: encryptedCreds, credentialsUpdatedAt: now }),
           createdAt: now,
           updatedAt: now,
         });
       }
-      return { success: true };
+      return { success: true, hasCredentials: !!encryptedCreds };
     }),
 
   // ─── Auto-sync: delete config ─────────────────────────────────────────────

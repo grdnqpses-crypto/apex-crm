@@ -71,6 +71,7 @@ export default function MigrationEngine() {
   const [addingSync, setAddingSync] = useState(false);
   const [newSyncPlatform, setNewSyncPlatform] = useState("hubspot");
   const [newSyncFrequency, setNewSyncFrequency] = useState<"hourly" | "daily" | "weekly">("daily");
+  const [newSyncApiKey, setNewSyncApiKey] = useState("");
 
   // ── Admin gate ────────────────────────────────────────────────────────────
   if (loading) {
@@ -193,12 +194,23 @@ export default function MigrationEngine() {
                   <option value="weekly">Every Week</option>
                 </select>
               </div>
+              <div className="flex-1 space-y-1">
+                <Label className="text-xs font-medium">API Key (optional)</Label>
+                <input
+                  type="password"
+                  placeholder="Store for auto-run"
+                  className="w-full text-sm border border-border rounded-lg px-3 py-1.5 bg-background"
+                  value={newSyncApiKey}
+                  onChange={e => setNewSyncApiKey(e.target.value)}
+                />
+              </div>
               <Button
                 size="sm"
                 className="rounded-xl"
                 onClick={() => {
-                  setAutoSync.mutate({ sourcePlatform: newSyncPlatform, enabled: true, frequency: newSyncFrequency });
+                  setAutoSync.mutate({ sourcePlatform: newSyncPlatform, enabled: true, frequency: newSyncFrequency, apiKey: newSyncApiKey || undefined });
                   setAddingSync(false);
+                  setNewSyncApiKey("");
                 }}
                 disabled={setAutoSync.isPending}
               >
@@ -224,6 +236,15 @@ export default function MigrationEngine() {
                       {FREQUENCY_LABELS[cfg.frequency] || cfg.frequency}
                       {cfg.nextRunAt && ` · Next: ${new Date(Number(cfg.nextRunAt)).toLocaleString()}`}
                     </p>
+                    {cfg.hasCredentials ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] text-green-600 font-medium mt-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500" /> Auto-run enabled
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 font-medium mt-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Needs credentials
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">

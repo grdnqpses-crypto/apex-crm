@@ -1,0 +1,90 @@
+{
+  "query": "DESCRIBE `migration_auto_sync`;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute DESCRIBE `migration_auto_sync`;",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "masCompanyId",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "masUserId",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "masPlatform",
+      "Type": "varchar(64)",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "masEnabled",
+      "Type": "tinyint(1)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "1",
+      "Extra": ""
+    },
+    {
+      "Field": "masFrequency",
+      "Type": "varchar(16)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "daily",
+      "Extra": ""
+    },
+    {
+      "Field": "masLastRunAt",
+      "Type": "bigint",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "masNextRunAt",
+      "Type": "bigint",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "masCreatedAt",
+      "Type": "bigint",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "masUpdatedAt",
+      "Type": "bigint",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint\tNO\tPRI\tNULL\tauto_increment\nmasCompanyId\tint\tNO\tMUL\tNULL\t\nmasUserId\tint\tNO\t\tNULL\t\nmasPlatform\tvarchar(64)\tNO\tMUL\tNULL\t\nmasEnabled\ttinyint(1)\tYES\t\t1\t\nmasFrequency\tvarchar(16)\tYES\t\tdaily\t\nmasLastRunAt\tbigint\tYES\t\tNULL\t\nmasNextRunAt\tbigint\tYES\t\tNULL\t\nmasCreatedAt\tbigint\tNO\t\tNULL\t\nmasUpdatedAt\tbigint\tYES\t\tNULL\t\n",
+  "stderr": "",
+  "execution_time_ms": 363
+}

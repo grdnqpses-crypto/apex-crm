@@ -2284,3 +2284,12 @@
 - [x] Scheduled auto-sync settings: frontend UI in Migration Engine (frequency picker, enable/disable toggle)
 - [x] Auto-sync cron runner on server (check configs and trigger migrations on schedule)
 - [x] Tests for auto-sync procedures and record count display
+
+## Session 16: Migration Improvements + Competitive Analysis
+
+- [ ] Notify admin via notifyOwner when auto-sync job is queued (with CRM name, next sync time, link to wizard)
+- [ ] In-app smart notification for queued auto-sync jobs
+- [ ] Secure credential storage: encrypt API keys in migration_auto_sync table (AES-256 via crypto module)
+- [ ] Auto-sync runner uses stored encrypted credentials to run fully-automatic syncs
+- [ ] Migration Health widget on main dashboard (last sync time, total records imported, Sync Now button)
+- [ ] Competitive analysis document: what competitors have, what we can do better, what we have, what we're missing

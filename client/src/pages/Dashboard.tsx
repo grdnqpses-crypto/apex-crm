@@ -14,7 +14,7 @@ import {
   FileText, Workflow, LayoutGrid, AlertCircle, Truck,
   Package, Brain, Phone, ArrowRight, Sparkles,
   StickyNote, PhoneCall, MailOpen, Calendar, Clock, User, ImagePlus,
-  Upload, Wand2, RefreshCw,
+  Upload, Wand2, RefreshCw, ArrowRightLeft, CheckCircle, Activity,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useSkin } from "@/contexts/SkinContext";
@@ -23,6 +23,70 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { CheckCircle2, Circle, ChevronRight as ChevronRightIcon, Zap, Video, MessageSquare, ClipboardList, RefreshCw as RefreshCwIcon, Building2 as Building2Icon, User as UserIcon, Target as TargetIcon } from "lucide-react";
+
+// ─── Migration Health Widget ─────────────────────────────────────────────────
+function MigrationHealthWidget() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const { data: lastSyncData } = trpc.migration.getLastSyncedAt.useQuery(undefined, { enabled: !!user });
+  const { data: jobs } = trpc.migration.listJobs.useQuery(undefined, { enabled: isAdmin });
+
+  if (!jobs || jobs.length === 0) return null;
+
+  const completedJobs = jobs.filter((j: any) => j.status === "completed");
+  if (completedJobs.length === 0) return null;
+
+  const latestJob = completedJobs[0];
+  const totalImported = (latestJob.contactsImported || 0) + (latestJob.companiesImported || 0) +
+    (latestJob.dealsImported || 0) + (latestJob.activitiesImported || 0);
+  const allTimeTotal = completedJobs.reduce((sum: number, j: any) =>
+    sum + (j.contactsImported || 0) + (j.companiesImported || 0) + (j.dealsImported || 0) + (j.activitiesImported || 0), 0);
+  const lastSyncedAt = lastSyncData?.lastSyncedAt;
+
+  return (
+    <Card className="rounded-2xl border-border/40 shadow-sm overflow-hidden">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center flex-shrink-0">
+              <ArrowRightLeft className="w-5 h-5 text-orange-500" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Migration Health</p>
+              <p className="text-xs text-muted-foreground capitalize mt-0.5">
+                Source: {latestJob.sourcePlatform}
+              </p>
+              {lastSyncedAt && (
+                <div className="flex items-center gap-1 mt-1">
+                  <CheckCircle className="w-3 h-3 text-green-500" />
+                  <span className="text-[10px] text-green-600 font-medium">
+                    Last synced {new Date(Number(lastSyncedAt)).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <p className="text-2xl font-bold text-foreground">{allTimeTotal.toLocaleString()}</p>
+            <p className="text-[10px] text-muted-foreground">records imported</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 mt-4">
+          <Link href={`/migration/wizard?sync=${latestJob.sourcePlatform}&sinceDate=${lastSyncedAt || ""}`} className="flex-1">
+            <Button size="sm" variant="outline" className="w-full rounded-xl text-xs font-medium">
+              <RefreshCw className="w-3 h-3 mr-1.5" /> Sync Now
+            </Button>
+          </Link>
+          <Link href="/migration">
+            <Button size="sm" variant="ghost" className="rounded-xl text-xs">
+              <Activity className="w-3 h-3 mr-1.5" /> History
+            </Button>
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 /*
  * Enterprise CRM Color System:
@@ -827,6 +891,9 @@ export default function Dashboard() {
 
       {/* ─── Task Command Center ─── */}
       <TaskCommandCenter />
+
+      {/* ─── Migration Health Widget (admin only, only shown when migrations exist) ─── */}
+      <MigrationHealthWidget />
 
       {/* ─── Quick Actions & System Status ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
