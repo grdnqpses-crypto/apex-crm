@@ -2171,7 +2171,7 @@ export const appRouter = router({
       const { generateImage } = await import("./_core/imageGeneration.js");
       const prompt = `VIVID, ELECTRIC, STUNNING business logo for a company called "${input.companyName}"${
         input.industry ? ` in the ${input.industry} industry` : ""
-      }. Ultra-bold, vibrant neon colors — electric blue, hot magenta, blazing gold, or deep violet gradients. Dynamic geometric shapes with glowing light effects, radiant energy bursts, and luminous gradients. The logo should feel ALIVE — like it's pulsing with energy. Modern 3D depth, metallic sheen, vivid color contrast on a rich dark background. Cinematic lighting, dramatic shadows, premium brand identity. Award-winning logo design. Highly detailed, ultra-sharp, 4K quality. NO plain text — only a powerful icon mark or stylized monogram with maximum visual impact.`;
+      }. Clean WHITE background. Bold, vibrant colors — bright electric blue, vivid teal, rich cobalt, warm coral, or energetic orange. Crisp geometric icon mark or stylized monogram. Flat modern design with subtle color gradients. Sharp edges, high contrast, instantly readable. Premium brand identity with a polished, contemporary feel. Award-winning logo design. Ultra-sharp, 4K quality. PURE WHITE BACKGROUND ONLY — absolutely NO dark backgrounds, NO black, NO shadows, NO gradients on the background. The logo must look great on a white page or business card.`;
       const result = await generateImage({ prompt });
       if (!result?.url) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Logo generation failed" });
       // Save to S3
@@ -2269,7 +2269,7 @@ export const appRouter = router({
       const { generateImage } = await import("./_core/imageGeneration.js");
       const prompt = `VIVID, ELECTRIC, STUNNING business logo for a company called "${company.name}"${
         company.industry ? ` in the ${company.industry} industry` : ""
-      }. Ultra-bold, vibrant neon colors — electric blue, hot magenta, blazing gold, or deep violet gradients. Dynamic geometric shapes with glowing light effects, radiant energy bursts, and luminous gradients. The logo should feel ALIVE — like it's pulsing with energy. Modern 3D depth, metallic sheen, vivid color contrast on a rich dark background. Cinematic lighting, dramatic shadows, premium brand identity. Award-winning logo design. Highly detailed, ultra-sharp, 4K quality. NO plain text — only a powerful icon mark or stylized monogram with maximum visual impact.`;
+      }. Clean WHITE background. Bold, vibrant colors — bright electric blue, vivid teal, rich cobalt, warm coral, or energetic orange. Crisp geometric icon mark or stylized monogram. Flat modern design with subtle color gradients. Sharp edges, high contrast, instantly readable. Premium brand identity with a polished, contemporary feel. Award-winning logo design. Ultra-sharp, 4K quality. PURE WHITE BACKGROUND ONLY — absolutely NO dark backgrounds, NO black, NO shadows, NO gradients on the background. The logo must look great on a white page or business card.`;
       const result = await generateImage({ prompt });
       if (!result?.url) return { logoUrl: null };
       const { storagePut } = await import("./storage.js");

@@ -2543,3 +2543,7 @@
 - [x] Fix emulate backend to create a proper session cookie for the target user
 - [x] Fix emulate frontend to redirect to /dashboard after session swap, not public page
 - [x] Ensure emulated user has full company admin access within the CRM
+
+## Session 29: Fix Logo Generator Colors
+
+- [x] Fix auto-generated company logos to use lighter, more vibrant colors instead of dark ones — changed prompt to specify pure white background, no dark backgrounds/shadows
