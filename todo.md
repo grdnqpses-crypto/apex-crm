@@ -2275,3 +2275,12 @@
 - [x] MigrationWizard.tsx: pass sinceDate and isIncrementalSync to startMigration
 - [x] useFeatureAccess.ts: add /migration/wizard to ADMIN_ROUTES
 - [x] 22 new tests for incremental sync, admin-only enforcement, and schema fields
+
+## Session 15: Migration UX Improvements
+
+- [x] Per-entity record counts breakdown on completed job cards (contacts · companies · deals · activities)
+- [x] Last Synced badge on sidebar Migration nav item (green dot + timestamp)
+- [x] Scheduled auto-sync settings: backend table + procedures (create/update/delete/get autoSync config)
+- [x] Scheduled auto-sync settings: frontend UI in Migration Engine (frequency picker, enable/disable toggle)
+- [x] Auto-sync cron runner on server (check configs and trigger migrations on schedule)
+- [x] Tests for auto-sync procedures and record count display

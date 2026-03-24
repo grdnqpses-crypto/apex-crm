@@ -2126,6 +2126,23 @@ export const migrationJobs = mysqlTable("migration_jobs", {
 });
 export type MigrationJob = typeof migrationJobs.$inferSelect;
 export type InsertMigrationJob = typeof migrationJobs.$inferInsert;
+
+// Auto-sync configuration — one row per company per source CRM
+export const migrationAutoSync = mysqlTable("migration_auto_sync", {
+  id: int("id").autoincrement().primaryKey(),
+  companyId: int("masCompanyId").notNull(),
+  userId: int("masUserId").notNull(), // admin who set it up
+  sourcePlatform: varchar("masPlatform", { length: 64 }).notNull(), // hubspot, salesforce, etc.
+  enabled: boolean("masEnabled").default(true),
+  frequency: varchar("masFrequency", { length: 16 }).default("daily"), // hourly, daily, weekly
+  lastRunAt: bigint("masLastRunAt", { mode: "number" }),
+  nextRunAt: bigint("masNextRunAt", { mode: "number" }),
+  createdAt: bigint("masCreatedAt", { mode: "number" }).notNull(),
+  updatedAt: bigint("masUpdatedAt", { mode: "number" }),
+});
+export type MigrationAutoSync = typeof migrationAutoSync.$inferSelect;
+export type InsertMigrationAutoSync = typeof migrationAutoSync.$inferInsert;
+
 // ============================================================
 // PHASE 16:6: AUTONOMOUS DIGITAL FREIGHT MARKETPLACE + AXIOM Autopilot
 // ============================================================

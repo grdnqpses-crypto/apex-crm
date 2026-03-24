@@ -402,8 +402,10 @@ function DashboardLayoutContent({
   // ─── Sidebar badges ───
   const { data: unreadNotifRaw } = trpc.smartNotifications.unreadCount.useQuery(undefined, { enabled: !!user, refetchInterval: 60000 });
   const { data: activeReportsData } = trpc.scheduledReports.activeCount.useQuery(undefined, { enabled: !!user, refetchInterval: 300000 });
+  const { data: lastSyncData } = trpc.migration.getLastSyncedAt.useQuery(undefined, { enabled: !!user, refetchInterval: 300000 });
   const unreadNotifCount = (unreadNotifRaw as number) ?? 0;
   const activeReportsCount = activeReportsData?.count ?? 0;
+  const lastSyncedAt = lastSyncData?.lastSyncedAt ?? null;
   const sidebarBadges: Record<string, number> = {
     "/smart-notifications": unreadNotifCount,
     "/scheduled-reports": activeReportsCount,
@@ -586,6 +588,15 @@ function DashboardLayoutContent({
                           {sidebarBadges[item.path] > 0 && (
                             <span className="ml-auto text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1" style={{ background: skin.primaryColor, color: '#fff' }}>
                               {sidebarBadges[item.path] > 99 ? '99+' : sidebarBadges[item.path]}
+                            </span>
+                          )}
+                          {item.path === "/migration" && lastSyncedAt && (
+                            <span
+                              className="ml-auto flex items-center gap-1 text-[10px] text-green-600 font-medium"
+                              title={`Last synced: ${new Date(Number(lastSyncedAt)).toLocaleString()}`}
+                            >
+                              <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+                              {new Date(Number(lastSyncedAt)).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                             </span>
                           )}
                         </SidebarMenuButton>

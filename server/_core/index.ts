@@ -11,6 +11,7 @@ import { registerStripeWebhook } from "../stripe";
 import { extensionImportRouter } from "../extension-import";
 import { registerErrorInterceptor, startHealthMonitor } from "../self-healing";
 import { startAIEngine } from "../ai-engine";
+import { startAutoSyncRunner } from "../migration-autosync-runner";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -74,6 +75,8 @@ async function startServer() {
     startHealthMonitor();
     // Start AI Autonomous Engine (developer-only background tasks)
     startAIEngine();
+    // Start migration auto-sync runner (checks scheduled syncs every 15 min)
+    startAutoSyncRunner();
   });
 }
 

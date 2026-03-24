@@ -8,7 +8,7 @@ import { router, protectedProcedure, companyAdminProcedure, adminProcedure } fro
 import { getDb } from "../db";
 import {
   migrationJobs, skinPreferences, customFieldDefs, customFieldValues,
-  activityHistory, contacts, companies, deals, users,
+  activityHistory, contacts, companies, deals, users, migrationAutoSync,
 } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import {
@@ -418,6 +418,90 @@ export const migrationRouter = router({
       }
       return { success: true };
     }),
+
+  // ─── Auto-sync: get config for current company ────────────────────────────
+  getAutoSync: adminProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db || !ctx.user.tenantCompanyId) return [];
+    return db.select().from(migrationAutoSync)
+      .where(eq(migrationAutoSync.companyId, ctx.user.tenantCompanyId));
+  }),
+
+  // ─── Auto-sync: upsert config for a source platform ──────────────────────
+  setAutoSync: adminProcedure
+    .input(z.object({
+      sourcePlatform: z.string(),
+      enabled: z.boolean(),
+      frequency: z.enum(["hourly", "daily", "weekly"]),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db || !ctx.user.tenantCompanyId) throw new Error("No company context");
+      const now = Date.now();
+      // Compute nextRunAt based on frequency
+      const frequencyMs = { hourly: 3600_000, daily: 86400_000, weekly: 604800_000 };
+      const nextRunAt = input.enabled ? now + frequencyMs[input.frequency] : null;
+
+      const [existing] = await db.select({ id: migrationAutoSync.id })
+        .from(migrationAutoSync)
+        .where(and(
+          eq(migrationAutoSync.companyId, ctx.user.tenantCompanyId),
+          eq(migrationAutoSync.sourcePlatform, input.sourcePlatform),
+        ))
+        .limit(1);
+
+      if (existing) {
+        await db.update(migrationAutoSync)
+          .set({
+            enabled: input.enabled,
+            frequency: input.frequency,
+            nextRunAt: nextRunAt ?? undefined,
+            updatedAt: now,
+          })
+          .where(eq(migrationAutoSync.id, existing.id));
+      } else {
+        await db.insert(migrationAutoSync).values({
+          companyId: ctx.user.tenantCompanyId,
+          userId: ctx.user.id,
+          sourcePlatform: input.sourcePlatform,
+          enabled: input.enabled,
+          frequency: input.frequency,
+          nextRunAt: nextRunAt ?? undefined,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+      return { success: true };
+    }),
+
+  // ─── Auto-sync: delete config ─────────────────────────────────────────────
+  deleteAutoSync: adminProcedure
+    .input(z.object({ sourcePlatform: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db || !ctx.user.tenantCompanyId) throw new Error("No company context");
+      await db.delete(migrationAutoSync)
+        .where(and(
+          eq(migrationAutoSync.companyId, ctx.user.tenantCompanyId),
+          eq(migrationAutoSync.sourcePlatform, input.sourcePlatform),
+        ));
+      return { success: true };
+    }),
+
+  // ─── Auto-sync: get last synced timestamp for sidebar badge ──────────────
+  getLastSyncedAt: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db || !ctx.user.tenantCompanyId) return { lastSyncedAt: null };
+    const [latest] = await db.select({ lastSyncedAt: migrationJobs.lastSyncedAt })
+      .from(migrationJobs)
+      .where(and(
+        eq(migrationJobs.companyId, ctx.user.tenantCompanyId),
+        eq(migrationJobs.status, "completed"),
+      ))
+      .orderBy(desc(migrationJobs.lastSyncedAt))
+      .limit(1);
+    return { lastSyncedAt: latest?.lastSyncedAt ?? null };
+  }),
 });
 
 // ─── Async Migration Runner ───────────────────────────────────────────────────
