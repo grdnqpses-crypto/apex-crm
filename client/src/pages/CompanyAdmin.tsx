@@ -17,36 +17,68 @@ import PageGuide from "@/components/PageGuide";
 import { useSkin } from "@/contexts/SkinContext";
 
 // Sub-component: shows masked password with reveal/copy for axiom-level admins
-function PasswordCell({ userId, username }: { userId: number; username?: string | null }) {
+function PasswordCell({ userId, username, loginMethod }: { userId: number; username?: string | null; loginMethod?: string | null }) {
   const [revealed, setRevealed] = useState(false);
-  const { data, isFetching } = trpc.userManagement.getPassword.useQuery(
+  const [resetting, setResetting] = useState(false);
+  const [newPw, setNewPw] = useState("");
+  const utils = trpc.useUtils();
+  const { data, isFetching, refetch } = trpc.userManagement.getPassword.useQuery(
     { userId },
     { enabled: revealed }
   );
-  if (!username) return <span className="text-xs text-muted-foreground">OAuth</span>;
+  const resetMutation = trpc.userManagement.resetPassword.useMutation({
+    onSuccess: () => {
+      toast.success("Password updated");
+      setResetting(false);
+      setNewPw("");
+      refetch();
+      utils.tenants.users.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  // OAuth users: no username or non-credential login
+  const isOAuth = !username || (loginMethod && loginMethod !== "credentials");
+  if (isOAuth) return <span className="text-xs text-muted-foreground italic">OAuth Login</span>;
+  // Inline reset form
+  if (resetting) {
+    return (
+      <div className="flex items-center gap-1">
+        <input
+          type="text"
+          className="text-xs bg-muted px-1.5 py-0.5 rounded border border-border w-24"
+          placeholder="New password"
+          value={newPw}
+          onChange={e => setNewPw(e.target.value)}
+          autoFocus
+        />
+        <button type="button" className="text-xs text-primary hover:underline" disabled={resetMutation.isPending}
+          onClick={() => { if (newPw.length >= 8) resetMutation.mutate({ userId, newPassword: newPw }); else toast.error("Min 8 characters"); }}>
+          {resetMutation.isPending ? "..." : "Save"}
+        </button>
+        <button type="button" className="text-xs text-muted-foreground hover:underline" onClick={() => { setResetting(false); setNewPw(""); }}>Cancel</button>
+      </div>
+    );
+  }
   return (
     <div className="flex items-center gap-1">
-      <code className="text-xs bg-muted px-1.5 py-0.5 rounded min-w-[80px]">
-        {revealed ? (isFetching ? "..." : (data?.password ?? "—")) : "••••••••"}
-      </code>
-      <button
-        type="button"
-        className="text-muted-foreground hover:text-foreground"
-        onClick={() => setRevealed(r => !r)}
-        title={revealed ? "Hide password" : "Reveal password"}
-      >
+      {revealed && !isFetching && !data?.password ? (
+        <span className="text-xs text-amber-400 italic">Not set</span>
+      ) : (
+        <code className="text-xs bg-muted px-1.5 py-0.5 rounded min-w-[80px]">
+          {revealed ? (isFetching ? "..." : (data?.password ?? "—")) : "••••••••"}
+        </code>
+      )}
+      <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => setRevealed(r => !r)} title={revealed ? "Hide" : "Reveal"}>
         {revealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
       </button>
       {revealed && data?.password && (
-        <button
-          type="button"
-          className="text-muted-foreground hover:text-foreground"
-          onClick={() => { navigator.clipboard.writeText(data.password!); toast.success("Password copied"); }}
-          title="Copy password"
-        >
+        <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => { navigator.clipboard.writeText(data!.password!); toast.success("Password copied"); }} title="Copy">
           <Copy className="h-3.5 w-3.5" />
         </button>
       )}
+      <button type="button" className="text-amber-400 hover:text-amber-300" onClick={() => { setResetting(true); setRevealed(false); }} title="Set / Reset password">
+        <KeyRound className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }
@@ -562,7 +594,7 @@ export default function CompanyAdmin() {
                         </TableCell>
                         {isAxiomLevel && (
                           <TableCell>
-                            <PasswordCell userId={u.id} username={u.username} />
+                            <PasswordCell userId={u.id} username={u.username} loginMethod={u.loginMethod} />
                           </TableCell>
                         )}
                         <TableCell className="text-right">

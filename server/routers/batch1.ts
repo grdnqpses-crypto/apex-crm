@@ -201,6 +201,28 @@ const bulkActionsRouter = router({
     return { success: true, deleted: input.ids.length };
   }),
 
+  // Bulk update task status (mark as completed or not_started)
+  updateTasksStatus: protectedProcedure.input(z.object({
+    ids: z.array(z.number()).min(1).max(500),
+    status: z.enum(["not_started", "completed"]),
+  })).mutation(async ({ ctx, input }) => {
+    const dbConn = await db.getDb();
+    if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const now = Date.now();
+    const updates: Record<string, unknown> = { status: input.status, updatedAt: now };
+    if (input.status === "completed") {
+      updates.completedAt = now;
+      updates.completedBy = ctx.user.name ?? ctx.user.username ?? undefined;
+    } else {
+      updates.completedAt = null;
+      updates.completedBy = null;
+    }
+    await dbConn.update(tasks).set(updates as never)
+      .where(and(inArray(tasks.id, input.ids), eq(tasks.tenantId, ctx.user.tenantCompanyId ?? 0)));
+    await writeAuditLog({ tenantId: ctx.user.tenantCompanyId, userId: ctx.user.id, userEmail: ctx.user.email ?? undefined, userName: ctx.user.name ?? undefined, action: "bulk_update", entityType: "tasks", changes: { count: input.ids.length, status: input.status } });
+    return { success: true, updated: input.ids.length };
+  }),
+
   // ── Fill Smart Properties (AI-infer missing fields) ──────────────────────
   fillSmartProperties: protectedProcedure.input(z.object({
     ids: z.array(z.number()).min(1).max(200),

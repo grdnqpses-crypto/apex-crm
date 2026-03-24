@@ -2504,3 +2504,19 @@
 - [x] Add bulk delete to Companies list
 - [x] Add bulk delete to Deals list
 - [x] Add bulk delete to Tasks list
+
+## Session 24: Bulk Status Update on Tasks
+
+- [ ] Add bulkUpdateTasks procedure to batch1.ts (update status + completedAt for multiple task IDs)
+- [ ] Add "Mark Completed" and "Mark Not Started" buttons to Tasks bulk selection bar
+- [ ] Run tests and save checkpoint
+
+## Session 24: Dashboard Quick Actions Position
+
+- [ ] Move Quick Actions section to the top of the Dashboard page (above stats cards)
+
+## Session 24: Fix Password Column Always Populates
+
+- [x] Fix PasswordCell to show OAuth Login for OAuth users, Not Set + KeyRound reset button for credential users with no stored password
+- [x] Pass loginMethod from table row to PasswordCell so OAuth detection is accurate
+- [x] Inline Set/Reset password form in PasswordCell (min 8 chars, saves via resetPassword mutation)
