@@ -2029,7 +2029,7 @@
 - [x] Change competitor false/missing values in comparison scroll to red ✗ dots (currently faded white)
 - [x] Make competitor false values big bold red X marks (larger, more prominent)
 - [x] Audit ALL AXIOM features and update comparison scroll to include every feature AXIOM has that competitors don't (Logo Generation, AI Post Writer, WhatsApp Broadcasts, etc.)
-- [x] Fix browser tab title from "Apex CRM" to "AXIOM CRM"
+- [x] Fix browser tab title from "Axiom CRM" to "AXIOM CRM"
 
 ## 3-Minute Trailer Video
 - [ ] Generate new cinematic video clips matching original style (empire panic, data stream, empire falls, rebellion, crown rise)
@@ -2049,7 +2049,7 @@
 - [x] Add cinematic music bed to the 3-minute trailer MP4
 - [x] Widen comparison scroll panel from 260px to 320px
 - [x] Add "Start Your 60-Day Free Trial" CTA button below video chapter markers
-- [x] Fix MP4 video metadata title from "Apex CRM" to "AXIOM CRM — Command Your Market"
+- [x] Fix MP4 video metadata title from "Axiom CRM" to "AXIOM CRM — Command Your Market"
 
 ## Video Rebuild (Round 4)
 - [ ] Extract original 64s trailer audio (voiceover + music bed)
@@ -2527,3 +2527,9 @@
 - [ ] Backfill plainTextPassword for all existing credential users (reset to known value)
 - [ ] Fix PasswordCell to ALWAYS show password — no "Not set", no dash, no OAuth hiding
 - [ ] Ensure getPassword procedure returns plainTextPassword for ALL users regardless of loginMethod
+
+## Session 25: All Users Must Show Password (No OAuth Login Label)
+
+- [ ] Assign real credential passwords to all OAuth users and store in plainTextPassword
+- [ ] Fix PasswordCell to always show the actual password (no "OAuth Login" label ever)
+- [ ] Rebuild Excel workbook in exact user-specified sidebar tab order

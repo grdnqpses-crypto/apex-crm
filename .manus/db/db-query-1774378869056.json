@@ -1,0 +1,106 @@
+{
+  "query": "SELECT id, name, email, loginMethod, username, plainTextPassword FROM users ORDER BY loginMethod, name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, name, email, loginMethod, username, plainTextPassword FROM users ORDER BY loginMethod, name;",
+  "rows": [
+    {
+      "id": "4410042",
+      "name": "Apex Platform Owner",
+      "email": "owner@apexcrm.com",
+      "loginMethod": "credentials",
+      "username": "apexowner",
+      "plainTextPassword": "apexowner@Apex1"
+    },
+    {
+      "id": "2610026",
+      "name": "David Thompson",
+      "email": "dthompson@shiplw.com",
+      "loginMethod": "credentials",
+      "username": "dthompson",
+      "plainTextPassword": "dthompson@Apex1"
+    },
+    {
+      "id": "2610017",
+      "name": "James Lavallee",
+      "email": "jlavallee@shiplw.com",
+      "loginMethod": "credentials",
+      "username": "jlavallee",
+      "plainTextPassword": "jlavallee@Apex1"
+    },
+    {
+      "id": "5520260",
+      "name": "Jeff Lavallee",
+      "email": "jlavallee@shiplw.com",
+      "loginMethod": "credentials",
+      "username": "JeffLavallee",
+      "plainTextPassword": "JeffLavallee@Apex1"
+    },
+    {
+      "id": "2640083",
+      "name": "Jerry",
+      "email": "glavallee@shiplw.com",
+      "loginMethod": "credentials",
+      "username": "Lavallee",
+      "plainTextPassword": "Lavallee@Apex1"
+    },
+    {
+      "id": "4590001",
+      "name": "Joseph Lavallee",
+      "email": "grdn.qpses@gmail.com",
+      "loginMethod": "credentials",
+      "username": "JoeLavallee",
+      "plainTextPassword": "JoeLavallee@Apex1"
+    },
+    {
+      "id": "2610020",
+      "name": "Mike Rodriguez",
+      "email": "mrodriguez@shiplw.com",
+      "loginMethod": "credentials",
+      "username": "mrodriguez",
+      "plainTextPassword": "mrodriguez@Apex1"
+    },
+    {
+      "id": "2610023",
+      "name": "Sarah Chen",
+      "email": "schen@shiplw.com",
+      "loginMethod": "credentials",
+      "username": "schen",
+      "plainTextPassword": "schen@Apex1"
+    },
+    {
+      "id": "5520069",
+      "name": "AXIOM Admin",
+      "email": "admin@axiomcrm.com",
+      "loginMethod": "email",
+      "username": "axiomadmin",
+      "plainTextPassword": "axiomadmin@Apex1"
+    },
+    {
+      "id": "5520068",
+      "name": "AXIOM Developer",
+      "email": "dev@axiomcrm.com",
+      "loginMethod": "email",
+      "username": "axiomdev",
+      "plainTextPassword": "axiomdev@Apex1"
+    },
+    {
+      "id": "1",
+      "name": "crm",
+      "email": "crm@shiplw.com",
+      "loginMethod": "email",
+      "username": "NULL",
+      "plainTextPassword": "NULL"
+    },
+    {
+      "id": "12",
+      "name": "Crypto- GRDN",
+      "email": "grdn.qpses@gmail.com",
+      "loginMethod": "google",
+      "username": "NULL",
+      "plainTextPassword": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tloginMethod\tusername\tplainTextPassword\n4410042\tApex Platform Owner\towner@apexcrm.com\tcredentials\tapexowner\tapexowner@Apex1\n2610026\tDavid Thompson\tdthompson@shiplw.com\tcredentials\tdthompson\tdthompson@Apex1\n2610017\tJames Lavallee\tjlavallee@shiplw.com\tcredentials\tjlavallee\tjlavallee@Apex1\n5520260\tJeff Lavallee\tjlavallee@shiplw.com\tcredentials\tJeffLavallee\tJeffLavallee@Apex1\n2640083\tJerry\tglavallee@shiplw.com\tcredentials\tLavallee\tLavallee@Apex1\n4590001\tJoseph Lavallee\tgrdn.qpses@gmail.com\tcredentials\tJoeLavallee\tJoeLavallee@Apex1\n2610020\tMike Rodriguez\tmrodriguez@shiplw.com\tcredentials\tmrodriguez\tmrodriguez@Apex1\n2610023\tSarah Chen\tschen@shiplw.com\tcredentials\tschen\tschen@Apex1\n5520069\tAXIOM Admin\tadmin@axiomcrm.com\temail\taxiomadmin\taxiomadmin@Apex1\n5520068\tAXIOM Developer\tdev@axiomcrm.com\temail\taxiomdev\taxiomdev@Apex1\n1\tcrm\tcrm@shiplw.com\temail\tNULL\tNULL\n12\tCrypto- GRDN\tgrdn.qpses@gmail.com\tgoogle\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 375
+}
