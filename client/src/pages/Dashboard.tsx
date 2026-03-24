@@ -806,6 +806,24 @@ export default function Dashboard() {
         <div className="absolute -bottom-4 -right-4 h-20 w-20 rounded-full bg-primary/3" />
       </div>
 
+      {/* ─── Quick Actions ─── */}
+      <Card className="rounded-2xl border-border/40 shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            Quick Actions
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          <QuickAction label="Add Company" href="/companies" icon={Building2} color="bg-blue-50 text-blue-600" />
+          <QuickAction label="Create Deal" href="/deals" icon={Kanban} color="bg-amber-50 text-amber-600" />
+          <QuickAction label="New Campaign" href="/campaigns" icon={Mail} color="bg-blue-50 text-blue-600" />
+          <QuickAction label="Add Task" href="/tasks" icon={ListChecks} color="bg-amber-50 text-amber-600" />
+          <QuickAction label="Post Load" href="/freight-marketplace" icon={Truck} color="bg-emerald-50 text-emerald-600" />
+          <QuickAction label="Signal Feed" href="/paradigm/signals" icon={Radar} color="bg-purple-50 text-purple-600" />
+        </CardContent>
+      </Card>
+
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -906,25 +924,8 @@ export default function Dashboard() {
       {/* ─── Migration Health Widget (admin only, only shown when migrations exist) ─── */}
       <MigrationHealthWidget />
 
-      {/* ─── Quick Actions & System Status ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="rounded-2xl border-border/40 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-3">
-            <QuickAction label="Add Company" href="/companies" icon={Building2} color="bg-blue-50 text-blue-600" />
-            <QuickAction label="Create Deal" href="/deals" icon={Kanban} color="bg-amber-50 text-amber-600" />
-            <QuickAction label="New Campaign" href="/campaigns" icon={Mail} color="bg-blue-50 text-blue-600" />
-            <QuickAction label="Add Task" href="/tasks" icon={ListChecks} color="bg-amber-50 text-amber-600" />
-            <QuickAction label="Post Load" href="/freight-marketplace" icon={Truck} color="bg-emerald-50 text-emerald-600" />
-            <QuickAction label="Signal Feed" href="/paradigm/signals" icon={Radar} color="bg-purple-50 text-purple-600" />
-          </CardContent>
-        </Card>
-
+      {/* ─── System Status ─── */}
+      <div className="grid grid-cols-1 gap-6">
         <Card className="rounded-2xl border-border/40 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold">System Status</CardTitle>

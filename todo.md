@@ -2512,8 +2512,7 @@
 - [ ] Run tests and save checkpoint
 
 ## Session 24: Dashboard Quick Actions Position
-
-- [ ] Move Quick Actions section to the top of the Dashboard page (above stats cards)
+- [x] Move Quick Actions card to the top of the Dashboard page (above stats/KPI cards)
 
 ## Session 24: Fix Password Column Always Populates
 
