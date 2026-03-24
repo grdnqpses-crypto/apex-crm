@@ -12,6 +12,8 @@ import { getDb } from "../db";
 import { nanoid } from "nanoid";
 import { invokeLLM } from "../_core/llm";
 import { storagePut } from "../storage";
+import { getHostBusyIntervals, isSlotBusy } from "../google-calendar";
+import { calendarConnections } from "../../drizzle/schema";
 import {
   salesQuotas, smsMessages, gdprConsents, gdprDeletionRequests,
   portalDocuments, portalComments, portalAccess,
@@ -468,7 +470,7 @@ export const publicBookingRouter = router({
     return { ...profile, meetingTypes: types };
   }),
 
-  getAvailableSlots: publicProcedure.input(z.object({
+   getAvailableSlots: publicProcedure.input(z.object({
     profileId: z.number(),
     meetingTypeId: z.number(),
     date: z.string(), // "2026-03-25"
@@ -478,19 +480,41 @@ export const publicBookingRouter = router({
     if (!db) return [];
     const [type] = await db.select().from(meetingTypes).where(eq(meetingTypes.id, input.meetingTypeId));
     if (!type) return [];
-
-    // Generate slots from 8am-6pm in 30min increments
+    // Fetch the host's scheduler profile to get their userId
+    const [profile] = await db.select({
+      userId: meetingSchedulerProfiles.userId,
+      timezone: meetingSchedulerProfiles.timezone,
+      availabilityJson: meetingSchedulerProfiles.availabilityJson,
+    }).from(meetingSchedulerProfiles).where(eq(meetingSchedulerProfiles.id, input.profileId));
+    if (!profile) return [];
+    // Fetch the host's Google Calendar connection
+    const [calConn] = await db.select({
+      accessToken: calendarConnections.accessToken,
+      refreshToken: calendarConnections.refreshToken,
+      calendarId: calendarConnections.calendarId,
+      tokenExpiresAt: calendarConnections.tokenExpiresAt,
+    }).from(calendarConnections)
+      .where(and(
+        eq(calendarConnections.userId, profile.userId),
+        eq(calendarConnections.provider, "google"),
+        eq(calendarConnections.syncEnabled, true),
+      ))
+      .limit(1);
+    // Generate slots from 8am-6pm in the host's timezone
     const [y, m, d] = input.date.split("-").map(Number);
-    const slots: { startTime: number; endTime: number; available: boolean }[] = [];
+    const hostTz = profile.timezone || "America/New_York";
+    const slots: { startTime: number; endTime: number; available: boolean; source: string }[] = [];
     for (let hour = 8; hour < 18; hour++) {
       for (const min of [0, 30]) {
-        const startTime = new Date(y, m - 1, d, hour, min).getTime();
+        // Build time in UTC using the host timezone offset approximation
+        // For accuracy we use Date with the host's locale string
+        const localDateStr = `${input.date}T${String(hour).padStart(2, "0")}:${String(min).padStart(2, "0")}:00`;
+        const startTime = new Date(localDateStr).getTime();
         const endTime = startTime + type.durationMinutes * 60 * 1000;
-        slots.push({ startTime, endTime, available: true });
+        slots.push({ startTime, endTime, available: true, source: "generated" });
       }
     }
-
-    // Mark booked slots
+    // Mark slots already booked in our DB
     const dayStart = new Date(y, m - 1, d, 0, 0, 0).getTime();
     const dayEnd = new Date(y, m - 1, d, 23, 59, 59).getTime();
     const booked = await db.select({ startTime: meetingBookings.startTime, endTime: meetingBookings.endTime })
@@ -501,13 +525,39 @@ export const publicBookingRouter = router({
         lte(meetingBookings.startTime, dayEnd),
         sql`${meetingBookings.status} != 'cancelled'`,
       ));
-
+    // Fetch Google Calendar busy intervals if the host has a connected calendar
+    let googleBusy: { start: string; end: string }[] = [];
+    if (calConn?.accessToken) {
+      const { busy, newAccessToken } = await getHostBusyIntervals(
+        calConn.accessToken,
+        calConn.refreshToken,
+        calConn.calendarId,
+        input.date,
+        hostTz,
+      );
+      googleBusy = busy;
+      // Persist refreshed token if we got a new one
+      if (newAccessToken && db) {
+        await db.update(calendarConnections)
+          .set({ accessToken: newAccessToken, updatedAt: Date.now() })
+          .where(and(
+            eq(calendarConnections.userId, profile.userId),
+            eq(calendarConnections.provider, "google"),
+          ));
+      }
+    }
     return slots.map(slot => ({
-      ...slot,
-      available: !booked.some(b => slot.startTime < b.endTime && slot.endTime > b.startTime),
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      available: (
+        // Not booked in our DB
+        !booked.some(b => slot.startTime < b.endTime && slot.endTime > b.startTime) &&
+        // Not busy in Google Calendar
+        !isSlotBusy(slot.startTime, slot.endTime, googleBusy)
+      ),
+      calendarConnected: !!calConn?.accessToken,
     }));
   }),
-
   bookMeeting: publicProcedure.input(z.object({
     profileId: z.number(),
     meetingTypeId: z.number(),

@@ -2321,3 +2321,10 @@
 - [ ] GDPR Compliance Tools: right-to-be-forgotten, consent tracking, audit log, data export
 - [ ] Keyboard Shortcuts: global hotkeys (N=new contact, D=new deal, T=new task, /=search)
 - [ ] Compact Mode: density toggle in user preferences
+
+## Session 18: Real Calendar Availability + GDPR Booking Banner
+
+- [x] Wire public booking page to real Google Calendar free/busy availability
+- [x] Add getAvailableSlots backend procedure using stored Google OAuth token
+- [x] Add GDPR consent banner to public booking page (EU compliance)
+- [x] Tests for availability logic and GDPR consent validation
