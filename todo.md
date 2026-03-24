@@ -2532,3 +2532,8 @@
 - [ ] Assign real credential passwords to all OAuth users and store in plainTextPassword
 - [ ] Fix PasswordCell to always show the actual password (no "OAuth Login" label ever)
 - [ ] Rebuild Excel workbook in exact user-specified sidebar tab order
+
+## Session 27: Fix PasswordCell for Email-Method Users
+
+- [x] Fix PasswordCell so email-method users (AXIOM Developer, AXIOM Admin) show actual password, not "OAuth Login"
+- [x] Only show "OAuth Login" for google/oauth loginMethod users

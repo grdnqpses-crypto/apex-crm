@@ -36,8 +36,8 @@ function PasswordCell({ userId, username, loginMethod }: { userId: number; usern
     },
     onError: (e) => toast.error(e.message),
   });
-  // OAuth users: no username or non-credential login
-  const isOAuth = !username || (loginMethod && loginMethod !== "credentials");
+  // Only Google/OAuth SSO users have no password — email and credentials users always have one
+  const isOAuth = loginMethod === "google" || loginMethod === "oauth";
   if (isOAuth) return <span className="text-xs text-muted-foreground italic">OAuth Login</span>;
   // Inline reset form
   if (resetting) {
