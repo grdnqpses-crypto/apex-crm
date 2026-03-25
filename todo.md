@@ -2603,3 +2603,38 @@
 - [ ] Bulk actions on companies/contacts (select all, assign, edit, delete, tasks, segment, workflow)
 - [ ] Lead enrichment paid service (enrich company/contact on demand)
 - [ ] Save imported CRM skins to DB so they don't re-duplicate
+
+## Feature Completion Sprint — No API Key Required
+
+### 1. Paradigm Engine
+- [x] Add ghostSequences.steps.aiGenerate procedure (LLM generates subject+body per step)
+- [x] Add "AI Generate Steps" button to Ghost Sequences page
+- [x] Verify Quantum Score frontend calls trpc.quantumScore.score and displays all 12 dimensions
+- [x] Add "Generate Battle Card" button directly on Battle Cards page
+
+### 2. Revenue Autopilot
+- [ ] Wire Revenue Autopilot LLM backend to frontend
+
+### 3. AXIOM Autopilot (Freight)
+- [ ] Wire AXIOM Autopilot LLM backend to frontend
+
+### 4. DocScan
+- [ ] Wire DocScan AI document extraction to LLM vision
+
+### 5. Meeting Prep
+- [ ] Wire Meeting Prep AI pre-call briefs to LLM
+
+### 6. AI Ghostwriter
+- [ ] Wire AI Ghostwriter email/content drafting to LLM
+
+### 7. Win Probability
+- [ ] Wire Win Probability AI deal scoring to LLM
+
+### 8. Anomaly Detection
+- [ ] Wire Anomaly Detection pipeline health monitoring to LLM
+
+### 9. FMCSA Scanner
+- [ ] Wire FMCSA Scanner to public API
+
+### 10. Stripe Billing
+- [ ] Wire Stripe subscription plans and AI credit purchases

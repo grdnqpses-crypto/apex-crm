@@ -1704,6 +1704,76 @@ export const appRouter = router({
         await db.deleteGhostSequenceStep(input.id);
         return { success: true };
       }),
+      aiGenerate: protectedProcedure.input(z.object({
+        sequenceId: z.number(),
+        sequenceName: z.string(),
+        sequenceDescription: z.string().optional(),
+        toneOverride: z.string().optional(),
+        prospectContext: z.object({
+          firstName: z.string().optional(),
+          lastName: z.string().optional(),
+          jobTitle: z.string().optional(),
+          companyName: z.string().optional(),
+          industry: z.string().optional(),
+          painPoints: z.string().optional(),
+        }).optional(),
+        numSteps: z.number().min(1).max(8).default(4),
+      })).mutation(async ({ input }) => {
+        const tone = input.toneOverride || 'professional and personable';
+        const prospect = input.prospectContext;
+        const prospectDesc = prospect
+          ? `Target prospect: ${prospect.firstName || ''} ${prospect.lastName || ''}, ${prospect.jobTitle || 'Decision Maker'} at ${prospect.companyName || 'their company'} in the ${prospect.industry || 'logistics'} industry. Known pain points: ${prospect.painPoints || 'not specified'}.`
+          : 'Target: a logistics/freight decision maker at a mid-size company.';
+        const response = await invokeLLM({
+          messages: [
+            { role: 'system', content: 'You are an expert B2B sales copywriter specializing in ghost email sequences. You write concise, high-converting cold outreach emails that feel personal, not spammy. Always respond with valid JSON only.' },
+            { role: 'user', content: `Generate a ${input.numSteps}-step ghost email sequence for the campaign: "${input.sequenceName}". ${input.sequenceDescription ? 'Campaign goal: ' + input.sequenceDescription + '.' : ''} ${prospectDesc} Tone: ${tone}. Each step should be spaced 2-4 days apart and progressively build urgency. Return JSON with steps array. Use {{firstName}}, {{companyName}}, {{jobTitle}} as personalization tokens. Keep each email under 150 words.` },
+          ],
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'ghost_sequence_steps',
+              strict: true,
+              schema: {
+                type: 'object',
+                properties: {
+                  steps: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        stepOrder: { type: 'integer' },
+                        delayDays: { type: 'integer' },
+                        subject: { type: 'string' },
+                        bodyTemplate: { type: 'string' },
+                      },
+                      required: ['stepOrder', 'delayDays', 'subject', 'bodyTemplate'],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ['steps'],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+        const content = response?.choices?.[0]?.message?.content;
+        const parsed = typeof content === 'string' ? JSON.parse(content) : content;
+        const createdSteps: any[] = [];
+        for (const step of (parsed?.steps || [])) {
+          const id = await db.createGhostSequenceStep({
+            sequenceId: input.sequenceId,
+            stepOrder: step.stepOrder,
+            delayDays: step.delayDays,
+            subject: step.subject,
+            bodyTemplate: step.bodyTemplate,
+            aiGenerated: true,
+          });
+          createdSteps.push({ id, ...step });
+        }
+        return { steps: createdSteps };
+      }),
     }),
   }),
 
@@ -1755,6 +1825,63 @@ export const appRouter = router({
     archive: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
       await db.updateBattleCard(input.id, ctx.user.id, { isArchived: true });
       return { success: true };
+    }),
+    generate: protectedProcedure.input(z.object({
+      prospectId: z.number().optional(),
+      prospectName: z.string(),
+      companyName: z.string().optional(),
+      jobTitle: z.string().optional(),
+      industry: z.string().optional(),
+      engagementStage: z.string().optional(),
+      notes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const response = await invokeLLM({
+        messages: [
+          { role: 'system', content: 'You are a B2B sales intelligence AI. Generate a concise, actionable battle card for a sales rep about to engage a prospect. Return JSON only.' },
+          { role: 'user', content: `Generate a battle card for: ${input.prospectName}${input.jobTitle ? ', ' + input.jobTitle : ''}${input.companyName ? ' at ' + input.companyName : ''}${input.industry ? ' (' + input.industry + ' industry)' : ''}. Engagement stage: ${input.engagementStage || 'cold'}. ${input.notes ? 'Additional context: ' + input.notes : ''}` },
+        ],
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'battle_card',
+            strict: true,
+            schema: {
+              type: 'object',
+              properties: {
+                title: { type: 'string' },
+                summary: { type: 'string' },
+                keyPainPoints: { type: 'array', items: { type: 'string' } },
+                talkingPoints: { type: 'array', items: { type: 'string' } },
+                objectionHandlers: { type: 'array', items: { type: 'string' } },
+                competitiveAdvantages: { type: 'array', items: { type: 'string' } },
+                recommendedNextStep: { type: 'string' },
+                urgencyLevel: { type: 'string' },
+              },
+              required: ['title', 'summary', 'keyPainPoints', 'talkingPoints', 'objectionHandlers', 'competitiveAdvantages', 'recommendedNextStep', 'urgencyLevel'],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+      const content = response?.choices?.[0]?.message?.content;
+      const cardData = typeof content === 'string' ? JSON.parse(content) : content;
+      const id = await db.createBattleCard({
+        userId: ctx.user.id,
+        prospectId: input.prospectId ?? 0,
+        title: cardData.title,
+        personInsights: cardData.summary,
+        painPoints: cardData.keyPainPoints,
+        talkingPoints: cardData.talkingPoints,
+        objectionHandlers: (cardData.objectionHandlers || []).map((o: string) => ({ objection: o, response: '' })),
+        competitorIntel: (cardData.competitiveAdvantages || []).join('\n'),
+        recommendedApproach: cardData.recommendedNextStep,
+        urgencyLevel: cardData.urgencyLevel,
+        isRead: false,
+        isArchived: false,
+        generatedAt: Date.now(),
+        createdAt: Date.now(),
+      });
+      return { id, ...cardData };
     }),
    }),
 

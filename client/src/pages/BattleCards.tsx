@@ -4,10 +4,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   Shield, Eye, Archive, Loader2, Target, ChevronDown, ChevronUp,
-  Building, User, AlertTriangle, MessageSquare, Flame,
+  Building, User, AlertTriangle, MessageSquare, Flame, Sparkles, Plus,
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
@@ -21,6 +26,8 @@ export default function BattleCards() {
   const [, navigate] = useLocation();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [showGenerate, setShowGenerate] = useState(false);
+  const [genForm, setGenForm] = useState({ prospectName: "", companyName: "", jobTitle: "", industry: "logistics", engagementStage: "cold", notes: "" });
 
   const utils = trpc.useUtils();
   const { data: cards, isLoading } = trpc.battleCards.list.useQuery({ limit: 100 });
@@ -29,6 +36,15 @@ export default function BattleCards() {
   });
   const archiveMut = trpc.battleCards.archive.useMutation({
     onSuccess: () => { utils.battleCards.list.invalidate(); toast.success("Card archived"); },
+  });
+  const generateMut = trpc.battleCards.generate.useMutation({
+    onSuccess: () => {
+      utils.battleCards.list.invalidate();
+      setShowGenerate(false);
+      setGenForm({ prospectName: "", companyName: "", jobTitle: "", industry: "logistics", engagementStage: "cold", notes: "" });
+      toast.success("✨ Battle card generated successfully");
+    },
+    onError: (err) => toast.error(`Generation failed: ${err.message}`),
   });
 
   const allCards = cards ?? [];
@@ -48,10 +64,65 @@ export default function BattleCards() {
             {unreadCount > 0 ? `${unreadCount} unread` : "All caught up"} &middot; {allCards.length} total
           </p>
         </div>
-        <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>
-          <Archive className="h-4 w-4 mr-2" />
-          {showArchived ? "Hide Archived" : "Show Archived"}
-        </Button>
+        <div className="flex gap-2">
+          <Dialog open={showGenerate} onOpenChange={setShowGenerate}>
+            <DialogTrigger asChild>
+              <Button className="bg-red-600 hover:bg-red-700">
+                <Sparkles className="h-4 w-4 mr-2" /> Generate Battle Card
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader><DialogTitle className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-red-400" /> AI Battle Card Generator</DialogTitle></DialogHeader>
+              <p className="text-xs text-muted-foreground">Enter prospect details and the AI will generate a complete battle card with pain points, talking points, objection handlers, and competitive advantages.</p>
+              <div className="space-y-3 mt-2">
+                <div>
+                  <Label className="text-xs">Prospect Name *</Label>
+                  <Input value={genForm.prospectName} onChange={(e) => setGenForm(p => ({ ...p, prospectName: e.target.value }))} className="mt-1" placeholder="e.g., John Smith" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Company</Label>
+                    <Input value={genForm.companyName} onChange={(e) => setGenForm(p => ({ ...p, companyName: e.target.value }))} className="mt-1" placeholder="e.g., Acme Logistics" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Job Title</Label>
+                    <Input value={genForm.jobTitle} onChange={(e) => setGenForm(p => ({ ...p, jobTitle: e.target.value }))} className="mt-1" placeholder="e.g., VP of Operations" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Industry</Label>
+                    <Input value={genForm.industry} onChange={(e) => setGenForm(p => ({ ...p, industry: e.target.value }))} className="mt-1" placeholder="e.g., freight, logistics" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Engagement Stage</Label>
+                    <Select value={genForm.engagementStage} onValueChange={(v) => setGenForm(p => ({ ...p, engagementStage: v }))}>
+                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cold">Cold</SelectItem>
+                        <SelectItem value="warm">Warm</SelectItem>
+                        <SelectItem value="hot">Hot</SelectItem>
+                        <SelectItem value="negotiating">Negotiating</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs">Additional Context (optional)</Label>
+                  <Textarea value={genForm.notes} onChange={(e) => setGenForm(p => ({ ...p, notes: e.target.value }))} className="mt-1" rows={2} placeholder="Any known pain points, recent interactions, or context..." />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-4">
+                <Button variant="outline" onClick={() => setShowGenerate(false)}>Cancel</Button>
+                <Button className="bg-red-600 hover:bg-red-700" onClick={() => generateMut.mutate(genForm)} disabled={!genForm.prospectName.trim() || generateMut.isPending}>
+                  {generateMut.isPending ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Generating...</> : <><Sparkles className="h-4 w-4 mr-2" /> Generate</>}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>
+            <Archive className="h-4 w-4 mr-2" />
+            {showArchived ? "Hide Archived" : "Show Archived"}
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -63,7 +134,7 @@ export default function BattleCards() {
           <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <Shield className="h-12 w-12 mb-3 opacity-50" />
             <p className="text-lg font-medium">No battle cards yet</p>
-            <p className="text-sm">Generate battle cards from the Prospect Detail page</p>
+            <p className="text-sm">Click "Generate Battle Card" to create one instantly with AI</p>
           </CardContent>
         </Card>
       ) : (
