@@ -5,43 +5,48 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import DashboardLayout from "./components/DashboardLayout";
-import { lazy, Suspense, useState, useEffect } from "react";
+import { lazy, Suspense } from "react";
 import { trpc } from "./lib/trpc";
 import { toast } from "sonner";
 
 // ─── Emulation Banner ─────────────────────────────────────────────────────────
+// Uses server-driven state (auth.me.isEmulating) so it always shows correctly
+// regardless of how emulation was started — no sessionStorage dependency.
 function EmulationBanner() {
-  const [active, setActive] = useState(false);
-  const [targetName, setTargetName] = useState("");
-
-  useEffect(() => {
-    const isEmulating = sessionStorage.getItem("emulation_active") === "true";
-    const name = sessionStorage.getItem("emulation_target") || "";
-    setActive(isEmulating);
-    setTargetName(name);
-  }, []);
+  const meQuery = trpc.auth.me.useQuery(undefined, {
+    retry: false,
+    refetchOnWindowFocus: true,
+    refetchInterval: 30_000, // re-check every 30s in case session changes
+  });
+  const utils = trpc.useUtils();
 
   const restoreSessionMutation = trpc.auth.restoreSession.useMutation({
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      // Clear sessionStorage flags (legacy cleanup)
       sessionStorage.removeItem("emulation_active");
       sessionStorage.removeItem("emulation_target");
       if (data.restored) {
         toast.success("Exited emulation — returning to your account");
-        setTimeout(() => { window.location.href = "/dashboard"; }, 800);
+        // Invalidate auth.me so the banner disappears and the correct user loads
+        await utils.auth.me.invalidate();
+        setTimeout(() => { window.location.href = "/dashboard"; }, 600);
       } else {
-        // No original session found — fall back to login
-        toast.success("Exited emulation");
+        toast.info("Session expired — please log in again");
         setTimeout(() => { window.location.href = "/login"; }, 800);
       }
     },
     onError: () => {
       sessionStorage.removeItem("emulation_active");
       sessionStorage.removeItem("emulation_target");
-      window.location.href = "/login";
+      // Still try to restore by reloading — the server may have set the cookie
+      window.location.href = "/dashboard";
     },
   });
 
-  if (!active) return null;
+  const isEmulating = (meQuery.data as any)?.isEmulating === true;
+  const targetName = (meQuery.data as any)?.emulatingAs || (meQuery.data as any)?.name || "";
+
+  if (!isEmulating) return null;
 
   return (
     <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999, background: "#f59e0b", color: "#000", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 16px", fontSize: "13px", fontWeight: 600, boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>

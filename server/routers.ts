@@ -109,7 +109,29 @@ export const appRouter = router({
   portalTokens: portalRouter,
   websiteMonitor: websiteMonitorRouter,
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
+    me: publicProcedure.query(async ({ ctx }) => {
+      if (!ctx.user) return null;
+      // Check if the current session is an emulation session (server-side, reliable)
+      const currentToken = ctx.req.cookies?.["app_session_id"];
+      let isEmulating = false;
+      let emulatingAs: string | null = null;
+      if (currentToken) {
+        try {
+          const dbConn = await db.getDb();
+          const { emulationSessions } = await import("../drizzle/schema.js");
+          const { eq } = await import("drizzle-orm");
+          const [record] = await dbConn.select()
+            .from(emulationSessions)
+            .where(eq(emulationSessions.emulatedSessionToken, currentToken))
+            .limit(1);
+          if (record) {
+            isEmulating = true;
+            emulatingAs = ctx.user.name || ctx.user.username || `User #${ctx.user.id}`;
+          }
+        } catch (_) {}
+      }
+      return { ...ctx.user, isEmulating, emulatingAs };
+    }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
