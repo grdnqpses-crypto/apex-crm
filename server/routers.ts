@@ -1706,28 +1706,39 @@ export const appRouter = router({
       }),
       aiGenerate: protectedProcedure.input(z.object({
         sequenceId: z.number(),
-        sequenceName: z.string(),
-        sequenceDescription: z.string().optional(),
-        toneOverride: z.string().optional(),
-        prospectContext: z.object({
-          firstName: z.string().optional(),
-          lastName: z.string().optional(),
-          jobTitle: z.string().optional(),
-          companyName: z.string().optional(),
-          industry: z.string().optional(),
-          painPoints: z.string().optional(),
-        }).optional(),
         numSteps: z.number().min(1).max(8).default(4),
-      })).mutation(async ({ input }) => {
+        toneOverride: z.string().optional(),
+      })).mutation(async ({ ctx, input }) => {
+        // Auto-pull: load the sequence, its enrolled prospects, and all CRM data for each
+        const sequence = await db.getGhostSequence(input.sequenceId, ctx.user.id);
+        const enrolledProspects = await db.getProspectsBySequence(input.sequenceId, ctx.user.id);
+        // Build rich context from DB — no manual input needed
+        let prospectDesc = 'Target: a logistics/freight decision maker at a mid-size company.';
+        if (enrolledProspects && enrolledProspects.length > 0) {
+          const p = enrolledProspects[0];
+          // Pull company data if linked
+          let companyInfo = '';
+          if (p.companyId) {
+            const company = await db.getCompany(p.companyId, ctx.user.id);
+            if (company) {
+              const deals = await db.listDeals(ctx.user.id, { limit: 3 });
+              const companyDeals = deals.filter((d: any) => d.companyId === p.companyId);
+              const activities = await db.listActivities(ctx.user.id, { companyId: p.companyId, limit: 5 });
+              companyInfo = `Company: ${company.name}${company.industry ? ' (' + company.industry + ' industry)' : ''}${company.website ? ', website: ' + company.website : ''}. ${companyDeals.length > 0 ? 'Open deals: ' + companyDeals.map((d: any) => d.name).join(', ') + '.' : ''} ${activities.length > 0 ? 'Recent activities: ' + activities.slice(0, 3).map((a: any) => a.type + ': ' + (a.notes || '')).join('; ') + '.' : ''}`;
+            }
+          }
+          // Pull signals for this prospect
+          const signals = await db.listTriggerSignals(ctx.user.id, { limit: 3 });
+          const prospectSignals = signals.items?.filter((s: any) => s.prospectId === p.id) || [];
+          prospectDesc = `Target prospect: ${p.firstName || ''} ${p.lastName || ''}, ${p.jobTitle || 'Decision Maker'} at ${p.companyName || 'their company'} in the ${p.industry || 'logistics'} industry. Intent score: ${p.intentScore ?? 'unknown'}/100. Engagement stage: ${p.engagementStage || 'cold'}. ${p.painPoints ? 'Pain points: ' + p.painPoints + '.' : ''} ${p.notes ? 'Notes: ' + p.notes + '.' : ''} ${companyInfo} ${prospectSignals.length > 0 ? 'Recent signals: ' + prospectSignals.map((s: any) => s.signalType + ': ' + s.description).join('; ') + '.' : ''}`;
+        }
         const tone = input.toneOverride || 'professional and personable';
-        const prospect = input.prospectContext;
-        const prospectDesc = prospect
-          ? `Target prospect: ${prospect.firstName || ''} ${prospect.lastName || ''}, ${prospect.jobTitle || 'Decision Maker'} at ${prospect.companyName || 'their company'} in the ${prospect.industry || 'logistics'} industry. Known pain points: ${prospect.painPoints || 'not specified'}.`
-          : 'Target: a logistics/freight decision maker at a mid-size company.';
+        const sequenceName = sequence?.name || 'Outreach Sequence';
+        const sequenceDescription = sequence?.description || '';
         const response = await invokeLLM({
           messages: [
             { role: 'system', content: 'You are an expert B2B sales copywriter specializing in ghost email sequences. You write concise, high-converting cold outreach emails that feel personal, not spammy. Always respond with valid JSON only.' },
-            { role: 'user', content: `Generate a ${input.numSteps}-step ghost email sequence for the campaign: "${input.sequenceName}". ${input.sequenceDescription ? 'Campaign goal: ' + input.sequenceDescription + '.' : ''} ${prospectDesc} Tone: ${tone}. Each step should be spaced 2-4 days apart and progressively build urgency. Return JSON with steps array. Use {{firstName}}, {{companyName}}, {{jobTitle}} as personalization tokens. Keep each email under 150 words.` },
+            { role: 'user', content: `Generate a ${input.numSteps}-step ghost email sequence for the campaign: "${sequenceName}". ${sequenceDescription ? 'Campaign goal: ' + sequenceDescription + '.' : ''} ${prospectDesc} Tone: ${tone}. Each step should be spaced 2-4 days apart and progressively build urgency. Return JSON with steps array. Use {{firstName}}, {{companyName}}, {{jobTitle}} as personalization tokens. Keep each email under 150 words.` },
           ],
           response_format: {
             type: 'json_schema',
@@ -1828,17 +1839,83 @@ export const appRouter = router({
     }),
     generate: protectedProcedure.input(z.object({
       prospectId: z.number().optional(),
-      prospectName: z.string(),
+      companyId: z.number().optional(),
+      contactId: z.number().optional(),
+      // Optional manual overrides — if not provided, system auto-pulls from DB
+      prospectName: z.string().optional(),
       companyName: z.string().optional(),
       jobTitle: z.string().optional(),
       industry: z.string().optional(),
       engagementStage: z.string().optional(),
       notes: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
+      // Auto-pull all available data from the DB
+      let contextParts: string[] = [];
+      let resolvedProspectName = input.prospectName || 'Unknown Prospect';
+
+      // Pull prospect data
+      if (input.prospectId) {
+        const p = await db.getProspect(input.prospectId, ctx.user.id);
+        if (p) {
+          resolvedProspectName = `${p.firstName || ''} ${p.lastName || ''}`.trim() || p.email || 'Unknown';
+          contextParts.push(`Prospect: ${resolvedProspectName}, ${p.jobTitle || 'Decision Maker'} at ${p.companyName || 'their company'}.`);
+          if (p.industry) contextParts.push(`Industry: ${p.industry}.`);
+          if (p.intentScore) contextParts.push(`Intent score: ${p.intentScore}/100.`);
+          if (p.engagementStage) contextParts.push(`Engagement stage: ${p.engagementStage}.`);
+          if (p.painPoints) contextParts.push(`Known pain points: ${p.painPoints}.`);
+          if (p.notes) contextParts.push(`Notes: ${p.notes}.`);
+          const outreach = await db.listProspectOutreach(p.id, 5);
+          if (outreach && outreach.length > 0) contextParts.push(`Past outreach: ${outreach.map((o: any) => o.channel + ' on ' + new Date(Number(o.sentAt)).toLocaleDateString() + (o.replied ? ' (replied)' : '')).join('; ')}.`);
+          // Pull signals for this prospect
+          const signals = await db.listTriggerSignals(ctx.user.id, { limit: 5 });
+          const prospectSignals = (signals.items || []).filter((s: any) => s.prospectId === p.id);
+          if (prospectSignals.length > 0) contextParts.push(`Trigger signals: ${prospectSignals.map((s: any) => s.signalType + ': ' + s.description).join('; ')}.`);
+        }
+      }
+
+      // Pull company data
+      const companyIdToUse = input.companyId;
+      if (companyIdToUse) {
+        const company = await db.getCompany(companyIdToUse, ctx.user.id);
+        if (company) {
+          contextParts.push(`Company: ${company.name}${company.industry ? ' (' + company.industry + ' industry)' : ''}${company.website ? ', website: ' + company.website : ''}${company.city ? ', based in ' + company.city : ''}.`);
+          if (company.description) contextParts.push(`Company description: ${company.description}.`);
+          // Pull contacts at this company
+          const contacts = await db.getContactsByCompany(companyIdToUse, ctx.user.id);
+          if (contacts && contacts.length > 0) contextParts.push(`Key contacts: ${contacts.slice(0, 3).map((c: any) => `${c.firstName} ${c.lastName} (${c.jobTitle || 'unknown role'})`).join(', ')}.`);
+          // Pull deals
+          const deals = await db.listDeals(ctx.user.id, { limit: 10 });
+          const companyDeals = deals.filter((d: any) => d.companyId === companyIdToUse);
+          if (companyDeals.length > 0) contextParts.push(`Open deals: ${companyDeals.map((d: any) => `${d.name} ($${d.value || 0}, stage: ${d.stage || 'unknown'})`).join('; ')}.`);
+          // Pull recent activities
+          const activities = await db.listActivities(ctx.user.id, { companyId: companyIdToUse, limit: 5 });
+          if (activities.length > 0) contextParts.push(`Recent activities: ${activities.map((a: any) => a.type + (a.notes ? ': ' + a.notes.substring(0, 80) : '')).join('; ')}.`);
+        }
+      }
+
+      // Pull contact data
+      if (input.contactId) {
+        const contact = await db.getContact(input.contactId, ctx.user.id);
+        if (contact) {
+          if (!input.prospectId) resolvedProspectName = `${contact.firstName || ''} ${contact.lastName || ''}`.trim();
+          contextParts.push(`Contact: ${resolvedProspectName}, ${contact.jobTitle || 'unknown role'}${contact.email ? ', email: ' + contact.email : ''}.`);
+          if (contact.notes) contextParts.push(`Contact notes: ${contact.notes}.`);
+        }
+      }
+
+      // Fallback to manual overrides if no DB data found
+      if (contextParts.length === 0) {
+        resolvedProspectName = input.prospectName || 'Unknown Prospect';
+        contextParts.push(`Prospect: ${resolvedProspectName}${input.jobTitle ? ', ' + input.jobTitle : ''}${input.companyName ? ' at ' + input.companyName : ''}${input.industry ? ' (' + input.industry + ' industry)' : ''}.`);
+        if (input.engagementStage) contextParts.push(`Engagement stage: ${input.engagementStage}.`);
+        if (input.notes) contextParts.push(`Additional context: ${input.notes}.`);
+      }
+
+      const fullContext = contextParts.join(' ');
       const response = await invokeLLM({
         messages: [
-          { role: 'system', content: 'You are a B2B sales intelligence AI. Generate a concise, actionable battle card for a sales rep about to engage a prospect. Return JSON only.' },
-          { role: 'user', content: `Generate a battle card for: ${input.prospectName}${input.jobTitle ? ', ' + input.jobTitle : ''}${input.companyName ? ' at ' + input.companyName : ''}${input.industry ? ' (' + input.industry + ' industry)' : ''}. Engagement stage: ${input.engagementStage || 'cold'}. ${input.notes ? 'Additional context: ' + input.notes : ''}` },
+          { role: 'system', content: 'You are a B2B sales intelligence AI. Generate a concise, actionable battle card for a sales rep about to engage a prospect. Use all provided CRM context to make the card highly specific and personalized. Return JSON only.' },
+          { role: 'user', content: `Generate a battle card using this CRM data: ${fullContext}` },
         ],
         response_format: {
           type: 'json_schema',
@@ -1882,6 +1959,76 @@ export const appRouter = router({
         createdAt: Date.now(),
       });
       return { id, ...cardData };
+    }),
+    generateForAllCompanies: protectedProcedure.mutation(async ({ ctx }) => {
+      // Auto-generate a battle card for every company in the user's CRM
+      const companies = await db.listCompanies(ctx.user.id, { limit: 50 });
+      const results: { companyId: number; companyName: string; cardId: number }[] = [];
+      for (const company of companies) {
+        try {
+          const contacts = await db.getContactsByCompany(company.id, ctx.user.id);
+          const deals = await db.listDeals(ctx.user.id, { limit: 10 });
+          const companyDeals = deals.filter((d: any) => d.companyId === company.id);
+          const activities = await db.listActivities(ctx.user.id, { companyId: company.id, limit: 5 });
+          const contextParts: string[] = [
+            `Company: ${company.name}${company.industry ? ' (' + company.industry + ' industry)' : ''}${company.website ? ', website: ' + company.website : ''}${company.city ? ', based in ' + company.city : ''}.`,
+          ];
+          if (company.description) contextParts.push(`Description: ${company.description}.`);
+          if (contacts.length > 0) contextParts.push(`Key contacts: ${contacts.slice(0, 3).map((c: any) => `${c.firstName} ${c.lastName} (${c.jobTitle || 'unknown role'})`).join(', ')}.`);
+          if (companyDeals.length > 0) contextParts.push(`Open deals: ${companyDeals.map((d: any) => `${d.name} ($${d.value || 0}, stage: ${d.stage || 'unknown'})`).join('; ')}.`);
+          if (activities.length > 0) contextParts.push(`Recent activities: ${activities.map((a: any) => a.type + (a.notes ? ': ' + a.notes.substring(0, 60) : '')).join('; ')}.`);
+          const response = await invokeLLM({
+            messages: [
+              { role: 'system', content: 'You are a B2B sales intelligence AI. Generate a concise, actionable battle card for a sales rep. Use all provided CRM context. Return JSON only.' },
+              { role: 'user', content: `Generate a battle card using this CRM data: ${contextParts.join(' ')}` },
+            ],
+            response_format: {
+              type: 'json_schema',
+              json_schema: {
+                name: 'battle_card',
+                strict: true,
+                schema: {
+                  type: 'object',
+                  properties: {
+                    title: { type: 'string' },
+                    summary: { type: 'string' },
+                    keyPainPoints: { type: 'array', items: { type: 'string' } },
+                    talkingPoints: { type: 'array', items: { type: 'string' } },
+                    objectionHandlers: { type: 'array', items: { type: 'string' } },
+                    competitiveAdvantages: { type: 'array', items: { type: 'string' } },
+                    recommendedNextStep: { type: 'string' },
+                    urgencyLevel: { type: 'string' },
+                  },
+                  required: ['title', 'summary', 'keyPainPoints', 'talkingPoints', 'objectionHandlers', 'competitiveAdvantages', 'recommendedNextStep', 'urgencyLevel'],
+                  additionalProperties: false,
+                },
+              },
+            },
+          });
+          const content = response?.choices?.[0]?.message?.content;
+          const cardData = typeof content === 'string' ? JSON.parse(content) : content;
+          const cardId = await db.createBattleCard({
+            userId: ctx.user.id,
+            prospectId: 0,
+            title: cardData.title,
+            personInsights: cardData.summary,
+            painPoints: cardData.keyPainPoints,
+            talkingPoints: cardData.talkingPoints,
+            objectionHandlers: (cardData.objectionHandlers || []).map((o: string) => ({ objection: o, response: '' })),
+            competitorIntel: (cardData.competitiveAdvantages || []).join('\n'),
+            recommendedApproach: cardData.recommendedNextStep,
+            urgencyLevel: cardData.urgencyLevel,
+            isRead: false,
+            isArchived: false,
+            generatedAt: Date.now(),
+            createdAt: Date.now(),
+          });
+          results.push({ companyId: company.id, companyName: company.name, cardId });
+        } catch (e) {
+          // skip failed companies, continue with rest
+        }
+      }
+      return { generated: results.length, results };
     }),
    }),
 

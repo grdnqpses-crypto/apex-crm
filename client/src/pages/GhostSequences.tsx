@@ -228,52 +228,27 @@ function SequenceCard({ sequence, expanded, onToggle, onUpdate, onDelete }: {
                     <Sparkles className="h-4 w-4 text-violet-400" />
                     <p className="text-sm font-semibold text-violet-400">AI Ghost Sequence Generator</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">The AI will write personalized email steps based on your sequence goal and prospect context. All steps are saved directly to this sequence.</p>
+                  <p className="text-xs text-muted-foreground">The AI automatically pulls all enrolled prospect data (name, company, deals, activities, signals) from your CRM to write highly personalized email steps. No manual input required.</p>
+                  <div className="p-3 rounded-lg bg-violet-500/10 text-xs text-muted-foreground">
+                    <p className="font-medium text-violet-300 mb-1">✨ Auto-pulled from your CRM:</p>
+                    <p>Enrolled prospect names, job titles, companies • Intent scores • Engagement stages • Known pain points • Open deals • Recent activities • Trigger signals</p>
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs">Number of Steps</Label>
                       <Input type="number" min={1} max={8} value={aiForm.numSteps} onChange={(e) => setAiForm(p => ({ ...p, numSteps: Number(e.target.value) }))} className="mt-1" />
                     </div>
                     <div>
-                      <Label className="text-xs">Tone</Label>
+                      <Label className="text-xs">Tone (optional)</Label>
                       <Input value={aiForm.toneOverride} onChange={(e) => setAiForm(p => ({ ...p, toneOverride: e.target.value }))} className="mt-1" placeholder="e.g., casual, urgent, consultative" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Prospect First Name</Label>
-                      <Input value={aiForm.prospectFirstName} onChange={(e) => setAiForm(p => ({ ...p, prospectFirstName: e.target.value }))} className="mt-1" placeholder="e.g., John" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Prospect Job Title</Label>
-                      <Input value={aiForm.prospectJobTitle} onChange={(e) => setAiForm(p => ({ ...p, prospectJobTitle: e.target.value }))} className="mt-1" placeholder="e.g., VP of Operations" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Company Name</Label>
-                      <Input value={aiForm.prospectCompany} onChange={(e) => setAiForm(p => ({ ...p, prospectCompany: e.target.value }))} className="mt-1" placeholder="e.g., Acme Logistics" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Industry</Label>
-                      <Input value={aiForm.prospectIndustry} onChange={(e) => setAiForm(p => ({ ...p, prospectIndustry: e.target.value }))} className="mt-1" placeholder="e.g., freight, logistics" />
-                    </div>
-                    <div className="col-span-2">
-                      <Label className="text-xs">Known Pain Points (optional)</Label>
-                      <Input value={aiForm.painPoints} onChange={(e) => setAiForm(p => ({ ...p, painPoints: e.target.value }))} className="mt-1" placeholder="e.g., high carrier turnover, manual load tracking" />
                     </div>
                   </div>
                   <div className="flex justify-end gap-2 pt-1">
                     <Button variant="outline" size="sm" onClick={() => setShowAiGenerate(false)}>Cancel</Button>
                     <Button size="sm" className="bg-violet-600 hover:bg-violet-700" onClick={() => aiGenerateMut.mutate({
                       sequenceId: sequence.id,
-                      sequenceName: sequence.name,
-                      sequenceDescription: sequence.description,
                       numSteps: aiForm.numSteps,
                       toneOverride: aiForm.toneOverride || undefined,
-                      prospectContext: {
-                        firstName: aiForm.prospectFirstName || undefined,
-                        jobTitle: aiForm.prospectJobTitle || undefined,
-                        companyName: aiForm.prospectCompany || undefined,
-                        industry: aiForm.prospectIndustry || undefined,
-                        painPoints: aiForm.painPoints || undefined,
-                      },
                     })} disabled={aiGenerateMut.isPending}>
                       {aiGenerateMut.isPending ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> Generating...</> : <><Sparkles className="h-3.5 w-3.5 mr-1" /> Generate {aiForm.numSteps} Steps</>}
                     </Button>

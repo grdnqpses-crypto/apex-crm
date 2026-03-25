@@ -2638,3 +2638,9 @@
 
 ### 10. Stripe Billing
 - [ ] Wire Stripe subscription plans and AI credit purchases
+
+### Auto-Pull Data for AI Features
+- [x] Ghost Sequences: auto-pull company/contact/deal/signal data for all enrolled prospects — zero manual input
+- [x] Battle Cards: auto-pull all company/contact/deal/activity data — generate cards for all companies with one click
+- [x] Add "Generate for All Companies" bulk battle card generation button
+- [x] Add "Auto-Enrich Sequence" that auto-enrolls all matching prospects from CRM

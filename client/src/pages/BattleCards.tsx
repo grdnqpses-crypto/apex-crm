@@ -27,7 +27,9 @@ export default function BattleCards() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const [showGenerate, setShowGenerate] = useState(false);
-  const [genForm, setGenForm] = useState({ prospectName: "", companyName: "", jobTitle: "", industry: "logistics", engagementStage: "cold", notes: "" });
+  const [genForm, setGenForm] = useState<{ prospectName: string; companyName: string; jobTitle: string; industry: string; engagementStage: string; notes: string; companyId?: number; contactId?: number }>({
+    prospectName: "", companyName: "", jobTitle: "", industry: "logistics", engagementStage: "cold", notes: "", companyId: undefined, contactId: undefined
+  });
 
   const utils = trpc.useUtils();
   const { data: cards, isLoading } = trpc.battleCards.list.useQuery({ limit: 100 });
@@ -41,11 +43,20 @@ export default function BattleCards() {
     onSuccess: () => {
       utils.battleCards.list.invalidate();
       setShowGenerate(false);
-      setGenForm({ prospectName: "", companyName: "", jobTitle: "", industry: "logistics", engagementStage: "cold", notes: "" });
+      setGenForm({ prospectName: "", companyName: "", jobTitle: "", industry: "logistics", engagementStage: "cold", notes: "", companyId: undefined as number | undefined, contactId: undefined as number | undefined });
       toast.success("✨ Battle card generated successfully");
     },
     onError: (err) => toast.error(`Generation failed: ${err.message}`),
   });
+  const generateAllMut = trpc.battleCards.generateForAllCompanies.useMutation({
+    onSuccess: (data) => {
+      utils.battleCards.list.invalidate();
+      toast.success(`✨ Generated ${data.generated} battle cards for all companies`);
+    },
+    onError: (err) => toast.error(`Bulk generation failed: ${err.message}`),
+  });
+  const { data: companiesData } = trpc.companies.list.useQuery({ limit: 100 });
+  const { data: contactsData } = trpc.contacts.list.useQuery({ limit: 100 });
 
   const allCards = cards ?? [];
   const visibleCards = showArchived ? allCards : allCards.filter(c => !c.isArchived);
@@ -73,51 +84,50 @@ export default function BattleCards() {
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader><DialogTitle className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-red-400" /> AI Battle Card Generator</DialogTitle></DialogHeader>
-              <p className="text-xs text-muted-foreground">Enter prospect details and the AI will generate a complete battle card with pain points, talking points, objection handlers, and competitive advantages.</p>
+              <p className="text-xs text-muted-foreground">Select a company or contact from your CRM — the AI will automatically pull all available data (deals, activities, contacts, signals) to generate a highly personalized battle card. No manual input required.</p>
               <div className="space-y-3 mt-2">
                 <div>
-                  <Label className="text-xs">Prospect Name *</Label>
-                  <Input value={genForm.prospectName} onChange={(e) => setGenForm(p => ({ ...p, prospectName: e.target.value }))} className="mt-1" placeholder="e.g., John Smith" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs">Company</Label>
-                    <Input value={genForm.companyName} onChange={(e) => setGenForm(p => ({ ...p, companyName: e.target.value }))} className="mt-1" placeholder="e.g., Acme Logistics" />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Job Title</Label>
-                    <Input value={genForm.jobTitle} onChange={(e) => setGenForm(p => ({ ...p, jobTitle: e.target.value }))} className="mt-1" placeholder="e.g., VP of Operations" />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Industry</Label>
-                    <Input value={genForm.industry} onChange={(e) => setGenForm(p => ({ ...p, industry: e.target.value }))} className="mt-1" placeholder="e.g., freight, logistics" />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Engagement Stage</Label>
-                    <Select value={genForm.engagementStage} onValueChange={(v) => setGenForm(p => ({ ...p, engagementStage: v }))}>
-                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cold">Cold</SelectItem>
-                        <SelectItem value="warm">Warm</SelectItem>
-                        <SelectItem value="hot">Hot</SelectItem>
-                        <SelectItem value="negotiating">Negotiating</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <Label className="text-xs">Company (auto-pulls all CRM data)</Label>
+                  <Select value={genForm.companyId?.toString() || ""} onValueChange={(v) => setGenForm(p => ({ ...p, companyId: v ? Number(v) : undefined }))}>
+                    <SelectTrigger className="mt-1"><SelectValue placeholder="Select a company..." /></SelectTrigger>
+                    <SelectContent>
+                      {(companiesData?.companies || []).map((c: any) => (
+                        <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
-                  <Label className="text-xs">Additional Context (optional)</Label>
-                  <Textarea value={genForm.notes} onChange={(e) => setGenForm(p => ({ ...p, notes: e.target.value }))} className="mt-1" rows={2} placeholder="Any known pain points, recent interactions, or context..." />
+                  <Label className="text-xs">Contact (optional — adds contact-level context)</Label>
+                  <Select value={genForm.contactId?.toString() || ""} onValueChange={(v) => setGenForm(p => ({ ...p, contactId: v ? Number(v) : undefined }))}>
+                    <SelectTrigger className="mt-1"><SelectValue placeholder="Select a contact..." /></SelectTrigger>
+                    <SelectContent>
+                      {(contactsData?.contacts || []).map((c: any) => (
+                        <SelectItem key={c.id} value={c.id.toString()}>{c.firstName} {c.lastName}{c.jobTitle ? ` — ${c.jobTitle}` : ""}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/40 text-xs text-muted-foreground">
+                  <p className="font-medium text-foreground mb-1">✨ What gets auto-pulled:</p>
+                  <p>Company details, industry, website • All contacts at the company • Open deals and deal values • Recent activities and notes • Trigger signals • Past outreach history</p>
+                </div>
+                <div>
+                  <Label className="text-xs">Additional Notes (optional)</Label>
+                  <Textarea value={genForm.notes} onChange={(e) => setGenForm(p => ({ ...p, notes: e.target.value }))} className="mt-1" rows={2} placeholder="Any extra context you want the AI to consider..." />
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-4">
                 <Button variant="outline" onClick={() => setShowGenerate(false)}>Cancel</Button>
-                <Button className="bg-red-600 hover:bg-red-700" onClick={() => generateMut.mutate(genForm)} disabled={!genForm.prospectName.trim() || generateMut.isPending}>
+                <Button className="bg-red-600 hover:bg-red-700" onClick={() => generateMut.mutate({ companyId: genForm.companyId, contactId: genForm.contactId, notes: genForm.notes })} disabled={(!genForm.companyId && !genForm.contactId) || generateMut.isPending}>
                   {generateMut.isPending ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Generating...</> : <><Sparkles className="h-4 w-4 mr-2" /> Generate</>}
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
+          <Button variant="outline" onClick={() => generateAllMut.mutate()} disabled={generateAllMut.isPending}>
+            {generateAllMut.isPending ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Generating All...</> : <><Sparkles className="h-4 w-4 mr-2" /> Generate for All Companies</>}
+          </Button>
           <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>
             <Archive className="h-4 w-4 mr-2" />
             {showArchived ? "Hide Archived" : "Show Archived"}
