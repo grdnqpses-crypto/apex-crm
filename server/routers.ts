@@ -212,6 +212,62 @@ export const appRouter = router({
       await db.markPasswordResetTokenUsed(input.token);
       return { success: true };
     }),
+
+    // Restore original admin session after exiting emulation.
+    // This is the canonical endpoint — App.tsx calls trpc.auth.restoreSession.
+    restoreSession: publicProcedure.mutation(async ({ ctx }) => {
+      // CRITICAL: Parse cookie from raw header — cookie-parser middleware is NOT installed.
+      const { parse: _parseCookiesAuth } = await import("cookie");
+      const _rawHeaderAuth = ctx.req.headers["cookie"] as string | undefined;
+      const _cookieMapAuth = _rawHeaderAuth ? _parseCookiesAuth(_rawHeaderAuth) : {};
+      const currentToken = _cookieMapAuth["app_session_id"];
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      console.log(`[auth.restoreSession] cookie present: ${!!currentToken}`);
+      if (currentToken) {
+        try {
+          const dbConn = await db.getDb();
+          const { emulationSessions } = await import("../drizzle/schema.js");
+          const { eq } = await import("drizzle-orm");
+          const [record] = await dbConn.select()
+            .from(emulationSessions)
+            .where(eq(emulationSessions.emulatedSessionToken, currentToken))
+            .limit(1);
+          if (record) {
+            // Delete the emulation record
+            await dbConn.delete(emulationSessions)
+              .where(eq(emulationSessions.emulatedSessionToken, currentToken))
+              .catch(() => {});
+            if (record.originalSessionToken) {
+              // Restore the saved original session token
+              ctx.res.cookie("app_session_id", record.originalSessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+              console.log(`[auth.restoreSession] Restored original token for emulator ${record.emulatorUserId}`);
+              return { success: true, restored: true };
+            } else {
+              // originalToken was empty — generate a fresh session for the emulator.
+              // getUserByOpenId finds UUID-format openIds in DB without OAuth lookup.
+              const { sdk } = await import("./_core/sdk.js");
+              const { ENV } = await import("./_core/env.js");
+              const emulatorUser = await db.getUserById(record.emulatorUserId);
+              if (emulatorUser) {
+                const freshToken = await sdk.signSession({
+                  openId: emulatorUser.openId,
+                  appId: ENV.appId,
+                  name: emulatorUser.name || "",
+                }, { expiresInMs: ONE_YEAR_MS });
+                ctx.res.cookie("app_session_id", freshToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+                console.log(`[auth.restoreSession] Fresh session for emulator ${record.emulatorUserId}`);
+                return { success: true, restored: true };
+              }
+            }
+          }
+        } catch (e) {
+          console.error("[auth.restoreSession] DB lookup failed:", e);
+        }
+      }
+      // No record found — clear session (logout)
+      ctx.res.clearCookie("app_session_id", cookieOptions);
+      return { success: true, restored: false };
+    }),
   }),
 
   dashboard: router({
@@ -2578,6 +2634,7 @@ export const appRouter = router({
       const _rawHeader1 = ctx.req.headers["cookie"] as string | undefined;
       const _cookieMap1 = _rawHeader1 ? _parseCookies1(_rawHeader1) : {};
       const originalToken = _cookieMap1["app_session_id"];
+      console.log(`[Emulate] raw cookie header present: ${!!_rawHeader1}, originalToken present: ${!!originalToken}, header length: ${_rawHeader1?.length ?? 0}`);
       // Use signSession with emulatedUserId so authenticateRequest resolves by DB id directly,
       // bypassing the OAuth server (which would return the wrong user for OAuth-based accounts).
       const sessionToken = await sdk.signSession({
@@ -2625,6 +2682,7 @@ export const appRouter = router({
       const _cookieMap2 = _rawHeader2 ? _parseCookies2(_rawHeader2) : {};
       const currentToken = _cookieMap2["app_session_id"];
       const cookieOptions = getSessionCookieOptions(ctx.req);
+      console.log(`[restoreSession] raw cookie header present: ${!!_rawHeader2}, currentToken present: ${!!currentToken}, header length: ${_rawHeader2?.length ?? 0}`);
       if (currentToken) {
         try {
           const dbConn = await db.getDb();
@@ -2646,7 +2704,10 @@ export const appRouter = router({
               return { success: true, restored: true };
             } else {
               // originalToken was empty (cookie not readable at emulation time).
-              // Generate a fresh session for the emulator user directly.
+              // Generate a fresh session for the emulator user.
+              // CRITICAL: Must embed emulatedUserId in the JWT so authenticateRequest
+              // resolves by DB id directly — bypassing OAuth which would fail for
+              // UUID-format openIds (non-Manus-credential users like the developer account).
               const { sdk } = await import("./_core/sdk.js");
               const { ENV } = await import("./_core/env.js");
               const emulatorUser = await db.getUserById(record.emulatorUserId);
@@ -2655,6 +2716,9 @@ export const appRouter = router({
                   openId: emulatorUser.openId,
                   appId: ENV.appId,
                   name: emulatorUser.name || "",
+                  // NOTE: No emulatedUserId here — this is a clean admin session.
+                  // getUserByOpenId will find the user in DB directly (UUID openIds
+                  // are stored in the users table, no OAuth lookup needed).
                 }, { expiresInMs: ONE_YEAR_MS });
                 ctx.res.cookie("app_session_id", freshToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
                 console.log(`[restoreSession] Generated fresh session for emulator ${record.emulatorUserId}`);

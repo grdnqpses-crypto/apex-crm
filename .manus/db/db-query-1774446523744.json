@@ -1,0 +1,26 @@
+{
+  "query": "SELECT * FROM emulation_sessions ORDER BY created_at DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT * FROM emulation_sessions ORDER BY created_at DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "2",
+      "emulated_session_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcGVuSWQiOiJjcmVkXzE3NzM3ODAxNzUxMzJfYThoMTQwMm4iLCJhcHBJZCI6Im1MTFpFZm1mU0V1SDQ3ZGZlSmdWR1kiLCJuYW1lIjoiSm9zZXBoIExhdmFsbGVlIiwiZW11bGF0ZWRVc2VySWQiOjQ1OTAwMDEsImV4cCI6MTgwNTk4MjAzMH0._Bk-zyn3Dh-dIhPygNv3KeXnEhWOQPQ-t_dd8uJ8vmw",
+      "original_session_token": "",
+      "emulator_user_id": "5520068",
+      "emulated_user_id": "4590001",
+      "created_at": "1774446030176"
+    },
+    {
+      "id": "1",
+      "emulated_session_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcGVuSWQiOiJjcmVkXzE3NzM3ODAxNzUxMzJfYThoMTQwMm4iLCJhcHBJZCI6Im1MTFpFZm1mU0V1SDQ3ZGZlSmdWR1kiLCJuYW1lIjoiSm9zZXBoIExhdmFsbGVlIiwiZW11bGF0ZWRVc2VySWQiOjQ1OTAwMDEsImV4cCI6MTgwNTk4MTI5N30.6FKrEPVnIZRwhnBIFm94nAhKyshbZ5wWN7cwyRYvdP4",
+      "original_session_token": "",
+      "emulator_user_id": "5520068",
+      "emulated_user_id": "4590001",
+      "created_at": "1774445297212"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temulated_session_token\toriginal_session_token\temulator_user_id\temulated_user_id\tcreated_at\n2\teyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcGVuSWQiOiJjcmVkXzE3NzM3ODAxNzUxMzJfYThoMTQwMm4iLCJhcHBJZCI6Im1MTFpFZm1mU0V1SDQ3ZGZlSmdWR1kiLCJuYW1lIjoiSm9zZXBoIExhdmFsbGVlIiwiZW11bGF0ZWRVc2VySWQiOjQ1OTAwMDEsImV4cCI6MTgwNTk4MjAzMH0._Bk-zyn3Dh-dIhPygNv3KeXnEhWOQPQ-t_dd8uJ8vmw\t\t5520068\t4590001\t1774446030176\n1\teyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcGVuSWQiOiJjcmVkXzE3NzM3ODAxNzUxMzJfYThoMTQwMm4iLCJhcHBJZCI6Im1MTFpFZm1mU0V1SDQ3ZGZlSmdWR1kiLCJuYW1lIjoiSm9zZXBoIExhdmFsbGVlIiwiZW11bGF0ZWRVc2VySWQiOjQ1OTAwMDEsImV4cCI6MTgwNTk4MTI5N30.6FKrEPVnIZRwhnBIFm94nAhKyshbZ5wWN7cwyRYvdP4\t\t5520068\t4590001\t1774445297212\n",
+  "stderr": "",
+  "execution_time_ms": 394
+}
