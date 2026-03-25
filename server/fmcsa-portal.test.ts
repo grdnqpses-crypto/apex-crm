@@ -8,7 +8,7 @@ function createAuthContext(): { ctx: TrpcContext } {
       user: {
         id: 1,
         openId: "test-fmcsa-portal",
-        email: "test@apexcrm.com",
+        email: "test@axiomcrm.com",
         name: "Test User",
         loginMethod: "manus",
         role: "admin" as const,

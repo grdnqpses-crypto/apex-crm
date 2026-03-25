@@ -10,7 +10,7 @@ function createAuthContext() {
   const user: AuthenticatedUser = {
     id: 1,
     openId: "test-deal-detail",
-    email: "test@apexcrm.com",
+    email: "test@axiomcrm.com",
     name: "Test User",
     loginMethod: "manus",
     role: "admin",

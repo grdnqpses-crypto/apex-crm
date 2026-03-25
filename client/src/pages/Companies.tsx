@@ -45,6 +45,14 @@ export default function Companies() {
   const deleteMutation = trpc.companies.delete.useMutation({
     onSuccess: () => { utils.companies.list.invalidate(); utils.companies.listWithMetrics.invalidate(); setDeleteTarget(null); toast.success("Company and all contacts deleted"); },
   });
+  const bulkDeleteMutation = trpc.companies.bulkDelete.useMutation({
+    onSuccess: (d) => { utils.companies.list.invalidate(); utils.companies.listWithMetrics.invalidate(); setSelectedIds(new Set()); toast.success(`Deleted ${d.deleted} companies and their contacts`); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const deleteAllMutation = trpc.companies.deleteAll.useMutation({
+    onSuccess: () => { utils.companies.list.invalidate(); utils.companies.listWithMetrics.invalidate(); setSelectedIds(new Set()); toast.success("All companies and contacts deleted"); },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   // Completeness score: count how many key fields are filled
   const getCompanyScore = (c: any): number => {
@@ -190,8 +198,11 @@ export default function Companies() {
           <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => setBulkActivityDialog(true)}>
             <Activity className="h-3.5 w-3.5 text-rose-500" /> Track Activity
           </Button>
-          <Button variant="destructive" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { if (confirm(`Delete ${selectedIds.size} companies and all their contacts? This cannot be undone.`)) { Array.from(selectedIds).forEach(id => deleteMutation.mutate({ id })); setSelectedIds(new Set()); } }}>
-            <Trash2 className="h-3.5 w-3.5" /> Delete
+          <Button variant="destructive" size="sm" className="gap-1.5 rounded-xl text-xs h-8" disabled={bulkDeleteMutation.isPending} onClick={() => { if (confirm(`Delete ${selectedIds.size} selected companies and all their contacts? This cannot be undone.`)) { bulkDeleteMutation.mutate({ ids: Array.from(selectedIds) }); } }}>
+            <Trash2 className="h-3.5 w-3.5" /> {bulkDeleteMutation.isPending ? "Deleting..." : "Delete Selected"}
+          </Button>
+          <Button variant="destructive" size="sm" className="gap-1.5 rounded-xl text-xs h-8 opacity-80" disabled={deleteAllMutation.isPending} onClick={() => { if (confirm(`DELETE ALL ${data?.total ?? 0} companies and ALL their contacts? This cannot be undone.`)) { deleteAllMutation.mutate(); } }}>
+            <Trash2 className="h-3.5 w-3.5" /> {deleteAllMutation.isPending ? "Deleting All..." : "Delete All"}
           </Button>
           <Button variant="ghost" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => setSelectedIds(new Set())}>
             Clear

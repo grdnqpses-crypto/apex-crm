@@ -729,7 +729,7 @@ export default function MarketingHome({
                 <div className="flex-1 mx-4">
                   <div className="bg-white/5 rounded-md px-3 py-1 text-xs text-white/30 flex items-center gap-1.5 max-w-xs mx-auto">
                     <Lock className="h-2.5 w-2.5 text-green-400" />
-                    app.apexcrm.com/dashboard
+                    app.axiomcrm.com/dashboard
                   </div>
                 </div>
               </div>

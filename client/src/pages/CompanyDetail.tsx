@@ -659,6 +659,19 @@ function EditCompanyForm({ company, onSave, saving }: { company: any; onSave: (d
   const [form, setForm] = useState({
     name: company.name ?? "",
     domain: company.domain ?? "",
+    // Activity dates
+    lastLoggedOutgoingEmailDate: (company as any).lastLoggedOutgoingEmailDate ?? null,
+    lastModifiedDate: (company as any).lastModifiedDate ?? null,
+    closeDate: (company as any).closeDate ?? null,
+    firstContactCreateDate: (company as any).firstContactCreateDate ?? null,
+    firstDealCreatedDate: (company as any).firstDealCreatedDate ?? null,
+    lastActivityDate: (company as any).lastActivityDate ?? null,
+    lastBookedMeetingDate: (company as any).lastBookedMeetingDate ?? null,
+    nextActivityDate: (company as any).nextActivityDate ?? null,
+    ownerAssignedDate: (company as any).ownerAssignedDate ?? null,
+    firstConversionDate: (company as any).firstConversionDate ?? null,
+    recentConversionDate: (company as any).recentConversionDate ?? null,
+    dateOfLastLeadStatusChange: (company as any).dateOfLastLeadStatusChange ?? null,
     companyType: company.companyType ?? "",
     companyEmail: company.companyEmail ?? "",
     phone: company.phone ?? "",
@@ -700,6 +713,7 @@ function EditCompanyForm({ company, onSave, saving }: { company: any; onSave: (d
           <TabsTrigger value="lifecycle" className="text-xs rounded-lg">Lifecycle</TabsTrigger>
           <TabsTrigger value="logistics" className="text-xs rounded-lg">Logistics</TabsTrigger>
           <TabsTrigger value="social" className="text-xs rounded-lg">Social</TabsTrigger>
+          <TabsTrigger value="activity_dates" className="text-xs rounded-lg">Activity Dates</TabsTrigger>
         </TabsList>
 
         <TabsContent value="basic" className="mt-4">
@@ -789,6 +803,36 @@ function EditCompanyForm({ company, onSave, saving }: { company: any; onSave: (d
             <div className="space-y-2"><Label className="text-xs font-semibold">Twitter/X Handle</Label><Input value={form.twitterHandle} onChange={(e) => setForm(p => ({ ...p, twitterHandle: e.target.value }))} className={inputCls} /></div>
             <div className="space-y-2"><Label className="text-xs font-semibold">LinkedIn URL</Label><Input value={form.linkedinUrl} onChange={(e) => setForm(p => ({ ...p, linkedinUrl: e.target.value }))} className={inputCls} /></div>
             <div className="space-y-2"><Label className="text-xs font-semibold">YouTube URL</Label><Input value={form.youtubeUrl} onChange={(e) => setForm(p => ({ ...p, youtubeUrl: e.target.value }))} className={inputCls} /></div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="activity_dates" className="mt-4">
+          <p className="text-xs text-muted-foreground mb-3">These dates are automatically updated by the system. You can also set them manually.</p>
+          <div className="grid grid-cols-2 gap-4">
+            {([
+              { key: "lastLoggedOutgoingEmailDate", label: "Last Logged Outgoing Email" },
+              { key: "lastModifiedDate", label: "Last Modified Date" },
+              { key: "closeDate", label: "Close Date" },
+              { key: "firstContactCreateDate", label: "First Contact Create Date" },
+              { key: "firstDealCreatedDate", label: "First Deal Created Date" },
+              { key: "lastActivityDate", label: "Last Activity Date" },
+              { key: "lastBookedMeetingDate", label: "Last Booked Meeting Date" },
+              { key: "nextActivityDate", label: "Next Activity Date" },
+              { key: "ownerAssignedDate", label: "Owner Assigned Date" },
+              { key: "firstConversionDate", label: "First Conversion Date" },
+              { key: "recentConversionDate", label: "Recent Conversion Date" },
+              { key: "dateOfLastLeadStatusChange", label: "Date of Last Lead Status Change" },
+            ] as { key: string; label: string }[]).map(({ key, label }) => (
+              <div key={key} className="space-y-2">
+                <Label className="text-xs font-semibold">{label}</Label>
+                <Input
+                  type="datetime-local"
+                  value={(form as any)[key] ? new Date((form as any)[key]).toISOString().slice(0, 16) : ""}
+                  onChange={(e) => setForm(p => ({ ...p, [key]: e.target.value ? new Date(e.target.value).getTime() : null }))}
+                  className={inputCls}
+                />
+              </div>
+            ))}
           </div>
         </TabsContent>
       </Tabs>

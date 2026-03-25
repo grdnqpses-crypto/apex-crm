@@ -2595,3 +2595,11 @@
 ## Session 34: Fix Exit Emulation
 - [x] Fix Exit Emulation restoring session (still logging out to public login screen)
 - [ ] Add Reset Password button in Team Credentials tab (generate temp password + email)
+
+## Session 33: Six Outstanding Features
+- [ ] Account creation validation with field-level error messages
+- [ ] All 12 activity date fields on company/contact records (schema + UI)
+- [ ] Bulk delete all companies/contacts for a user with confirmation
+- [ ] Bulk actions on companies/contacts (select all, assign, edit, delete, tasks, segment, workflow)
+- [ ] Lead enrichment paid service (enrich company/contact on demand)
+- [ ] Save imported CRM skins to DB so they don't re-duplicate

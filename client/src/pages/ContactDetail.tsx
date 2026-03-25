@@ -562,6 +562,19 @@ function EditContactForm({ contact, companies, onSave, saving }: { contact: any;
     instagramProfile: contact.instagramProfile ?? "",
     emailSubscriptionStatus: contact.emailSubscriptionStatus ?? "subscribed",
     notes: contact.notes ?? "",
+    // Activity dates
+    lastLoggedOutgoingEmailDate: (contact as any).lastLoggedOutgoingEmailDate ?? null,
+    lastModifiedDate: (contact as any).lastModifiedDate ?? null,
+    closeDate: (contact as any).closeDate ?? null,
+    firstContactCreateDate: (contact as any).firstContactCreateDate ?? null,
+    firstDealCreatedDate: (contact as any).firstDealCreatedDate ?? null,
+    lastActivityDate: (contact as any).lastActivityDate ?? null,
+    lastBookedMeetingDate: (contact as any).lastBookedMeetingDate ?? null,
+    nextActivityDate: (contact as any).nextActivityDate ?? null,
+    ownerAssignedDate: (contact as any).ownerAssignedDate ?? null,
+    firstConversionDate: (contact as any).firstConversionDate ?? null,
+    recentConversionDate: (contact as any).recentConversionDate ?? null,
+    dateOfLastLeadStatusChange: (contact as any).dateOfLastLeadStatusChange ?? null,
   });
 
   const inputCls = "rounded-xl bg-muted/30 border-border/50";
@@ -577,6 +590,7 @@ function EditContactForm({ contact, companies, onSave, saving }: { contact: any;
           <TabsTrigger value="logistics" className="text-xs rounded-lg">Logistics</TabsTrigger>
           <TabsTrigger value="social" className="text-xs rounded-lg">Social</TabsTrigger>
           <TabsTrigger value="email_prefs" className="text-xs rounded-lg">Email Prefs</TabsTrigger>
+          <TabsTrigger value="activity_dates" className="text-xs rounded-lg">Activity Dates</TabsTrigger>
         </TabsList>
 
         <TabsContent value="identity" className="mt-4">
@@ -673,6 +687,35 @@ function EditContactForm({ contact, companies, onSave, saving }: { contact: any;
                 </SelectContent>
               </Select>
             </div>
+          </div>
+        </TabsContent>
+        <TabsContent value="activity_dates" className="mt-4">
+          <p className="text-xs text-muted-foreground mb-3">These dates are automatically updated by the system. You can also set them manually.</p>
+          <div className="grid grid-cols-2 gap-4">
+            {([
+              { key: "lastLoggedOutgoingEmailDate", label: "Last Logged Outgoing Email" },
+              { key: "lastModifiedDate", label: "Last Modified Date" },
+              { key: "closeDate", label: "Close Date" },
+              { key: "firstContactCreateDate", label: "First Contact Create Date" },
+              { key: "firstDealCreatedDate", label: "First Deal Created Date" },
+              { key: "lastActivityDate", label: "Last Activity Date" },
+              { key: "lastBookedMeetingDate", label: "Last Booked Meeting Date" },
+              { key: "nextActivityDate", label: "Next Activity Date" },
+              { key: "ownerAssignedDate", label: "Owner Assigned Date" },
+              { key: "firstConversionDate", label: "First Conversion Date" },
+              { key: "recentConversionDate", label: "Recent Conversion Date" },
+              { key: "dateOfLastLeadStatusChange", label: "Date of Last Lead Status Change" },
+            ] as { key: string; label: string }[]).map(({ key, label }) => (
+              <div key={key} className="space-y-2">
+                <Label className="text-xs font-semibold">{label}</Label>
+                <Input
+                  type="datetime-local"
+                  value={(form as any)[key] ? new Date((form as any)[key]).toISOString().slice(0, 16) : ""}
+                  onChange={(e) => setForm(p => ({ ...p, [key]: e.target.value ? new Date(e.target.value).getTime() : null }))}
+                  className={inputCls}
+                />
+              </div>
+            ))}
           </div>
         </TabsContent>
       </Tabs>

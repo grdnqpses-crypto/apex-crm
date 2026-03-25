@@ -8,7 +8,7 @@ function createAuthContext(): { ctx: TrpcContext } {
   const user: AuthenticatedUser = {
     id: 1,
     openId: "test-company-metrics",
-    email: "metrics@apexcrm.com",
+    email: "metrics@axiomcrm.com",
     name: "Metrics Test User",
     loginMethod: "manus",
     role: "admin",

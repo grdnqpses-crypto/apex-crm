@@ -70,7 +70,7 @@ const webFormsRouter = router({
         updatedAt: ts,
       });
       const insertId = (result as unknown as { insertId: number }).insertId;
-      const embedCode = `<script src="https://app.apexcrm.com/forms/embed.js" data-form-id="${insertId}"></script>`;
+      const embedCode = `<script src="https://app.axiomcrm.com/forms/embed.js" data-form-id="${insertId}"></script>`;
       await dbConn.update(webForms).set({ embedCode }).where(eq(webForms.id, insertId));
       return { id: insertId, embedCode };
     }),

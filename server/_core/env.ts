@@ -16,5 +16,5 @@ export const ENV = {
   smtpPort: parseInt(process.env.SMTP_PORT ?? "587"),
   smtpUser: process.env.SMTP_USER ?? "",
   smtpPass: process.env.SMTP_PASS ?? "",
-  smtpFrom: process.env.SMTP_FROM ?? '"AXIOM CRM" <noreply@apexcrm.com>',
+  smtpFrom: process.env.SMTP_FROM ?? '"AXIOM CRM" <noreply@axiomcrm.com>',
 };

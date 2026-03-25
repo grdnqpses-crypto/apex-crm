@@ -40,6 +40,7 @@ import { currencyRouter } from "./routers/currency";
 import { fmcsaRouter } from "./routers/fmcsa";
 import { portalRouter } from "./routers/portal";
 import { websiteMonitorRouter, syncCompanyMonitor } from "./routers/website-monitor";
+import { enrichmentRouter } from "./routers/enrichment";
 
 export const appRouter = router({
   system: systemRouter,
@@ -108,36 +109,45 @@ export const appRouter = router({
   fmcsa: fmcsaRouter,
   portalTokens: portalRouter,
   websiteMonitor: websiteMonitorRouter,
+  enrichment: enrichmentRouter,
   auth: router({
     me: publicProcedure.query(async ({ ctx }) => {
       if (!ctx.user) return null;
-      // Check if the current session is an emulation session.
-      // Primary: check DB by token string.
-      // Fallback: check JWT payload for emulatedUserId (set by signSession in emulate procedure).
-      const currentToken = ctx.req.cookies?.["app_session_id"];
+      // CRITICAL FIX: Express cookie-parser middleware is NOT installed.
+      // ctx.req.cookies is always undefined. Parse the raw cookie header directly,
+      // exactly the same way sdk.authenticateRequest does it.
+      const { parse: parseCookieHeader } = await import("cookie");
+      const rawCookieHeader = ctx.req.headers["cookie"] as string | undefined;
+      const cookieMap = rawCookieHeader ? parseCookieHeader(rawCookieHeader) : {};
+      const currentToken = cookieMap["app_session_id"];
       let isEmulating = false;
       let emulatingAs: string | null = null;
-      // Fallback: if the JWT has emulatedUserId, this is definitely an emulation session
-      const { sdk } = await import("./_core/sdk.js");
-      const sessionPayload = currentToken ? await sdk.verifySession(currentToken) : null;
-      if (sessionPayload?.emulatedUserId !== undefined) {
-        isEmulating = true;
-        emulatingAs = ctx.user.name || (ctx.user as any).username || `User #${ctx.user.id}`;
-      } else if (currentToken) {
-        // Primary: DB lookup by token
+      if (currentToken) {
+        // Primary: verify JWT and check for emulatedUserId in payload (set by signSession in emulate procedure)
         try {
-          const dbConn = await db.getDb();
-          const { emulationSessions } = await import("../drizzle/schema.js");
-          const { eq } = await import("drizzle-orm");
-          const [record] = await dbConn.select()
-            .from(emulationSessions)
-            .where(eq(emulationSessions.emulatedSessionToken, currentToken))
-            .limit(1);
-          if (record) {
+          const { sdk } = await import("./_core/sdk.js");
+          const sessionPayload = await sdk.verifySession(currentToken);
+          if (sessionPayload?.emulatedUserId !== undefined) {
             isEmulating = true;
             emulatingAs = ctx.user.name || (ctx.user as any).username || `User #${ctx.user.id}`;
           }
         } catch (_) {}
+        // Fallback: DB lookup for older sessions that may not have emulatedUserId in JWT
+        if (!isEmulating) {
+          try {
+            const dbConn = await db.getDb();
+            const { emulationSessions } = await import("../drizzle/schema.js");
+            const { eq } = await import("drizzle-orm");
+            const [record] = await dbConn.select()
+              .from(emulationSessions)
+              .where(eq(emulationSessions.emulatedSessionToken, currentToken))
+              .limit(1);
+            if (record) {
+              isEmulating = true;
+              emulatingAs = ctx.user.name || (ctx.user as any).username || `User #${ctx.user.id}`;
+            }
+          } catch (_) {}
+        }
       }
       return { ...ctx.user, isEmulating, emulatingAs };
     }),
@@ -169,7 +179,7 @@ export const appRouter = router({
           } : undefined,
         });
         await transporter.sendMail({
-          from: process.env.SMTP_FROM || '"AXIOM CRM" <noreply@apexcrm.com>',
+          from: process.env.SMTP_FROM || '"AXIOM CRM" <noreply@axiomcrm.com>',
           to: user.email,
           subject: 'Reset your AXIOM CRM password',
           html: `
@@ -361,6 +371,22 @@ export const appRouter = router({
       await db.deleteContact(input.id, ctx.user.id);
       return { success: true };
     }),
+    bulkDelete: protectedProcedure.input(z.object({ ids: z.array(z.number()) })).mutation(async ({ ctx, input }) => {
+      const { contacts: ct } = await import('../drizzle/schema.js');
+      const { eq, and, inArray } = await import('drizzle-orm');
+      const drizzleDb = await db.getDb();
+      const tenantId = ctx.user.tenantCompanyId ?? 0;
+      await drizzleDb.delete(ct).where(and(inArray(ct.id, input.ids), eq(ct.tenantCompanyId, tenantId)));
+      return { deleted: input.ids.length };
+    }),
+    deleteAll: protectedProcedure.mutation(async ({ ctx }) => {
+      const { contacts: ct } = await import('../drizzle/schema.js');
+      const { eq } = await import('drizzle-orm');
+      const drizzleDb = await db.getDb();
+      const tenantId = ctx.user.tenantCompanyId ?? 0;
+      await drizzleDb.delete(ct).where(eq(ct.tenantCompanyId, tenantId));
+      return { success: true };
+    }),
     exportCsv: protectedProcedure.query(async ({ ctx }) => {
       const result = await db.listContactsByRole(ctx.user, { limit: 10000 });
       const rows = result.items;
@@ -539,11 +565,29 @@ export const appRouter = router({
       await db.deleteCompanyByRole(input.id, ctx.user);
       return { success: true };
     }),
-    contactCount: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
+     contactCount: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
       return db.getCompanyContactCountByRole(input.companyId, ctx.user);
     }),
+    bulkDelete: protectedProcedure.input(z.object({ ids: z.array(z.number()) })).mutation(async ({ ctx, input }) => {
+      const { companies: co, contacts: ct } = await import('../drizzle/schema.js');
+      const { eq, and, inArray } = await import('drizzle-orm');
+      const drizzleDb = await db.getDb();
+      const tenantId = ctx.user.tenantCompanyId ?? 0;
+      // Cascade: delete contacts first, then companies
+      await drizzleDb.delete(ct).where(and(inArray(ct.companyId, input.ids), eq(ct.tenantCompanyId, tenantId)));
+      await drizzleDb.delete(co).where(and(inArray(co.id, input.ids), eq(co.tenantCompanyId, tenantId)));
+      return { deleted: input.ids.length };
+    }),
+    deleteAll: protectedProcedure.mutation(async ({ ctx }) => {
+      const { companies: co, contacts: ct } = await import('../drizzle/schema.js');
+      const { eq } = await import('drizzle-orm');
+      const drizzleDb = await db.getDb();
+      const tenantId = ctx.user.tenantCompanyId ?? 0;
+      await drizzleDb.delete(ct).where(eq(ct.tenantCompanyId, tenantId));
+      await drizzleDb.delete(co).where(eq(co.tenantCompanyId, tenantId));
+      return { success: true };
+    }),
   }),
-
   pipelines: router({
     list: protectedProcedure.query(async ({ ctx }) => {
       return db.listPipelines(ctx.user.id, ctx.user.tenantCompanyId);

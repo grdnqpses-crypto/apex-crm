@@ -55,7 +55,7 @@ describe("Web Forms Builder", () => {
 
   it("should build embed code from form id", () => {
     const formId = 123;
-    const embedCode = `<script src="https://app.apexcrm.com/forms/embed.js" data-form-id="${formId}"></script>`;
+    const embedCode = `<script src="https://app.axiomcrm.com/forms/embed.js" data-form-id="${formId}"></script>`;
     expect(embedCode).toContain(`data-form-id="${formId}"`);
     expect(embedCode).toContain("embed.js");
   });

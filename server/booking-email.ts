@@ -28,7 +28,7 @@ function generateICS(params: {
     "CALSCALE:GREGORIAN",
     "METHOD:REQUEST",
     "BEGIN:VEVENT",
-    `UID:${params.uid}@apexcrm.com`,
+    `UID:${params.uid}@axiomcrm.com`,
     `DTSTAMP:${fmt(Date.now())}Z`,
     `DTSTART:${fmt(params.startTime)}Z`,
     `DTEND:${fmt(params.endTime)}Z`,

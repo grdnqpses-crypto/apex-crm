@@ -572,7 +572,7 @@ export default function InteractiveDemoTour() {
                 <div className="flex-1 mx-3">
                   <div className="bg-white/5 rounded-md px-3 py-1 text-xs text-white/30 flex items-center gap-2">
                     <span className="text-green-400">🔒</span>
-                    app.apexcrm.com/{step.id}
+                    app.axiomcrm.com/{step.id}
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-white/30">

@@ -384,11 +384,11 @@ export default function WebFormsBuilder() {
               Copy this code and paste it into your website's HTML where you want the form to appear.
             </p>
             <div className="bg-muted rounded-lg p-4 font-mono text-xs break-all">
-              {selectedForm?.embedCode ?? `<script src="https://app.apexcrm.com/forms/embed.js" data-form-id="${selectedForm?.id}"></script>`}
+              {selectedForm?.embedCode ?? `<script src="https://app.axiomcrm.com/forms/embed.js" data-form-id="${selectedForm?.id}"></script>`}
             </div>
             <Button
               className="w-full"
-              onClick={() => copyEmbed(selectedForm?.embedCode ?? `<script src="https://app.apexcrm.com/forms/embed.js" data-form-id="${selectedForm?.id}"></script>`)}
+              onClick={() => copyEmbed(selectedForm?.embedCode ?? `<script src="https://app.axiomcrm.com/forms/embed.js" data-form-id="${selectedForm?.id}"></script>`)}
             >
               <Copy className="h-4 w-4 mr-2" />
               Copy Embed Code

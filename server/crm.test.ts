@@ -10,7 +10,7 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: any[] } {
   const user: AuthenticatedUser = {
     id: 1,
     openId: "test-user-001",
-    email: "test@apexcrm.com",
+    email: "test@axiomcrm.com",
     name: "Test User",
     loginMethod: "manus",
     role: "admin",

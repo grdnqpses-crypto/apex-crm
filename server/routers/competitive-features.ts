@@ -639,7 +639,7 @@ export const publicBookingRouter = router({
       .from(users).where(eq(users.id, profile.userId)).limit(1) : [undefined];
 
     // Send confirmation email (non-blocking)
-    const origin = input.origin ?? "https://apexcrm.com";
+    const origin = input.origin ?? "https://axiomcrm.com";
     const hostName = host?.name ?? profile?.displayName ?? "Your Host";
     const hostEmail = host?.email ?? "";
     sendBookingConfirmation({
@@ -755,7 +755,7 @@ export const publicBookingRouter = router({
 
     // Send reschedule confirmation email (non-blocking)
     const { sendRescheduleConfirmation } = await import("../booking-email");
-    const origin = input.origin ?? "https://apexcrm.com";
+    const origin = input.origin ?? "https://axiomcrm.com";
     sendRescheduleConfirmation({
       bookingId: booking.id,
       guestName: booking.guestName,

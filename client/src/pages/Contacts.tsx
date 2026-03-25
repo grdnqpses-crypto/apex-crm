@@ -167,8 +167,12 @@ export default function Contacts() {
   };
   const [contactTab, setContactTab] = useState<"all" | "incomplete">("all");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const bulkDeleteContacts = trpc.bulkActions.deleteContacts.useMutation({
+  const bulkDeleteContacts = trpc.contacts.bulkDelete.useMutation({
     onSuccess: (d) => { utils.contacts.list.invalidate(); setSelectedIds(new Set()); toast.success(`Deleted ${d.deleted} contacts`); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const deleteAllContactsMutation = trpc.contacts.deleteAll.useMutation({
+    onSuccess: () => { utils.contacts.list.invalidate(); setSelectedIds(new Set()); toast.success("All contacts deleted"); },
     onError: (e: any) => toast.error(e.message),
   });
   const bulkUpdateContacts = trpc.bulkActions.updateContacts.useMutation({
@@ -295,8 +299,11 @@ export default function Contacts() {
           <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => setBulkActivityDialog(true)}>
             <Activity className="h-3.5 w-3.5 text-rose-500" /> Track Activity
           </Button>
-          <Button variant="destructive" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { if (confirm(`Delete ${selectedIds.size} contacts? This cannot be undone.`)) bulkDeleteContacts.mutate({ ids: Array.from(selectedIds) }); }}>
-            <Trash2 className="h-3.5 w-3.5" /> Delete
+          <Button variant="destructive" size="sm" className="gap-1.5 rounded-xl text-xs h-8" disabled={bulkDeleteContacts.isPending} onClick={() => { if (confirm(`Delete ${selectedIds.size} selected contacts? This cannot be undone.`)) bulkDeleteContacts.mutate({ ids: Array.from(selectedIds) }); }}>
+            <Trash2 className="h-3.5 w-3.5" /> {bulkDeleteContacts.isPending ? "Deleting..." : "Delete Selected"}
+          </Button>
+          <Button variant="destructive" size="sm" className="gap-1.5 rounded-xl text-xs h-8 opacity-80" disabled={deleteAllContactsMutation.isPending} onClick={() => { if (confirm(`DELETE ALL ${data?.total ?? 0} contacts? This cannot be undone.`)) deleteAllContactsMutation.mutate(); }}>
+            <Trash2 className="h-3.5 w-3.5" /> {deleteAllContactsMutation.isPending ? "Deleting All..." : "Delete All"}
           </Button>
           <Button variant="ghost" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => setSelectedIds(new Set())}>
             Clear
