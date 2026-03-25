@@ -2497,32 +2497,66 @@ export const appRouter = router({
         }
       }
       const { sdk } = await import("./_core/sdk.js");
-      const { getSessionCookieOptions } = await import("./_core/cookies.js");
-      const { ONE_YEAR_MS } = await import("../shared/const.js");
-      // Save the original session token so we can restore it on exit
-      const originalToken = ctx.req.cookies?.["app_session_id"];
       const cookieOptions = getSessionCookieOptions(ctx.req);
-      if (originalToken) {
-        ctx.res.cookie("app_session_id_pre_emulation", originalToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-      }
+      // Save the original session token in the DB so we can reliably restore it on exit
+      const originalToken = ctx.req.cookies?.["app_session_id"];
       const sessionToken = await sdk.createSessionToken(target.openId, {
         name: target.name || "",
         expiresInMs: ONE_YEAR_MS,
       });
+      if (originalToken) {
+        const dbConn = await db.getDb();
+        const { emulationSessions } = await import("../drizzle/schema.js");
+        // Clean up any stale records for this emulated token first
+        await dbConn.delete(emulationSessions)
+          .where((await import("drizzle-orm")).eq(emulationSessions.emulatedSessionToken, sessionToken))
+          .catch(() => {});
+        await dbConn.insert(emulationSessions).values({
+          emulatedSessionToken: sessionToken,
+          originalSessionToken: originalToken,
+          emulatorUserId: ctx.user.id,
+          emulatedUserId: target.id,
+          createdAt: Date.now(),
+        });
+      }
       ctx.res.cookie("app_session_id", sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
       return { success: true, userId: target.id, name: target.name, username: target.username };
     }),
-    // Restore original session after exiting emulation
-    restoreSession: publicProcedure.mutation(({ ctx }) => {
-      const originalToken = ctx.req.cookies?.["app_session_id_pre_emulation"];
+    // Restore original session after exiting emulation (DB-backed, reliable)
+    restoreSession: publicProcedure.mutation(async ({ ctx }) => {
+      const currentToken = ctx.req.cookies?.["app_session_id"];
       const cookieOptions = getSessionCookieOptions(ctx.req);
-      if (originalToken) {
-        ctx.res.cookie("app_session_id", originalToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-        ctx.res.clearCookie("app_session_id_pre_emulation", { ...cookieOptions, maxAge: -1 });
+      if (currentToken) {
+        try {
+          const dbConn = await db.getDb();
+          const { emulationSessions } = await import("../drizzle/schema.js");
+          const { eq } = await import("drizzle-orm");
+          const [record] = await dbConn.select()
+            .from(emulationSessions)
+            .where(eq(emulationSessions.emulatedSessionToken, currentToken))
+            .limit(1);
+          if (record?.originalSessionToken) {
+            // Restore the original admin session
+            ctx.res.cookie("app_session_id", record.originalSessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+            // Clean up the emulation record
+            await dbConn.delete(emulationSessions)
+              .where(eq(emulationSessions.emulatedSessionToken, currentToken))
+              .catch(() => {});
+            return { success: true, restored: true };
+          }
+        } catch (e) {
+          console.error("[restoreSession] DB lookup failed:", e);
+        }
+      }
+      // Fallback: also check the old cookie-based approach for backwards compatibility
+      const legacyToken = ctx.req.cookies?.["app_session_id_pre_emulation"];
+      if (legacyToken) {
+        ctx.res.cookie("app_session_id", legacyToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+        ctx.res.clearCookie("app_session_id_pre_emulation", cookieOptions);
         return { success: true, restored: true };
       }
-      // Fallback: just clear session (logout)
-      ctx.res.clearCookie("app_session_id", { ...cookieOptions, maxAge: -1 });
+      // No original session found — clear current session (logout)
+      ctx.res.clearCookie("app_session_id", cookieOptions);
       return { success: true, restored: false };
     }),
     // Get company admin user for emulation from Platform Dashboard
@@ -2883,6 +2917,62 @@ export const appRouter = router({
           isActive: u.isActive,
           lastSignedIn: u.lastSignedIn,
         }));
+    }),
+    // Company Admin: reset a team member's password and optionally email them
+    resetTeamMemberPassword: companyAdminProcedure.input(z.object({
+      userId: z.number(),
+      sendEmail: z.boolean().default(true),
+    })).mutation(async ({ ctx, input }) => {
+      if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "FORBIDDEN", message: "No company context" });
+      const target = await db.getUserById(input.userId);
+      if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      // Must be same tenant
+      if (target.tenantCompanyId !== ctx.user.tenantCompanyId) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You can only reset passwords for users in your company" });
+      }
+      // Must be lower role
+      if (getRoleLevel(target.systemRole) >= getRoleLevel(ctx.user.systemRole)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You can only reset passwords for users with a lower role than yours" });
+      }
+      // Generate a secure temporary password
+      const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$";
+      const tempPassword = Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+      const passwordHash = await bcrypt.hash(tempPassword, 10);
+      // Update in DB
+      const dbConn = await db.getDb();
+      const { users: usersTable } = await import("../drizzle/schema.js");
+      const { eq } = await import("drizzle-orm");
+      await dbConn.update(usersTable)
+        .set({ passwordHash, plainTextPassword: tempPassword })
+        .where(eq(usersTable.id, input.userId));
+      // Optionally send email
+      if (input.sendEmail && target.email) {
+        try {
+          const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST || "smtp.gmail.com",
+            port: Number(process.env.SMTP_PORT) || 587,
+            secure: false,
+            auth: {
+              user: process.env.SMTP_USER,
+              pass: process.env.SMTP_PASS,
+            },
+          });
+          await transporter.sendMail({
+            from: process.env.SMTP_USER || `noreply@${ctx.user.email?.split("@")[1] || "crm.app"}`,
+            to: target.email,
+            subject: "Your CRM Password Has Been Reset",
+            html: `<p>Hi ${target.name || target.username || "there"},</p>
+<p>Your CRM password has been reset by your administrator.</p>
+<p><strong>New temporary password:</strong> <code style="background:#f4f4f4;padding:4px 8px;border-radius:4px;font-size:16px">${tempPassword}</code></p>
+<p>Please log in and change your password immediately.</p>
+<p>If you did not expect this, please contact your administrator.</p>`,
+          });
+        } catch (e) {
+          console.error("[resetTeamMemberPassword] Email send failed:", e);
+          // Don't fail the whole operation if email fails
+        }
+      }
+      return { success: true, tempPassword, emailSent: input.sendEmail && !!target.email };
     }),
   }),
 

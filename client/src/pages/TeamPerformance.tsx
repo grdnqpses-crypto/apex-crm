@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { RefreshCw } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +41,8 @@ export default function TeamPerformance() {
   const [revealedPasswords, setRevealedPasswords] = useState<Record<number, boolean>>({});
   const [credSearch, setCredSearch] = useState("");
   const [emulatingId, setEmulatingId] = useState<number | null>(null);
+  const [resetTarget, setResetTarget] = useState<{ id: number; name: string; email: string | null } | null>(null);
+  const [newPassword, setNewPassword] = useState<string | null>(null);
 
   const isCompanyAdmin = COMPANY_ADMIN_ROLES.includes(user?.systemRole || "");
 
@@ -48,11 +52,25 @@ export default function TeamPerformance() {
     { enabled: isCompanyAdmin }
   );
 
-  const emulateMutation = trpc.users.emulate.useMutation({
+  const resetPasswordMutation = trpc.teamOversight.resetTeamMemberPassword.useMutation({
     onSuccess: (data) => {
+      setNewPassword(data.tempPassword);
+      toast.success("Password reset", { description: data.emailSent ? "New password emailed to user." : "Password updated. No email sent (no SMTP configured)." });
+      utils.teamOversight.getTeamCredentials.invalidate();
+    },
+    onError: (err) => {
+      toast.error("Reset failed", { description: err.message });
+    },
+  });
+  const utils = trpc.useUtils();
+
+  const emulateMutation = trpc.tenants.emulate.useMutation({
+    onSuccess: (data) => {
+      // Set sessionStorage so the EmulationBanner appears after reload
+      sessionStorage.setItem("emulation_active", "true");
+      sessionStorage.setItem("emulation_target", data.name || data.username || `User #${data.userId}`);
       toast.success(`Emulating ${data.name || data.username}`, { description: "You are now viewing the CRM as this user." });
-      navigate("/dashboard");
-      window.location.reload();
+      setTimeout(() => { window.location.href = "/dashboard"; }, 600);
     },
     onError: (err) => {
       toast.error("Emulation failed", { description: err.message });
@@ -415,29 +433,42 @@ export default function TeamPerformance() {
                               }
                             </p>
                           </div>
-                          {member.plainTextPassword && (
-                            <div className="flex gap-1 shrink-0">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                onClick={() => toggleReveal(member.id)}
-                              >
-                                {revealedPasswords[member.id]
-                                  ? <EyeOff className="h-3.5 w-3.5" />
-                                  : <Eye className="h-3.5 w-3.5" />
-                                }
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                onClick={() => copyToClipboard(member.plainTextPassword, "Password")}
-                              >
-                                <Copy className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          )}
+                          <div className="flex gap-1 shrink-0">
+                            {member.plainTextPassword && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => toggleReveal(member.id)}
+                                  title={revealedPasswords[member.id] ? "Hide password" : "Show password"}
+                                >
+                                  {revealedPasswords[member.id]
+                                    ? <EyeOff className="h-3.5 w-3.5" />
+                                    : <Eye className="h-3.5 w-3.5" />
+                                  }
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => copyToClipboard(member.plainTextPassword, "Password")}
+                                  title="Copy password"
+                                >
+                                  <Copy className="h-3.5 w-3.5" />
+                                </Button>
+                              </>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-amber-600 hover:text-amber-700"
+                              onClick={() => { setResetTarget({ id: member.id, name: member.name, email: member.email }); setNewPassword(null); }}
+                              title="Reset password"
+                            >
+                              <RefreshCw className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -522,6 +553,63 @@ export default function TeamPerformance() {
           </TabsContent>
         )}
       </Tabs>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={!!resetTarget} onOpenChange={(open) => { if (!open) { setResetTarget(null); setNewPassword(null); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCw className="h-5 w-5 text-amber-500" />
+              Reset Password
+            </DialogTitle>
+            <DialogDescription>
+              {newPassword
+                ? `Password has been reset for ${resetTarget?.name}.`
+                : `Generate a new temporary password for ${resetTarget?.name}. ${resetTarget?.email ? "A copy will be emailed to them." : "Note: no email on file — you will need to share the password manually."}`
+              }
+            </DialogDescription>
+          </DialogHeader>
+          {newPassword ? (
+            <div className="space-y-3">
+              <div className="rounded-lg border bg-muted p-4">
+                <p className="text-xs text-muted-foreground mb-1">New Temporary Password</p>
+                <div className="flex items-center gap-2">
+                  <code className="text-lg font-mono font-bold tracking-widest flex-1">{newPassword}</code>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { navigator.clipboard.writeText(newPassword); toast.success("Copied!"); }}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">Ask the user to log in and change their password immediately.</p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              This will immediately replace their current password. They will not be able to log in with their old password.
+            </p>
+          )}
+          <DialogFooter>
+            {newPassword ? (
+              <Button onClick={() => { setResetTarget(null); setNewPassword(null); }}>Done</Button>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setResetTarget(null)}>Cancel</Button>
+                <Button
+                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                  disabled={resetPasswordMutation.isPending}
+                  onClick={() => resetTarget && resetPasswordMutation.mutate({ userId: resetTarget.id, sendEmail: !!resetTarget.email })}
+                >
+                  <RefreshCw className="h-4 w-4 mr-1.5" />
+                  {resetPasswordMutation.isPending ? "Resetting..." : "Reset Password"}
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Role Permissions Info */}
       <Card className="bg-muted/30">

@@ -3873,3 +3873,15 @@ export const websiteCrawlResults = mysqlTable("website_crawl_results", {
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
 });
 export type WebsiteCrawlResult = typeof websiteCrawlResults.$inferSelect;
+
+
+// ─── Emulation Sessions (server-side token store for reliable session restore) ─
+export const emulationSessions = mysqlTable("emulation_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  emulatedSessionToken: varchar("emulated_session_token", { length: 512 }).notNull(),
+  originalSessionToken: varchar("original_session_token", { length: 512 }).notNull(),
+  emulatorUserId: int("emulator_user_id").notNull(),
+  emulatedUserId: int("emulated_user_id").notNull(),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+export type EmulationSession = typeof emulationSessions.$inferSelect;

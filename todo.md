@@ -2591,3 +2591,7 @@
 - [x] Add getTeamCredentials procedure (companyAdmin+) for viewing sub-user credentials
 - [x] Allow Company Admins to emulate any user under their company
 - [x] Add Team Credentials UI tab on Team Performance page
+
+## Session 34: Fix Exit Emulation
+- [ ] Fix Exit Emulation restoring session (still logging out to public login screen)
+- [ ] Add Reset Password button in Team Credentials tab (generate temp password + email)
