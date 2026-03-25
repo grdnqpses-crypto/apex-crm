@@ -2585,3 +2585,9 @@
 - [x] Update WIM UI: "Sync All Companies" button in header and empty state
 - [x] Update WIM UI: auto-enrollment explanation banner replaces old "How It Works" banner
 - [x] 33 unit tests passing (added 10 new: URL normalisation + sync upsert logic)
+
+## Session 33: Team Performance Fix + Credentials + Company Admin Emulation
+- [x] Fix duplicate appRouter keys dropping teamOversight (Team Performance page error)
+- [x] Add getTeamCredentials procedure (companyAdmin+) for viewing sub-user credentials
+- [x] Allow Company Admins to emulate any user under their company
+- [x] Add Team Credentials UI tab on Team Performance page
