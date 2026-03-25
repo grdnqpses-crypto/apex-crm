@@ -2573,8 +2573,11 @@ export const appRouter = router({
       }
       const { sdk } = await import("./_core/sdk.js");
       const cookieOptions = getSessionCookieOptions(ctx.req);
-      // Save the original session token in the DB so we can reliably restore it on exit
-      const originalToken = ctx.req.cookies?.["app_session_id"];
+      // CRITICAL: Parse cookie from raw header — cookie-parser middleware is NOT installed.
+      const { parse: _parseCookies1 } = await import("cookie");
+      const _rawHeader1 = ctx.req.headers["cookie"] as string | undefined;
+      const _cookieMap1 = _rawHeader1 ? _parseCookies1(_rawHeader1) : {};
+      const originalToken = _cookieMap1["app_session_id"];
       // Use signSession with emulatedUserId so authenticateRequest resolves by DB id directly,
       // bypassing the OAuth server (which would return the wrong user for OAuth-based accounts).
       const sessionToken = await sdk.signSession({
@@ -2616,7 +2619,11 @@ export const appRouter = router({
     }),
     // Restore original session after exiting emulation (DB-backed, reliable)
     restoreSession: publicProcedure.mutation(async ({ ctx }) => {
-      const currentToken = ctx.req.cookies?.["app_session_id"];
+      // CRITICAL: Parse cookie from raw header — cookie-parser middleware is NOT installed.
+      const { parse: _parseCookies2 } = await import("cookie");
+      const _rawHeader2 = ctx.req.headers["cookie"] as string | undefined;
+      const _cookieMap2 = _rawHeader2 ? _parseCookies2(_rawHeader2) : {};
+      const currentToken = _cookieMap2["app_session_id"];
       const cookieOptions = getSessionCookieOptions(ctx.req);
       if (currentToken) {
         try {
@@ -2660,7 +2667,7 @@ export const appRouter = router({
         }
       }
       // Fallback: also check the old cookie-based approach for backwards compatibility
-      const legacyToken = ctx.req.cookies?.["app_session_id_pre_emulation"];
+      const legacyToken = _cookieMap2["app_session_id_pre_emulation"];
       if (legacyToken) {
         ctx.res.cookie("app_session_id", legacyToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
         ctx.res.clearCookie("app_session_id_pre_emulation", cookieOptions);

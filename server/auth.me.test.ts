@@ -37,7 +37,7 @@ describe("auth.me cookie parsing (emulation detection fix)", () => {
     expect(cookieMap["app_session_id"]).toBe(jwtLike);
   });
 
-  it("simulates the old broken approach: req.cookies is always undefined without cookie-parser", () => {
+  it("simulates the old broken approach vs the fix (covers emulate + restoreSession too)", () => {
     // This is what was happening before the fix
     const reqCookies = undefined as any; // Express req.cookies without cookie-parser
     const brokenToken = reqCookies?.["app_session_id"];
