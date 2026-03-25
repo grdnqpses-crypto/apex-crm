@@ -111,11 +111,20 @@ export const appRouter = router({
   auth: router({
     me: publicProcedure.query(async ({ ctx }) => {
       if (!ctx.user) return null;
-      // Check if the current session is an emulation session (server-side, reliable)
+      // Check if the current session is an emulation session.
+      // Primary: check DB by token string.
+      // Fallback: check JWT payload for emulatedUserId (set by signSession in emulate procedure).
       const currentToken = ctx.req.cookies?.["app_session_id"];
       let isEmulating = false;
       let emulatingAs: string | null = null;
-      if (currentToken) {
+      // Fallback: if the JWT has emulatedUserId, this is definitely an emulation session
+      const { sdk } = await import("./_core/sdk.js");
+      const sessionPayload = currentToken ? await sdk.verifySession(currentToken) : null;
+      if (sessionPayload?.emulatedUserId !== undefined) {
+        isEmulating = true;
+        emulatingAs = ctx.user.name || (ctx.user as any).username || `User #${ctx.user.id}`;
+      } else if (currentToken) {
+        // Primary: DB lookup by token
         try {
           const dbConn = await db.getDb();
           const { emulationSessions } = await import("../drizzle/schema.js");
@@ -126,7 +135,7 @@ export const appRouter = router({
             .limit(1);
           if (record) {
             isEmulating = true;
-            emulatingAs = ctx.user.name || ctx.user.username || `User #${ctx.user.id}`;
+            emulatingAs = ctx.user.name || (ctx.user as any).username || `User #${ctx.user.id}`;
           }
         } catch (_) {}
       }
@@ -2530,20 +2539,33 @@ export const appRouter = router({
         name: target.name || "",
         emulatedUserId: target.id,
       }, { expiresInMs: ONE_YEAR_MS });
-      if (originalToken) {
+      // Always save the emulation record so the banner can detect it via auth.me.
+      // originalToken may be empty if cookies aren't readable server-side (SameSite/Secure),
+      // but we still need the record to exist so isEmulating returns true.
+      try {
         const dbConn = await db.getDb();
         const { emulationSessions } = await import("../drizzle/schema.js");
-        // Clean up any stale records for this emulated token first
+        const { eq } = await import("drizzle-orm");
+        // Clean up any stale records for this new emulated token
         await dbConn.delete(emulationSessions)
-          .where((await import("drizzle-orm")).eq(emulationSessions.emulatedSessionToken, sessionToken))
+          .where(eq(emulationSessions.emulatedSessionToken, sessionToken))
           .catch(() => {});
+        // Also clean up any existing emulation record for the emulator (prevent nesting)
+        if (originalToken) {
+          await dbConn.delete(emulationSessions)
+            .where(eq(emulationSessions.emulatedSessionToken, originalToken))
+            .catch(() => {});
+        }
         await dbConn.insert(emulationSessions).values({
           emulatedSessionToken: sessionToken,
-          originalSessionToken: originalToken,
+          originalSessionToken: originalToken || "",
           emulatorUserId: ctx.user.id,
           emulatedUserId: target.id,
           createdAt: Date.now(),
         });
+        console.log(`[Emulate] Session record saved: emulator=${ctx.user.id} → target=${target.id}`);
+      } catch (e) {
+        console.error("[Emulate] Failed to save emulation session record:", e);
       }
       ctx.res.cookie("app_session_id", sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
       return { success: true, userId: target.id, name: target.name, username: target.username };
@@ -2561,14 +2583,33 @@ export const appRouter = router({
             .from(emulationSessions)
             .where(eq(emulationSessions.emulatedSessionToken, currentToken))
             .limit(1);
-          if (record?.originalSessionToken) {
-            // Restore the original admin session
-            ctx.res.cookie("app_session_id", record.originalSessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-            // Clean up the emulation record
+          if (record) {
+            // Clean up the emulation record first
             await dbConn.delete(emulationSessions)
               .where(eq(emulationSessions.emulatedSessionToken, currentToken))
               .catch(() => {});
-            return { success: true, restored: true };
+            if (record.originalSessionToken) {
+              // Restore the saved original session token
+              ctx.res.cookie("app_session_id", record.originalSessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+              console.log(`[restoreSession] Restored original token for emulator ${record.emulatorUserId}`);
+              return { success: true, restored: true };
+            } else {
+              // originalToken was empty (cookie not readable at emulation time).
+              // Generate a fresh session for the emulator user directly.
+              const { sdk } = await import("./_core/sdk.js");
+              const { ENV } = await import("./_core/env.js");
+              const emulatorUser = await db.getUserById(record.emulatorUserId);
+              if (emulatorUser) {
+                const freshToken = await sdk.signSession({
+                  openId: emulatorUser.openId,
+                  appId: ENV.appId,
+                  name: emulatorUser.name || "",
+                }, { expiresInMs: ONE_YEAR_MS });
+                ctx.res.cookie("app_session_id", freshToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+                console.log(`[restoreSession] Generated fresh session for emulator ${record.emulatorUserId}`);
+                return { success: true, restored: true };
+              }
+            }
           }
         } catch (e) {
           console.error("[restoreSession] DB lookup failed:", e);
