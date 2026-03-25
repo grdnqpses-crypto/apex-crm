@@ -2522,10 +2522,14 @@ export const appRouter = router({
       const cookieOptions = getSessionCookieOptions(ctx.req);
       // Save the original session token in the DB so we can reliably restore it on exit
       const originalToken = ctx.req.cookies?.["app_session_id"];
-      const sessionToken = await sdk.createSessionToken(target.openId, {
+      // Use signSession with emulatedUserId so authenticateRequest resolves by DB id directly,
+      // bypassing the OAuth server (which would return the wrong user for OAuth-based accounts).
+      const sessionToken = await sdk.signSession({
+        openId: target.openId,
+        appId: (await import("./_core/env.js")).ENV.appId,
         name: target.name || "",
-        expiresInMs: ONE_YEAR_MS,
-      });
+        emulatedUserId: target.id,
+      }, { expiresInMs: ONE_YEAR_MS });
       if (originalToken) {
         const dbConn = await db.getDb();
         const { emulationSessions } = await import("../drizzle/schema.js");

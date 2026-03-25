@@ -22,6 +22,8 @@ export type SessionPayload = {
   openId: string;
   appId: string;
   name: string;
+  // When set, authenticateRequest resolves the user by DB id directly (bypasses OAuth sync)
+  emulatedUserId?: number;
 };
 
 const EXCHANGE_TOKEN_PATH = `/webdev.v1.WebDevAuthPublicService/ExchangeToken`;
@@ -186,12 +188,15 @@ class SDKServer {
     const expiresInMs = options.expiresInMs ?? ONE_YEAR_MS;
     const expirationSeconds = Math.floor((issuedAt + expiresInMs) / 1000);
     const secretKey = this.getSessionSecret();
-
-    return new SignJWT({
+    const jwtPayload: Record<string, unknown> = {
       openId: payload.openId,
       appId: payload.appId,
       name: payload.name,
-    })
+    };
+    if (payload.emulatedUserId !== undefined) {
+      jwtPayload.emulatedUserId = payload.emulatedUserId;
+    }
+    return new SignJWT(jwtPayload)
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
       .setExpirationTime(expirationSeconds)
       .sign(secretKey);
@@ -199,19 +204,17 @@ class SDKServer {
 
   async verifySession(
     cookieValue: string | undefined | null
-  ): Promise<{ openId: string; appId: string; name: string } | null> {
+  ): Promise<{ openId: string; appId: string; name: string; emulatedUserId?: number } | null> {
     if (!cookieValue) {
       console.warn("[Auth] Missing session cookie");
       return null;
     }
-
     try {
       const secretKey = this.getSessionSecret();
       const { payload } = await jwtVerify(cookieValue, secretKey, {
         algorithms: ["HS256"],
       });
-      const { openId, appId, name } = payload as Record<string, unknown>;
-
+      const { openId, appId, name, emulatedUserId } = payload as Record<string, unknown>;
       if (
         !isNonEmptyString(openId) ||
         !isNonEmptyString(appId) ||
@@ -220,11 +223,11 @@ class SDKServer {
         console.warn("[Auth] Session payload missing required fields");
         return null;
       }
-
       return {
         openId,
         appId,
         name,
+        emulatedUserId: typeof emulatedUserId === "number" ? emulatedUserId : undefined,
       };
     } catch (error) {
       console.warn("[Auth] Session verification failed", String(error));
@@ -261,15 +264,21 @@ class SDKServer {
     const cookies = this.parseCookies(req.headers.cookie);
     const sessionCookie = cookies.get(COOKIE_NAME);
     const session = await this.verifySession(sessionCookie);
-
     if (!session) {
       throw ForbiddenError("Invalid session cookie");
     }
-
-    const sessionUserId = session.openId;
     const signedInAt = new Date();
+    // EMULATION FAST PATH: if the JWT contains emulatedUserId, resolve by DB id directly.
+    // This bypasses the OAuth server entirely, which is critical for emulating OAuth users
+    // (non-cred users) — without this, the OAuth server returns the currently-logged-in
+    // Manus account instead of the target user.
+    if (session.emulatedUserId !== undefined) {
+      const user = await db.getUserById(session.emulatedUserId);
+      if (!user) throw ForbiddenError("Emulated user not found");
+      return user;
+    }
+    const sessionUserId = session.openId;
     let user = await db.getUserByOpenId(sessionUserId);
-
     // If user not in DB, sync from OAuth server automatically
     if (!user) {
       try {
@@ -287,16 +296,13 @@ class SDKServer {
         throw ForbiddenError("Failed to sync user info");
       }
     }
-
     if (!user) {
       throw ForbiddenError("User not found");
     }
-
     await db.upsertUser({
       openId: user.openId,
       lastSignedIn: signedInAt,
     });
-
     return user;
   }
 }

@@ -2593,5 +2593,5 @@
 - [x] Add Team Credentials UI tab on Team Performance page
 
 ## Session 34: Fix Exit Emulation
-- [ ] Fix Exit Emulation restoring session (still logging out to public login screen)
+- [x] Fix Exit Emulation restoring session (still logging out to public login screen)
 - [ ] Add Reset Password button in Team Credentials tab (generate temp password + email)

@@ -1,0 +1,106 @@
+{
+  "query": "SELECT id, openId, name, systemRole, tenantCompanyId, loginMethod FROM users ORDER BY id LIMIT 15;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, openId, name, systemRole, tenantCompanyId, loginMethod FROM users ORDER BY id LIMIT 15;",
+  "rows": [
+    {
+      "id": "1",
+      "openId": "FPcP9esewArtw5otMcG9Ck",
+      "name": "crm",
+      "systemRole": "developer",
+      "tenantCompanyId": "2",
+      "loginMethod": "email"
+    },
+    {
+      "id": "12",
+      "openId": "jtQ3jFK9bkHcoXbfm8SamD",
+      "name": "Crypto- GRDN",
+      "systemRole": "developer",
+      "tenantCompanyId": "NULL",
+      "loginMethod": "google"
+    },
+    {
+      "id": "2610017",
+      "openId": "cred_1772215478073_8xxjrwe4",
+      "name": "James Lavallee",
+      "systemRole": "developer",
+      "tenantCompanyId": "2",
+      "loginMethod": "credentials"
+    },
+    {
+      "id": "2610020",
+      "openId": "cred_1772215558168_q570wvv3",
+      "name": "Mike Rodriguez",
+      "systemRole": "sales_manager",
+      "tenantCompanyId": "2",
+      "loginMethod": "credentials"
+    },
+    {
+      "id": "2610023",
+      "openId": "cred_1772215612376_ctgypv85",
+      "name": "Sarah Chen",
+      "systemRole": "account_manager",
+      "tenantCompanyId": "2",
+      "loginMethod": "credentials"
+    },
+    {
+      "id": "2610026",
+      "openId": "cred_1772215663978_3fkem7l6",
+      "name": "David Thompson",
+      "systemRole": "account_manager",
+      "tenantCompanyId": "2",
+      "loginMethod": "credentials"
+    },
+    {
+      "id": "2640083",
+      "openId": "cred_1772220971089_w3t0vyqs",
+      "name": "Jerry",
+      "systemRole": "company_admin",
+      "tenantCompanyId": "2",
+      "loginMethod": "credentials"
+    },
+    {
+      "id": "4410042",
+      "openId": "cred_1773693349_apexowner",
+      "name": "Apex Platform Owner",
+      "systemRole": "axiom_admin",
+      "tenantCompanyId": "30001",
+      "loginMethod": "credentials"
+    },
+    {
+      "id": "4590001",
+      "openId": "cred_1773780175132_a8h1402n",
+      "name": "Joseph Lavallee",
+      "systemRole": "company_admin",
+      "tenantCompanyId": "60001",
+      "loginMethod": "credentials"
+    },
+    {
+      "id": "5520068",
+      "openId": "9f83efc1-246f-11f1-8ac0-6ec8fab8eae5",
+      "name": "AXIOM Developer",
+      "systemRole": "developer",
+      "tenantCompanyId": "30001",
+      "loginMethod": "email"
+    },
+    {
+      "id": "5520069",
+      "openId": "9f8e0805-246f-11f1-8ac0-6ec8fab8eae5",
+      "name": "AXIOM Admin",
+      "systemRole": "user",
+      "tenantCompanyId": "30001",
+      "loginMethod": "email"
+    },
+    {
+      "id": "5520260",
+      "openId": "cred_1774062119243_dbqawvmq",
+      "name": "Jeff Lavallee",
+      "systemRole": "company_admin",
+      "tenantCompanyId": "30001",
+      "loginMethod": "credentials"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\topenId\tname\tsystemRole\ttenantCompanyId\tloginMethod\n1\tFPcP9esewArtw5otMcG9Ck\tcrm\tdeveloper\t2\temail\n12\tjtQ3jFK9bkHcoXbfm8SamD\tCrypto- GRDN\tdeveloper\tNULL\tgoogle\n2610017\tcred_1772215478073_8xxjrwe4\tJames Lavallee\tdeveloper\t2\tcredentials\n2610020\tcred_1772215558168_q570wvv3\tMike Rodriguez\tsales_manager\t2\tcredentials\n2610023\tcred_1772215612376_ctgypv85\tSarah Chen\taccount_manager\t2\tcredentials\n2610026\tcred_1772215663978_3fkem7l6\tDavid Thompson\taccount_manager\t2\tcredentials\n2640083\tcred_1772220971089_w3t0vyqs\tJerry\tcompany_admin\t2\tcredentials\n4410042\tcred_1773693349_apexowner\tApex Platform Owner\taxiom_admin\t30001\tcredentials\n4590001\tcred_1773780175132_a8h1402n\tJoseph Lavallee\tcompany_admin\t60001\tcredentials\n5520068\t9f83efc1-246f-11f1-8ac0-6ec8fab8eae5\tAXIOM Developer\tdeveloper\t30001\temail\n5520069\t9f8e0805-246f-11f1-8ac0-6ec8fab8eae5\tAXIOM Admin\tuser\t30001\temail\n5520260\tcred_1774062119243_dbqawvmq\tJeff Lavallee\tcompany_admin\t30001\tcredentials\n",
+  "stderr": "",
+  "execution_time_ms": 376
+}
