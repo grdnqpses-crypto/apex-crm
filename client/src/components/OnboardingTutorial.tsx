@@ -285,15 +285,7 @@ export default function OnboardingTutorial() {
     });
   }, []);
 
-  // Expose start function globally for the Getting Started button
-  useEffect(() => {
-    (window as any).__startOnboarding = startTutorial;
-    (window as any).__resetOnboarding = resetTutorial;
-    return () => {
-      delete (window as any).__startOnboarding;
-      delete (window as any).__resetOnboarding;
-    };
-  }, [startTutorial, resetTutorial]);
+  // NOTE: __startOnboarding intentionally removed — the Getting Started button now opens OnboardingWizard directly
 
   const [isExpanded, setIsExpanded] = React.useState(false);
 

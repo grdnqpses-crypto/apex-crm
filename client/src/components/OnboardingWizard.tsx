@@ -42,6 +42,335 @@ type SetupStep = {
   diagram?: React.ReactNode; // inline SVG/JSX diagram
 };
 
+// ─── Inline illustrated diagrams ─────────────────────────────────────────────
+function StepDiagram({ chapterId, stepNumber, gradient }: { chapterId: string; stepNumber: number; gradient: string }) {
+  const diagrams: Record<string, Record<number, React.ReactNode>> = {
+    branding: {
+      1: (
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3 text-[10px] font-mono">
+          <div className="flex gap-2">
+            {/* Sidebar mock */}
+            <div className="w-28 bg-stone-800 rounded-lg p-2 space-y-1.5">
+              <div className="flex items-center gap-1.5 mb-2">
+                <div className="h-6 w-6 rounded bg-amber-500 flex items-center justify-center">
+                  <span className="text-white text-[8px] font-black">A</span>
+                </div>
+                <span className="text-stone-300 text-[9px] font-bold">AXIOM CRM</span>
+                <div className="ml-auto h-4 w-4 rounded bg-amber-500/30 border border-amber-400 flex items-center justify-center cursor-pointer">
+                  <span className="text-amber-400 text-[8px]">📷</span>
+                </div>
+              </div>
+              {["Dashboard","Contacts","Deals","Campaigns"].map(l => (
+                <div key={l} className="h-5 rounded bg-stone-700 flex items-center px-1.5">
+                  <span className="text-stone-400 text-[8px]">{l}</span>
+                </div>
+              ))}
+            </div>
+            {/* Arrow callout */}
+            <div className="flex flex-col justify-start pt-1">
+              <div className="flex items-center gap-1">
+                <div className="h-0.5 w-6 bg-amber-500" />
+                <div className="bg-amber-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap">← Click here</div>
+              </div>
+              <p className="text-stone-500 text-[9px] mt-1 max-w-[100px]">Camera icon next to company name opens the logo dialog</p>
+            </div>
+          </div>
+        </div>
+      ),
+      2: (
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <div className="bg-white rounded-lg border border-stone-200 shadow-sm overflow-hidden">
+            <div className="bg-stone-100 px-3 py-1.5 border-b border-stone-200 flex items-center gap-2">
+              <span className="text-[9px] font-bold text-stone-600">Logo Dialog</span>
+              <div className="flex gap-1 ml-2">
+                {["Upload","AI Generate","History"].map((t,i) => (
+                  <div key={t} className={`px-2 py-0.5 rounded text-[8px] font-semibold ${i===1 ? "bg-amber-500 text-white" : "bg-stone-200 text-stone-500"}`}>{t}</div>
+                ))}
+              </div>
+            </div>
+            <div className="p-3 space-y-2">
+              <div className="h-16 rounded-lg bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-dashed border-amber-300 flex items-center justify-center">
+                <span className="text-[9px] text-amber-600 font-semibold">✨ AI will generate your logo here</span>
+              </div>
+              <div className="bg-amber-500 rounded text-white text-[9px] font-bold text-center py-1.5">Generate My Logo →</div>
+            </div>
+          </div>
+        </div>
+      ),
+      3: (
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <div className="bg-white rounded-lg border border-stone-200 shadow-sm overflow-hidden">
+            <div className="bg-stone-100 px-3 py-1.5 border-b border-stone-200 flex items-center gap-2">
+              <span className="text-[9px] font-bold text-stone-600">Logo Dialog</span>
+              <div className="flex gap-1 ml-2">
+                {["Upload","AI Generate","History"].map((t,i) => (
+                  <div key={t} className={`px-2 py-0.5 rounded text-[8px] font-semibold ${i===0 ? "bg-blue-500 text-white" : "bg-stone-200 text-stone-500"}`}>{t}</div>
+                ))}
+              </div>
+            </div>
+            <div className="p-3 space-y-2">
+              <div className="h-14 rounded-lg bg-blue-50 border-2 border-dashed border-blue-300 flex flex-col items-center justify-center gap-1">
+                <span className="text-[10px]">📁</span>
+                <span className="text-[9px] text-blue-600 font-semibold">Click to choose PNG or JPG file</span>
+              </div>
+              <div className="text-[8px] text-stone-400 text-center">Recommended: 512×512 px PNG with transparent background</div>
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    smtp: {
+      1: (
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center text-base">📧</div>
+            <div>
+              <p className="text-[10px] font-bold text-stone-700">How SMTP works</p>
+              <p className="text-[9px] text-stone-500">Your email account → SMTP server → Recipient inbox</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 text-[9px]">
+            {["Your CRM","→","SMTP Server","→","Inbox ✅"].map((s,i) => (
+              <div key={i} className={`px-2 py-1 rounded font-semibold ${
+                s==="→" ? "text-stone-400" :
+                s.includes("✅") ? "bg-emerald-100 text-emerald-700" :
+                "bg-blue-100 text-blue-700"
+              }`}>{s}</div>
+            ))}
+          </div>
+        </div>
+      ),
+      2: (
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <p className="text-[9px] font-bold text-stone-500 uppercase tracking-wider mb-2">Settings → Email Infrastructure → SMTP Accounts → Add Account</p>
+          <div className="bg-white rounded-lg border border-stone-200 p-3 space-y-1.5">
+            {[
+              ["Host","smtp.gmail.com","text-blue-600"],
+              ["Port","587","text-emerald-600"],
+              ["Username","you@yourcompany.com","text-stone-500"],
+              ["Password","••••••••••••••••","text-stone-400"],
+            ].map(([label,val,cls]) => (
+              <div key={label} className="flex items-center gap-2">
+                <span className="text-[9px] text-stone-500 w-16 shrink-0">{label}</span>
+                <div className={`flex-1 bg-stone-50 border border-stone-200 rounded px-2 py-1 text-[9px] font-mono ${cls}`}>{val}</div>
+              </div>
+            ))}
+            <div className="bg-blue-500 rounded text-white text-[9px] font-bold text-center py-1 mt-1">Test Connection</div>
+          </div>
+        </div>
+      ),
+      3: (
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3 space-y-2">
+          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+            <span className="text-base">✅</span>
+            <div>
+              <p className="text-[10px] font-bold text-emerald-700">Connection Successful</p>
+              <p className="text-[9px] text-emerald-600">Test email sent to you@yourcompany.com</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            <span className="text-base">❌</span>
+            <div>
+              <p className="text-[10px] font-bold text-red-700">Connection Failed</p>
+              <p className="text-[9px] text-red-600">Check hostname, port, and password</p>
+            </div>
+          </div>
+        </div>
+      ),
+      4: (
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <p className="text-[9px] font-bold text-stone-500 uppercase tracking-wider mb-2">DNS Records to Add (example)</p>
+          <div className="space-y-1.5">
+            {[
+              ["TXT","@","v=spf1 include:_spf.yourdomain.com ~all","SPF"],
+              ["TXT","mail._domainkey","v=DKIM1; k=rsa; p=MIGf...","DKIM"],
+              ["TXT","_dmarc","v=DMARC1; p=none; rua=mailto:...","DMARC"],
+            ].map(([type,name,val,label]) => (
+              <div key={label} className="bg-white rounded border border-stone-200 px-2 py-1.5 flex items-start gap-2">
+                <span className={`text-[8px] font-black px-1 py-0.5 rounded shrink-0 ${
+                  label==="SPF" ? "bg-blue-100 text-blue-700" :
+                  label==="DKIM" ? "bg-purple-100 text-purple-700" :
+                  "bg-amber-100 text-amber-700"
+                }`}>{label}</span>
+                <div className="min-w-0">
+                  <p className="text-[8px] text-stone-500">Type: <span className="font-mono text-stone-700">{type}</span> · Name: <span className="font-mono text-stone-700">{name}</span></p>
+                  <p className="text-[8px] font-mono text-stone-600 truncate">{val}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ),
+    },
+    contacts: {
+      1: (
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <p className="text-[9px] font-bold text-stone-500 uppercase tracking-wider mb-2">Your CSV file should look like this:</p>
+          <div className="bg-white rounded border border-stone-200 overflow-hidden">
+            <table className="w-full text-[8px]">
+              <thead>
+                <tr className="bg-emerald-500 text-white">
+                  {["First Name","Last Name","Email","Phone","Company"].map(h => (
+                    <th key={h} className="px-2 py-1 text-left font-bold">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["John","Smith","john@acme.com","555-1234","Acme Corp"],
+                  ["Sarah","Jones","sarah@beta.com","555-5678","Beta LLC"],
+                  ["Mike","Brown","mike@co.com","555-9012","Co Inc"],
+                ].map((row,i) => (
+                  <tr key={i} className={i%2===0 ? "bg-white" : "bg-stone-50"}>
+                    {row.map((cell,j) => <td key={j} className="px-2 py-1 text-stone-600">{cell}</td>)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ),
+      2: (
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <p className="text-[9px] font-bold text-stone-500 uppercase tracking-wider mb-2">Settings → Import & Export → Import Contacts</p>
+          <div className="bg-white rounded-lg border border-stone-200 p-3 space-y-2">
+            <div className="h-12 rounded-lg bg-emerald-50 border-2 border-dashed border-emerald-300 flex items-center justify-center gap-2">
+              <span className="text-sm">📁</span>
+              <span className="text-[9px] text-emerald-700 font-semibold">contacts.csv (2,450 rows)</span>
+            </div>
+            <div className="bg-emerald-500 rounded text-white text-[9px] font-bold text-center py-1">Upload & Preview →</div>
+          </div>
+        </div>
+      ),
+      3: (
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <p className="text-[9px] font-bold text-stone-500 uppercase tracking-wider mb-2">Column Mapping</p>
+          <div className="space-y-1">
+            {[
+              ["Email Address","Email","green"],
+              ["Full Name","? Needs mapping","yellow"],
+              ["Phone #","Phone","green"],
+              ["Biz Name","Company","green"],
+            ].map(([from,to,color]) => (
+              <div key={from} className="flex items-center gap-2">
+                <div className="bg-stone-100 rounded px-2 py-0.5 text-[8px] text-stone-600 w-24 shrink-0">{from}</div>
+                <span className="text-stone-400 text-[8px]">→</span>
+                <div className={`rounded px-2 py-0.5 text-[8px] font-semibold flex-1 ${
+                  color==="green" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                }`}>{to}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ),
+    },
+    pipeline: {
+      1: (
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <p className="text-[9px] font-bold text-stone-500 uppercase tracking-wider mb-2">Deals → Kanban View</p>
+          <div className="flex gap-1.5 overflow-x-auto pb-1">
+            {[
+              {stage:"Lead In",color:"bg-stone-200",deals:["Acme Corp","Beta LLC"]},
+              {stage:"Qualified",color:"bg-blue-200",deals:["Gamma Inc"]},
+              {stage:"Proposal",color:"bg-amber-200",deals:["Delta Co","Epsilon"]},
+              {stage:"Won ✅",color:"bg-emerald-200",deals:["Zeta Ltd"]},
+            ].map(col => (
+              <div key={col.stage} className="shrink-0 w-20">
+                <div className={`${col.color} rounded-t px-1.5 py-1 text-[8px] font-bold text-stone-700`}>{col.stage}</div>
+                <div className="bg-white border border-stone-200 rounded-b p-1 space-y-1 min-h-[40px]">
+                  {col.deals.map(d => (
+                    <div key={d} className="bg-white border border-stone-200 rounded px-1 py-0.5 text-[7px] text-stone-600 shadow-sm">{d}</div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-[8px] text-stone-400 mt-1.5 text-center">↔ Drag cards between columns to advance deals</p>
+        </div>
+      ),
+      2: (
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <p className="text-[9px] font-bold text-stone-500 uppercase tracking-wider mb-2">New Deal Form</p>
+          <div className="bg-white rounded-lg border border-stone-200 p-2.5 space-y-1.5">
+            {[
+              ["Deal Name","Acme Corp — Q2 Contract"],
+              ["Company","Acme Corp"],
+              ["Value","$24,000"],
+              ["Stage","Qualified"],
+            ].map(([label,val]) => (
+              <div key={label} className="flex items-center gap-2">
+                <span className="text-[8px] text-stone-500 w-16 shrink-0">{label}</span>
+                <div className="flex-1 bg-stone-50 border border-stone-200 rounded px-2 py-0.5 text-[8px] text-stone-700">{val}</div>
+              </div>
+            ))}
+            <div className="bg-amber-500 rounded text-white text-[9px] font-bold text-center py-1 mt-1">Create Deal</div>
+          </div>
+        </div>
+      ),
+    },
+    campaigns: {
+      1: (
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <p className="text-[9px] font-bold text-stone-500 uppercase tracking-wider mb-2">Campaigns → New Campaign</p>
+          <div className="flex gap-2">
+            {["Email Blast","Drip Sequence","AI Ghost Sequence"].map((t,i) => (
+              <div key={t} className={`flex-1 rounded-lg border p-2 text-center ${
+                i===0 ? "border-amber-400 bg-amber-50" : "border-stone-200 bg-white"
+              }`}>
+                <div className="text-base mb-0.5">{["📨","🔄","🤖"][i]}</div>
+                <p className="text-[8px] font-semibold text-stone-700">{t}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ),
+    },
+    ai: {
+      1: (
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <p className="text-[9px] font-bold text-stone-500 uppercase tracking-wider mb-2">AI Features Overview</p>
+          <div className="grid grid-cols-2 gap-1.5">
+            {[
+              ["🤖","AI Ghostwriter","Write emails in your voice"],
+              ["📊","Win Probability","Score every deal 0–100%"],
+              ["🎯","Lead Scoring","Rank contacts by likelihood"],
+              ["📅","Meeting Prep","Auto-brief before calls"],
+            ].map(([icon,name,desc]) => (
+              <div key={name} className="bg-white rounded-lg border border-stone-200 p-2">
+                <div className="text-sm mb-0.5">{icon}</div>
+                <p className="text-[8px] font-bold text-stone-700">{name}</p>
+                <p className="text-[7px] text-stone-500">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ),
+    },
+    team: {
+      1: (
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <p className="text-[9px] font-bold text-stone-500 uppercase tracking-wider mb-2">Settings → Team → Invite Member</p>
+          <div className="bg-white rounded-lg border border-stone-200 p-2.5 space-y-1.5">
+            {[
+              ["Email","colleague@yourcompany.com"],
+              ["Role","Account Manager"],
+            ].map(([label,val]) => (
+              <div key={label} className="flex items-center gap-2">
+                <span className="text-[8px] text-stone-500 w-10 shrink-0">{label}</span>
+                <div className="flex-1 bg-stone-50 border border-stone-200 rounded px-2 py-0.5 text-[8px] text-stone-600">{val}</div>
+              </div>
+            ))}
+            <div className="bg-indigo-500 rounded text-white text-[9px] font-bold text-center py-1 mt-1">Send Invite Email →</div>
+          </div>
+        </div>
+      ),
+    },
+  };
+  const diagram = diagrams[chapterId]?.[stepNumber];
+  if (!diagram) return null;
+  return <div className="w-full">{diagram}</div>;
+}
+
 const CHAPTERS: Chapter[] = [
   {
     id: "branding",
@@ -789,15 +1118,18 @@ export default function OnboardingWizard({ onClose, onComplete }: OnboardingWiza
 
               {/* Step content */}
               <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                {/* Illustration + title */}
-                <div className="flex items-start gap-4">
-                  <div className="text-4xl shrink-0 mt-0.5">{currentStep.illustration}</div>
-                  <div>
-                    <h3 className="text-lg font-bold text-stone-800 leading-tight">
-                      Step {currentStep.number}: {currentStep.title}
-                    </h3>
+                {/* Step title */}
+                <div className="flex items-center gap-3">
+                  <div className={`h-8 w-8 rounded-xl bg-gradient-to-br ${currentChapter.gradient} flex items-center justify-center shrink-0`}>
+                    <span className="text-white text-xs font-black">{currentStep.number}</span>
                   </div>
+                  <h3 className="text-lg font-bold text-stone-800 leading-tight">
+                    {currentStep.title}
+                  </h3>
                 </div>
+
+                {/* Inline diagram */}
+                <StepDiagram chapterId={currentChapter.id} stepNumber={currentStep.number} gradient={currentChapter.gradient} />
 
                 {/* Description */}
                 <p className="text-sm text-stone-600 leading-relaxed">

@@ -2892,3 +2892,10 @@
 - [x] Wire progress saving in OnboardingWizard: mark step complete when user clicks Next/Done
 - [x] Show "X of 7 complete" badge on Getting Started button in Dashboard
 - [x] Add Quick Setup Checklist widget to Dashboard sidebar showing 7 chapters as checkboxes with progress bar
+
+## Bug Investigation - Session (2026-03-26h)
+- [ ] Investigate why Getting Started wizard changes (sub-steps, video embeds, tips) are not visible to user
+
+## Onboarding Wizard Fix - Session (2026-03-26i)
+- [x] Remove __startOnboarding override from OnboardingTutorial so Getting Started button opens new OnboardingWizard
+- [x] Add inline illustrated diagrams (CSS/SVG UI mockups) to each wizard step so it's truly "for dummies"
