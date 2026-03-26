@@ -297,7 +297,12 @@ export const appRouter = router({
       from: z.number(),
       to: z.number(),
     })).query(async ({ ctx, input }) => {
-      return db.getDashboardTrendStats(ctx.user, { from: input.from, to: input.to });
+      try {
+        return await db.getDashboardTrendStats(ctx.user, { from: input.from, to: input.to });
+      } catch (err: any) {
+        console.error("[dashboard.trendStats] Error:", err?.message);
+        return null;
+      }
     }),
     recentActivities: protectedProcedure.input(z.object({
       limit: z.number().min(1).max(50).optional(),

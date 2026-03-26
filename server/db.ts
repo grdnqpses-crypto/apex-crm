@@ -4202,7 +4202,7 @@ export async function getDashboardTrendStats(
     }).from(deals)
       .where(and(inArray(deals.userId, visibleIds), gte(deals.createdAt, from), lte(deals.createdAt, to)))
       .groupBy(deals.userId)
-      .orderBy(sql`wonDeals DESC`)
+      .orderBy(sql`SUM(CASE WHEN status='won' THEN 1 ELSE 0 END) DESC`)
       .limit(5),
   ]);
 

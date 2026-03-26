@@ -2864,3 +2864,8 @@
 - [ ] AI Credit Usage: Add usage forecast, per-user credit limit, credit usage export
 - [ ] Custom Roles: Add role cloning, role usage analytics, role export
 - [ ] SSO Settings: Add SSO health monitoring, login analytics, JIT provisioning
+
+## Bug Fixes - Session (2026-03-26)
+- [x] Fix Error 1: scheduled_reports schema column mismatch (sr_frequency→frequency, sr_format→format) fixed in drizzle/schema.ts
+- [x] Fix Error 3: bad SQL alias "wonDeals" in top-reps orderBy replaced with full SUM() expression
+- [x] Fix Error 2: added try/catch to trendStats + scheduledReports.list + scheduledReports.activeCount to prevent server crash

@@ -1,0 +1,146 @@
+{
+  "query": "DESCRIBE scheduled_reports;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute DESCRIBE scheduled_reports;",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "tenant_company_id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "user_id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "saved_report_id",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "report_name",
+      "Type": "varchar(255)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "report_config",
+      "Type": "json",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "frequency",
+      "Type": "enum('daily','weekly','monthly')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "weekly",
+      "Extra": ""
+    },
+    {
+      "Field": "day_of_week",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "",
+      "Default": "1",
+      "Extra": ""
+    },
+    {
+      "Field": "day_of_month",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "",
+      "Default": "1",
+      "Extra": ""
+    },
+    {
+      "Field": "delivery_time",
+      "Type": "varchar(8)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "08:00",
+      "Extra": ""
+    },
+    {
+      "Field": "recipients",
+      "Type": "json",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "format",
+      "Type": "enum('pdf','csv','both')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "pdf",
+      "Extra": ""
+    },
+    {
+      "Field": "is_active",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "1",
+      "Extra": ""
+    },
+    {
+      "Field": "last_sent_at",
+      "Type": "bigint",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "next_send_at",
+      "Type": "bigint",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "created_at",
+      "Type": "bigint",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "updated_at",
+      "Type": "bigint",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint\tNO\tPRI\tNULL\tauto_increment\ntenant_company_id\tint\tNO\t\tNULL\t\nuser_id\tint\tNO\t\tNULL\t\nsaved_report_id\tint\tYES\t\tNULL\t\nreport_name\tvarchar(255)\tNO\t\tNULL\t\nreport_config\tjson\tNO\t\tNULL\t\nfrequency\tenum('daily','weekly','monthly')\tNO\t\tweekly\t\nday_of_week\tint\tYES\t\t1\t\nday_of_month\tint\tYES\t\t1\t\ndelivery_time\tvarchar(8)\tNO\t\t08:00\t\nrecipients\tjson\tNO\t\tNULL\t\nformat\tenum('pdf','csv','both')\tNO\t\tpdf\t\nis_active\ttinyint(1)\tNO\t\t1\t\nlast_sent_at\tbigint\tYES\t\tNULL\t\nnext_send_at\tbigint\tYES\t\tNULL\t\ncreated_at\tbigint\tNO\t\tNULL\t\nupdated_at\tbigint\tNO\t\tNULL\t\n",
+  "stderr": "",
+  "execution_time_ms": 366
+}

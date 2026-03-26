@@ -112,12 +112,17 @@ export const notificationPrefsRouter = router({
 // ─── 2. Scheduled Report Delivery ────────────────────────────────────────────
 export const scheduledReportsRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
-    const dbConn = (await db.getDb())!;
-    return dbConn
-      .select()
-      .from(scheduledReports)
-      .where(eq(scheduledReports.tenantCompanyId, ctx.user.tenantCompanyId!))
-      .orderBy(desc(scheduledReports.createdAt));
+    try {
+      const dbConn = (await db.getDb())!;
+      return dbConn
+        .select()
+        .from(scheduledReports)
+        .where(eq(scheduledReports.tenantCompanyId, ctx.user.tenantCompanyId!))
+        .orderBy(desc(scheduledReports.createdAt));
+    } catch (err: any) {
+      console.error("[scheduledReports.list] Error:", err?.message);
+      return [];
+    }
   }),
 
   create: protectedProcedure
@@ -224,17 +229,22 @@ export const scheduledReportsRouter = router({
     }),
 
   activeCount: protectedProcedure.query(async ({ ctx }) => {
-    const dbConn = (await db.getDb())!;
-    const rows = await dbConn
-      .select()
-      .from(scheduledReports)
-      .where(
-        and(
-          eq(scheduledReports.tenantCompanyId, ctx.user.tenantCompanyId!),
-          eq(scheduledReports.isActive, true)
-        )
-      );
-    return { count: rows.length };
+    try {
+      const dbConn = (await db.getDb())!;
+      const rows = await dbConn
+        .select()
+        .from(scheduledReports)
+        .where(
+          and(
+            eq(scheduledReports.tenantCompanyId, ctx.user.tenantCompanyId!),
+            eq(scheduledReports.isActive, true)
+          )
+        );
+      return { count: rows.length };
+    } catch (err: any) {
+      console.error("[scheduledReports.activeCount] Error:", err?.message);
+      return { count: 0 };
+    }
   }),
 });
 
