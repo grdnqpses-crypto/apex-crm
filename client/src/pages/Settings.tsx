@@ -348,8 +348,16 @@ function AccountDefaults() {
   }, [myCompany]);
 
   const updateBranding = trpc.tenants.updateBranding.useMutation({
-    onSuccess: () => {
-      toast.success("Company name updated");
+    onSuccess: (_data, variables) => {
+      // Show context-aware toast: logo update vs name update
+      if (variables.logoUrl !== undefined) {
+        if (variables.logoUrl === null) {
+          toast.success("Logo removed");
+        }
+        // When called from generateLogo/uploadLogo, those mutations show their own toast
+      } else {
+        toast.success("Company name updated");
+      }
       utils.tenants.myCompany.invalidate();
     },
     onError: (e) => toast.error(e.message),
@@ -367,9 +375,11 @@ function AccountDefaults() {
   const generateLogo = trpc.tenants.generateLogo.useMutation({
     onSuccess: (data) => {
       setPreviewLogo(data.logoUrl);
+      // Immediately persist the new logo to the company record so the sidebar replaces the old logo
+      updateBranding.mutate({ logoUrl: data.logoUrl });
       utils.tenants.myCompany.invalidate();
       utils.tenants.getLogoHistory.invalidate();
-      toast.success("AI logo generated and saved!");
+      toast.success("AI logo generated and applied!");
       setIsGenerating(false);
       setShowLogoUpgrade(false);
     },
