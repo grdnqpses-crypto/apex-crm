@@ -584,6 +584,9 @@ export default function Dashboard() {
   );
   const { data: company, refetch: refetchCompany } = trpc.tenants.myCompany.useQuery();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const { data: onboardingProgress } = trpc.onboarding.getProgress.useQuery(undefined, { enabled: !!user });
+  const onboardingCompletedCount = onboardingProgress ? (onboardingProgress.completedSteps as string[]).length : 0;
+  const ONBOARDING_TOTAL = 7;
   const [showLogoDialog, setShowLogoDialog] = useState(false);
   const [logoPrompt, setLogoPrompt] = useState("");
   const [logoGenerating, setLogoGenerating] = useState(false);
@@ -839,7 +842,13 @@ export default function Dashboard() {
                 onClick={() => { if ((window as any).__startOnboarding) (window as any).__startOnboarding(); else setShowOnboarding(true); }}
                 className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-bold shadow-lg shadow-amber-500/20 transition-all flex items-center gap-1.5"
               >
-                <Sparkles className="h-3.5 w-3.5" /> Getting Started
+                <Sparkles className="h-3.5 w-3.5" />
+                Getting Started
+                {onboardingCompletedCount > 0 && (
+                  <span className="ml-0.5 bg-white/30 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none">
+                    {onboardingCompletedCount}/{ONBOARDING_TOTAL}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setShowLogoDialog(true)}

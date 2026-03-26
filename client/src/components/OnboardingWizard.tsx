@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -576,6 +576,17 @@ export default function OnboardingWizard({ onClose, onComplete }: OnboardingWiza
   const [activeChapter, setActiveChapter] = useState<string>("smtp");
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [completedChapters, setCompletedChapters] = useState<Set<string>>(new Set());
+  // ─── Progress persistence ──────────────────────────────────────────────────
+  const { data: savedProgress } = trpc.onboarding.getProgress.useQuery();
+  const initProgressMutation = trpc.onboarding.initProgress.useMutation();
+  const completeStepMutation = trpc.onboarding.completeStep.useMutation();
+  // Load saved progress from DB on mount
+  useEffect(() => {
+    if (savedProgress?.completedSteps) {
+      const steps = savedProgress.completedSteps as string[];
+      setCompletedChapters(new Set(steps));
+    }
+  }, [savedProgress]);
 
   // Quick setup state
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -622,6 +633,12 @@ export default function OnboardingWizard({ onClose, onComplete }: OnboardingWiza
 
   const markChapterComplete = (id: string) => {
     setCompletedChapters(prev => new Set(Array.from(prev).concat(id)));
+    // Persist to DB
+    completeStepMutation.mutate({ stepId: id });
+    // Init record if it doesn't exist yet
+    if (!savedProgress) {
+      initProgressMutation.mutate();
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

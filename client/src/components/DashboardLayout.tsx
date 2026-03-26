@@ -36,6 +36,7 @@ import {
   Inbox, Layers, Star, LucideIcon, FileSignature, ClipboardList, ThumbsUp, Plane,
   MessageCircle, Share2, PhoneCall, AlertTriangle, Search as SearchIcon, Route, ListOrdered,
   Users2, GitMerge, CalendarClock, Lock, PieChart, MessageSquareDot, SlidersHorizontal,
+  CheckCircle2, Circle,
 } from "lucide-react";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -342,6 +343,70 @@ function getMenuSections(devMode: boolean, userRole?: string) {
   return sections;
 }
 
+// ─── Quick Setup Checklist Widget ──────────────────────────────────────────────────
+const SETUP_CHAPTERS = [
+  { id: "branding", label: "Brand & Logo" },
+  { id: "smtp", label: "Email Setup" },
+  { id: "contacts", label: "Import Contacts" },
+  { id: "pipeline", label: "Sales Pipeline" },
+  { id: "campaigns", label: "Campaigns" },
+  { id: "ai", label: "AI Features" },
+  { id: "team", label: "Team Setup" },
+];
+
+function QuickSetupChecklist() {
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
+  const [expanded, setExpanded] = useState(false);
+  const { data: progress } = trpc.onboarding.getProgress.useQuery();
+  const completedSteps: string[] = progress ? (progress.completedSteps as string[]) : [];
+  const completedCount = completedSteps.length;
+  const total = SETUP_CHAPTERS.length;
+  const pct = Math.round((completedCount / total) * 100);
+  if (isCollapsed) return null;
+  if (completedCount === total) return null; // hide when all done
+  return (
+    <div className="mb-2 rounded-xl border border-amber-200/60 bg-amber-50/60 overflow-hidden">
+      <button
+        onClick={() => setExpanded(e => !e)}
+        className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-amber-100/60 transition-colors"
+      >
+        <Rocket className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[11px] font-bold text-amber-800">Setup Progress</span>
+            <span className="text-[10px] font-semibold text-amber-600">{completedCount}/{total}</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-amber-200 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
+        <ChevronDown className={`h-3 w-3 text-amber-500 shrink-0 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />
+      </button>
+      {expanded && (
+        <div className="border-t border-amber-200/60 px-3 py-2 space-y-1">
+          {SETUP_CHAPTERS.map((ch) => {
+            const done = completedSteps.includes(ch.id);
+            return (
+              <div key={ch.id} className="flex items-center gap-2 py-0.5">
+                {done
+                  ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                  : <Circle className="h-3.5 w-3.5 text-amber-300 shrink-0" />}
+                <span className={`text-[11px] ${done ? "line-through text-muted-foreground" : "text-amber-800 font-medium"}`}>
+                  {ch.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 260;
 const MIN_WIDTH = 200;
@@ -617,6 +682,8 @@ function DashboardLayoutContent({
 
           {/* ─── Sidebar Footer ─── */}
           <SidebarFooter className="p-3 border-t border-border/40">
+            {/* ─── Quick Setup Checklist ─── */}
+            <QuickSetupChecklist />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-accent/60 transition-all duration-200 w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">

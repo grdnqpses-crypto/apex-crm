@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS onboarding_progress (id int NOT NULL AUTO_INCREMENT PRIMARY KEY, userId int NOT NULL, tenantCompanyId int NOT NULL, completedSteps json NOT NULL, currentStep varchar(64) DEFAULT NULL, isCompleted tinyint(1) NOT NULL DEFAULT 0, completedAt bigint DEFAULT NULL, dismissedAt bigint DEFAULT NULL, createdAt bigint NOT NULL, updatedAt bigint NOT NULL)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute CREATE TABLE IF NOT EXISTS onboarding_progress (id int NOT NULL AUTO_INCREMENT PRIMARY KEY, userId int NOT NULL, tenantCompanyId int NOT NULL, completedSteps json NOT NULL, currentStep varchar(64) DEFAULT NULL, isCompleted tinyint(1) NOT NULL DEFAULT 0, completedAt bigint DEFAULT NULL, dismissedAt bigint DEFAULT NULL, createdAt bigint NOT NULL, updatedAt bigint NOT NULL)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 559
+}

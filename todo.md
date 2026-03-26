@@ -2885,3 +2885,10 @@
 
 ## Onboarding Guide Redesign - Session (2026-03-26f)
 - [x] Redesign Getting Started guide chapters with detailed step-by-step instructions, numbered sub-steps, tips callouts, warning boxes, and video tutorial embeds for all 7 chapters (Branding, SMTP, Contacts, Pipeline, Campaigns, AI, Team)
+
+## Onboarding Progress & Checklist - Session (2026-03-26g)
+- [x] Add onboarding_progress DB table (userId, chapterId, stepId, completedAt)
+- [x] Add tRPC procedures: onboarding.getProgress, onboarding.markStepComplete, onboarding.resetProgress (already existed in phase44.ts)
+- [x] Wire progress saving in OnboardingWizard: mark step complete when user clicks Next/Done
+- [x] Show "X of 7 complete" badge on Getting Started button in Dashboard
+- [x] Add Quick Setup Checklist widget to Dashboard sidebar showing 7 chapters as checkboxes with progress bar

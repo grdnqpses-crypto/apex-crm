@@ -1,0 +1,15 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `onboarding_progress` (\n  `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,\n  `userId` int NOT NULL,\n  `tenantCompanyId` int NOT NULL,\n  `completedSteps` json NOT NULL DEFAULT ('[]'),\n  `currentStep` varchar(64) DEFAULT NULL,\n  `isCompleted` tinyint(1) NOT NULL DEFAULT 0,\n  `completedAt` bigint DEFAULT NULL,\n  `dismissedAt` bigint DEFAULT NULL,\n  `createdAt` bigint NOT NULL,\n  `updatedAt` bigint NOT NULL\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute CREATE TABLE IF NOT EXISTS `onboarding_progress` (\n  `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,\n  `userId` int NOT NULL,\n  `tenantCompanyId` int NOT NULL,\n  `completedSteps` json NOT NULL DEFAULT ('[]'),\n  `currentStep` varchar(64) DEFAULT NULL,\n  `isCompleted` tinyint(1) NOT NULL DEFAULT 0,\n  `completedAt` bigint DEFAULT NULL,\n  `dismissedAt` bigint DEFAULT NULL,\n  `createdAt` bigint NOT NULL,\n  `updatedAt` bigint NOT NULL\n);",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 5 column 47 near \"'[]'),",
+    "  `currentStep` varchar(64) DEFAULT NULL,",
+    "  `isCompleted` tinyint(1) NOT NULL DEFAULT 0,",
+    "  `completedAt` bigint DEFAULT NULL,",
+    "  `dismissedAt` bigint DEFAULT NULL,",
+    "  `createdAt` bigint NOT NULL,",
+    "  `updatedAt` bigint NOT NULL",
+    ")\""
+  ]
+}
