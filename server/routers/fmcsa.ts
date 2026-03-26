@@ -139,6 +139,7 @@ export const fmcsaRouter = router({
     }))
     .mutation(async ({ input }) => {
       const drizzle = await getDb();
+      if (!drizzle) throw new Error("Database not available");
       const [company] = await drizzle.select({
         id: companies.id,
         fmcsaVerifiedAt: companies.fmcsaVerifiedAt,
@@ -197,6 +198,7 @@ export const fmcsaRouter = router({
     .input(z.object({ companyId: z.number() }))
     .query(async ({ input }) => {
       const drizzle = await getDb();
+      if (!drizzle) return null;
       const [company] = await drizzle.select({
         fmcsaVerifiedAt: companies.fmcsaVerifiedAt,
         fmcsaSafetyRating: companies.fmcsaSafetyRating,
@@ -219,6 +221,7 @@ export const fmcsaRouter = router({
     .input(z.object({ companyId: z.number() }))
     .mutation(async ({ input }) => {
       const drizzle = await getDb();
+      if (!drizzle) throw new Error("Database not available");
       await drizzle.update(companies).set({
         fmcsaVerifiedAt: null,
         fmcsaSafetyRating: null,

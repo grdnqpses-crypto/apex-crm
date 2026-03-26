@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { CheckCircle, XCircle, Loader2, Plug, ExternalLink, Trash2, TestTube } from "lucide-react";
-import DashboardLayout from "@/components/DashboardLayout";
 import { useSkin } from "@/contexts/SkinContext";
 
 const CATEGORIES = ["all", "communication", "automation", "finance", "meetings", "ecommerce", "forms", "scheduling", "prospecting", "telephony", "email", "migration"];
@@ -70,7 +69,8 @@ export default function IntegrationHub() {
   };
 
   return (
-    <DashboardLayout>
+    <>
+
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div>
@@ -197,6 +197,6 @@ export default function IntegrationHub() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
-  );
+  
+    </>);
 }

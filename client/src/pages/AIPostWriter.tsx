@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,7 +60,6 @@ export default function AIPostWriter() {
   const PlatformIcon = selectedPlatform?.icon ?? Linkedin;
 
   return (
-    <DashboardLayout>
       <div className="p-6 max-w-4xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
@@ -216,6 +214,5 @@ export default function AIPostWriter() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

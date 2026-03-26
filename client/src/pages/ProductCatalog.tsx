@@ -1,5 +1,4 @@
 import { useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,7 +71,6 @@ export default function ProductCatalog() {
   const filtered = products?.items ?? [];
 
   return (
-    <DashboardLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -199,6 +197,5 @@ export default function ProductCatalog() {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout>
   );
 }

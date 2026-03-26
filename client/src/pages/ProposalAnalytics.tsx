@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -32,7 +31,6 @@ export default function ProposalAnalytics() {
   const highEngagement = analytics ? Math.round((analytics.completionRate / 100) * analytics.totalViews) : 0;
 
   return (
-    <DashboardLayout>
       <div className="p-6 max-w-5xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
@@ -175,6 +173,5 @@ export default function ProposalAnalytics() {
           </div>
         )}
       </div>
-    </DashboardLayout>
   );
 }

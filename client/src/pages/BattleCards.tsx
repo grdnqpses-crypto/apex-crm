@@ -91,7 +91,7 @@ export default function BattleCards() {
                   <Select value={genForm.companyId?.toString() || ""} onValueChange={(v) => setGenForm(p => ({ ...p, companyId: v ? Number(v) : undefined }))}>
                     <SelectTrigger className="mt-1"><SelectValue placeholder="Select a company..." /></SelectTrigger>
                     <SelectContent>
-                      {(companiesData?.companies || []).map((c: any) => (
+                      {(companiesData?.items || []).map((c: any) => (
                         <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -102,7 +102,7 @@ export default function BattleCards() {
                   <Select value={genForm.contactId?.toString() || ""} onValueChange={(v) => setGenForm(p => ({ ...p, contactId: v ? Number(v) : undefined }))}>
                     <SelectTrigger className="mt-1"><SelectValue placeholder="Select a contact..." /></SelectTrigger>
                     <SelectContent>
-                      {(contactsData?.contacts || []).map((c: any) => (
+                      {(contactsData?.items || []).map((c: any) => (
                         <SelectItem key={c.id} value={c.id.toString()}>{c.firstName} {c.lastName}{c.jobTitle ? ` — ${c.jobTitle}` : ""}</SelectItem>
                       ))}
                     </SelectContent>

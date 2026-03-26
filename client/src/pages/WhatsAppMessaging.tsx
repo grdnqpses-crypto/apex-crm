@@ -1,5 +1,4 @@
 import { useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -51,7 +50,6 @@ export default function WhatsAppMessaging() {
   const templateList = templates as any[] || [];
 
   return (
-    <DashboardLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -238,6 +236,5 @@ export default function WhatsAppMessaging() {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout>
   );
 }

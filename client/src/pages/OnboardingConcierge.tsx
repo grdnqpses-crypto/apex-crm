@@ -6,7 +6,6 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { CheckCircle, Circle, ChevronRight, Sparkles, MessageSquare, Send, Loader2, Trophy, BookOpen, Video, HelpCircle } from "lucide-react";
-import DashboardLayout from "@/components/DashboardLayout";
 import { useSkin } from "@/contexts/SkinContext";
 
 const CHECKLIST_STEPS = [
@@ -69,7 +68,6 @@ export default function OnboardingConcierge() {
   };
 
   return (
-    <DashboardLayout>
       <div className="p-6 max-w-6xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Onboarding Concierge</h1>
@@ -207,6 +205,5 @@ export default function OnboardingConcierge() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

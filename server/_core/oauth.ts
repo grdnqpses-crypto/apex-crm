@@ -183,7 +183,8 @@ export function registerOAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      res.redirect(302, "/");
+      // Redirect to dashboard after successful OAuth login (not "/" which shows marketing page)
+      res.redirect(302, "/dashboard");
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
       res.status(500).json({ error: "OAuth callback failed" });
@@ -249,7 +250,7 @@ export function registerOAuthRoutes(app: Express) {
           await dbConn.update(calendarConnections).set({
             accessToken: tokenData.access_token as string,
             refreshToken: (tokenData.refresh_token as string) ?? undefined,
-            calendarEmail,
+            calendarId: calendarEmail,
             syncEnabled: true,
             updatedAt: now,
           }).where(eq(calendarConnections.id, existing[0].id));
@@ -260,7 +261,7 @@ export function registerOAuthRoutes(app: Express) {
             provider: "google",
             accessToken: tokenData.access_token as string,
             refreshToken: (tokenData.refresh_token as string) ?? undefined,
-            calendarEmail,
+            calendarId: calendarEmail,
             syncEnabled: true,
             createdAt: now,
             updatedAt: now,

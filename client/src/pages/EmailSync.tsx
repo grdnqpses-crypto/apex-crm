@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Mail, CheckCircle, XCircle, Plug, Trash2, Plus, Inbox, Send, Copy } from "lucide-react";
-import DashboardLayout from "@/components/DashboardLayout";
 import { useSkin } from "@/contexts/SkinContext";
 
 const PROVIDERS = [
@@ -50,7 +49,8 @@ export default function EmailSync() {
   const bccAddress = connection?.bccAddress;
 
   return (
-    <DashboardLayout>
+    <>
+
       <div className="p-6 max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -204,6 +204,6 @@ export default function EmailSync() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
-  );
+  
+    </>);
 }

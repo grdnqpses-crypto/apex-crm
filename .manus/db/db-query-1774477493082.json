@@ -1,0 +1,18 @@
+{
+  "query": "SHOW COLUMNS FROM prospects LIKE 'engagementStage';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SHOW COLUMNS FROM prospects LIKE 'engagementStage';",
+  "rows": [
+    {
+      "Field": "engagementStage",
+      "Type": "varchar(32)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "discovered",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nengagementStage\tvarchar(32)\tNO\t\tdiscovered\t\n",
+  "stderr": "",
+  "execution_time_ms": 403
+}

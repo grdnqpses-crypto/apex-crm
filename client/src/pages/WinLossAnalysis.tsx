@@ -1,5 +1,4 @@
-import { useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
+import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,12 +8,11 @@ import { useSkin } from "@/contexts/SkinContext";
 export default function WinLossAnalysis() {
   const { t } = useSkin();
   const [days, setDays] = useState(90);
-  const startDate = Date.now() - days * 86400000;
+  const startDate = useMemo(() => Date.now() - days * 86400000, [days]);
 
   const { data: stats, isLoading } = trpc.winLoss.stats.useQuery({ startDate });
 
   return (
-    <DashboardLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -39,7 +37,11 @@ export default function WinLossAnalysis() {
 
         {isLoading ? (
           <div className="text-center py-20 text-muted-foreground">Loading analysis…</div>
-        ) : stats ? (
+        ) : !stats ? (
+          <Card><CardContent className="p-12 text-center"><BarChart3 className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" /><h3 className="text-lg font-medium">Unable to load analysis</h3><p className="text-sm text-muted-foreground mt-1">Please try refreshing the page.</p></CardContent></Card>
+        ) : stats.totalWon === 0 && stats.totalLost === 0 ? (
+          <Card><CardContent className="p-12 text-center"><Trophy className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" /><h3 className="text-lg font-medium">No closed deals in this period</h3><p className="text-sm text-muted-foreground mt-1">Mark deals as Won or Lost in your pipeline to see win/loss analysis here. Try extending the date range above.</p></CardContent></Card>
+        ) : (
           <>
             {/* KPI cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -179,8 +181,7 @@ export default function WinLossAnalysis() {
               </CardContent>
             </Card>
           </>
-        ) : null}
+        )}
       </div>
-    </DashboardLayout>
   );
 }

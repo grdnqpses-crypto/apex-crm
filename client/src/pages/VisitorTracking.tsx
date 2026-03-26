@@ -12,7 +12,7 @@ import { useSkin } from "@/contexts/SkinContext";
 import {
   Eye, Building2, Globe, UserPlus, Clock, Code, Copy, Trash2,
   CheckCircle, AlertCircle, MonitorSmartphone, Sparkles, Loader2,
-  Mail, ChevronDown, ChevronUp, Zap, Key, X, RefreshCw,
+  Mail, ChevronDown, ChevronUp, Zap, Key, X, RefreshCw, BarChart3, ExternalLink, Info,
 } from "lucide-react";
 
 // ─── AI progress steps ───────────────────────────────────────────────────────
@@ -350,6 +350,9 @@ export default function VisitorTracking() {
               <Badge className="ml-2 text-xs">{sessions.data.length}</Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="google-analytics">
+            <BarChart3 className="w-4 h-4 mr-2" />Google Analytics
+          </TabsTrigger>
         </TabsList>
 
         {/* ── Set Up Tracking Tab ───────────────────────────────────────── */}
@@ -519,7 +522,12 @@ export default function VisitorTracking() {
           )}
         </TabsContent>
 
-        {/* ── Visitor Sessions Tab ──────────────────────────────────────── */}
+        {/* ── Google Analytics Tab ─────────────────────────────────── */}
+        <TabsContent value="google-analytics" className="space-y-4 mt-4">
+          <GoogleAnalyticsTab />
+        </TabsContent>
+
+        {/* ── Visitor Sessions Tab ────────────────────────────────── */}
         <TabsContent value="visitors" className="space-y-4 mt-4">
           <div className="grid grid-cols-4 gap-4">
             {[
@@ -613,6 +621,160 @@ export default function VisitorTracking() {
           onSaved={() => websites.refetch()}
         />
       )}
+    </div>
+  );
+}
+
+// ─── Google Analytics Tab ───────────────────────────────────────────────────
+function GoogleAnalyticsTab() {
+  const [measurementId, setMeasurementId] = useState("");
+  const [saved, setSaved] = useState(() => {
+    try { return localStorage.getItem("ga4_measurement_id") ?? ""; } catch { return ""; }
+  });
+  const [copied, setCopied] = useState(false);
+
+  const handleSave = () => {
+    const id = measurementId.trim().toUpperCase();
+    if (!id.startsWith("G-")) { toast.error("Measurement ID must start with G- (e.g. G-XXXXXXXXXX)"); return; }
+    try { localStorage.setItem("ga4_measurement_id", id); } catch {}
+    setSaved(id);
+    setMeasurementId("");
+    toast.success("GA4 Measurement ID saved");
+  };
+
+  const gaScript = saved ? `<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=${saved}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '${saved}');
+</script>` : "";
+
+  const copyScript = () => {
+    navigator.clipboard.writeText(gaScript).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <Card className="border-border/60">
+        <CardContent className="pt-6 pb-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+              <BarChart3 className="w-6 h-6 text-orange-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold">Google Analytics 4 Integration</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Connect your GA4 property to enrich visitor tracking with Google Analytics data. Enter your Measurement ID to generate the tracking snippet.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Step 1: Enter Measurement ID */}
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-bold">1</span>
+            <h3 className="font-semibold">Enter your GA4 Measurement ID</h3>
+          </div>
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 flex items-start gap-2 text-xs text-blue-300">
+            <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <span>Find your Measurement ID in Google Analytics → Admin → Data Streams → select your stream. It starts with <strong>G-</strong></span>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="G-XXXXXXXXXX"
+              value={measurementId}
+              onChange={e => setMeasurementId(e.target.value)}
+              className="font-mono"
+              onKeyDown={e => e.key === "Enter" && handleSave()}
+            />
+            <Button onClick={handleSave} disabled={!measurementId.trim()}>Save ID</Button>
+          </div>
+          {saved && (
+            <div className="flex items-center gap-2 text-sm text-green-400">
+              <CheckCircle className="w-4 h-4" />
+              <span>Active Measurement ID: <span className="font-mono font-bold">{saved}</span></span>
+              <Button variant="ghost" size="sm" className="h-6 text-xs text-muted-foreground" onClick={() => { setSaved(""); try { localStorage.removeItem("ga4_measurement_id"); } catch {} toast.success("Measurement ID removed"); }}>Remove</Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Step 2: Get the script */}
+      {saved && (
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-bold">2</span>
+              <h3 className="font-semibold">Add the tracking snippet to your website</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">Paste this snippet in the <code className="bg-muted px-1 rounded text-xs">&lt;head&gt;</code> section of every page you want to track.</p>
+            <div className="relative">
+              <pre className="bg-zinc-900 text-zinc-100 rounded-xl p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap border border-border leading-relaxed">{gaScript}</pre>
+              <Button size="sm" variant="outline" className="absolute top-2 right-2" onClick={copyScript}>
+                {copied ? <CheckCircle className="w-3 h-3 mr-1 text-green-400" /> : <Copy className="w-3 h-3 mr-1" />}
+                {copied ? "Copied!" : "Copy"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 3: Verify */}
+      {saved && (
+        <Card>
+          <CardContent className="pt-6 space-y-3">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-bold">3</span>
+              <h3 className="font-semibold">Verify installation</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">After adding the snippet, use Google's Tag Assistant to confirm it's firing correctly.</p>
+            <div className="flex gap-3">
+              <Button variant="outline" size="sm" asChild>
+                <a href="https://tagassistant.google.com/" target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="w-3 h-3 mr-1" />Open Tag Assistant
+                </a>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <a href={`https://analytics.google.com/analytics/web/#/p${saved.replace('G-','')}/reports/reportinghub`} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="w-3 h-3 mr-1" />Open GA4 Dashboard
+                </a>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Platform-specific guides */}
+      <Card>
+        <CardContent className="pt-6 space-y-3">
+          <h3 className="font-semibold">Platform-specific installation guides</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {[
+              { name: "WordPress", url: "https://support.google.com/analytics/answer/10447272", color: "text-blue-400" },
+              { name: "Shopify",   url: "https://help.shopify.com/en/manual/reports-and-analytics/google-analytics/google-analytics-setup", color: "text-green-400" },
+              { name: "Webflow",   url: "https://university.webflow.com/lesson/google-analytics", color: "text-purple-400" },
+              { name: "Wix",       url: "https://support.wix.com/en/article/adding-google-analytics-4-ga4-to-your-wix-site", color: "text-yellow-400" },
+              { name: "Squarespace", url: "https://support.squarespace.com/hc/en-us/articles/205815898", color: "text-gray-400" },
+              { name: "Custom HTML", url: "https://developers.google.com/analytics/devguides/collection/ga4", color: "text-cyan-400" },
+            ].map(p => (
+              <a key={p.name} href={p.url} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 p-3 rounded-lg border border-border/50 hover:border-border transition-colors text-sm">
+                <ExternalLink className={`w-3 h-3 ${p.color}`} />
+                <span>{p.name}</span>
+              </a>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

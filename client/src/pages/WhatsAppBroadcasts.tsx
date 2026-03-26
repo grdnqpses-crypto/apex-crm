@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,7 +66,6 @@ export default function WhatsAppBroadcasts() {
   const totalSent = broadcasts?.filter((b) => b.status === "sent").reduce((s, b) => s + (b.recipientCount ?? 0), 0) ?? 0;
 
   return (
-    <DashboardLayout>
       <div className="p-6 max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -248,6 +246,5 @@ export default function WhatsAppBroadcasts() {
           </div>
         )}
       </div>
-    </DashboardLayout>
   );
 }

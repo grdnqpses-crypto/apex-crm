@@ -11,7 +11,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { Plus, BarChart2, Download, Share2, Trash2, MoreHorizontal, Play, Table, PieChart, TrendingUp } from "lucide-react";
-import DashboardLayout from "@/components/DashboardLayout";
 import { useSkin } from "@/contexts/SkinContext";
 
 const REPORT_TYPES = [
@@ -120,7 +119,7 @@ export default function ReportBuilder() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -292,6 +291,6 @@ export default function ReportBuilder() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 }

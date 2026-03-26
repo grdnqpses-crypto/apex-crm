@@ -127,7 +127,7 @@ Only return signals with confidence >= 0.6.`;
 
     const content = response.choices?.[0]?.message?.content;
     if (!content) return [];
-    const parsed = JSON.parse(content);
+    const parsed = JSON.parse(typeof content === "string" ? content : JSON.stringify(content));
     return (parsed.signals || []).map((s: any) => ({ ...s, autoEmailSent: false }));
   } catch {
     return [];
@@ -185,7 +185,7 @@ Return JSON with: subject (string), html (string with basic HTML), text (plain t
 
   const content = response.choices?.[0]?.message?.content;
   if (!content) throw new Error("Failed to generate email");
-  return JSON.parse(content);
+  return JSON.parse(typeof content === "string" ? content : JSON.stringify(content));
 }
 
 /** Send a congratulations email via nodemailer */
@@ -431,6 +431,7 @@ export async function syncCompanyMonitor(opts: {
 // ─── tRPC Router ──────────────────────────────────────────────────────────────
 async function getDbOrThrow() {
   const db = await getDb();
+  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
   return db;
 }
 

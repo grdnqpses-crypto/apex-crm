@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
-import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -82,7 +81,6 @@ export default function NotificationDigest() {
   ];
 
   return (
-    <DashboardLayout>
       <div className="p-6 max-w-3xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -249,6 +247,5 @@ export default function NotificationDigest() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   );
 }

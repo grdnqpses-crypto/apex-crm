@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Calendar, Clock, Link, Plus, Copy, Users, Video, Phone, MapPin, Trash2, CheckCircle, Zap, AlertCircle, RefreshCw } from "lucide-react";
-import DashboardLayout from "@/components/DashboardLayout";
 import { useSkin } from "@/contexts/SkinContext";
 
 const MEETING_ICONS: Record<string, React.ElementType> = {
@@ -38,20 +37,18 @@ export default function MeetingScheduler() {
   const { data: bookings = [] } = trpc.scheduler.getBookings.useQuery({});
 
   // Google Calendar connection status
-  const { data: calendarStatus, refetch: refetchCalendarStatus } = trpc.googleCalendarOAuth.getCalendarStatus.useQuery();
+  const { data: calendarStatus, refetch: refetchCalendarStatus } = trpc.googleCalendarOAuth.getConnectionStatus.useQuery();
 
-  const getGoogleAuthUrlMutation = trpc.googleCalendarOAuth.getGoogleAuthUrl.useMutation({
-    onSuccess: (data) => {
-      if (data.configured) {
-        window.location.href = data.url;
-      } else {
-        toast.error("Google Calendar credentials not configured. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Settings → Secrets.");
-      }
-    },
-    onError: () => toast.error("Failed to start Google Calendar connection."),
-  });
+  const { data: googleAuthUrlData } = trpc.googleCalendarOAuth.getAuthUrl.useQuery({ origin: window.location.origin });
+  const handleConnectGoogle = () => {
+    if (googleAuthUrlData?.configured && googleAuthUrlData?.url) {
+      window.location.href = googleAuthUrlData.url;
+    } else {
+      toast.error("Google Calendar credentials not configured. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Settings → Secrets.");
+    }
+  };
 
-  const disconnectCalendarMutation = trpc.googleCalendarOAuth.disconnectCalendar.useMutation({
+  const disconnectCalendarMutation = trpc.googleCalendarOAuth.disconnectGoogle.useMutation({
     onSuccess: () => { toast.success("Google Calendar disconnected."); refetchCalendarStatus(); },
     onError: () => toast.error("Failed to disconnect."),
   });
@@ -110,7 +107,8 @@ export default function MeetingScheduler() {
   };
 
   return (
-    <DashboardLayout>
+    <>
+
       <div className="p-6 max-w-5xl mx-auto space-y-6">
 
         {/* Google Calendar Connection Banner */}
@@ -133,7 +131,7 @@ export default function MeetingScheduler() {
                   </p>
                   <p className="text-xs text-gray-500">
                     {calendarStatus?.connected
-                      ? `Live availability from ${calendarStatus.email ?? "your calendar"} — guests only see real open slots`
+                      ? `Live availability from ${(calendarStatus as { calendarId?: string }).calendarId ?? "your calendar"} — guests only see real open slots`
                       : "Connect to show real free/busy availability on your booking page instead of static slots"}
                   </p>
                 </div>
@@ -164,8 +162,7 @@ export default function MeetingScheduler() {
                   <Button
                     size="sm"
                     className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2 shadow-sm"
-                    onClick={() => getGoogleAuthUrlMutation.mutate({ origin: window.location.origin })}
-                    disabled={getGoogleAuthUrlMutation.isPending}
+                    onClick={handleConnectGoogle}
                   >
                     <Zap className="h-3.5 w-3.5 text-blue-500" />
                     Connect Google Calendar
@@ -355,6 +352,6 @@ export default function MeetingScheduler() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
-  );
+  
+    </>);
 }

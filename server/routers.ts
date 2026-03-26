@@ -136,6 +136,7 @@ export const appRouter = router({
         if (!isEmulating) {
           try {
             const dbConn = await db.getDb();
+            if (!dbConn) throw new Error('DB unavailable');
             const { emulationSessions } = await import("../drizzle/schema.js");
             const { eq } = await import("drizzle-orm");
             const [record] = await dbConn.select()
@@ -226,6 +227,7 @@ export const appRouter = router({
       if (currentToken) {
         try {
           const dbConn = await db.getDb();
+          if (!dbConn) throw new Error('DB unavailable');
           const { emulationSessions } = await import("../drizzle/schema.js");
           const { eq } = await import("drizzle-orm");
           const [record] = await dbConn.select()
@@ -431,16 +433,18 @@ export const appRouter = router({
       const { contacts: ct } = await import('../drizzle/schema.js');
       const { eq, and, inArray } = await import('drizzle-orm');
       const drizzleDb = await db.getDb();
+      if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
       const tenantId = ctx.user.tenantCompanyId ?? 0;
-      await drizzleDb.delete(ct).where(and(inArray(ct.id, input.ids), eq(ct.tenantCompanyId, tenantId)));
+      await drizzleDb.delete(ct).where(and(inArray(ct.id, input.ids), eq(ct.tenantId, tenantId)));
       return { deleted: input.ids.length };
     }),
     deleteAll: protectedProcedure.mutation(async ({ ctx }) => {
       const { contacts: ct } = await import('../drizzle/schema.js');
       const { eq } = await import('drizzle-orm');
       const drizzleDb = await db.getDb();
+      if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
       const tenantId = ctx.user.tenantCompanyId ?? 0;
-      await drizzleDb.delete(ct).where(eq(ct.tenantCompanyId, tenantId));
+      await drizzleDb.delete(ct).where(eq(ct.tenantId, tenantId));
       return { success: true };
     }),
     exportCsv: protectedProcedure.query(async ({ ctx }) => {
@@ -628,19 +632,21 @@ export const appRouter = router({
       const { companies: co, contacts: ct } = await import('../drizzle/schema.js');
       const { eq, and, inArray } = await import('drizzle-orm');
       const drizzleDb = await db.getDb();
+      if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
       const tenantId = ctx.user.tenantCompanyId ?? 0;
       // Cascade: delete contacts first, then companies
-      await drizzleDb.delete(ct).where(and(inArray(ct.companyId, input.ids), eq(ct.tenantCompanyId, tenantId)));
-      await drizzleDb.delete(co).where(and(inArray(co.id, input.ids), eq(co.tenantCompanyId, tenantId)));
+      await drizzleDb.delete(ct).where(and(inArray(ct.companyId, input.ids), eq(ct.tenantId, tenantId)));
+      await drizzleDb.delete(co).where(and(inArray(co.id, input.ids), eq(co.tenantId, tenantId)));
       return { deleted: input.ids.length };
     }),
     deleteAll: protectedProcedure.mutation(async ({ ctx }) => {
       const { companies: co, contacts: ct } = await import('../drizzle/schema.js');
       const { eq } = await import('drizzle-orm');
       const drizzleDb = await db.getDb();
+      if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
       const tenantId = ctx.user.tenantCompanyId ?? 0;
-      await drizzleDb.delete(ct).where(eq(ct.tenantCompanyId, tenantId));
-      await drizzleDb.delete(co).where(eq(co.tenantCompanyId, tenantId));
+      await drizzleDb.delete(ct).where(eq(ct.tenantId, tenantId));
+      await drizzleDb.delete(co).where(eq(co.tenantId, tenantId));
       return { success: true };
     }),
   }),
@@ -1314,13 +1320,20 @@ export const appRouter = router({
 
   paradigm: router({
     stats: protectedProcedure.query(async ({ ctx }) => {
-      return db.getParadigmStats(ctx.user.id);
+      // For admin roles, aggregate stats across all visible users
+      const visibleIds = await db.getVisibleUserIds(ctx.user);
+      const primaryId = visibleIds[0] ?? ctx.user.id;
+      return db.getParadigmStats(primaryId);
     }),
     recentActivity: protectedProcedure.input(z.object({ limit: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
-      return db.getRecentActivity(ctx.user.id, input?.limit);
+      const visibleIds = await db.getVisibleUserIds(ctx.user);
+      const primaryId = visibleIds[0] ?? ctx.user.id;
+      return db.getRecentActivity(primaryId, input?.limit);
     }),
     hotLeads: protectedProcedure.query(async ({ ctx }) => {
-      return db.getHotLeads(ctx.user.id);
+      const visibleIds = await db.getVisibleUserIds(ctx.user);
+      const primaryId = visibleIds[0] ?? ctx.user.id;
+      return db.getHotLeads(primaryId);
     }),
   }),
 
@@ -1715,14 +1728,14 @@ export const appRouter = router({
         // Build rich context from DB — no manual input needed
         let prospectDesc = 'Target: a logistics/freight decision maker at a mid-size company.';
         if (enrolledProspects && enrolledProspects.length > 0) {
-          const p = enrolledProspects[0];
+          const p = enrolledProspects[0] as any;
           // Pull company data if linked
           let companyInfo = '';
           if (p.companyId) {
             const company = await db.getCompany(p.companyId, ctx.user.id);
             if (company) {
-              const deals = await db.listDeals(ctx.user.id, { limit: 3 });
-              const companyDeals = deals.filter((d: any) => d.companyId === p.companyId);
+              const dealsResult2 = await db.listDeals(ctx.user.id, { limit: 3 });
+              const companyDeals = dealsResult2.items.filter((d: any) => d.companyId === p.companyId);
               const activities = await db.listActivities(ctx.user.id, { companyId: p.companyId, limit: 5 });
               companyInfo = `Company: ${company.name}${company.industry ? ' (' + company.industry + ' industry)' : ''}${company.website ? ', website: ' + company.website : ''}. ${companyDeals.length > 0 ? 'Open deals: ' + companyDeals.map((d: any) => d.name).join(', ') + '.' : ''} ${activities.length > 0 ? 'Recent activities: ' + activities.slice(0, 3).map((a: any) => a.type + ': ' + (a.notes || '')).join('; ') + '.' : ''}`;
             }
@@ -1730,7 +1743,8 @@ export const appRouter = router({
           // Pull signals for this prospect
           const signals = await db.listTriggerSignals(ctx.user.id, { limit: 3 });
           const prospectSignals = signals.items?.filter((s: any) => s.prospectId === p.id) || [];
-          prospectDesc = `Target prospect: ${p.firstName || ''} ${p.lastName || ''}, ${p.jobTitle || 'Decision Maker'} at ${p.companyName || 'their company'} in the ${p.industry || 'logistics'} industry. Intent score: ${p.intentScore ?? 'unknown'}/100. Engagement stage: ${p.engagementStage || 'cold'}. ${p.painPoints ? 'Pain points: ' + p.painPoints + '.' : ''} ${p.notes ? 'Notes: ' + p.notes + '.' : ''} ${companyInfo} ${prospectSignals.length > 0 ? 'Recent signals: ' + prospectSignals.map((s: any) => s.signalType + ': ' + s.description).join('; ') + '.' : ''}`;
+          const painPoints = p.psychographicProfile?.painPoints || p.painPoints;
+          prospectDesc = `Target prospect: ${p.firstName || ''} ${p.lastName || ''}, ${p.jobTitle || 'Decision Maker'} at ${p.companyName || 'their company'} in the ${p.industry || 'logistics'} industry. Intent score: ${p.intentScore ?? 'unknown'}/100. Engagement stage: ${p.engagementStage || 'cold'}. ${painPoints ? 'Pain points: ' + painPoints + '.' : ''} ${p.notes ? 'Notes: ' + p.notes + '.' : ''} ${companyInfo} ${prospectSignals.length > 0 ? 'Recent signals: ' + prospectSignals.map((s: any) => s.signalType + ': ' + s.description).join('; ') + '.' : ''}`;
         }
         const tone = input.toneOverride || 'professional and personable';
         const sequenceName = sequence?.name || 'Outreach Sequence';
@@ -1855,14 +1869,15 @@ export const appRouter = router({
 
       // Pull prospect data
       if (input.prospectId) {
-        const p = await db.getProspect(input.prospectId, ctx.user.id);
+        const p = await db.getProspect(input.prospectId, ctx.user.id) as any;
         if (p) {
           resolvedProspectName = `${p.firstName || ''} ${p.lastName || ''}`.trim() || p.email || 'Unknown';
           contextParts.push(`Prospect: ${resolvedProspectName}, ${p.jobTitle || 'Decision Maker'} at ${p.companyName || 'their company'}.`);
           if (p.industry) contextParts.push(`Industry: ${p.industry}.`);
           if (p.intentScore) contextParts.push(`Intent score: ${p.intentScore}/100.`);
           if (p.engagementStage) contextParts.push(`Engagement stage: ${p.engagementStage}.`);
-          if (p.painPoints) contextParts.push(`Known pain points: ${p.painPoints}.`);
+          const pPainPoints = p.psychographicProfile?.painPoints || p.painPoints;
+          if (pPainPoints) contextParts.push(`Known pain points: ${pPainPoints}.`);
           if (p.notes) contextParts.push(`Notes: ${p.notes}.`);
           const outreach = await db.listProspectOutreach(p.id, 5);
           if (outreach && outreach.length > 0) contextParts.push(`Past outreach: ${outreach.map((o: any) => o.channel + ' on ' + new Date(Number(o.sentAt)).toLocaleDateString() + (o.replied ? ' (replied)' : '')).join('; ')}.`);
@@ -1884,8 +1899,8 @@ export const appRouter = router({
           const contacts = await db.getContactsByCompany(companyIdToUse, ctx.user.id);
           if (contacts && contacts.length > 0) contextParts.push(`Key contacts: ${contacts.slice(0, 3).map((c: any) => `${c.firstName} ${c.lastName} (${c.jobTitle || 'unknown role'})`).join(', ')}.`);
           // Pull deals
-          const deals = await db.listDeals(ctx.user.id, { limit: 10 });
-          const companyDeals = deals.filter((d: any) => d.companyId === companyIdToUse);
+          const dealsResult = await db.listDeals(ctx.user.id, { limit: 10 });
+          const companyDeals = dealsResult.items.filter((d: any) => d.companyId === companyIdToUse);
           if (companyDeals.length > 0) contextParts.push(`Open deals: ${companyDeals.map((d: any) => `${d.name} ($${d.value || 0}, stage: ${d.stage || 'unknown'})`).join('; ')}.`);
           // Pull recent activities
           const activities = await db.listActivities(ctx.user.id, { companyId: companyIdToUse, limit: 5 });
@@ -1945,14 +1960,16 @@ export const appRouter = router({
       const id = await db.createBattleCard({
         userId: ctx.user.id,
         prospectId: input.prospectId ?? 0,
-        title: cardData.title,
-        personInsights: cardData.summary,
-        painPoints: cardData.keyPainPoints,
-        talkingPoints: cardData.talkingPoints,
+        title: String(cardData.title || ''),
+        personInsights: cardData.summary || null,
+        painPoints: cardData.keyPainPoints || null,
+        talkingPoints: cardData.talkingPoints || null,
         objectionHandlers: (cardData.objectionHandlers || []).map((o: string) => ({ objection: o, response: '' })),
         competitorIntel: (cardData.competitiveAdvantages || []).join('\n'),
-        recommendedApproach: cardData.recommendedNextStep,
-        urgencyLevel: cardData.urgencyLevel,
+        recommendedApproach: cardData.recommendedNextStep || null,
+        urgencyLevel: cardData.urgencyLevel || 'medium',
+        companyOverview: null,
+        triggerContext: null,
         isRead: false,
         isArchived: false,
         generatedAt: Date.now(),
@@ -1962,13 +1979,13 @@ export const appRouter = router({
     }),
     generateForAllCompanies: protectedProcedure.mutation(async ({ ctx }) => {
       // Auto-generate a battle card for every company in the user's CRM
-      const companies = await db.listCompanies(ctx.user.id, { limit: 50 });
+      const companiesResult = await db.listCompanies(ctx.user.id, { limit: 50 });
       const results: { companyId: number; companyName: string; cardId: number }[] = [];
-      for (const company of companies) {
+      for (const company of companiesResult.items) {
         try {
           const contacts = await db.getContactsByCompany(company.id, ctx.user.id);
-          const deals = await db.listDeals(ctx.user.id, { limit: 10 });
-          const companyDeals = deals.filter((d: any) => d.companyId === company.id);
+          const dealsResult3 = await db.listDeals(ctx.user.id, { limit: 10 });
+          const companyDeals = dealsResult3.items.filter((d: any) => d.companyId === company.id);
           const activities = await db.listActivities(ctx.user.id, { companyId: company.id, limit: 5 });
           const contextParts: string[] = [
             `Company: ${company.name}${company.industry ? ' (' + company.industry + ' industry)' : ''}${company.website ? ', website: ' + company.website : ''}${company.city ? ', based in ' + company.city : ''}.`,
@@ -2010,14 +2027,16 @@ export const appRouter = router({
           const cardId = await db.createBattleCard({
             userId: ctx.user.id,
             prospectId: 0,
-            title: cardData.title,
-            personInsights: cardData.summary,
-            painPoints: cardData.keyPainPoints,
-            talkingPoints: cardData.talkingPoints,
+            title: String(cardData.title || ''),
+            personInsights: cardData.summary || null,
+            painPoints: cardData.keyPainPoints || null,
+            talkingPoints: cardData.talkingPoints || null,
             objectionHandlers: (cardData.objectionHandlers || []).map((o: string) => ({ objection: o, response: '' })),
             competitorIntel: (cardData.competitiveAdvantages || []).join('\n'),
-            recommendedApproach: cardData.recommendedNextStep,
-            urgencyLevel: cardData.urgencyLevel,
+            recommendedApproach: cardData.recommendedNextStep || null,
+            urgencyLevel: cardData.urgencyLevel || 'medium',
+            companyOverview: null,
+            triggerContext: null,
             isRead: false,
             isArchived: false,
             generatedAt: Date.now(),
@@ -2922,6 +2941,7 @@ export const appRouter = router({
       // but we still need the record to exist so isEmulating returns true.
       try {
         const dbConn = await db.getDb();
+        if (!dbConn) throw new Error('DB unavailable');
         const { emulationSessions } = await import("../drizzle/schema.js");
         const { eq } = await import("drizzle-orm");
         // Clean up any stale records for this new emulated token
@@ -2960,6 +2980,7 @@ export const appRouter = router({
       if (currentToken) {
         try {
           const dbConn = await db.getDb();
+          if (!dbConn) throw new Error('DB unavailable');
           const { emulationSessions } = await import("../drizzle/schema.js");
           const { eq } = await import("drizzle-orm");
           const [record] = await dbConn.select()
@@ -3396,6 +3417,7 @@ export const appRouter = router({
       const passwordHash = await bcrypt.hash(tempPassword, 10);
       // Update in DB
       const dbConn = await db.getDb();
+      if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
       const { users: usersTable } = await import("../drizzle/schema.js");
       const { eq } = await import("drizzle-orm");
       await dbConn.update(usersTable)

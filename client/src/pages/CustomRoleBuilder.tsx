@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -130,7 +129,6 @@ export default function CustomRoleBuilder() {
   };
 
   return (
-    <DashboardLayout>
       <div className="p-6 max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -275,6 +273,5 @@ export default function CustomRoleBuilder() {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout>
   );
 }

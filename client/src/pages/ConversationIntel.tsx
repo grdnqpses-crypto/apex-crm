@@ -1,5 +1,4 @@
 import { useState, useRef } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,13 +33,12 @@ export default function ConversationIntel() {
     if (!uploadFile) { toast.error("Select a file first"); return; }
     if (!uploadTitle) { toast.error("Enter a call title"); return; }
     const reader = new FileReader();
-    reader.onload = (e) => { const b64 = (e.target?.result as string).split(",")[1]; uploadRecording.mutate({ title: uploadTitle, contactId: uploadContactId ? parseInt(uploadContactId) : undefined, fileName: uploadFile.name, mimeType: uploadFile.type, base64Data: b64 }); };
+    reader.onload = (e) => { const b64 = (e.target?.result as string).split(",")[1]; uploadRecording.mutate({ contactId: uploadContactId ? parseInt(uploadContactId) : undefined, fileName: uploadFile.name, mimeType: uploadFile.type, base64Data: b64 }); };
     reader.readAsDataURL(uploadFile);
   };
   const stats = { total: recordings?.length ?? 0, analyzed: recordings?.filter((r: any) => r.analysisStatus === "completed").length ?? 0, avgSentiment: recordings?.length ? recordings.reduce((s: number, r: any) => s + (r.sentimentScore ?? 0.5), 0) / recordings.length : 0, pending: recordings?.filter((r: any) => r.analysisStatus === "pending" || r.analysisStatus === "processing").length ?? 0 };
 
   return (
-    <DashboardLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
@@ -111,7 +109,7 @@ export default function ConversationIntel() {
                     <div className="flex items-center gap-2 shrink-0">
                       <Badge className={rec.analysisStatus === "completed" ? "bg-green-500/20 text-green-400 text-xs" : rec.analysisStatus === "processing" ? "bg-blue-500/20 text-blue-400 text-xs" : rec.analysisStatus === "failed" ? "bg-red-500/20 text-red-400 text-xs" : "bg-yellow-500/20 text-yellow-400 text-xs"}>{rec.analysisStatus}</Badge>
                       {rec.sentimentScore != null && <span className={`text-xs font-medium ${SENTIMENT_COLOR(rec.sentimentScore)}`}>{SENTIMENT_LABEL(rec.sentimentScore)}</span>}
-                      {rec.analysisStatus === "pending" && <Button size="sm" variant="outline" className="text-xs h-7" onClick={e => { e.stopPropagation(); triggerAnalysis.mutate({ recordingId: rec.id }); }}>Analyze</Button>}
+                      {rec.analysisStatus === "pending" && <Button size="sm" variant="outline" className="text-xs h-7" onClick={e => { e.stopPropagation(); triggerAnalysis.mutate({ id: rec.id }); }}>Analyze</Button>}
                       {expandedId === rec.id ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                     </div>
                   </div>
@@ -136,6 +134,5 @@ export default function ConversationIntel() {
           ))}
         </div>
       </div>
-    </DashboardLayout>
   );
 }

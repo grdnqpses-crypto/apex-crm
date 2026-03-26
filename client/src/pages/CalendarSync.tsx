@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Calendar, CheckCircle, XCircle, Plug, Trash2, RefreshCw, Plus, Clock } from "lucide-react";
-import DashboardLayout from "@/components/DashboardLayout";
 import { useSkin } from "@/contexts/SkinContext";
 
 const PROVIDERS = [
@@ -58,7 +57,8 @@ export default function CalendarSync() {
   };
 
   return (
-    <DashboardLayout>
+    <>
+
       <div className="p-6 max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -215,6 +215,6 @@ export default function CalendarSync() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
-  );
+  
+    </>);
 }

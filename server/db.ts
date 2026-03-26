@@ -93,7 +93,11 @@ export async function getUserByOpenId(openId: string) {
 export async function getUserByUsername(username: string) {
   const db = await getDb();
   if (!db) return undefined;
-  const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
+  // Search by username, email, or name (for accounts created via OAuth that have no username)
+  const { or } = await import('drizzle-orm');
+  const result = await db.select().from(users).where(
+    or(eq(users.username, username), eq(users.email, username), eq(users.name, username))
+  ).limit(1);
   return result.length > 0 ? result[0] : undefined;
 }
 
@@ -110,7 +114,7 @@ export async function createCredentialUser(data: {
   plainTextPassword?: string;
   name: string;
   email?: string;
-  systemRole: "axiom_owner" | "company_admin" | "sales_manager" | "office_manager" | "manager" | "account_manager" | "coordinator" | "user";
+  systemRole: "developer" | "axiom_admin" | "axiom_owner" | "company_admin" | "sales_manager" | "office_manager" | "manager" | "account_manager" | "coordinator" | "user";
   tenantCompanyId: number;
   managerId?: number;
   jobTitle?: string;
@@ -203,7 +207,7 @@ export async function listLeadStatuses() {
 }
 
 // ─── Contacts ───
-export async function listContacts(userId: number, opts?: { search?: string; stage?: string; leadStatus?: string; limit?: number; offset?: number }) {
+export async function listContacts(userId: number, opts?: { search?: string; stage?: string; leadStatus?: string; limit?: number; offset?: number; companyId?: number }) {
   const db = await getDb();
   if (!db) return { items: [], total: 0 };
   const conditions = [eq(contacts.userId, userId)];
@@ -1843,7 +1847,7 @@ export async function getAllUsersWithCompany() {
     .orderBy(desc(users.lastSignedIn));
 }
 
-export async function updateUserRole(userId: number, systemRole: "developer" | "axiom_owner" | "company_admin" | "sales_manager" | "office_manager" | "manager" | "account_manager" | "coordinator" | "user") {
+export async function updateUserRole(userId: number, systemRole: "developer" | "axiom_admin" | "axiom_owner" | "company_admin" | "sales_manager" | "office_manager" | "manager" | "account_manager" | "coordinator" | "user") {
   const db = await getDb();
   if (!db) return null as any;
   await db.update(users).set({ systemRole }).where(eq(users.id, userId));
@@ -1958,7 +1962,7 @@ export async function getFeatureAssignmentsByCompany(companyId: number) {
 export async function createCompanyInvite(data: {
   tenantCompanyId: number;
   email: string;
-  inviteRole: "company_admin" | "sales_manager" | "office_manager" | "manager" | "account_manager" | "coordinator" | "user";
+  inviteRole: "axiom_admin" | "company_admin" | "sales_manager" | "office_manager" | "manager" | "account_manager" | "coordinator" | "user";
   managerId?: number;
   token: string;
   invitedBy: number;
@@ -3290,7 +3294,7 @@ export async function listMarketplaceLoads(filters: { status?: string; companyId
   if (!db) return [];
   const conditions: any[] = [];
   if (filters.status) conditions.push(eq(marketplaceLoads.status, filters.status));
-  if (filters.companyId) conditions.push(eq(marketplaceLoads.companyId, filters.companyId));
+  // companyId not in marketplace_loads table - skip that filter
   return db.select().from(marketplaceLoads).where(conditions.length ? and(...conditions) : undefined).orderBy(desc(marketplaceLoads.createdAt)).limit(100);
 }
 
@@ -3441,7 +3445,7 @@ export async function getMarketplaceStats(companyId?: number) {
   const db = await getDb();
   if (!db) return { totalLoads: 0, activeLoads: 0, deliveredLoads: 0, totalRevenue: 0, totalMargin: 0, avgMarginPercent: 0 };
   const conditions: any[] = [];
-  if (companyId) conditions.push(eq(marketplaceLoads.companyId, companyId));
+  // companyId not in marketplace_loads table - skip that filter
   
   const allLoads = await db.select().from(marketplaceLoads).where(conditions.length ? and(...conditions) : undefined);
   const totalLoads = allLoads.length;
@@ -3598,13 +3602,13 @@ export async function getVisibleUserIds(user: { id: number; systemRole: string; 
   if (!db) return [user.id];
 
   if (user.systemRole === "developer" || user.systemRole === "super_admin") {
-    // Developer sees all users
+    // Developer / super_admin sees all users across all tenants
     const allUsers = await db.select({ id: users.id }).from(users);
     return allUsers.map(u => u.id);
   }
 
-  if (user.systemRole === "company_admin") {
-    // Company admin sees all users in their tenant
+  if (user.systemRole === "axiom_admin" || user.systemRole === "axiom_owner" || user.systemRole === "company_admin") {
+    // axiom_admin / axiom_owner / company_admin sees all users in their own tenant
     if (!user.tenantCompanyId) return [user.id];
     const tenantUsers = await db.select({ id: users.id }).from(users)
       .where(eq(users.tenantCompanyId, user.tenantCompanyId));

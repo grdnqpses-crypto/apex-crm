@@ -1,5 +1,4 @@
 import { useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -68,7 +67,6 @@ export default function BulkActions() {
   }
 
   return (
-    <DashboardLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center gap-3">
           <Layers className="h-7 w-7 text-primary" />
@@ -174,6 +172,5 @@ export default function BulkActions() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   );
 }

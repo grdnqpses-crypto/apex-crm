@@ -250,8 +250,13 @@ export default function MarketingHome({
   const [videoOpen, setVideoOpen] = useState(false);
   const [checkoutLoadingPlan, setCheckoutLoadingPlan] = useState<string | null>(null);
 
-  const { user } = useAuth();
-
+  const { user, loading: authLoading } = useAuth();
+  // Redirect already-logged-in users directly to the dashboard
+  useEffect(() => {
+    if (!authLoading && user && !initialLoginOpen) {
+      navigate("/dashboard");
+    }
+  }, [user, authLoading, initialLoginOpen, navigate]);
   const createCheckout = trpc.billing.createCheckout.useMutation({
     onSuccess: (data) => {
       if (data.checkoutUrl) {

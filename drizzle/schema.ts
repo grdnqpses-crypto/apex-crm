@@ -340,6 +340,8 @@ export const deals = mysqlTable("deals", {
   expectedCloseDate: bigint("expectedCloseDate", { mode: "number" }),
   closedAt: bigint("closedAt", { mode: "number" }),
   lostReason: text("lostReason"),
+  wonReason: text("wonReason"),
+  closeNote: text("closeNote"),
   notes: text("notes"),
   tags: json("tags").$type<string[]>(),
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),

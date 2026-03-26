@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +58,6 @@ export default function SMSInbox() {
   const isTwilioConfigured = true; // Show UI regardless; backend will error gracefully if not configured
 
   return (
-    <DashboardLayout>
       <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
         {/* Sidebar: thread list */}
         <div className="w-72 border-r border-border/50 flex flex-col shrink-0">
@@ -81,7 +79,7 @@ export default function SMSInbox() {
                       <label className="text-sm font-medium">Message</label>
                       <Input placeholder="Type your message…" value={newMsg} onChange={e => setNewMsg(e.target.value)} />
                     </div>
-                    <Button className="w-full" onClick={() => sendNew.mutate({ phone: newPhone, body: newMsg })} disabled={sendNew.isPending || !newPhone || !newMsg}>
+                    <Button className="w-full" onClick={() => sendNew.mutate({ toNumber: newPhone, body: newMsg })} disabled={sendNew.isPending || !newPhone || !newMsg}>
                       {sendNew.isPending ? "Sending…" : "Send"}
                     </Button>
                   </div>
@@ -179,12 +177,12 @@ export default function SMSInbox() {
                     placeholder="Type a message…"
                     value={messageText}
                     onChange={e => setMessageText(e.target.value)}
-                    onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (messageText.trim()) sendSms.mutate({ contactId: selectedContactId, body: messageText }); } }}
+                    onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (messageText.trim()) sendSms.mutate({ contactId: selectedContactId!, toNumber: selectedThread?.phone ?? "", body: messageText }); } }}
                     className="flex-1"
                   />
                   <Button
                     size="icon"
-                    onClick={() => { if (messageText.trim()) sendSms.mutate({ contactId: selectedContactId, body: messageText }); }}
+                    onClick={() => { if (messageText.trim()) sendSms.mutate({ contactId: selectedContactId!, toNumber: selectedThread?.phone ?? "", body: messageText }); }}
                     disabled={sendSms.isPending || !messageText.trim()}
                   >
                     <Send className="w-4 h-4" />
@@ -195,6 +193,5 @@ export default function SMSInbox() {
           )}
         </div>
       </div>
-    </DashboardLayout>
   );
 }

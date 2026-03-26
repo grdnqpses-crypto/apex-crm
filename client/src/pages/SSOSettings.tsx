@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
-import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +58,6 @@ export default function SSOSettings() {
   const needsAdvanced = form.provider === "saml" || form.provider === "oidc";
 
   return (
-    <DashboardLayout>
       <div className="p-6 max-w-3xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -236,6 +234,5 @@ export default function SSOSettings() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   );
 }

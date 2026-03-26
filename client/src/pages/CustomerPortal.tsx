@@ -1,5 +1,4 @@
 import { useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,7 +70,6 @@ export default function CustomerPortal() {
   const totalAccesses = (tokens.data ?? []).reduce((sum: number, t: any) => sum + (t.accessCount || 0), 0);
 
   return (
-    <DashboardLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -251,7 +249,7 @@ export default function CustomerPortal() {
                         variant="outline"
                         size="sm"
                         className="gap-1.5 text-xs"
-                        onClick={() => copyPortalLink(selectedToken?.token)}
+                        onClick={() => selectedToken?.token && copyPortalLink(selectedToken.token)}
                       >
                         <ExternalLink className="w-3 h-3" /> Copy Link
                       </Button>
@@ -364,6 +362,5 @@ export default function CustomerPortal() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

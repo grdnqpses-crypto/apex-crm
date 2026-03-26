@@ -53,7 +53,7 @@ Return a JSON object with only the fields you can confidently infer. Example: {"
           response_format: { type: "json_object" },
         });
         const content = response.choices?.[0]?.message?.content ?? "{}";
-        enrichedData = JSON.parse(content);
+        enrichedData = JSON.parse(typeof content === 'string' ? content : '{}');
       } catch {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "AI enrichment failed" });
       }
@@ -116,7 +116,7 @@ Return a JSON object with only the fields you can confidently infer.`;
           response_format: { type: "json_object" },
         });
         const content = response.choices?.[0]?.message?.content ?? "{}";
-        enrichedData = JSON.parse(content);
+        enrichedData = JSON.parse(typeof content === 'string' ? content : '{}');
       } catch {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "AI enrichment failed" });
       }
@@ -167,7 +167,7 @@ Return a JSON object with only the fields you can confidently infer.`;
           });
 
           const content = response.choices?.[0]?.message?.content ?? "{}";
-          const enrichedData = JSON.parse(content);
+          const enrichedData = JSON.parse(typeof content === 'string' ? content : '{}');
           const updates: Record<string, any> = {};
           for (const [key, value] of Object.entries(enrichedData)) {
             if (ENRICHMENT_FIELDS_COMPANY.includes(key) && value && !(company as any)[key]) {
@@ -213,7 +213,7 @@ Return a JSON object with only the fields you can confidently infer.`;
           });
 
           const content = response.choices?.[0]?.message?.content ?? "{}";
-          const enrichedData = JSON.parse(content);
+          const enrichedData = JSON.parse(typeof content === 'string' ? content : '{}');
           const updates: Record<string, any> = {};
           for (const [key, value] of Object.entries(enrichedData)) {
             if (ENRICHMENT_FIELDS_CONTACT.includes(key) && value && !(contact as any)[key]) {

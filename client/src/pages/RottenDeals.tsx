@@ -1,5 +1,4 @@
 import { useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,8 +13,8 @@ export default function RottenDeals() {
   const { t } = useSkin();
   const [thresholdDays, setThresholdDays] = useState(14);
 
-  const { data: rottenDealsData, isLoading, refetch } = trpc.rottenDeals.list.useQuery();
-  const rottenDeals = rottenDealsData?.deals ?? [];
+  const { data: rottenDealsData, isLoading, refetch } = trpc.rottenDeals.list.useQuery({ thresholdDays });
+  const rottenDeals = rottenDealsData ?? [];
 
   const totalValue = rottenDeals.reduce((s: number, d: any) => s + (d.value ?? 0), 0);
 
@@ -26,7 +25,6 @@ export default function RottenDeals() {
   }
 
   return (
-    <DashboardLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -135,6 +133,5 @@ export default function RottenDeals() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   );
 }

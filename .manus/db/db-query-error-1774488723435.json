@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE deals ADD COLUMN wonReason TEXT NULL AFTER lostReason;\nALTER TABLE deals ADD COLUMN closeNote TEXT NULL AFTER wonReason;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute ALTER TABLE deals ADD COLUMN wonReason TEXT NULL AFTER lostReason;\nALTER TABLE deals ADD COLUMN closeNote TEXT NULL AFTER wonReason;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1060 (42S21) at line 1: Duplicate column name 'wonReason'"
+  ]
+}

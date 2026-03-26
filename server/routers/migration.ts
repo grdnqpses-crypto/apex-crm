@@ -538,14 +538,17 @@ export const migrationRouter = router({
       let fieldSample: Record<string, string[]> = {};
       let suggestedMapping: Record<string, string> = {};
       if (input.csvData) {
-        const rows = parseCSV(input.csvData);
-        contactCount = rows.length;
-        if (rows.length > 0) {
-          const headers = Object.keys(rows[0]);
+        const parsed = parseCSV(input.csvData);
+        contactCount = parsed.rows.length;
+        if (parsed.rows.length > 0) {
+          const headers = parsed.headers;
           for (const h of headers) {
-            fieldSample[h] = rows.slice(0, 3).map((r: Record<string, string>) => r[h] ?? "").filter(Boolean);
+            fieldSample[h] = parsed.rows.slice(0, 3).map((r: Record<string, string>) => r[h] ?? "").filter(Boolean);
           }
-          try { suggestedMapping = await aiMapFields(headers, input.sourcePlatform); } catch { /* fallback */ }
+          try {
+            const mapping = await aiMapFields(input.sourcePlatform, { contacts: headers, companies: [], deals: [] }, ctx.user.tenantCompanyId ?? 0);
+            suggestedMapping = mapping.mapped as Record<string, string>;
+          } catch { /* fallback */ }
         }
       }
       return { tenantId, sourcePlatform: input.sourcePlatform, contactCount, fieldSample, suggestedMapping, canImport: contactCount > 0 };
@@ -760,51 +763,51 @@ async function runMigrationAsync(
           break;
         case "apollo":
           if (!input.apiKey) throw new Error("Apollo.io API key is required");
-          liveData = await fetchApollo(input.apiKey, progressCb, sinceDate);
+          liveData = await fetchApollo({ apiKey: input.apiKey! }, progressCb, sinceDate);
           break;
         case "freshsales":
           if (!input.apiKey) throw new Error("Freshsales API key and subdomain are required");
-          liveData = await fetchFreshsales(input.apiKey, progressCb, sinceDate);
+          liveData = await fetchFreshsales({ apiKey: input.apiKey!, subdomain: input.instanceUrl || "" }, progressCb, sinceDate);
           break;
         case "activecampaign":
           if (!input.apiKey) throw new Error("ActiveCampaign API key and URL are required");
-          liveData = await fetchActiveCampaign(input.apiKey, progressCb, sinceDate);
+          liveData = await fetchActiveCampaign({ apiKey: input.apiKey!, accountUrl: input.instanceUrl || "" }, progressCb, sinceDate);
           break;
         case "keap":
           if (!input.apiKey) throw new Error("Keap API key is required");
-          liveData = await fetchKeap(input.apiKey, progressCb, sinceDate);
+          liveData = await fetchKeap({ apiKey: input.apiKey! }, progressCb, sinceDate);
           break;
         case "copper":
           if (!input.apiKey) throw new Error("Copper API key and email are required");
-          liveData = await fetchCopper(input.apiKey, progressCb, sinceDate);
+          liveData = await fetchCopper({ apiKey: input.apiKey!, userEmail: input.instanceUrl || "" }, progressCb, sinceDate);
           break;
         case "nutshell":
           if (!input.apiKey) throw new Error("Nutshell email and API key are required");
-          liveData = await fetchNutshell(input.apiKey, progressCb, sinceDate);
+          liveData = await fetchNutshell({ username: input.instanceUrl || "", apiKey: input.apiKey! }, progressCb, sinceDate);
           break;
         case "insightly":
           if (!input.apiKey) throw new Error("Insightly API key is required");
-          liveData = await fetchInsightly(input.apiKey, progressCb, sinceDate);
+          liveData = await fetchInsightly({ apiKey: input.apiKey! }, progressCb, sinceDate);
           break;
         case "sugarcrm":
           if (!input.apiKey) throw new Error("SugarCRM credentials are required");
-          liveData = await fetchSugarCRM(input.apiKey, progressCb, sinceDate);
+          liveData = await fetchSugarCRM({ username: "", password: "", instanceUrl: input.instanceUrl || input.apiKey || "" }, progressCb, sinceDate);
           break;
         case "streak":
           if (!input.apiKey) throw new Error("Streak API key is required");
-          liveData = await fetchStreak(input.apiKey, progressCb, sinceDate);
+          liveData = await fetchStreak({ apiKey: input.apiKey! }, progressCb, sinceDate);
           break;
         case "nimble":
           if (!input.apiKey) throw new Error("Nimble API token is required");
-          liveData = await fetchNimble(input.apiKey, progressCb, sinceDate);
+          liveData = await fetchNimble({ apiKey: input.apiKey! }, progressCb, sinceDate);
           break;
         case "monday":
           if (!input.apiKey) throw new Error("Monday.com API token is required");
-          liveData = await fetchMonday(input.apiKey, progressCb, sinceDate);
+          liveData = await fetchMonday({ apiToken: input.apiKey! }, progressCb, sinceDate);
           break;
         case "constantcontact":
           if (!input.apiKey) throw new Error("Constant Contact access token is required");
-          liveData = await fetchConstantContact(input.apiKey, progressCb, sinceDate);
+          liveData = await fetchConstantContact({ accessToken: input.apiKey! }, progressCb, sinceDate);
           break;
         default:
           throw new Error(`Live API migration not supported for: ${input.sourceSystem}`);

@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { DollarSign, Globe, RefreshCw, Check, X, Plus, Loader2 } from "lucide-react";
-import DashboardLayout from "@/components/DashboardLayout";
 
 export default function MultiCurrencySettings() {
   const { data: supported = [] } = trpc.currency.getSupportedCurrencies.useQuery();
@@ -60,7 +59,6 @@ export default function MultiCurrencySettings() {
   const enabledSet = new Set(enabledCurrencies);
 
   return (
-    <DashboardLayout>
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -187,6 +185,5 @@ export default function MultiCurrencySettings() {
           </Button>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

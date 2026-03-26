@@ -1,5 +1,4 @@
 import { trpc } from "@/lib/trpc";
-import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -25,7 +24,6 @@ export default function AICreditUsage() {
   const topFeature = usage?.slice().sort((a: { totalCredits: number }, b: { totalCredits: number }) => b.totalCredits - a.totalCredits)[0];
 
   return (
-    <DashboardLayout>
       <div className="p-6 max-w-4xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
@@ -131,6 +129,5 @@ export default function AICreditUsage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   );
 }

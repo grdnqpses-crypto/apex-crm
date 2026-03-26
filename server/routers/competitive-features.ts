@@ -96,7 +96,7 @@ export const salesQuotasRouter = router({
         AND d.expectedCloseDate >= ${startOfMonth}
         AND d.expectedCloseDate <= ${endOfMonth}
       ORDER BY d.value DESC
-    `).then(([rows]) => rows as any[]);
+    `).then(([rows]) => rows as unknown as any[]);
 
     const wonAmount = periodDeals.filter(d => d.status === "won").reduce((s: number, d: any) => s + Number(d.dealValue ?? 0), 0);
     const pipelineAmount = periodDeals.filter(d => d.status === "open").reduce((s: number, d: any) => s + Number(d.dealValue ?? 0), 0);
@@ -137,7 +137,7 @@ export const salesQuotasRouter = router({
         AND closedAt >= ${startOfMonth} AND closedAt <= ${endOfMonth}
         AND isDeleted = 0
       GROUP BY userId
-    `).then(([rows]) => rows as any[]);
+    `).then(([rows]) => rows as unknown as any[]);
 
     return teamUsers.map(u => {
       const quota = quotaRows.find(q => q.userId === u.id);
@@ -233,7 +233,7 @@ export const smsRouter = router({
         )
       ORDER BY m.createdAt DESC
       LIMIT 100
-    `).then(([rows]) => rows as any[]);
+    `).then(([rows]) => rows as unknown as any[]);
     return rows;
   }),
 
@@ -445,7 +445,7 @@ export const gdprRouter = router({
     const consents = await db.select().from(gdprConsents)
       .where(and(eq(gdprConsents.contactId, input.contactId), eq(gdprConsents.tenantId, tenantId)));
     const activities = await db.select().from(activityHistory)
-      .where(and(eq(activityHistory.contactId, input.contactId), eq(activityHistory.tenantCompanyId, tenantId)))
+      .where(and(eq(activityHistory.recordId, input.contactId), eq(activityHistory.tenantCompanyId, tenantId)))
       .orderBy(desc(activityHistory.occurredAt)).limit(500);
     return { contact, consents, activities, exportedAt: Date.now() };
   }),
@@ -940,7 +940,7 @@ For unknown: params = {}, confirmation = "I don't understand that command"`,
         SELECT ps.id, ps.pipelineId FROM pipeline_stages ps
         JOIN pipelines p ON ps.pipelineId = p.id
         WHERE p.tenantId = ${tenantId} ORDER BY ps.stageOrder ASC LIMIT 1
-      `).then(([rows]) => rows as any[]);
+      `).then(([rows]) => rows as unknown as any[]);
       if (stage) {
         const [ins] = await db.execute(sql`
           INSERT INTO deals (userId, tenantId, pipelineId, stageId, name, dealValue, status, priority, createdAt, updatedAt)
@@ -1065,9 +1065,8 @@ export const userPrefsRouter = router({
   get: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return { compactMode: false, keyboardShortcuts: true, theme: "dark" };
-    const [user] = await db.select({ settings: users.settings ?? {} as any }).from(users)
-      .where(eq(users.id, ctx.user.id));
-    const settings = (user?.settings as any) ?? {};
+    const [userRow] = await db.execute(sql`SELECT settings FROM users WHERE id = ${ctx.user.id} LIMIT 1`).then(([rows]) => rows as unknown as any[]);
+    const settings = userRow?.settings ? (typeof userRow.settings === 'string' ? JSON.parse(userRow.settings) : userRow.settings) : {};
     return {
       compactMode: settings.compactMode ?? false,
       keyboardShortcuts: settings.keyboardShortcuts ?? true,
@@ -1082,9 +1081,8 @@ export const userPrefsRouter = router({
   })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    const [user] = await db.select({ settings: users.settings ?? {} as any }).from(users)
-      .where(eq(users.id, ctx.user.id));
-    const current = (user?.settings as any) ?? {};
+    const [userRow2] = await db.execute(sql`SELECT settings FROM users WHERE id = ${ctx.user.id} LIMIT 1`).then(([rows]) => rows as unknown as any[]);
+    const current = userRow2?.settings ? (typeof userRow2.settings === 'string' ? JSON.parse(userRow2.settings) : userRow2.settings) : {};
     const updated = { ...current, ...Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined)) };
     await db.execute(sql`UPDATE users SET settings = ${JSON.stringify(updated)} WHERE id = ${ctx.user.id}`);
     return { success: true };
@@ -1142,7 +1140,8 @@ export const portalDocsRouter = router({
       fileUrl: url,
       fileKey: key,
       mimeType: input.mimeType,
-      uploadedAt: Date.now(),
+      uploadedBy: 'rep',
+      createdAt: Date.now(),
     });
     return { success: true, url };
   }),

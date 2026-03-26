@@ -311,13 +311,13 @@ function AccountDefaults() {
   // Logo history to count usage
   const { data: logoHistory } = trpc.tenants.getLogoHistory.useQuery();
   const logoCount = logoHistory?.length ?? 0;
-  const addonPaid = ((myCompany?.settings as Record<string, unknown>) || {})?.logoAddonPaid === true;
+  const addonPaid = false; // logoAddonPaid is checked server-side in generateLogo procedure
   const hasFreeLogo = logoCount >= 1 && !addonPaid && !isUnlimitedLogoRole;
 
   const createLogoCheckout = trpc.tenants.createLogoCustomizationCheckout.useMutation({
     onSuccess: (data) => {
       toast.info("Redirecting to checkout...");
-      window.open(data.checkoutUrl, "_blank");
+      window.open(data.checkoutUrl ?? undefined, "_blank");
     },
     onError: (e) => toast.error(e.message),
   });

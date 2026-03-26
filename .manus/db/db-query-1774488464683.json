@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, name, email, username, plainTextPassword, systemRole FROM users LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, name, email, username, plainTextPassword, systemRole FROM users LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "crm",
+      "email": "crm@shiplw.com",
+      "username": "NULL",
+      "plainTextPassword": "Axiom123",
+      "systemRole": "developer"
+    },
+    {
+      "id": "12",
+      "name": "Crypto- GRDN",
+      "email": "grdn.qpses@gmail.com",
+      "username": "NULL",
+      "plainTextPassword": "Axiom123",
+      "systemRole": "developer"
+    },
+    {
+      "id": "2610017",
+      "name": "James Lavallee",
+      "email": "jlavallee@shiplw.com",
+      "username": "jlavallee",
+      "plainTextPassword": "Axiom123",
+      "systemRole": "developer"
+    },
+    {
+      "id": "2610020",
+      "name": "Mike Rodriguez",
+      "email": "mrodriguez@shiplw.com",
+      "username": "mrodriguez",
+      "plainTextPassword": "Axiom123",
+      "systemRole": "sales_manager"
+    },
+    {
+      "id": "2610023",
+      "name": "Sarah Chen",
+      "email": "schen@shiplw.com",
+      "username": "schen",
+      "plainTextPassword": "Axiom123",
+      "systemRole": "account_manager"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tusername\tplainTextPassword\tsystemRole\n1\tcrm\tcrm@shiplw.com\tNULL\tAxiom123\tdeveloper\n12\tCrypto- GRDN\tgrdn.qpses@gmail.com\tNULL\tAxiom123\tdeveloper\n2610017\tJames Lavallee\tjlavallee@shiplw.com\tjlavallee\tAxiom123\tdeveloper\n2610020\tMike Rodriguez\tmrodriguez@shiplw.com\tmrodriguez\tAxiom123\tsales_manager\n2610023\tSarah Chen\tschen@shiplw.com\tschen\tAxiom123\taccount_manager\n",
+  "stderr": "",
+  "execution_time_ms": 372
+}

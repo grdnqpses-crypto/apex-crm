@@ -17,6 +17,7 @@ export const portalRouter = router({
   // List all portal tokens created by this user
   listTokens: protectedProcedure.query(async ({ ctx }) => {
     const drizzle = await getDb();
+    if (!drizzle) return [];
     return drizzle.select().from(portalTokens)
       .where(eq(portalTokens.userId, ctx.user.id))
       .orderBy(desc(portalTokens.createdAt));
@@ -32,6 +33,7 @@ export const portalRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const drizzle = await getDb();
+      if (!drizzle) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const token = generateToken();
       const expiresAt = Date.now() + input.expiresInDays * 24 * 60 * 60 * 1000;
       const [result] = await drizzle.insert(portalTokens).values({
@@ -52,6 +54,7 @@ export const portalRouter = router({
     .input(z.object({ tokenId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const drizzle = await getDb();
+      if (!drizzle) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       await drizzle.update(portalTokens)
         .set({ isActive: 0 })
         .where(and(
@@ -66,6 +69,7 @@ export const portalRouter = router({
     .input(z.object({ tokenId: z.number() }))
     .query(async ({ ctx, input }) => {
       const drizzle = await getDb();
+      if (!drizzle) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const [token] = await drizzle.select().from(portalTokens)
         .where(and(eq(portalTokens.id, input.tokenId), eq(portalTokens.userId, ctx.user.id)))
         .limit(1);
@@ -80,6 +84,7 @@ export const portalRouter = router({
     .input(z.object({ tokenId: z.number() }))
     .query(async ({ ctx, input }) => {
       const drizzle = await getDb();
+      if (!drizzle) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const [token] = await drizzle.select().from(portalTokens)
         .where(and(eq(portalTokens.id, input.tokenId), eq(portalTokens.userId, ctx.user.id)))
         .limit(1);
@@ -94,6 +99,7 @@ export const portalRouter = router({
     .input(z.object({ tokenId: z.number(), content: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
       const drizzle = await getDb();
+      if (!drizzle) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const [token] = await drizzle.select().from(portalTokens)
         .where(and(eq(portalTokens.id, input.tokenId), eq(portalTokens.userId, ctx.user.id)))
         .limit(1);
@@ -117,6 +123,7 @@ export const portalRouter = router({
     .input(z.object({ token: z.string() }))
     .query(async ({ input }) => {
       const drizzle = await getDb();
+      if (!drizzle) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const [portalToken] = await drizzle.select().from(portalTokens)
         .where(eq(portalTokens.token, input.token))
         .limit(1);
@@ -190,6 +197,7 @@ export const portalRouter = router({
     }))
     .mutation(async ({ input }) => {
       const drizzle = await getDb();
+      if (!drizzle) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const [portalToken] = await drizzle.select().from(portalTokens)
         .where(eq(portalTokens.token, input.token))
         .limit(1);
@@ -226,6 +234,7 @@ export const portalRouter = router({
     }))
     .mutation(async ({ input }) => {
       const drizzle = await getDb();
+      if (!drizzle) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const [portalToken] = await drizzle.select().from(portalTokens)
         .where(eq(portalTokens.token, input.token))
         .limit(1);

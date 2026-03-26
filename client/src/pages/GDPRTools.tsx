@@ -1,5 +1,4 @@
-import { useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,9 +55,14 @@ export default function GDPRTools() {
     onError: (e) => toast.error(e.message),
   });
 
-  const exportData = trpc.gdpr.exportContactData.useMutation({
-    onSuccess: (data) => {
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const [exportTrigger, setExportTrigger] = useState<number | null>(null);
+  const exportData = trpc.gdpr.exportContactData.useQuery(
+    { contactId: exportTrigger! },
+    { enabled: exportTrigger !== null }
+  );
+  useEffect(() => {
+    if (exportData.data && exportTrigger !== null) {
+      const blob = new Blob([JSON.stringify(exportData.data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -66,9 +70,9 @@ export default function GDPRTools() {
       a.click();
       URL.revokeObjectURL(url);
       toast.success("Data exported");
-    },
-    onError: (e) => toast.error(e.message),
-  });
+      setExportTrigger(null);
+    }
+  }, [exportData.data]);
 
   const statusColor = (s: string) => {
     if (s === "granted") return "bg-green-500/20 text-green-400";
@@ -83,7 +87,6 @@ export default function GDPRTools() {
   };
 
   return (
-    <DashboardLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -128,7 +131,7 @@ export default function GDPRTools() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button className="w-full" onClick={() => recordConsent.mutate({ contactId: parseInt(consentForm.contactId), type: consentForm.type as any, status: consentForm.status as any })} disabled={recordConsent.isPending || !consentForm.contactId}>
+                  <Button className="w-full" onClick={() => recordConsent.mutate({ contactId: parseInt(consentForm.contactId), consentType: consentForm.type, granted: consentForm.status === 'granted' })} disabled={recordConsent.isPending || !consentForm.contactId}>
                     {recordConsent.isPending ? "Saving…" : "Save Consent"}
                   </Button>
                 </div>
@@ -161,10 +164,10 @@ export default function GDPRTools() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "Consents Granted", value: stats?.consentsGranted ?? 0, icon: CheckCircle2, color: "text-green-400" },
-            { label: "Consents Revoked", value: stats?.consentsRevoked ?? 0, icon: AlertTriangle, color: "text-red-400" },
-            { label: "Deletion Requests", value: stats?.deletionRequests ?? 0, icon: Trash2, color: "text-yellow-400" },
-            { label: "Audit Events (30d)", value: stats?.auditEvents ?? 0, icon: FileText, color: "text-blue-400" },
+            { label: "Consents Granted", value: stats?.granted ?? 0, icon: CheckCircle2, color: "text-green-400" },
+            { label: "Consents Revoked", value: stats?.revoked ?? 0, icon: AlertTriangle, color: "text-red-400" },
+            { label: "Deletion Requests", value: stats?.pendingDeletions ?? 0, icon: Trash2, color: "text-yellow-400" },
+            { label: "Completed Deletions", value: stats?.completedDeletions ?? 0, icon: FileText, color: "text-blue-400" },
           ].map(s => (
             <Card key={s.label} className="border-border/50">
               <CardContent className="p-4 flex items-center justify-between">
@@ -233,7 +236,7 @@ export default function GDPRTools() {
                         <div className="flex items-center gap-2">
                           <Badge className={deletionStatusColor(r.status)}>{r.status}</Badge>
                           {r.status === "pending" && (
-                            <Button size="sm" variant="destructive" onClick={() => processDeletion.mutate({ requestId: r.id })} disabled={processDeletion.isPending}>
+                            <Button size="sm" variant="destructive" onClick={() => processDeletion.mutate({ requestId: r.id, action: "complete" })} disabled={processDeletion.isPending}>
                               Erase Data
                             </Button>
                           )}
@@ -257,8 +260,8 @@ export default function GDPRTools() {
                   </div>
                   <div className="flex gap-2">
                     <Input type="number" placeholder="Contact ID" value={exportContactId} onChange={e => setExportContactId(e.target.value)} />
-                    <Button onClick={() => exportData.mutate({ contactId: parseInt(exportContactId) })} disabled={exportData.isPending || !exportContactId} className="gap-1.5 shrink-0">
-                      <Download className="w-4 h-4" /> {exportData.isPending ? "Exporting…" : "Export"}
+                    <Button onClick={() => setExportTrigger(parseInt(exportContactId))} disabled={exportData.isFetching || !exportContactId} className="gap-1.5 shrink-0">
+                      <Download className="w-4 h-4" /> {exportData.isFetching ? "Exporting…" : "Export"}
                     </Button>
                   </div>
                 </div>
@@ -291,6 +294,5 @@ export default function GDPRTools() {
           </TabsContent>
         </Tabs>
       </div>
-    </DashboardLayout>
   );
 }

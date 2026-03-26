@@ -240,7 +240,7 @@ const bulkActionsRouter = router({
         .where(and(inArray(contacts.id, input.ids), eq(contacts.tenantId, tenantId)));
       for (const row of rows) {
         const updates: Record<string, unknown> = { updatedAt: now, lastModifiedDate: now };
-        if (!row.lifecycleStage && row.leadStatus) {
+        if (!(row as any).lifecycleStage && row.leadStatus) {
           if (hotStatuses.includes(row.leadStatus)) updates.lifecycleStage = "opportunity";
           else if (warmStatuses.includes(row.leadStatus)) updates.lifecycleStage = "lead";
           else updates.lifecycleStage = "subscriber";
@@ -254,7 +254,7 @@ const bulkActionsRouter = router({
         .where(and(inArray(companies.id, input.ids), eq(companies.tenantId, tenantId)));
       for (const row of rows) {
         const updates: Record<string, unknown> = { updatedAt: now, lastModifiedDate: now };
-        if (!row.lifecycleStage && row.leadStatus) {
+        if (!(row as any).lifecycleStage && row.leadStatus) {
           if (hotStatuses.includes(row.leadStatus)) updates.lifecycleStage = "customer";
           else if (warmStatuses.includes(row.leadStatus)) updates.lifecycleStage = "lead";
           else updates.lifecycleStage = "prospect";
@@ -347,8 +347,10 @@ const winLossRouter = router({
   })).query(async ({ ctx, input }) => {
     const dbConn = await db.getDb();
     if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    // Use visible user IDs so axiom_admin / developer see all deals
+    const visibleIds = await db.getVisibleUserIds(ctx.user);
     const conditions = [
-      eq(deals.tenantId, ctx.user.tenantCompanyId ?? 0),
+      inArray(deals.userId, visibleIds),
       ne(deals.status, "open"),
     ];
     if (input.startDate) conditions.push(sql`${deals.closedAt} >= ${input.startDate}` as never);

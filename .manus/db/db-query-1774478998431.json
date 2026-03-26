@@ -1,0 +1,25 @@
+{
+  "query": "SHOW TABLES LIKE 'marketplace%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SHOW TABLES LIKE 'marketplace%';",
+  "rows": [
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY (marketplace%)": "marketplace_bids"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY (marketplace%)": "marketplace_documents"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY (marketplace%)": "marketplace_loads"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY (marketplace%)": "marketplace_payments"
+    },
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY (marketplace%)": "marketplace_tracking"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_mLLZEfmfSEuH47dfeJgVGY (marketplace%)\nmarketplace_bids\nmarketplace_documents\nmarketplace_loads\nmarketplace_payments\nmarketplace_tracking\n",
+  "stderr": "",
+  "execution_time_ms": 484
+}

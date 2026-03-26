@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,7 +47,6 @@ export default function BulkMerge() {
   const totalDuplicates = duplicates?.reduce((s, g) => s + g.duplicateIds.length, 0) ?? 0;
 
   return (
-    <DashboardLayout>
       <div className="p-6 max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -173,6 +171,5 @@ export default function BulkMerge() {
           </div>
         )}
       </div>
-    </DashboardLayout>
   );
 }

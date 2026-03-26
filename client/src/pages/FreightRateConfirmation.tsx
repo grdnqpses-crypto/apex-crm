@@ -1,5 +1,4 @@
-import { useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -208,8 +207,23 @@ function generatePDF(form: RateConfirmation) {
   doc.save(`rate-confirmation-${form.confirmationNumber}.pdf`);
 }
 
+const VERBIAGE_KEY = "rc_permanent_verbiage";
+
 export default function FreightRateConfirmation() {
   const [form, setForm] = useState<RateConfirmation>(defaultForm);
+  const [permanentVerbiage, setPermanentVerbiage] = useState<string>(() => {
+    try { return localStorage.getItem(VERBIAGE_KEY) ?? ""; } catch { return ""; }
+  });
+  const [editingVerbiage, setEditingVerbiage] = useState(false);
+  const [verbiageDraft, setVerbiageDraft] = useState("");
+
+  // Auto-fill special instructions from permanent verbiage on first load
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(VERBIAGE_KEY) ?? "";
+      if (saved) setForm(prev => ({ ...prev, specialInstructions: prev.specialInstructions || saved }));
+    } catch {}
+  }, []);
 
   const update = (field: keyof RateConfirmation, value: string) =>
     setForm(prev => ({ ...prev, [field]: value }));
@@ -239,7 +253,6 @@ export default function FreightRateConfirmation() {
   };
 
   return (
-    <DashboardLayout>
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -356,9 +369,57 @@ export default function FreightRateConfirmation() {
           </CardContent>
         </Card>
 
+        {/* Permanent Special Verbiage */}
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <span className="text-amber-500">&#9733;</span> Permanent Special Verbiage
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">Saved default text that auto-fills every new rate confirmation</p>
+              </div>
+              {!editingVerbiage ? (
+                <Button size="sm" variant="outline" onClick={() => { setVerbiageDraft(permanentVerbiage); setEditingVerbiage(true); }}>Edit Default</Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setEditingVerbiage(false)}>Cancel</Button>
+                  <Button size="sm" onClick={() => {
+                    setPermanentVerbiage(verbiageDraft);
+                    try { localStorage.setItem(VERBIAGE_KEY, verbiageDraft); } catch {}
+                    setEditingVerbiage(false);
+                    toast.success("Default verbiage saved");
+                  }}>Save Default</Button>
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          {editingVerbiage && (
+            <CardContent>
+              <Textarea rows={3} value={verbiageDraft} onChange={e => setVerbiageDraft(e.target.value)} placeholder="Enter permanent terms, policies, or clauses that appear on every rate confirmation..." className="bg-background" />
+            </CardContent>
+          )}
+          {!editingVerbiage && permanentVerbiage && (
+            <CardContent>
+              <p className="text-xs text-muted-foreground whitespace-pre-wrap">{permanentVerbiage}</p>
+            </CardContent>
+          )}
+          {!editingVerbiage && !permanentVerbiage && (
+            <CardContent>
+              <p className="text-xs text-muted-foreground italic">No default verbiage set. Click "Edit Default" to add permanent terms.</p>
+            </CardContent>
+          )}
+        </Card>
         {/* Special Instructions */}
         <Card>
-          <CardHeader><CardTitle className="text-base">Special Instructions / Notes</CardTitle></CardHeader>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Special Instructions / Notes</CardTitle>
+              {permanentVerbiage && (
+                <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => update("specialInstructions", permanentVerbiage)}>Reset to Default</Button>
+              )}
+            </div>
+          </CardHeader>
           <CardContent>
             <Textarea rows={4} value={form.specialInstructions} onChange={e => update("specialInstructions", e.target.value)} placeholder="TONU, detention policy, lumper fees, hazmat requirements, etc." />
           </CardContent>
@@ -371,6 +432,5 @@ export default function FreightRateConfirmation() {
           </Button>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

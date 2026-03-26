@@ -152,34 +152,29 @@ export default function PublicPortalView() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className="text-lg font-bold text-foreground">{deal.name}</h3>
-                  {deal.description && <p className="text-sm text-muted-foreground mt-1">{deal.description}</p>}
+                  {(deal as any).notes && <p className="text-sm text-muted-foreground mt-1">{(deal as any).notes}</p>}
                 </div>
-                <Badge className={`text-xs font-semibold rounded-lg shrink-0 ${stageColors[deal.stage ?? ""] ?? "bg-muted/60 text-muted-foreground"}`}>
-                  {deal.stage}
+                <Badge className={`text-xs font-semibold rounded-lg shrink-0 ${stageColors[deal.status ?? ""] ?? "bg-muted/60 text-muted-foreground"}`}>
+                  {deal.status}
                 </Badge>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {deal.amount && (
+                {deal.value && (
                   <div className="rounded-xl bg-muted/30 border border-border/40 p-3">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-1">Value</p>
-                    <p className="text-sm font-bold text-emerald-600">${Number(deal.amount).toLocaleString()}</p>
+                    <p className="text-sm font-bold text-emerald-600">${Number(deal.value).toLocaleString()}</p>
                   </div>
                 )}
-                {deal.closeDate && (
+                {deal.expectedCloseDate && (
                   <div className="rounded-xl bg-muted/30 border border-border/40 p-3">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-1">Expected Close</p>
                     <p className="text-sm font-semibold text-foreground flex items-center gap-1">
                       <Calendar className="h-3.5 w-3.5" />
-                      {new Date(deal.closeDate).toLocaleDateString()}
+                      {new Date(deal.expectedCloseDate).toLocaleDateString()}
                     </p>
                   </div>
                 )}
-                {deal.probability != null && (
-                  <div className="rounded-xl bg-muted/30 border border-border/40 p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-1">Probability</p>
-                    <p className="text-sm font-semibold text-foreground">{deal.probability}%</p>
-                  </div>
-                )}
+
               </div>
             </CardContent>
           </Card>

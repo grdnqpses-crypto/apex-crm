@@ -58,6 +58,13 @@
   --color-crm-purple-foreground: var(--crm-purple-foreground);
   --color-crm-gray: var(--crm-gray);
   --color-crm-gray-foreground: var(--crm-gray-foreground);
+  /* Freight/logistics semantic color aliases */
+  --color-crm-workflow: var(--crm-workflow);
+  --color-crm-pending: var(--crm-pending);
+  --color-crm-success: var(--crm-success);
+  --color-crm-premium: var(--crm-premium);
+  --color-crm-critical: var(--crm-critical);
+  --color-crm-inactive: var(--crm-inactive);
 }
 
 :root {
@@ -159,6 +166,13 @@
   /* Gray — Inactive / Archived */
   --crm-gray: oklch(0.55 0.005 260);
   --crm-gray-foreground: oklch(0.99 0 0);
+  /* Freight/logistics semantic aliases (map to base palette) */
+  --crm-workflow: oklch(0.50 0.18 255);   /* blue — active workflow */
+  --crm-pending: oklch(0.78 0.15 75);     /* amber — pending/attention */
+  --crm-success: oklch(0.55 0.18 155);    /* green — success/completed */
+  --crm-premium: oklch(0.55 0.20 300);    /* purple — premium/AI */
+  --crm-critical: oklch(0.55 0.22 25);    /* red — critical/overdue */
+  --crm-inactive: oklch(0.55 0.005 260);  /* gray — inactive/archived */
 }
 
 /* ─── Compact Mode (density toggle) ─── */

@@ -1,0 +1,45 @@
+{
+  "query": "SELECT id, username, systemRole, isActive, LEFT(COALESCE(passwordHash,''), 10) as hash_prefix FROM users WHERE systemRole IN ('axiom_admin', 'developer', 'axiom_owner') LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SELECT id, username, systemRole, isActive, LEFT(COALESCE(passwordHash,''), 10) as hash_prefix FROM users WHERE systemRole IN ('axiom_admin', 'developer', 'axiom_owner') LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "username": "NULL",
+      "systemRole": "developer",
+      "isActive": "1",
+      "hash_prefix": "$2b$10$SGb"
+    },
+    {
+      "id": "12",
+      "username": "NULL",
+      "systemRole": "developer",
+      "isActive": "1",
+      "hash_prefix": "$2b$10$SGb"
+    },
+    {
+      "id": "2610017",
+      "username": "jlavallee",
+      "systemRole": "developer",
+      "isActive": "1",
+      "hash_prefix": "$2b$10$SGb"
+    },
+    {
+      "id": "4410042",
+      "username": "apexowner",
+      "systemRole": "axiom_admin",
+      "isActive": "0",
+      "hash_prefix": "$2b$10$SGb"
+    },
+    {
+      "id": "5520068",
+      "username": "axiomdev",
+      "systemRole": "developer",
+      "isActive": "1",
+      "hash_prefix": "$2b$10$SGb"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tusername\tsystemRole\tisActive\thash_prefix\n1\tNULL\tdeveloper\t1\t$2b$10$SGb\n12\tNULL\tdeveloper\t1\t$2b$10$SGb\n2610017\tjlavallee\tdeveloper\t1\t$2b$10$SGb\n4410042\tapexowner\taxiom_admin\t0\t$2b$10$SGb\n5520068\taxiomdev\tdeveloper\t1\t$2b$10$SGb\n",
+  "stderr": "",
+  "execution_time_ms": 376
+}
