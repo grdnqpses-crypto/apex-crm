@@ -2882,3 +2882,6 @@
 ## Bug Fixes - Session (2026-03-26e)
 - [x] Fix OnboardingWizard logo step: AI Generate shows no preview — now shows full preview with approve/customize/regenerate options before applying
 - [x] Resize AI chat panel to 1/3 of main screen width when opened — now a full-height right-side panel, slides in from right
+
+## Onboarding Guide Redesign - Session (2026-03-26f)
+- [x] Redesign Getting Started guide chapters with detailed step-by-step instructions, numbered sub-steps, tips callouts, warning boxes, and video tutorial embeds for all 7 chapters (Branding, SMTP, Contacts, Pipeline, Campaigns, AI, Team)

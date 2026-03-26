@@ -36,7 +36,10 @@ type SetupStep = {
   illustration: string; // emoji illustration
   path?: string; // navigation path
   pathLabel?: string;
+  videoUrl?: string;   // YouTube embed URL
   videoLabel?: string;
+  subSteps?: string[]; // numbered sub-steps for complex actions
+  diagram?: React.ReactNode; // inline SVG/JSX diagram
 };
 
 const CHAPTERS: Chapter[] = [
@@ -52,23 +55,56 @@ const CHAPTERS: Chapter[] = [
       {
         number: 1,
         title: "Open the Logo Dialog",
-        description: "From the Dashboard, click the camera icon next to your company logo in the top-left sidebar. A dialog will pop up with logo options.",
+        description: "Your logo is the first thing every team member and email recipient sees. Let's add it now. Look at the top-left corner of the sidebar — you'll see your company name with a small camera icon next to it. Click that camera icon to open the logo dialog.",
         illustration: "🖼️",
-        tip: "Your logo appears in the sidebar, email footers, and all exported reports — so a clean, square image works best.",
+        subSteps: [
+          "Look at the left sidebar — find your company name at the very top",
+          "Click the small camera/pencil icon that appears next to the company name",
+          "A dialog box will pop up in the center of the screen with logo options",
+        ],
+        tip: "Your logo appears everywhere: the sidebar, email footers, PDF exports, and the AI assistant. A clean square image (PNG with transparent background) looks best.",
       },
       {
         number: 2,
-        title: "Generate or Upload Your Logo",
-        description: "Click \"AI Generate\" to have the AI create a professional logo based on your company name and industry — no design skills needed. Or click \"Upload\" to use your own PNG/JPG file (recommended size: 512×512 px or larger).",
+        title: "Generate a Logo with AI (No Design Skills Needed)",
+        description: "Don't have a logo? No problem. Click the \"AI Generate\" tab in the logo dialog. The AI will create a professional logo based on your company name and industry in about 15 seconds — completely free.",
         illustration: "✨",
-        tip: "After generating, click \"Customize It\" to describe specific colors, styles, or icons you want. The AI will regenerate to match your vision.",
+        subSteps: [
+          "In the logo dialog, click the \"AI Generate\" tab",
+          "Your company name is pre-filled — click \"Generate My Logo\"",
+          "Wait 10–20 seconds while the AI creates your logo",
+          "A large preview will appear — review it carefully",
+          "Click \"Customize It\" to describe changes (e.g. \"use navy blue and gold, add a truck icon\")",
+          "Click \"Yes, Use This Logo\" when you're happy with it",
+        ],
+        tip: "Be specific when customizing: say \"dark navy background, gold text, minimalist truck icon, sans-serif font\" instead of just \"make it better\". The more detail you give, the better the result.",
+        videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        videoLabel: "Watch: AI Logo Generation (2 min)",
       },
       {
         number: 3,
-        title: "Apply and Set as Favicon",
-        description: "Once you're happy with the preview, click \"Yes, Use This Logo\" to apply it. Then click \"Set as Favicon\" to also use it as the browser tab icon.",
-        illustration: "✅",
-        tip: "You can return to the logo dialog anytime from the Dashboard to update your logo or browse your logo history.",
+        title: "Upload Your Own Logo",
+        description: "Already have a logo file? Click the \"Upload\" button in the logo dialog. Select your PNG or JPG file from your computer. The system will show you a preview before applying it.",
+        illustration: "⬆️",
+        subSteps: [
+          "In the logo dialog, click the \"Upload\" button",
+          "Select your logo file (PNG or JPG, ideally 512×512 px or larger)",
+          "A preview will appear — confirm it looks correct",
+          "Click \"Yes, Use This Logo\" to apply it",
+        ],
+        tip: "PNG files with a transparent background look the most professional, especially on colored sidebar backgrounds. Avoid logos with white backgrounds — they'll look like a white box.",
+      },
+      {
+        number: 4,
+        title: "Set as Favicon (Browser Tab Icon)",
+        description: "After applying your logo, you'll see a \"Set as Favicon\" button. Click it to also use your logo as the small icon that appears in the browser tab. This makes the CRM feel like your own branded product.",
+        illustration: "🌐",
+        subSteps: [
+          "After clicking \"Yes, Use This Logo\", look for the \"Set as Favicon\" button",
+          "Click it — your logo will now appear in the browser tab",
+          "Refresh the page to see the new favicon take effect",
+        ],
+        tip: "You can change your logo anytime. Go to the Dashboard, click the camera icon again, and the full logo history is saved so you can switch back to any previous version.",
       },
     ],
   },
@@ -78,41 +114,84 @@ const CHAPTERS: Chapter[] = [
     color: "blue",
     gradient: "from-blue-500 to-cyan-600",
     title: "Set Up Email Sending",
-    subtitle: "Connect your SMTP server to send emails",
-    estimatedTime: "5 min",
+    subtitle: "Connect your SMTP server so you can send campaigns",
+    estimatedTime: "5–10 min",
     steps: [
       {
         number: 1,
-        title: "Navigate to Email Infrastructure",
-        description: "Go to Settings → Email Infrastructure → SMTP Accounts in the left sidebar. This is where all your sending accounts live.",
+        title: "What is SMTP and Why Do You Need It?",
+        description: "SMTP (Simple Mail Transfer Protocol) is the technology that lets the CRM send emails on your behalf. Think of it as connecting your email account to the CRM so it can send campaigns, follow-ups, and sequences using your email address — not a generic system address.",
         illustration: "📬",
+        subSteps: [
+          "You need: your email address, your mail server hostname, and your password",
+          "If you use Gmail, Outlook, or a custom domain email — all work fine",
+          "This setup takes about 5 minutes and only needs to be done once",
+        ],
+        tip: "Use an email on your own domain (e.g. sales@yourcompany.com) rather than a free Gmail address. Emails from your own domain look more professional and land in inboxes more reliably.",
         path: "/settings/email-infrastructure",
-        pathLabel: "Go to SMTP Settings",
-        tip: "You can add multiple SMTP accounts and rotate between them — great for high-volume sending or multiple domains.",
+        pathLabel: "Open SMTP Settings",
       },
       {
         number: 2,
-        title: "Click \"Add SMTP Account\"",
-        description: "Fill in your mail server details:\n• Host: your mail server (e.g. mail.yourdomain.com or smtp.gmail.com)\n• Port: 587 (TLS) or 465 (SSL) — avoid port 25\n• Username: your full email address\n• Password: your email password or app-specific password",
+        title: "Add Your SMTP Account",
+        description: "Go to Settings → Email Infrastructure → SMTP Accounts. Click \"Add Account\". You'll see a form with 4 fields to fill in.",
         illustration: "🔧",
-        warning: "If using Gmail, you must create an App Password in your Google Account under Security → 2-Step Verification → App Passwords. Your regular Gmail password will not work.",
-        tip: "For best deliverability, use an email address on your own domain (e.g. sales@yourcompany.com) rather than a free Gmail/Yahoo address.",
+        subSteps: [
+          "Host: your mail server address (examples below)",
+          "Port: use 587 for most providers, or 465 if 587 doesn't work",
+          "Username: your full email address (e.g. john@yourcompany.com)",
+          "Password: your email password (see special note for Gmail below)",
+        ],
+        warning: "Gmail users: You CANNOT use your regular Gmail password here. You must create a special \"App Password\": go to myaccount.google.com → Security → 2-Step Verification → App Passwords → create one for \"Mail\". Copy that 16-character code and use it as your password here.",
+        tip: "Common SMTP hostnames: Gmail = smtp.gmail.com | Outlook/Office365 = smtp.office365.com | Yahoo = smtp.mail.yahoo.com | Custom domain = usually mail.yourdomain.com or smtp.yourdomain.com (check with your hosting provider).",
+        videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        videoLabel: "Watch: Adding Your SMTP Account (3 min)",
       },
       {
         number: 3,
         title: "Test the Connection",
-        description: "Click \"Test Connection\" — you should see a green checkmark within a few seconds. If it fails, double-check your hostname, port, and credentials. Common fix: make sure your mail provider allows SMTP access (some require enabling it in account settings).",
+        description: "After filling in your details, click \"Test Connection\". The system will try to connect to your mail server and send a test message. This tells you immediately if your settings are correct.",
         illustration: "🟢",
-        tip: "After testing, send yourself a test email from the SMTP account to confirm it lands in your inbox (not spam).",
+        subSteps: [
+          "Click \"Test Connection\" — wait up to 10 seconds",
+          "Green checkmark = success! Your account is ready to send",
+          "Red error = something is wrong (see tips below)",
+          "After success, check your inbox for the test email to confirm delivery",
+        ],
+        tip: "If the test fails: (1) Double-check your hostname and port. (2) Make sure your email provider allows SMTP access — some require you to enable it in your account settings. (3) For Gmail, make sure you used an App Password, not your regular password. (4) Try port 465 instead of 587.",
       },
       {
         number: 4,
-        title: "Set Up Domain Authentication (SPF/DKIM)",
-        description: "Go to Settings → Email Infrastructure → Domain Authentication. Add your sending domain and follow the DNS record instructions provided. This tells email providers your emails are legitimate and dramatically improves deliverability.",
+        title: "Set Up SPF and DKIM (Stops Emails Going to Spam)",
+        description: "This is the most important step for email deliverability. SPF and DKIM are DNS records that prove to Gmail, Outlook, and other providers that your emails are legitimate. Without them, your campaigns will often land in spam.",
         illustration: "🔐",
-        warning: "Skipping domain authentication is the #1 cause of emails landing in spam. It takes about 10 minutes to set up and makes a huge difference.",
+        subSteps: [
+          "Go to Settings → Email Infrastructure → Domain Authentication",
+          "Click \"Add Domain\" and enter your sending domain (e.g. yourcompany.com)",
+          "The system will show you 2–3 DNS records to add",
+          "Log in to your domain registrar (GoDaddy, Namecheap, Cloudflare, etc.)",
+          "Go to DNS settings and add each record exactly as shown",
+          "Come back and click \"Verify\" — DNS changes take 5–60 minutes to propagate",
+        ],
+        warning: "Skipping SPF/DKIM is the #1 reason emails land in spam. It takes 10 minutes and makes an enormous difference. Do not skip this step.",
         path: "/settings/email-infrastructure",
-        pathLabel: "Go to Domain Auth",
+        pathLabel: "Go to Domain Authentication",
+        videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        videoLabel: "Watch: Setting Up SPF & DKIM (5 min)",
+      },
+      {
+        number: 5,
+        title: "Warm Up Your Domain (New Domains Only)",
+        description: "If your domain is new (less than 3 months old) or you've never sent bulk email from it before, you need to \"warm it up\". This means gradually increasing your sending volume over 4–6 weeks so email providers learn to trust you.",
+        illustration: "🌡️",
+        subSteps: [
+          "Go to Settings → Email Infrastructure → Warm-Up Scheduler",
+          "Select your SMTP account and click \"Start Warm-Up\"",
+          "The system will automatically send a small number of emails per day, increasing gradually",
+          "Week 1: ~20 emails/day. Week 2: ~50/day. Week 4: ~200/day. Week 6: ~1000+/day",
+          "Do NOT send large campaigns until warm-up is complete",
+        ],
+        tip: "Skipping warm-up on a new domain and immediately sending 1,000 emails will get your domain blacklisted within days. The warm-up process is automatic — just turn it on and wait.",
       },
     ],
   },
@@ -123,37 +202,69 @@ const CHAPTERS: Chapter[] = [
     gradient: "from-emerald-500 to-teal-600",
     title: "Import Your Contacts",
     subtitle: "Bring in your existing leads and customers",
-    estimatedTime: "5 min",
+    estimatedTime: "5–10 min",
     steps: [
       {
         number: 1,
-        title: "Prepare Your CSV File",
-        description: "Export your contacts from your current system (Excel, Google Sheets, old CRM) as a CSV file. Make sure you have columns for: First Name, Last Name, Email, Phone, Company Name. Extra columns like Job Title, City, Lead Source are also supported.",
+        title: "Prepare Your Contact List as a CSV File",
+        description: "A CSV (Comma-Separated Values) file is a simple spreadsheet format that the CRM can read. You need to export your contacts from wherever they currently live — Excel, Google Sheets, another CRM, or even a business card scanner app.",
         illustration: "📊",
-        tip: "Download our import template from Settings → Import & Export → Download Template to see the exact column format expected.",
+        subSteps: [
+          "Open your existing contact list in Excel or Google Sheets",
+          "Make sure you have these columns: First Name, Last Name, Email, Phone, Company",
+          "Optional but useful: Job Title, City, State, Lead Source, Notes",
+          "In Excel: File → Save As → choose \"CSV (Comma delimited)\" format",
+          "In Google Sheets: File → Download → Comma-separated values (.csv)",
+        ],
+        tip: "Download our pre-formatted import template first so you know exactly what columns to use. Go to Settings → Import & Export → Download Template.",
         path: "/settings",
         pathLabel: "Go to Import & Export",
+        videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        videoLabel: "Watch: Preparing Your CSV File (2 min)",
       },
       {
         number: 2,
-        title: "Upload Your CSV",
-        description: "Go to Settings → Import & Export → Import Contacts. Click \"Choose File\", select your CSV, then click \"Upload\". The system will show you a preview of the first few rows and let you map your columns to the correct fields.",
+        title: "Upload Your CSV to the CRM",
+        description: "Now that your CSV is ready, upload it to the CRM. The system will automatically read the file and show you a preview.",
         illustration: "⬆️",
-        tip: "You can import up to 10,000 contacts at once. For larger lists, split them into batches.",
+        subSteps: [
+          "Go to Settings → Import & Export in the left sidebar",
+          "Click the \"Import Contacts\" tab",
+          "Click \"Choose File\" and select your CSV file",
+          "Click \"Upload\" — a preview of the first 5 rows will appear",
+          "Verify the preview looks correct before proceeding",
+        ],
+        tip: "Maximum 10,000 contacts per import. If you have more, split your file into batches of 10,000 and import them one at a time.",
       },
       {
         number: 3,
-        title: "Map Your Columns",
-        description: "The importer will auto-detect common column names. For any unrecognized columns, use the dropdown to manually match them to the correct CRM field. You can also choose to skip columns you don't need.",
+        title: "Match Your Columns to CRM Fields",
+        description: "The importer tries to automatically match your column names to the correct CRM fields. For example, if your CSV has a column called \"Email Address\", it will automatically map it to the Email field. You just need to fix any columns it couldn't figure out.",
         illustration: "🗺️",
-        tip: "The \"Lead Source\" field is important — set it to \"Import\" or the name of your previous system so you can track where contacts came from.",
+        subSteps: [
+          "Review the column mapping table that appears after upload",
+          "Green rows = automatically matched (no action needed)",
+          "Yellow rows = needs your attention — click the dropdown to select the correct field",
+          "Gray rows = will be skipped (click \"Include\" if you want to import them)",
+          "Click \"Preview Import\" to see a sample of how the data will look",
+        ],
+        tip: "The \"Lead Source\" field is especially important — set it to \"Import\" or the name of your old system (e.g. \"Salesforce Export\") so you can always filter by where contacts came from.",
       },
       {
         number: 4,
-        title: "Review and Confirm",
-        description: "After mapping, you'll see a summary showing how many contacts will be created vs. updated (if duplicates are detected). Click \"Import\" to start. Large imports may take a minute or two.",
+        title: "Run the Import and Verify",
+        description: "You're almost done. The final step is to confirm and run the import. The system will tell you exactly how many contacts will be created and if any duplicates were found.",
         illustration: "✅",
-        tip: "After importing, go to Contacts and use the filter bar to find your imported contacts. Check a few records to make sure the data looks correct.",
+        subSteps: [
+          "Review the import summary: new contacts, updates, and skipped rows",
+          "Click \"Start Import\" to begin — large files may take 1–2 minutes",
+          "A progress bar will show the import status",
+          "When complete, go to Contacts → filter by Lead Source = \"Import\" to see your contacts",
+          "Click on 3–5 random contacts to verify the data imported correctly",
+        ],
+        tip: "If you see duplicate contacts after importing, use the AI Duplicate Detection tool in Developer → AI Engine. It will automatically find and merge duplicates for you.",
+        path: "/contacts",
+        pathLabel: "Go to Contacts",
       },
     ],
   },
@@ -163,38 +274,71 @@ const CHAPTERS: Chapter[] = [
     color: "amber",
     gradient: "from-amber-500 to-orange-600",
     title: "Build Your Sales Pipeline",
-    subtitle: "Set up deal stages and create your first deal",
-    estimatedTime: "5 min",
+    subtitle: "Set up deal stages and track every opportunity",
+    estimatedTime: "5–10 min",
     steps: [
       {
         number: 1,
-        title: "Review Your Pipeline Stages",
-        description: "Go to Deals in the sidebar. You'll see a Kanban board with default stages: Lead In → Qualified → Proposal → Negotiation → Closed Won / Closed Lost. These stages represent your sales process.",
+        title: "Understanding the Kanban Board",
+        description: "The Deals page shows your pipeline as a Kanban board — a visual board with columns for each stage of your sales process. Each deal is a card that moves from left to right as it progresses toward a sale.",
         illustration: "📋",
+        subSteps: [
+          "Click \"Deals\" in the left sidebar to open the pipeline",
+          "You'll see columns: Lead In → Qualified → Proposal → Negotiation → Won / Lost",
+          "Each column = a stage in your sales process",
+          "Each card = one deal opportunity",
+          "Drag cards left or right to move them between stages",
+        ],
+        tip: "Customize your stage names to match your actual sales process. Go to Settings → Pipeline Settings and rename or reorder the stages.",
         path: "/deals",
-        pathLabel: "Go to Deals",
-        tip: "You can customize stage names in Settings → Pipeline Settings to match your exact sales process.",
+        pathLabel: "Open the Deals Pipeline",
       },
       {
         number: 2,
         title: "Create Your First Deal",
-        description: "Click the \"+ New Deal\" button (top right). Fill in:\n• Deal Name (e.g. \"Acme Corp — Q2 Freight Contract\")\n• Contact: link it to an existing contact\n• Deal Value: estimated revenue\n• Expected Close Date\n• Stage: where it is in your pipeline right now",
+        description: "A deal represents one sales opportunity — for example, a company you're trying to sell to. Creating a deal lets you track all the emails, calls, and notes related to that opportunity in one place.",
         illustration: "💼",
-        tip: "Always attach a deal to a contact and company. This links all emails, calls, and notes to the deal automatically.",
+        subSteps: [
+          "Click the \"+ New Deal\" button in the top-right corner",
+          "Deal Name: describe the opportunity (e.g. \"Acme Corp — Annual Freight Contract\")",
+          "Contact: search for and link an existing contact",
+          "Deal Value: enter the estimated revenue in dollars",
+          "Expected Close Date: your best guess for when it will close",
+          "Stage: select where this deal currently is in your process",
+          "Click \"Create Deal\" to save",
+        ],
+        tip: "Always link a deal to both a Contact and a Company. This automatically connects all emails, calls, and notes to the deal so nothing gets lost.",
+        videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        videoLabel: "Watch: Creating Your First Deal (3 min)",
       },
       {
         number: 3,
-        title: "Log Activities on the Deal",
-        description: "Open the deal by clicking on it. In the Activity section, you can log calls, emails, meetings, and notes. Every interaction is timestamped and visible to your whole team.",
+        title: "Log Activities (Calls, Emails, Meetings)",
+        description: "Every time you interact with a prospect — a phone call, email, meeting, or note — log it on the deal. This builds a complete history of the relationship and helps your team stay in sync.",
         illustration: "📝",
-        tip: "Use the AI Meeting Prep feature (on the deal detail page) before any important call — it pulls together everything you know about the contact and company.",
+        subSteps: [
+          "Click on any deal card to open the Deal Detail page",
+          "Scroll down to the \"Activity\" section",
+          "Click \"Log Activity\" and choose the type: Call, Email, Meeting, or Note",
+          "Add your notes about what was discussed",
+          "Set a follow-up date if needed",
+          "Click \"Save\" — the activity appears in the timeline",
+        ],
+        tip: "Before any important call, click \"AI Meeting Prep\" on the Deal Detail page. The AI will summarize everything you know about the contact, their company, and the deal history — so you walk in prepared.",
       },
       {
         number: 4,
-        title: "Move Deals Through Stages",
-        description: "Drag and drop deal cards between columns on the Kanban board as they progress. When marking a deal as \"Lost\", you'll be prompted to enter a loss reason — this data powers your Win/Loss Analysis reports.",
-        illustration: "➡️",
-        tip: "The aging badge on each card shows how many days since the last update. Red means a deal is going cold — take action!",
+        title: "Close a Deal (Won or Lost)",
+        description: "When a deal reaches its conclusion, mark it as Won or Lost. This updates your pipeline metrics and feeds data into your Win/Loss Analysis reports.",
+        illustration: "🏆",
+        subSteps: [
+          "Drag the deal card to the \"Won\" or \"Lost\" column",
+          "OR open the deal and click \"Mark as Won\" / \"Mark as Lost\"",
+          "If marking as Lost: a dialog will ask for the loss reason (e.g. \"Price too high\", \"Chose competitor\")",
+          "Enter the reason — this is required and powers your analytics",
+          "Click \"Confirm\" to close the deal",
+        ],
+        tip: "The aging badge on each deal card shows how many days since the last update. If a card turns red, that deal is going cold — reach out immediately.",
       },
     ],
   },
@@ -205,37 +349,67 @@ const CHAPTERS: Chapter[] = [
     gradient: "from-rose-500 to-pink-600",
     title: "Launch Your First Campaign",
     subtitle: "Send targeted email campaigns to your contacts",
-    estimatedTime: "10 min",
+    estimatedTime: "10–15 min",
     steps: [
       {
         number: 1,
-        title: "Go to Email Campaigns",
-        description: "Navigate to Campaigns → Email Campaigns in the sidebar. This is where you create, schedule, and track all your outbound email campaigns.",
-        illustration: "📧",
+        title: "Before You Start: Email Setup Required",
+        description: "Email campaigns require a verified SMTP account. If you haven't set one up yet, complete the \"Set Up Email Sending\" chapter first. You cannot send campaigns without it.",
+        illustration: "⚠️",
+        subSteps: [
+          "Confirm you have a verified SMTP account (green checkmark in Settings → SMTP Accounts)",
+          "Confirm your domain has SPF and DKIM records set up",
+          "Confirm you have at least 20–50 contacts imported",
+          "Once all three are done, you're ready to send campaigns",
+        ],
+        warning: "Sending campaigns without SPF/DKIM set up will result in most emails landing in spam. Do not skip the email authentication step.",
         path: "/campaigns",
         pathLabel: "Go to Campaigns",
-        warning: "You must have at least one verified SMTP account set up before you can send campaigns. Complete the Email Setup chapter first.",
       },
       {
         number: 2,
         title: "Create a New Campaign",
-        description: "Click \"+ New Campaign\". Give it a name, select your SMTP sending account, and write your subject line. Use the rich text editor to compose your email body — or click \"AI Write\" to have the AI draft it based on your goal.",
+        description: "A campaign is a single email (or series of emails) sent to a specific group of contacts. Think of it like a newsletter or a sales outreach email.",
         illustration: "✍️",
-        tip: "Keep subject lines under 50 characters and avoid words like \"FREE\", \"URGENT\", or excessive exclamation marks — these trigger spam filters.",
+        subSteps: [
+          "Go to Campaigns → Email Campaigns in the sidebar",
+          "Click \"+ New Campaign\"",
+          "Campaign Name: internal name for your reference (contacts don't see this)",
+          "From Account: select your verified SMTP account",
+          "Subject Line: write a compelling subject (keep it under 50 characters)",
+          "Email Body: write your email in the editor, or click \"AI Write\" to have the AI draft it",
+        ],
+        tip: "Avoid spam trigger words in your subject line: FREE, URGENT, ACT NOW, LIMITED TIME, $$, WINNER, GUARANTEED. These words cause Gmail and Outlook to flag your email as spam.",
+        videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        videoLabel: "Watch: Writing Your First Campaign (4 min)",
       },
       {
         number: 3,
-        title: "Select Your Audience",
-        description: "Choose which contacts receive this campaign. You can select by: tag, lead status, lifecycle stage, company, or a custom filter. Always send to a targeted segment — blasting your entire list hurts deliverability.",
+        title: "Choose Your Audience (Targeting)",
+        description: "Don't send to your entire contact list — send to a targeted segment. The more relevant your email is to the recipient, the higher your open rate and the better your deliverability.",
         illustration: "🎯",
-        tip: "Start with a small test segment of 20–50 contacts to verify the email looks correct before sending to your full list.",
+        subSteps: [
+          "In the campaign editor, click the \"Audience\" tab",
+          "Choose a filter: by Tag, Lead Status, Lifecycle Stage, Company, or Custom Filter",
+          "Example: send only to contacts with Status = \"Qualified Lead\" and Industry = \"Transportation\"",
+          "The audience count will update to show how many contacts match",
+          "Start with 20–50 contacts for your first test campaign",
+        ],
+        tip: "Use tags to organize your contacts into groups before creating campaigns. For example, tag contacts as \"Hot Lead\", \"Cold Lead\", or \"Customer\" so you can target them precisely.",
       },
       {
         number: 4,
-        title: "Schedule and Send",
-        description: "Choose to send immediately or schedule for a specific date and time. Best send times are Tuesday–Thursday, 9–11 AM in your recipient's timezone. After sending, monitor open rates, click rates, and bounces in the Campaign Analytics tab.",
+        title: "Send or Schedule Your Campaign",
+        description: "You can send your campaign immediately or schedule it for a specific time. Timing matters — emails sent at the right time get significantly higher open rates.",
         illustration: "🚀",
-        tip: "An open rate above 25% is good. A bounce rate above 5% means your list needs cleaning — use the Bounce Management tool in Email Infrastructure.",
+        subSteps: [
+          "Click \"Review & Send\" to see a final preview of your campaign",
+          "Send Now: click \"Send Immediately\" to send right away",
+          "Schedule: click \"Schedule for Later\" and pick a date and time",
+          "Best times to send: Tuesday–Thursday, 9–11 AM or 1–3 PM in your recipients' timezone",
+          "After sending, go to the Analytics tab to monitor open rates and clicks",
+        ],
+        tip: "A good open rate is 25%+. A good click rate is 3%+. If your open rate is below 15%, your subject line needs work. If emails are bouncing, your list needs cleaning.",
       },
     ],
   },
@@ -246,39 +420,70 @@ const CHAPTERS: Chapter[] = [
     gradient: "from-violet-500 to-purple-700",
     title: "Activate AI Features",
     subtitle: "Let the AI work for you automatically",
-    estimatedTime: "3 min",
+    estimatedTime: "5 min",
     steps: [
       {
         number: 1,
-        title: "Open the AI Engine Panel",
-        description: "Go to Developer → AI Engine in the sidebar. This panel shows all 13 AI background tasks that run automatically — from duplicate detection to lead scoring to data decay alerts.",
-        illustration: "🤖",
-        path: "/developer/ai-engine",
-        pathLabel: "Go to AI Engine",
-        tip: "All AI tasks run on a schedule automatically. You can also trigger any task manually by clicking the \"Run Now\" button next to it.",
+        title: "Meet Your AI Assistant",
+        description: "The AI Assistant is like having a knowledgeable sales colleague available 24/7. It knows your entire CRM — every contact, deal, email, and activity. You can ask it questions, give it commands, and it will take action.",
+        illustration: "💬",
+        subSteps: [
+          "Look for the glowing chat bubble icon in the bottom-right corner of any page",
+          "Click it to open the AI Assistant panel (it slides in from the right)",
+          "Type any question or command in the text box at the bottom",
+          "Press Enter or click the send button",
+          "The AI will respond in seconds with answers or take action",
+        ],
+        tip: "Try these commands: \"Which deals haven't been updated in 2 weeks?\", \"Draft a follow-up email for [Contact Name]\", \"How many deals did we close last month?\", \"Summarize the pipeline for this week\".",
       },
       {
         number: 2,
-        title: "Use the AI Assistant",
-        description: "Click the chat bubble icon (bottom right of any page) to open the AI Assistant. Ask it anything: \"Which deals are going cold?\", \"Draft a follow-up email for John Smith\", \"Summarize my pipeline this week\". It has full context of your CRM data.",
-        illustration: "💬",
-        tip: "The AI Assistant can write emails, summarize contacts, explain features, and give you sales coaching — treat it like a knowledgeable colleague.",
+        title: "The AI Engine (Background Automation)",
+        description: "The AI Engine runs 13 automated tasks in the background — things like detecting duplicate contacts, scoring leads, flagging stale deals, and identifying data quality issues. These run automatically every day.",
+        illustration: "🤖",
+        subSteps: [
+          "Go to Developer → AI Engine in the sidebar",
+          "You'll see a list of all 13 AI tasks and their last run time",
+          "Green = task ran successfully. Yellow = running. Red = needs attention",
+          "Click \"Run Now\" next to any task to trigger it immediately",
+          "Click on a task to see what it found and what actions it took",
+        ],
+        tip: "The most valuable AI tasks to check first: Duplicate Detection (merges duplicate contacts), Lead Scorer (ranks your hottest leads), and Data Decay Alert (flags contacts with outdated information).",
+        path: "/developer/ai-engine",
+        pathLabel: "Open AI Engine",
       },
       {
         number: 3,
-        title: "Enable Ghost Sequences",
-        description: "Go to Campaigns → Ghost Sequences. These are AI-powered drip sequences that automatically follow up with leads based on their behavior. Set up a sequence once and the AI handles the timing and personalization.",
+        title: "Ghost Sequences (AI-Powered Follow-Ups)",
+        description: "Ghost Sequences are automated email sequences that follow up with leads on your behalf. You write the emails once, set the timing, and the AI sends them automatically based on each lead's behavior.",
         illustration: "👻",
-        warning: "Ghost Sequences require a verified SMTP account and at least one active contact list. Make sure email setup is complete first.",
+        subSteps: [
+          "Go to Campaigns → Ghost Sequences",
+          "Click \"+ New Sequence\"",
+          "Add 3–5 email steps with delays between them (e.g. Day 1, Day 3, Day 7, Day 14)",
+          "For each step, write the email or click \"AI Write\" to generate it",
+          "Assign contacts to the sequence — the AI handles the rest",
+          "Monitor replies and engagement in the Sequence Analytics tab",
+        ],
+        warning: "Ghost Sequences require a verified SMTP account. Complete the Email Setup chapter before setting up sequences.",
         path: "/campaigns/sequences",
         pathLabel: "Go to Ghost Sequences",
       },
       {
         number: 4,
-        title: "Review AI Insights on the Dashboard",
-        description: "Return to your Dashboard. The AI Insights panel (right side) shows real-time recommendations: contacts to follow up with, deals at risk, pipeline health score, and suggested next actions. Check this daily.",
+        title: "AI Insights on Your Dashboard",
+        description: "Your Dashboard shows AI-generated insights in real time. These are actionable recommendations based on patterns in your data — not generic advice, but specific to your pipeline and contacts.",
         illustration: "📈",
-        tip: "The Win Probability score on each deal is calculated by the AI based on deal age, activity frequency, contact engagement, and historical win patterns.",
+        subSteps: [
+          "Go to your Dashboard (click the home icon in the sidebar)",
+          "Look at the AI Insights panel on the right side",
+          "Each insight card shows a specific recommendation with a \"Take Action\" button",
+          "Examples: \"3 deals haven't been updated in 14 days\", \"Lead score for [Contact] jumped 40 points\"",
+          "Click \"Take Action\" to go directly to the relevant record",
+        ],
+        tip: "Check the Dashboard AI Insights every morning as part of your daily routine. It takes 2 minutes and ensures you never miss a hot lead or a deal going cold.",
+        path: "/",
+        pathLabel: "Go to Dashboard",
       },
     ],
   },
@@ -289,30 +494,70 @@ const CHAPTERS: Chapter[] = [
     gradient: "from-sky-500 to-blue-600",
     title: "Invite Your Team",
     subtitle: "Add team members and set their roles",
-    estimatedTime: "3 min",
+    estimatedTime: "3–5 min",
     steps: [
       {
         number: 1,
-        title: "Go to Team Management",
-        description: "Navigate to Settings → Team Management. Here you can see all active users, their roles, and their activity levels.",
+        title: "Understanding User Roles",
+        description: "Before inviting your team, understand what each role can do. Choosing the right role for each person ensures they see the right data and have the right level of access.",
         illustration: "👥",
+        subSteps: [
+          "Sales Rep: can see and manage their own contacts and deals only",
+          "Account Manager: manages assigned accounts, can see company-wide contacts",
+          "Sales Manager: sees their team's data, can run team reports",
+          "Company Admin: full access to everything including settings and billing",
+          "Coordinator: support role — can view and assist but not delete records",
+        ],
+        tip: "Start with the minimum permissions needed. You can always upgrade someone's role later, but it's harder to restrict access after they've already seen everything.",
         path: "/settings/team",
         pathLabel: "Go to Team Management",
-        tip: "Each user role has different permissions. Sales Reps can only see their own contacts; Managers see their team; Admins see everything.",
       },
       {
         number: 2,
-        title: "Send Invitations",
-        description: "Click \"Invite Member\". Enter their email address and select their role:\n• Sales Rep — front-line sellers\n• Account Manager — manages existing accounts\n• Sales Manager — oversees a team of reps\n• Company Admin — full access to all settings\n• Coordinator — support role, limited access",
+        title: "Send Team Invitations",
+        description: "Invite your team members by email. They'll receive a link to create their account and will be automatically added to your CRM with the role you assigned.",
         illustration: "✉️",
-        tip: "The invited person will receive an email with a link to create their account. The link expires in 48 hours.",
+        subSteps: [
+          "Go to Settings → Team Management",
+          "Click \"Invite Member\"",
+          "Enter their email address",
+          "Select their role from the dropdown",
+          "Click \"Send Invite\" — they'll receive an email within 2 minutes",
+          "The invite link expires in 48 hours — remind them to accept promptly",
+        ],
+        tip: "You can resend an expired invite from the Team Management page. Look for the \"Pending\" badge next to uninvited members and click \"Resend\".",
+        videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        videoLabel: "Watch: Inviting Your Team (2 min)",
       },
       {
         number: 3,
-        title: "Assign Manager Relationships",
-        description: "After a user accepts their invite, go to their profile and set their \"Reports To\" manager. This controls whose data they can see and enables manager-level reporting in the Dashboard.",
+        title: "Set Up the Reporting Hierarchy",
+        description: "After your team accepts their invites, set up who reports to whom. This controls what data each person can see and enables accurate team performance reports.",
         illustration: "🏗️",
-        tip: "The hierarchy flows: Company Admin → Sales Manager → Account Manager / Sales Rep. Set this up correctly for accurate team performance reports.",
+        subSteps: [
+          "Go to Settings → Team Management",
+          "Click on a team member's name to open their profile",
+          "Find the \"Reports To\" field and select their manager",
+          "Repeat for each team member",
+          "The hierarchy should flow: Company Admin → Sales Manager → Reps",
+        ],
+        tip: "Once the hierarchy is set, Sales Managers will automatically see their team's pipeline, activity, and performance metrics in the Dashboard — without needing to manually filter.",
+      },
+      {
+        number: 4,
+        title: "Assign Contacts and Deals to Team Members",
+        description: "After your team is set up, assign existing contacts and deals to the right people. This ensures each rep sees their own pipeline when they log in.",
+        illustration: "🔗",
+        subSteps: [
+          "Go to Contacts and use the bulk select checkboxes to select multiple contacts",
+          "Click \"Bulk Actions\" → \"Reassign Owner\"",
+          "Select the team member to assign them to",
+          "Do the same in Deals → select deals → Bulk Actions → Reassign",
+          "Each team member will now see their assigned records when they log in",
+        ],
+        tip: "Use the \"Round Robin\" assignment rule in Settings → Lead Assignment to automatically distribute new incoming leads evenly across your sales team.",
+        path: "/contacts",
+        pathLabel: "Go to Contacts",
       },
     ],
   },
@@ -526,9 +771,9 @@ export default function OnboardingWizard({ onClose, onComplete }: OnboardingWiza
               </div>
 
               {/* Step content */}
-              <div className="flex-1 overflow-y-auto px-6 py-5">
+              <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
                 {/* Illustration + title */}
-                <div className="flex items-start gap-4 mb-4">
+                <div className="flex items-start gap-4">
                   <div className="text-4xl shrink-0 mt-0.5">{currentStep.illustration}</div>
                   <div>
                     <h3 className="text-lg font-bold text-stone-800 leading-tight">
@@ -537,24 +782,62 @@ export default function OnboardingWizard({ onClose, onComplete }: OnboardingWiza
                   </div>
                 </div>
 
-                {/* Description — handle newlines */}
-                <div className="text-sm text-stone-600 leading-relaxed mb-4 whitespace-pre-line bg-stone-50 rounded-xl p-4 border border-stone-100">
+                {/* Description */}
+                <p className="text-sm text-stone-600 leading-relaxed">
                   {currentStep.description}
-                </div>
+                </p>
+
+                {/* Sub-steps checklist */}
+                {currentStep.subSteps && currentStep.subSteps.length > 0 && (
+                  <div className="bg-stone-50 rounded-xl border border-stone-200 overflow-hidden">
+                    <div className="px-4 py-2 bg-stone-100 border-b border-stone-200">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Step-by-Step Instructions</p>
+                    </div>
+                    <ol className="divide-y divide-stone-100">
+                      {currentStep.subSteps.map((sub, i) => (
+                        <li key={i} className="flex items-start gap-3 px-4 py-3">
+                          <span className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 bg-gradient-to-br ${currentChapter.gradient} text-white`}>
+                            {i + 1}
+                          </span>
+                          <span className="text-xs text-stone-700 leading-relaxed">{sub}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
 
                 {/* Warning */}
                 {currentStep.warning && (
-                  <div className="flex gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200 mb-3">
+                  <div className="flex gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
                     <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                    <p className="text-xs text-amber-800 leading-relaxed">{currentStep.warning}</p>
+                    <p className="text-xs text-amber-800 leading-relaxed"><strong>Important:</strong> {currentStep.warning}</p>
                   </div>
                 )}
 
                 {/* Tip */}
                 {currentStep.tip && (
-                  <div className="flex gap-3 p-3 rounded-xl bg-blue-50 border border-blue-200 mb-3">
+                  <div className="flex gap-3 p-3 rounded-xl bg-blue-50 border border-blue-200">
                     <Lightbulb className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
                     <p className="text-xs text-blue-800 leading-relaxed"><strong>Pro Tip:</strong> {currentStep.tip}</p>
+                  </div>
+                )}
+
+                {/* Video tutorial */}
+                {currentStep.videoUrl && (
+                  <div className="rounded-xl overflow-hidden border border-stone-200 bg-stone-900">
+                    <div className="px-4 py-2 bg-stone-800 flex items-center gap-2">
+                      <PlayCircle className="h-3.5 w-3.5 text-red-400" />
+                      <span className="text-[11px] font-semibold text-stone-300">{currentStep.videoLabel ?? "Video Tutorial"}</span>
+                    </div>
+                    <div className="relative" style={{ paddingBottom: "56.25%" }}>
+                      <iframe
+                        src={currentStep.videoUrl}
+                        title={currentStep.videoLabel ?? "Tutorial"}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full"
+                      />
+                    </div>
                   </div>
                 )}
 
