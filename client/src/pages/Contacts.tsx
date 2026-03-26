@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, UserPlus, Mail, Phone, MoreHorizontal, Trash2, Upload, Download, Users, Building2, Plus, CheckSquare, Square, Tag, UserCheck, Workflow, Sparkles, Pencil, Link2, ShieldCheck, Activity } from "lucide-react";
+import { Search, UserPlus, Mail, Phone, MoreHorizontal, Trash2, Upload, Download, Users, Building2, Plus, CheckSquare, Square, Tag, UserCheck, Workflow, Sparkles, Pencil, Link2, ShieldCheck, Activity, Ban } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
@@ -174,6 +174,12 @@ export default function Contacts() {
   const deleteAllContactsMutation = trpc.contacts.deleteAll.useMutation({
     onSuccess: () => { utils.contacts.list.invalidate(); setSelectedIds(new Set()); toast.success("All contacts deleted"); },
     onError: (e: any) => toast.error(e.message),
+  });
+  const [dncContact, setDncContact] = useState<{ id: number; name: string; current: boolean } | null>(null);
+  const [dncReason, setDncReason] = useState("");
+  const setDoNotContact = trpc.contacts.setDoNotContact.useMutation({
+    onSuccess: () => { utils.contacts.list.invalidate(); setDncContact(null); setDncReason(""); toast.success("Do Not Contact status updated"); },
+    onError: (e) => toast.error(e.message),
   });
   const bulkUpdateContacts = trpc.bulkActions.updateContacts.useMutation({
     onSuccess: (d) => { utils.contacts.list.invalidate(); setSelectedIds(new Set()); toast.success(`Updated ${d.updated} contacts`); },
@@ -424,6 +430,9 @@ export default function Contacts() {
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"><MoreHorizontal className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded-xl">
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setDncContact({ id: contact.id, name: `${contact.firstName} ${contact.lastName ?? ''}`.trim(), current: !!(contact as any).doNotContact }); setDncReason((contact as any).doNotContactReason ?? ''); }}>
+                            <Ban className="mr-2 h-4 w-4 text-orange-500" /> {(contact as any).doNotContact ? 'Remove DNC Flag' : 'Mark Do Not Contact'}
+                          </DropdownMenuItem>
                           <DropdownMenuItem className="text-destructive rounded-lg" onClick={(e) => { e.stopPropagation(); deleteMutation.mutate({ id: contact.id }); }}>
                             <Trash2 className="mr-2 h-4 w-4" /> Delete
                           </DropdownMenuItem>
@@ -715,6 +724,28 @@ export default function Contacts() {
               {importMutation.isPending ? "Importing..." : "Import"}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Do Not Contact Dialog */}
+      <Dialog open={!!dncContact} onOpenChange={(o) => { if (!o) { setDncContact(null); setDncReason(""); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Ban className="h-5 w-5 text-orange-500" /> {dncContact?.current ? 'Remove Do Not Contact' : 'Mark Do Not Contact'}</DialogTitle>
+            <DialogDescription>{dncContact?.current ? `Remove the DNC flag from ${dncContact?.name}?` : `Mark ${dncContact?.name} as Do Not Contact. All future outreach will be blocked.`}</DialogDescription>
+          </DialogHeader>
+          {!dncContact?.current && (
+            <div className="space-y-2">
+              <Label>Reason (optional)</Label>
+              <Input placeholder="e.g. Requested no contact, Unsubscribed" value={dncReason} onChange={e => setDncReason(e.target.value)} />
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setDncContact(null); setDncReason(""); }}>Cancel</Button>
+            <Button variant={dncContact?.current ? "default" : "destructive"} onClick={() => { if (dncContact) setDoNotContact.mutate({ id: dncContact.id, doNotContact: !dncContact.current, reason: dncReason || undefined }); }} disabled={setDoNotContact.isPending}>
+              {setDoNotContact.isPending ? "Saving..." : dncContact?.current ? "Remove DNC" : "Mark DNC"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE contacts ADD COLUMN IF NOT EXISTS doNotContact boolean DEFAULT false; ALTER TABLE contacts ADD COLUMN IF NOT EXISTS doNotContactReason varchar(256); ALTER TABLE contacts ADD COLUMN IF NOT EXISTS doNotContactDate bigint;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute ALTER TABLE contacts ADD COLUMN IF NOT EXISTS doNotContact boolean DEFAULT false; ALTER TABLE contacts ADD COLUMN IF NOT EXISTS doNotContactReason varchar(256); ALTER TABLE contacts ADD COLUMN IF NOT EXISTS doNotContactDate bigint;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2237
+}

@@ -112,6 +112,18 @@ const EMPTY_FORM = {
 export default function Tasks() {
   const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
+
+  const TASK_TEMPLATES = [
+    { label: "Follow-up Call", type: "call", title: "Follow-up call", priority: "medium", description: "Check in with contact after initial meeting", isRecurring: false, recurringFrequency: "" },
+    { label: "Send Proposal", type: "email", title: "Send proposal email", priority: "high", description: "Send the proposal document and follow up", isRecurring: false, recurringFrequency: "" },
+    { label: "Discovery Meeting", type: "meeting", title: "Discovery meeting", priority: "high", description: "Understand client needs and pain points", isRecurring: false, recurringFrequency: "" },
+    { label: "Contract Review", type: "task", title: "Review and send contract", priority: "urgent", description: "Prepare contract for signature", isRecurring: false, recurringFrequency: "" },
+    { label: "Monthly Check-In", type: "call", title: "Monthly check-in call", priority: "low", description: "Routine relationship maintenance call", isRecurring: true, recurringFrequency: "monthly" },
+    { label: "Onboarding Call", type: "call", title: "Onboarding kickoff call", priority: "high", description: "Walk new client through the onboarding process", isRecurring: false, recurringFrequency: "" },
+    { label: "Renewal Reminder", type: "task", title: "Renewal discussion", priority: "high", description: "Discuss contract renewal and upsell opportunities", isRecurring: false, recurringFrequency: "" },
+    { label: "Product Demo", type: "meeting", title: "Product demo", priority: "high", description: "Walk prospect through product features", isRecurring: false, recurringFrequency: "" },
+  ];
   const [editingTask, setEditingTask] = useState<any>(null);
   const [viewingTask, setViewingTask] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -893,14 +905,47 @@ export default function Tasks() {
         )}
       </div>
 
+      {/* Task Templates Picker */}
+      <Dialog open={showTemplates} onOpenChange={setShowTemplates}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Layers className="h-5 w-5 text-primary" /> Choose a Template</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-2 py-2">
+            {TASK_TEMPLATES.map((tpl) => {
+              const Icon = TYPE_ICONS[tpl.type] || ClipboardList;
+              return (
+                <button key={tpl.label} className="flex items-start gap-2 p-3 rounded-lg border border-border hover:bg-muted/50 text-left transition-colors" onClick={() => {
+                  setForm(prev => ({ ...prev, title: tpl.title, taskType: tpl.type, priority: tpl.priority, description: tpl.description, isRecurring: tpl.isRecurring, recurringFrequency: tpl.recurringFrequency }));
+                  setShowTemplates(false);
+                  setShowCreate(true);
+                }}>
+                  <Icon className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">{tpl.label}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{tpl.description.slice(0, 40)}…</p>
+                    {tpl.isRecurring && <Badge variant="outline" className="text-[9px] mt-1">Recurring</Badge>}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Create Dialog */}
       <Dialog open={showCreate} onOpenChange={(o) => { setShowCreate(o); if (!o) setTaskTab("details"); }}>
         <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-primary" />
-              Create New Task
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5 text-primary" />
+                Create New Task
+              </DialogTitle>
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-7" onClick={() => { setShowCreate(false); setShowTemplates(true); }}>
+                <Layers className="h-3.5 w-3.5" /> Use Template
+              </Button>
+            </div>
           </DialogHeader>
           <ScrollArea className="max-h-[70vh] pr-2">
             <TaskForm />

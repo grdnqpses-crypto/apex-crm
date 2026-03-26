@@ -198,6 +198,10 @@ export const contacts = mysqlTable("contacts", {
   lastBookedMeetingDate: bigint("lastBookedMeetingDate", { mode: "number" }),
   ownerAssignedDate: bigint("ownerAssignedDate", { mode: "number" }),
   dateOfLastLeadStatusChange: bigint("dateOfLastLeadStatusChange", { mode: "number" }),
+  // ─── Do Not Contact ───
+  doNotContact: boolean("doNotContact").default(false),
+  doNotContactReason: varchar("doNotContactReason", { length: 256 }),
+  doNotContactDate: bigint("doNotContactDate", { mode: "number" }),
   // ─── Soft-Delete Fields ───
   isDeleted: tinyint("is_deleted").notNull().default(0),
   deletedAt: bigint("deleted_at", { mode: "number" }),

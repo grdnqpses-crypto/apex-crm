@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, DollarSign, MoreHorizontal, Trash2, Trophy, X, GripVertical, Kanban, TrendingUp, Building2, User, List, Clock, AlertTriangle, ArrowRightLeft, ExternalLink } from "lucide-react";
+import { Plus, DollarSign, MoreHorizontal, Trash2, Trophy, X, GripVertical, Kanban, TrendingUp, Building2, User, List, Clock, AlertTriangle, ArrowRightLeft, ExternalLink, Copy } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useMemo } from "react";
@@ -116,6 +116,10 @@ export default function Deals() {
   });
   const updateDeal = trpc.deals.update.useMutation({
     onSuccess: () => { utils.deals.list.invalidate(); utils.dashboard.stats.invalidate(); },
+  });
+  const cloneDeal = trpc.deals.clone.useMutation({
+    onSuccess: () => { utils.deals.list.invalidate(); utils.dashboard.stats.invalidate(); toast.success("Deal cloned", { description: "A copy has been created." }); },
+    onError: (e) => toast.error(e.message),
   });
   const deleteDeal = trpc.deals.delete.useMutation({
     onSuccess: () => { utils.deals.list.invalidate(); utils.dashboard.stats.invalidate(); toast.success("Deal deleted"); },
@@ -460,6 +464,10 @@ export default function Deals() {
                                   <GripVertical className="mr-2 h-4 w-4" /> Move to {s.name}
                                 </DropdownMenuItem>
                               ))}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); cloneDeal.mutate({ id: deal.id }); }}>
+                                <Copy className="mr-2 h-4 w-4 text-blue-500" /> Clone Deal
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem className="text-red-500" onClick={(e) => { e.stopPropagation(); deleteDeal.mutate({ id: deal.id }); }}>
                                 <Trash2 className="mr-2 h-4 w-4" /> Delete

@@ -431,9 +431,28 @@ export const appRouter = router({
       preferredContactMethod: z.string().optional(),
       tags: z.array(z.string()).optional(),
       notes: z.string().optional(),
+      doNotContact: z.boolean().optional(),
+      doNotContactReason: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
-      await db.updateContact(id, ctx.user.id, data);
+      const updateData: any = { ...data };
+      if (data.doNotContact !== undefined) {
+        updateData.doNotContactDate = data.doNotContact ? Date.now() : null;
+      }
+      await db.updateContact(id, ctx.user.id, updateData);
+      return { success: true };
+    }),
+    setDoNotContact: protectedProcedure.input(z.object({
+      id: z.number(),
+      doNotContact: z.boolean(),
+      reason: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      await db.updateContact(input.id, ctx.user.id, {
+        doNotContact: input.doNotContact,
+        doNotContactReason: input.reason ?? null,
+        doNotContactDate: input.doNotContact ? Date.now() : null,
+      });
+      await db.createActivity({ userId: ctx.user.id, contactId: input.id, type: 'note', subject: input.doNotContact ? `Marked as Do Not Contact${input.reason ? `: ${input.reason}` : ''}` : 'Do Not Contact flag removed' });
       return { success: true };
     }),
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
@@ -747,6 +766,29 @@ export const appRouter = router({
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
       await db.deleteDeal(input.id, ctx.user.id);
       return { success: true };
+    }),
+    clone: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const deal = await db.getDeal(input.id, ctx.user.id);
+      if (!deal) throw new TRPCError({ code: 'NOT_FOUND', message: 'Deal not found' });
+      const now = Date.now();
+      const newId = await db.createDeal({
+        name: `${deal.name} (Copy)`,
+        pipelineId: deal.pipelineId,
+        stageId: deal.stageId,
+        contactId: deal.contactId ?? undefined,
+        companyId: deal.companyId ?? undefined,
+        value: deal.value ?? undefined,
+        currency: deal.currency ?? undefined,
+        priority: deal.priority ?? undefined,
+        notes: deal.notes ?? undefined,
+        tags: deal.tags ?? undefined,
+        userId: ctx.user.id,
+        status: 'open',
+        createdAt: now,
+        updatedAt: now,
+      });
+      await db.createActivity({ userId: ctx.user.id, dealId: newId, type: 'deal_created', subject: `Deal cloned from "${deal.name}"` });
+      return { id: newId };
     }),
   }),
 
