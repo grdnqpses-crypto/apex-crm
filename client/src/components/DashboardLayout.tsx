@@ -330,8 +330,11 @@ function getMenuSections(devMode: boolean, userRole?: string) {
     }
   }
 
-  // Add Developer section for developer role (when dev mode is active)
-  if (devMode && userRole === "developer") {
+  // Developer section: always visible for axiom_admin, axiom_owner, and developer roles;
+  // for other roles it requires the 11-tap dev mode unlock
+  const showDeveloper =
+    ["developer", "axiom_admin", "axiom_owner", "apex_owner"].includes(userRole || "") || devMode;
+  if (showDeveloper) {
     const resIdx = sections.findIndex(s => s.label === "Resources");
     if (resIdx >= 0) {
       sections.splice(resIdx, 0, developerSection);
