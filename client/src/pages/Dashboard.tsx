@@ -1130,7 +1130,14 @@ export default function Dashboard() {
                 <Button
                   variant="outline"
                   className="w-full gap-2"
-                  onClick={() => setLogoStep('customize-offer')}
+                  onClick={() => {
+                    // Developers get free customization — skip the payment offer
+                    if (user?.systemRole === 'developer' || user?.systemRole === 'axiom_admin' || user?.systemRole === 'axiom_owner') {
+                      setLogoStep('customize-input');
+                    } else {
+                      setLogoStep('customize-offer');
+                    }
+                  }}
                 >
                   <Wand2 className="h-4 w-4" /> Customize It
                 </Button>
@@ -1236,6 +1243,9 @@ export default function Dashboard() {
               </div>
             </div>
           )}
+
+          {/* ── Step: Customize Offer (Developer Free Bypass) ── */}
+          {/* Developer/axiom_admin/axiom_owner roles skip directly to customize-input above */}
 
           {/* ── Step: Customize Input ── */}
           {logoStep === 'customize-input' && (

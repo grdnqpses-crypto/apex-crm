@@ -2869,3 +2869,6 @@
 - [x] Fix Error 1: scheduled_reports schema column mismatch (sr_frequency→frequency, sr_format→format) fixed in drizzle/schema.ts
 - [x] Fix Error 3: bad SQL alias "wonDeals" in top-reps orderBy replaced with full SUM() expression
 - [x] Fix Error 2: added try/catch to trendStats + scheduledReports.list + scheduledReports.activeCount to prevent server crash
+
+## Bug Fixes - Session (2026-03-26b)
+- [x] Make Change Logo / AI logo generation free for developer system role (bypass subscription gate)
