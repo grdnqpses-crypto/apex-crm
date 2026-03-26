@@ -5641,8 +5641,8 @@ export const appRouter = router({
   // ─── AI Credits System ───
   // Model:
   //   - CRM AI features are FREE (included in subscription)
-  //   - Non-CRM AI usage requires purchased credits at 25% markup on Manus pricing
-  //   - Billed directly to tenant company's Stripe card on file
+  //   - Non-CRM AI usage requires purchased credits (billed separately to tenant)
+  //   - Charged to tenant company's card on file
   //   - Only AXIOM Owner manages packages and sells credits
   //   - Company Admins view their balance and history (read-only)
   aiCredits: router({
@@ -5677,13 +5677,13 @@ export const appRouter = router({
       name: z.string().min(1),
       description: z.string().optional(),
       credits: z.number().min(1),
-      manusBasePriceCents: z.number().min(0), // Manus list price in cents
+      manusBasePriceCents: z.number().min(0), // base cost in cents (internal)
     })).mutation(async ({ input }) => {
       const { aiCreditPackages: pkgTable } = await import('../drizzle/schema');
       const dbConn = await db.getDb();
       if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
       const now = Date.now();
-      const finalPriceCents = Math.round(input.manusBasePriceCents * 1.25); // 25% markup
+      const finalPriceCents = Math.round(input.manusBasePriceCents * 1.25); // internal pricing calculation
       await dbConn.insert(pkgTable).values({
         name: input.name,
         description: input.description,

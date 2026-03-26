@@ -3881,7 +3881,7 @@ export async function reassignTask(taskId: number, fromUserId: number, toUserId:
 
 // ═══════════════════════════════════════════════════════════════
 // AI CREDIT SYSTEM
-// CRM AI = FREE. Non-CRM AI = paid credits at 25% markup on Manus pricing.
+// CRM AI = FREE. Non-CRM AI = paid credits (billed separately to tenant).
 // ═══════════════════════════════════════════════════════════════
 
 /** Get tenant AI credit balance */
