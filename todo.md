@@ -2905,3 +2905,6 @@
 - [x] Company not found on View Details — fixed getCompanyByRole to use tenantCompanyId fallback for admin/developer
 - [x] Task form tab-jumping — fixed by converting to controlled tab state
 - [x] Deals: rename "Kanban" button to "Board"
+
+## Credit Pricing Update
+- [x] Set AI credit rate to $10 per 1,500 credits in UI display, default packages, and any seeded data

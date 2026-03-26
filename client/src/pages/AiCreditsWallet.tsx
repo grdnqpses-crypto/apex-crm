@@ -84,7 +84,7 @@ export default function AiCreditsWallet() {
                 </div>
               </div>
               <p className="text-muted-foreground text-xs">
-                To purchase additional credits, contact your AXIOM CRM account manager.
+                Credits are <strong>$10 per 1,500 credits</strong>. To purchase additional credits, contact your AXIOM CRM account manager.
               </p>
             </div>
           </div>

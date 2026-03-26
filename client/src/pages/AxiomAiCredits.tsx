@@ -4,7 +4,7 @@
  *
  * Model:
  *   - CRM AI features are FREE (included in subscription)
- *   - Non-CRM AI usage requires purchased credits at 25% markup on Manus pricing
+ *   - Non-CRM AI usage requires purchased credits ($10 per 1,500 credits)
  *   - AXIOM Owner defines packages and can grant credits to tenants
  */
 import { useState } from "react";
@@ -45,6 +45,10 @@ import {
   DollarSign,
   Coins,
 } from "lucide-react";
+
+// Standard rate: $10 per 1,500 credits
+const STANDARD_RATE_CREDITS = 1500;
+const STANDARD_RATE_PRICE_USD = 10;
 
 export default function AxiomAiCredits() {
   const { t } = useSkin();
@@ -87,9 +91,9 @@ export default function AxiomAiCredits() {
               </p>
               <p className="text-muted-foreground">
                 <strong>Non-CRM AI usage</strong> (general AI chat, custom AI tasks, bulk
-                processing) requires purchased credits at a{" "}
-                <strong>25% markup on Manus pricing</strong>, billed directly to the tenant
-                company's card on file.
+                processing) requires purchased credits at{" "}
+                <strong>${STANDARD_RATE_PRICE_USD} per {STANDARD_RATE_CREDITS.toLocaleString()} credits</strong>,
+                billed to the tenant company's card on file.
               </p>
             </div>
           </div>
@@ -124,14 +128,15 @@ export default function AxiomAiCredits() {
 
 function PackagesTab() {
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ name: "", description: "", credits: "", manusBasePriceCents: "" });
+  // Form uses credits + sell price directly (no internal cost field)
+  const [form, setForm] = useState({ name: "", description: "", credits: "", sellPriceUsd: "" });
 
   const { data: packages = [], refetch } = trpc.aiCredits.listPackages.useQuery();
   const createMutation = trpc.aiCredits.createPackage.useMutation({
     onSuccess: () => {
       toast.success("Package created", { description: "The credit package has been added." });
       setShowCreate(false);
-      setForm({ name: "", description: "", credits: "", manusBasePriceCents: "" });
+      setForm({ name: "", description: "", credits: "", sellPriceUsd: "" });
       refetch();
     },
     onError: (e) => toast.error("Error", { description: e.message }),
@@ -142,25 +147,32 @@ function PackagesTab() {
   });
 
   const handleCreate = () => {
-    if (!form.name || !form.credits || !form.manusBasePriceCents) {
+    if (!form.name || !form.credits || !form.sellPriceUsd) {
       toast.error("Missing fields", { description: "Please fill in all required fields." });
       return;
     }
+    const sellPriceCents = Math.round(parseFloat(form.sellPriceUsd) * 100);
+    // Store sell price as both base and final (no markup calculation exposed)
     createMutation.mutate({
       name: form.name,
       description: form.description || undefined,
       credits: parseInt(form.credits),
-      manusBasePriceCents: Math.round(parseFloat(form.manusBasePriceCents) * 100),
+      manusBasePriceCents: sellPriceCents, // stored internally
     });
   };
 
   const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
+  // Suggest sell price based on standard rate
+  const suggestedPrice = form.credits
+    ? ((parseInt(form.credits) / STANDARD_RATE_CREDITS) * STANDARD_RATE_PRICE_USD).toFixed(2)
+    : "";
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">
-          Define credit packages with Manus base pricing. The 25% markup is applied automatically.
+          Standard rate: <strong>${STANDARD_RATE_PRICE_USD} per {STANDARD_RATE_CREDITS.toLocaleString()} credits</strong>. You can create custom packages at any price point.
         </p>
         <Button onClick={() => setShowCreate(true)} size="sm">
           <Plus className="h-4 w-4 mr-2" />
@@ -203,21 +215,17 @@ function PackagesTab() {
                   <span className="font-semibold text-lg">{pkg.credits.toLocaleString()}</span>
                   <span className="text-muted-foreground text-sm">credits</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Manus base price</p>
-                    <p className="font-medium">{formatPrice(pkg.manusBasePriceCents)}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Tenant pays (+25%)</p>
-                    <p className="font-semibold text-green-600 dark:text-green-400">
-                      {formatPrice(pkg.finalPriceCents)}
-                    </p>
-                  </div>
+                <div className="text-sm">
+                  <p className="text-muted-foreground">Client price</p>
+                  <p className="font-semibold text-green-600 dark:text-green-400 text-lg">
+                    {formatPrice(pkg.finalPriceCents)}
+                  </p>
                 </div>
                 <div className="text-xs text-muted-foreground">
                   <TrendingUp className="h-3 w-3 inline mr-1" />
-                  Margin: {formatPrice(pkg.finalPriceCents - pkg.manusBasePriceCents)} per package
+                  {(pkg.credits / STANDARD_RATE_CREDITS * STANDARD_RATE_PRICE_USD).toFixed(2) !== (pkg.finalPriceCents / 100).toFixed(2)
+                    ? "Custom pricing"
+                    : `Standard rate (${STANDARD_RATE_CREDITS.toLocaleString()} credits / $${STANDARD_RATE_PRICE_USD})`}
                 </div>
                 <div className="flex gap-2 pt-1">
                   <Button
@@ -264,33 +272,32 @@ function PackagesTab() {
               <Label>Number of Credits *</Label>
               <Input
                 type="number"
-                placeholder="e.g. 1000"
+                placeholder={`e.g. ${STANDARD_RATE_CREDITS}`}
                 value={form.credits}
                 onChange={(e) => setForm({ ...form, credits: e.target.value })}
               />
+              {form.credits && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Standard rate suggests: <strong className="text-orange-500">${suggestedPrice}</strong>
+                </p>
+              )}
             </div>
             <div>
-              <Label>Manus Base Price (USD) *</Label>
+              <Label>Client Price (USD) *</Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="number"
                   step="0.01"
-                  placeholder="e.g. 10.00"
+                  placeholder={suggestedPrice || "e.g. 10.00"}
                   className="pl-9"
-                  value={form.manusBasePriceCents}
-                  onChange={(e) => setForm({ ...form, manusBasePriceCents: e.target.value })}
+                  value={form.sellPriceUsd}
+                  onChange={(e) => setForm({ ...form, sellPriceUsd: e.target.value })}
                 />
               </div>
-              {form.manusBasePriceCents && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Tenant will pay:{" "}
-                  <strong className="text-green-600">
-                    ${(parseFloat(form.manusBasePriceCents || "0") * 1.25).toFixed(2)}
-                  </strong>{" "}
-                  (25% markup applied automatically)
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                This is the price the client pays. Standard rate: ${STANDARD_RATE_PRICE_USD} per {STANDARD_RATE_CREDITS.toLocaleString()} credits.
+              </p>
             </div>
           </div>
           <DialogFooter>
@@ -520,10 +527,15 @@ function TenantsTab() {
               <Label>Credits to Grant *</Label>
               <Input
                 type="number"
-                placeholder="e.g. 500"
+                placeholder={`e.g. ${STANDARD_RATE_CREDITS}`}
                 value={grantForm.credits}
                 onChange={(e) => setGrantForm({ ...grantForm, credits: e.target.value })}
               />
+              {grantForm.credits && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Equivalent value: <strong>${((parseInt(grantForm.credits) / STANDARD_RATE_CREDITS) * STANDARD_RATE_PRICE_USD).toFixed(2)}</strong> at standard rate
+                </p>
+              )}
             </div>
             <div>
               <Label>Description</Label>
