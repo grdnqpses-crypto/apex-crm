@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, sql, like, or, isNotNull, count, inArray } from "drizzle-orm";
+import { eq, and, desc, asc, sql, like, or, isNotNull, count, inArray, gte, lte, ne } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser, users,
@@ -858,6 +858,26 @@ export async function listWebhookLogs(webhookId: number, limit = 50) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(webhookLogs).where(eq(webhookLogs.webhookId, webhookId)).orderBy(desc(webhookLogs.createdAt)).limit(limit);
+}
+
+export async function getWebhookLog(logId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [row] = await db.select().from(webhookLogs).where(eq(webhookLogs.id, logId)).limit(1);
+  return row ?? null;
+}
+
+export async function getWebhookByIdAndUser(webhookId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [row] = await db.select().from(webhooks).where(and(eq(webhooks.id, webhookId), eq(webhooks.userId, userId))).limit(1);
+  return row ?? null;
+}
+
+export async function insertWebhookLog(data: { webhookId: number; event: string; payload?: string | null; responseStatus?: number | null; responseBody?: string | null; createdAt: number }) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(webhookLogs).values(data as any);
 }
 
 // ─── Dashboard Stats ───
@@ -4109,3 +4129,115 @@ export async function deletePlatformCredentials(userId: number, websiteId: numbe
     WHERE wpcUserId = ${userId} AND wpcWebsiteId = ${websiteId} AND wpcPlatform = ${platform}
   `);
 }
+
+// ─── Dashboard Trend Stats ───
+export async function getDashboardTrendStats(
+  user: { id: number; systemRole: string; tenantCompanyId: number | null },
+  range: { from: number; to: number }
+) {
+  const db = await getDb();
+  if (!db) return null;
+  const visibleIds = await getVisibleUserIds(user);
+  const { from, to } = range;
+  const duration = to - from;
+  const prevFrom = from - duration;
+  const prevTo = from;
+
+  const [curr, prev, avgCycle, topReps] = await Promise.all([
+    // Current period stats
+    db.select({
+      newContacts: sql<number>`SUM(CASE WHEN ${contacts.createdAt} >= ${from} AND ${contacts.createdAt} <= ${to} THEN 1 ELSE 0 END)`,
+      newCompanies: sql<number>`SUM(CASE WHEN ${companies.createdAt} >= ${from} AND ${companies.createdAt} <= ${to} THEN 1 ELSE 0 END)`,
+    }).from(contacts).rightJoin(companies, sql`1=1`).where(
+      or(inArray(contacts.userId, visibleIds), inArray(companies.userId, visibleIds))
+    ).limit(1).then(async () => {
+      // Simpler: separate queries
+      const [c, co, d] = await Promise.all([
+        db.select({ n: sql<number>`count(*)` }).from(contacts)
+          .where(and(inArray(contacts.userId, visibleIds), gte(contacts.createdAt, from), lte(contacts.createdAt, to))),
+        db.select({ n: sql<number>`count(*)` }).from(companies)
+          .where(and(inArray(companies.userId, visibleIds), gte(companies.createdAt, from), lte(companies.createdAt, to))),
+        db.select({
+          n: sql<number>`count(*)`,
+          won: sql<number>`SUM(CASE WHEN status='won' THEN 1 ELSE 0 END)`,
+          lost: sql<number>`SUM(CASE WHEN status='lost' THEN 1 ELSE 0 END)`,
+          wonVal: sql<number>`COALESCE(SUM(CASE WHEN status='won' THEN dealValue ELSE 0 END), 0)`,
+        }).from(deals)
+          .where(and(inArray(deals.userId, visibleIds), gte(deals.createdAt, from), lte(deals.createdAt, to))),
+      ]);
+      return { contacts: c[0]?.n ?? 0, companies: co[0]?.n ?? 0, deals: d[0]?.n ?? 0, wonDeals: d[0]?.won ?? 0, lostDeals: d[0]?.lost ?? 0, wonValue: d[0]?.wonVal ?? 0 };
+    }),
+    // Previous period stats
+    (async () => {
+      const [c, co, d] = await Promise.all([
+        db.select({ n: sql<number>`count(*)` }).from(contacts)
+          .where(and(inArray(contacts.userId, visibleIds), gte(contacts.createdAt, prevFrom), lte(contacts.createdAt, prevTo))),
+        db.select({ n: sql<number>`count(*)` }).from(companies)
+          .where(and(inArray(companies.userId, visibleIds), gte(companies.createdAt, prevFrom), lte(companies.createdAt, prevTo))),
+        db.select({
+          n: sql<number>`count(*)`,
+          won: sql<number>`SUM(CASE WHEN status='won' THEN 1 ELSE 0 END)`,
+          wonVal: sql<number>`COALESCE(SUM(CASE WHEN status='won' THEN dealValue ELSE 0 END), 0)`,
+        }).from(deals)
+          .where(and(inArray(deals.userId, visibleIds), gte(deals.createdAt, prevFrom), lte(deals.createdAt, prevTo))),
+      ]);
+      return { contacts: c[0]?.n ?? 0, companies: co[0]?.n ?? 0, deals: d[0]?.n ?? 0, wonDeals: d[0]?.won ?? 0, wonValue: d[0]?.wonVal ?? 0 };
+    })(),
+    // Avg deal cycle time (days from created to closed for won deals in period)
+    db.select({
+      avgMs: sql<number>`AVG(closedAt - createdAt)`,
+    }).from(deals)
+      .where(and(
+        inArray(deals.userId, visibleIds),
+        eq(deals.status, 'won'),
+        gte(deals.closedAt, from),
+        lte(deals.closedAt, to),
+        isNotNull(deals.closedAt)
+      )),
+    // Top reps by won deals in period
+    db.select({
+      userId: deals.userId,
+      wonDeals: sql<number>`SUM(CASE WHEN status='won' THEN 1 ELSE 0 END)`,
+      wonValue: sql<number>`COALESCE(SUM(CASE WHEN status='won' THEN dealValue ELSE 0 END), 0)`,
+    }).from(deals)
+      .where(and(inArray(deals.userId, visibleIds), gte(deals.createdAt, from), lte(deals.createdAt, to)))
+      .groupBy(deals.userId)
+      .orderBy(sql`wonDeals DESC`)
+      .limit(5),
+  ]);
+
+  // Resolve user names for top reps
+  const repNames: Record<number, string> = {};
+  if (topReps.length > 0) {
+    const repUsers = await db.select({ id: users.id, name: users.name, username: users.username })
+      .from(users).where(inArray(users.id, topReps.map(r => r.userId)));
+    for (const u of repUsers) repNames[u.id] = u.name ?? u.username ?? `User ${u.id}`;
+  }
+
+  const avgCycleMs = avgCycle[0]?.avgMs ?? null;
+  const avgCycleDays = avgCycleMs ? Math.round(avgCycleMs / 86400000) : null;
+
+  const pctChange = (curr: number, prev: number) =>
+    prev === 0 ? (curr > 0 ? 100 : 0) : Math.round(((curr - prev) / prev) * 100);
+
+  return {
+    current: curr,
+    previous: prev,
+    trends: {
+      contacts: pctChange(curr.contacts, prev.contacts),
+      companies: pctChange(curr.companies, prev.companies),
+      deals: pctChange(curr.deals, prev.deals),
+      wonDeals: pctChange(curr.wonDeals, prev.wonDeals),
+      wonValue: pctChange(curr.wonValue, prev.wonValue),
+    },
+    winRate: curr.deals > 0 ? Math.round((curr.wonDeals / curr.deals) * 100) : 0,
+    avgCycleDays,
+    topReps: topReps.map(r => ({
+      userId: r.userId,
+      name: repNames[r.userId] ?? `User ${r.userId}`,
+      wonDeals: r.wonDeals,
+      wonValue: r.wonValue,
+    })),
+  };
+}
+

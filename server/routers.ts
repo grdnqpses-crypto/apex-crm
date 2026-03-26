@@ -293,6 +293,12 @@ export const appRouter = router({
         teamSize: roleStats.teamSize,
       };
     }),
+    trendStats: protectedProcedure.input(z.object({
+      from: z.number(),
+      to: z.number(),
+    })).query(async ({ ctx, input }) => {
+      return db.getDashboardTrendStats(ctx.user, { from: input.from, to: input.to });
+    }),
     recentActivities: protectedProcedure.input(z.object({
       limit: z.number().min(1).max(50).optional(),
     }).optional()).query(async ({ ctx, input }) => {
@@ -1287,6 +1293,37 @@ export const appRouter = router({
     }),
     logs: protectedProcedure.input(z.object({ webhookId: z.number(), limit: z.number().optional() })).query(async ({ input }) => {
       return db.listWebhookLogs(input.webhookId, input.limit);
+    }),
+    retryDelivery: protectedProcedure.input(z.object({ logId: z.number() })).mutation(async ({ ctx, input }) => {
+      const log = await db.getWebhookLog(input.logId);
+      if (!log) throw new TRPCError({ code: "NOT_FOUND", message: "Log entry not found" });
+      const webhook = await db.getWebhookByIdAndUser(log.webhookId, ctx.user.id);
+      if (!webhook) throw new TRPCError({ code: "FORBIDDEN" });
+      let responseStatus: number | null = null;
+      let responseBody: string | null = null;
+      try {
+        const headers: Record<string, string> = { "Content-Type": "application/json", "X-Webhook-Retry": "true" };
+        if (webhook.secret) headers["X-Webhook-Secret"] = webhook.secret;
+        const resp = await fetch(webhook.url, {
+          method: "POST",
+          headers,
+          body: typeof log.payload === "string" ? log.payload : JSON.stringify({ event: log.event, retry: true }),
+          signal: AbortSignal.timeout(10000),
+        });
+        responseStatus = resp.status;
+        responseBody = await resp.text().catch(() => null);
+      } catch (err: any) {
+        responseBody = err?.message ?? "Network error";
+      }
+      await db.insertWebhookLog({
+        webhookId: webhook.id,
+        event: log.event,
+        payload: typeof log.payload === "string" ? log.payload : null,
+        responseStatus,
+        responseBody: responseBody?.slice(0, 2000) ?? null,
+        createdAt: Date.now(),
+      });
+      return { success: responseStatus !== null && responseStatus >= 200 && responseStatus < 300, responseStatus };
     }),
   }),
 

@@ -6,6 +6,7 @@ import PageGuide from "@/components/PageGuide";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -156,6 +157,9 @@ function ProfileSettings() {
   const [lastName, setLastName] = useState(user?.name?.split(" ").slice(1).join(" ") || "");
   const [email] = useState(user?.email || "");
   const [phone, setPhone] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [bio, setBio] = useState("");
   const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
 
   return (
@@ -181,9 +185,23 @@ function ProfileSettings() {
             <Input id="email" value={email} disabled className="bg-muted" />
             <p className="text-xs text-muted-foreground">Email is managed through your authentication provider.</p>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 (555) 000-0000" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="jobTitle">Job Title</Label>
+              <Input id="jobTitle" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} placeholder="Account Executive" />
+            </div>
+          </div>
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 (555) 000-0000" />
+            <Label htmlFor="linkedinUrl">LinkedIn URL</Label>
+            <Input id="linkedinUrl" value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder="https://linkedin.com/in/yourname" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="bio">Bio <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
+            <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Brief description about yourself, your role, and expertise…" rows={3} className="resize-none" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="timezone">Timezone</Label>

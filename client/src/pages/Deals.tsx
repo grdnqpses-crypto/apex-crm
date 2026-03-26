@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Plus, DollarSign, MoreHorizontal, Trash2, Trophy, X, GripVertical, Kanban, TrendingUp, Building2, User, List } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, DollarSign, MoreHorizontal, Trash2, Trophy, X, GripVertical, Kanban, TrendingUp, Building2, User, List, Clock, AlertTriangle, ArrowRightLeft } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
@@ -31,11 +32,51 @@ const PRIORITY_STYLES: Record<string, string> = {
   urgent: "bg-red-50 text-red-600",
 };
 
+const LOSS_REASONS = [
+  "Price too high",
+  "Chose a competitor",
+  "No budget",
+  "No decision / stalled",
+  "Wrong fit / wrong timing",
+  "Lost contact",
+  "Feature gap",
+  "Internal politics",
+  "Other",
+];
+
+/** Returns days since a timestamp */
+function daysSince(ts: number | null | undefined): number | null {
+  if (!ts) return null;
+  return Math.floor((Date.now() - ts) / 86_400_000);
+}
+
+/** Deal aging badge — amber > 14d, red > 30d */
+function AgingBadge({ updatedAt, createdAt }: { updatedAt?: number | null; createdAt?: number | null }) {
+  const days = daysSince(updatedAt ?? createdAt);
+  if (days === null || days < 7) return null;
+  const isRed = days >= 30;
+  const isAmber = days >= 14;
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-[10px] font-semibold rounded-md px-1.5 py-0.5 ${isRed ? "bg-red-50 text-red-600" : isAmber ? "bg-amber-50 text-amber-600" : "bg-muted/60 text-muted-foreground"}`}>
+      <Clock className="h-2.5 w-2.5" />{days}d
+    </span>
+  );
+}
+
 export default function Deals() {
   const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
   const [showPipeline, setShowPipeline] = useState(false);
   const utils = trpc.useUtils();
+
+  // ─── Loss reason modal state ───
+  const [lossModal, setLossModal] = useState<{ dealId: number; dealName: string } | null>(null);
+  const [lossReason, setLossReason] = useState("");
+  const [lossNote, setLossNote] = useState("");
+  const [lossCustom, setLossCustom] = useState("");
+
+  // ─── Bulk stage change state ───
+  const [bulkStageId, setBulkStageId] = useState<string>("");
 
   const { data: pipelines } = trpc.pipelines.list.useQuery();
   const [selectedPipeline, setSelectedPipeline] = useState<number | null>(null);
@@ -83,6 +124,19 @@ export default function Deals() {
     onSuccess: (res) => { utils.deals.list.invalidate(); utils.dashboard.stats.invalidate(); setSelectedDealIds(new Set()); toast.success(`${res.deleted} deals deleted`); },
     onError: (e) => toast.error(e.message),
   });
+  const updateCloseReason = trpc.winLoss.updateCloseReason.useMutation({
+    onSuccess: () => {
+      utils.deals.list.invalidate();
+      utils.dashboard.stats.invalidate();
+      setLossModal(null);
+      setLossReason("");
+      setLossNote("");
+      setLossCustom("");
+      toast.success("Deal marked as lost");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const [selectedDealIds, setSelectedDealIds] = useState<Set<number>>(new Set());
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const toggleDealSelect = (id: number) => setSelectedDealIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
@@ -108,6 +162,36 @@ export default function Deals() {
       companyId: dealForm.companyId,
       contactId: dealForm.contactId ?? undefined,
     });
+  };
+
+  const handleMarkLost = (dealId: number, dealName: string) => {
+    setLossModal({ dealId, dealName });
+    setLossReason("");
+    setLossNote("");
+    setLossCustom("");
+  };
+
+  const handleConfirmLoss = () => {
+    if (!lossModal) return;
+    const reason = lossReason === "Other" ? (lossCustom.trim() || "Other") : lossReason;
+    if (!reason) { toast.error("Please select a loss reason"); return; }
+    updateCloseReason.mutate({
+      dealId: lossModal.dealId,
+      status: "lost",
+      reason,
+      closeNote: lossNote || undefined,
+    });
+  };
+
+  const handleBulkStageChange = () => {
+    if (!bulkStageId || selectedDealIds.size === 0) return;
+    const stageIdNum = parseInt(bulkStageId);
+    Array.from(selectedDealIds).forEach(id => {
+      updateDeal.mutate({ id, stageId: stageIdNum });
+    });
+    toast.success(`Moving ${selectedDealIds.size} deals to new stage…`);
+    setSelectedDealIds(new Set());
+    setBulkStageId("");
   };
 
   const formatCurrency = (val: number) => {
@@ -205,10 +289,24 @@ export default function Deals() {
         </button>
       </div>
 
-      {/* Bulk delete bar for list view */}
+      {/* Bulk action bar for list view */}
       {viewMode === "list" && selectedDealIds.size > 0 && (
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-primary/5 border border-primary/20 rounded-xl">
+        <div className="flex flex-wrap items-center gap-3 px-4 py-2.5 bg-primary/5 border border-primary/20 rounded-xl">
           <span className="text-sm font-semibold text-primary">{selectedDealIds.size} selected</span>
+          {/* Bulk stage change */}
+          <div className="flex items-center gap-2">
+            <Select value={bulkStageId} onValueChange={setBulkStageId}>
+              <SelectTrigger className="w-44 rounded-xl h-8 text-xs bg-background border-border/50">
+                <SelectValue placeholder="Move to stage…" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                {stages?.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button size="sm" variant="outline" className="gap-1.5 rounded-xl text-xs h-8" onClick={handleBulkStageChange} disabled={!bulkStageId}>
+              <ArrowRightLeft className="h-3.5 w-3.5" /> Move
+            </Button>
+          </div>
           <Button variant="destructive" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => { if (confirm(`Delete ${selectedDealIds.size} deals? This cannot be undone.`)) bulkDeleteDeals.mutate({ ids: Array.from(selectedDealIds) }); }} disabled={bulkDeleteDeals.isPending}>
             <Trash2 className="h-3.5 w-3.5" />{bulkDeleteDeals.isPending ? "Deleting..." : "Delete Selected"}
           </Button>
@@ -263,15 +361,17 @@ export default function Deals() {
                     <th className="px-4 py-3 text-left font-semibold text-foreground">Stage</th>
                     <th className="px-4 py-3 text-left font-semibold text-foreground">Priority</th>
                     <th className="px-4 py-3 text-left font-semibold text-foreground">Company</th>
+                    <th className="px-4 py-3 text-left font-semibold text-foreground">Age</th>
                     <th className="px-4 py-3 text-left font-semibold text-foreground">Status</th>
                     <th className="px-4 py-3 text-right font-semibold text-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {allDealsFlat.length === 0 ? (
-                    <tr><td colSpan={8} className="text-center py-12 text-muted-foreground">No deals yet</td></tr>
+                    <tr><td colSpan={9} className="text-center py-12 text-muted-foreground">No deals yet</td></tr>
                   ) : allDealsFlat.map(deal => {
                     const stageName = stages?.find(s => s.id === deal.stageId)?.name ?? "—";
+                    const ageDays = daysSince((deal as any).updatedAt ?? (deal as any).createdAt);
                     return (
                       <tr key={deal.id} className={`border-b border-border/20 hover:bg-accent/30 transition-colors cursor-pointer ${selectedDealIds.has(deal.id) ? 'bg-primary/5' : ''}`}>
                         <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
@@ -284,6 +384,14 @@ export default function Deals() {
                           <Badge variant="secondary" className={`text-[10px] capitalize rounded-md ${PRIORITY_STYLES[deal.priority] ?? 'bg-muted/60 text-muted-foreground'}`}>{deal.priority}</Badge>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">{deal.companyId ? companyMap.get(deal.companyId) ?? '—' : '—'}</td>
+                        <td className="px-4 py-3">
+                          {ageDays !== null && ageDays >= 7 && (
+                            <span className={`inline-flex items-center gap-0.5 text-[10px] font-semibold rounded-md px-1.5 py-0.5 ${ageDays >= 30 ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-600"}`}>
+                              <Clock className="h-2.5 w-2.5" />{ageDays}d
+                            </span>
+                          )}
+                          {(ageDays === null || ageDays < 7) && <span className="text-xs text-muted-foreground">{ageDays !== null ? `${ageDays}d` : "—"}</span>}
+                        </td>
                         <td className="px-4 py-3">
                           <Badge variant="secondary" className={`text-[10px] capitalize rounded-md ${deal.status === 'won' ? 'bg-emerald-50 text-emerald-600' : deal.status === 'lost' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-600'}`}>{deal.status}</Badge>
                         </td>
@@ -339,18 +447,20 @@ export default function Deals() {
                               <Button variant="ghost" size="sm" className="h-6 w-6 p-0 shrink-0 rounded-lg" onClick={(e) => e.stopPropagation()}><MoreHorizontal className="h-3.5 w-3.5" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="rounded-xl">
-                              <DropdownMenuItem onClick={() => updateDeal.mutate({ id: deal.id, status: "won", closedAt: Date.now() })}>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); updateDeal.mutate({ id: deal.id, status: "won", closedAt: Date.now() }); }}>
                                 <Trophy className="mr-2 h-4 w-4 text-emerald-600" /> Mark Won
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => updateDeal.mutate({ id: deal.id, status: "lost", closedAt: Date.now() })}>
-                                <X className="mr-2 h-4 w-4 text-red-500" /> Mark Lost
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleMarkLost(deal.id, deal.name); }}>
+                                <X className="mr-2 h-4 w-4 text-red-500" /> Mark Lost…
                               </DropdownMenuItem>
+                              <DropdownMenuSeparator />
                               {stages.filter(s => s.id !== stage.id).map(s => (
-                                <DropdownMenuItem key={s.id} onClick={() => updateDeal.mutate({ id: deal.id, stageId: s.id })}>
+                                <DropdownMenuItem key={s.id} onClick={(e) => { e.stopPropagation(); updateDeal.mutate({ id: deal.id, stageId: s.id }); }}>
                                   <GripVertical className="mr-2 h-4 w-4" /> Move to {s.name}
                                 </DropdownMenuItem>
                               ))}
-                              <DropdownMenuItem className="text-red-500" onClick={() => deleteDeal.mutate({ id: deal.id })}>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-red-500" onClick={(e) => { e.stopPropagation(); deleteDeal.mutate({ id: deal.id }); }}>
                                 <Trash2 className="mr-2 h-4 w-4" /> Delete
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -377,9 +487,13 @@ export default function Deals() {
                             <span className="truncate">{contactMap.get(deal.contactId)}</span>
                           </div>
                         )}
-                        <Badge variant="secondary" className={`text-[10px] capitalize rounded-md ${PRIORITY_STYLES[deal.priority] ?? "bg-muted/60 text-muted-foreground"}`}>
-                          {deal.priority}
-                        </Badge>
+                        {/* Priority + Aging row */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <Badge variant="secondary" className={`text-[10px] capitalize rounded-md ${PRIORITY_STYLES[deal.priority] ?? "bg-muted/60 text-muted-foreground"}`}>
+                            {deal.priority}
+                          </Badge>
+                          <AgingBadge updatedAt={(deal as any).updatedAt} createdAt={(deal as any).createdAt} />
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
@@ -397,6 +511,51 @@ export default function Deals() {
           })}
         </div>
       )}
+
+      {/* ─── Loss Reason Modal ─── */}
+      <Dialog open={!!lossModal} onOpenChange={(open) => { if (!open) setLossModal(null); }}>
+        <DialogContent className="rounded-2xl border-border/40 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg font-bold">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Why was this deal lost?
+            </DialogTitle>
+            {lossModal && <p className="text-sm text-muted-foreground mt-1">"{lossModal.dealName}"</p>}
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Loss Reason <span className="text-red-500">*</span></Label>
+              <div className="grid grid-cols-2 gap-2">
+                {LOSS_REASONS.map(r => (
+                  <button
+                    key={r}
+                    onClick={() => setLossReason(r)}
+                    className={`text-left px-3 py-2 rounded-xl text-xs font-medium border transition-all ${lossReason === r ? "bg-red-50 border-red-300 text-red-700" : "bg-muted/30 border-border/40 text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {lossReason === "Other" && (
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Specify reason</Label>
+                <Input value={lossCustom} onChange={e => setLossCustom(e.target.value)} placeholder="Describe why the deal was lost…" className="rounded-xl bg-muted/30 border-border/50" />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Close Note <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <Textarea value={lossNote} onChange={e => setLossNote(e.target.value)} placeholder="Any additional context about this loss…" className="rounded-xl bg-muted/30 border-border/50 resize-none" rows={3} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLossModal(null)} className="rounded-xl">Cancel</Button>
+            <Button variant="destructive" onClick={handleConfirmLoss} disabled={!lossReason || updateCloseReason.isPending} className="rounded-xl">
+              {updateCloseReason.isPending ? "Saving…" : "Mark as Lost"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Create Deal Dialog */}
       <Dialog open={showCreate} onOpenChange={(open) => { setShowCreate(open); if (!open) { setSelectedCompanyId(null); setDealForm({ name: "", value: "", priority: "medium", companyId: null, contactId: null }); } }}>

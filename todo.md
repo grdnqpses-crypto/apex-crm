@@ -2304,7 +2304,7 @@
 ### P1 — High Impact
 - [ ] Quote / Proposal Generator: PDF from deal line items, branded template, e-sign link
 - [ ] Agentic AI Command Execution: plain-English task execution wired to tRPC mutations
-- [ ] Webhook / Zapier Integration: user-configurable webhooks per CRM event, retry logic
+- [x] Webhook / Zapier Integration: user-configurable webhooks per CRM event, retry logic
 - [ ] Two-Way SMS: Twilio send/receive from contact record, thread view in timeline
 - [ ] Migration Preview: live preview before import showing field mapping + record counts
 - [ ] Migration Rollback: 48-hour rollback button to undo a completed migration
@@ -2664,3 +2664,203 @@
 - [x] Resources > Billing & Invoices: Verify implementation — Billing page confirmed working
 - [x] Resources > AI Credits: Verify implementation — AiCreditsWallet page confirmed working
 - [x] Resources > Business Type: Verify implementation — BusinessCategorySelector page confirmed working
+
+## Phase 64: Master Tab Audit — Full 170-Item Implementation (03/23/2026)
+
+### Overview / Dashboard (19 items)
+- [ ] Dashboard: Add trend arrows and % change vs. prior period on KPI stat cards
+- [ ] Dashboard: Add date-range selector (Today / This Week / This Month / Custom) on KPI cards
+- [ ] Dashboard: Add goal-setting per KPI with goal-vs-actual progress bars
+- [ ] Dashboard: Add sparkline trend lines on each stat card
+- [ ] Dashboard Quick Actions: Add inline slide-out drawer for Add Company (no page change)
+- [ ] Dashboard Quick Actions: Add inline deal creation drawer with company/contact pre-fill
+- [ ] Dashboard Quick Actions: Add quick-start campaign wizard from dashboard
+- [ ] Dashboard Quick Actions: Add inline task creation popover with contact/deal association
+- [ ] Dashboard Quick Actions: Add live signal count badge on Signal Feed button
+- [ ] Dashboard CRM Core: Add period-over-period comparison on stat cards
+- [ ] Dashboard Performance: Add win rate % card, avg deal cycle time card, mini leaderboard
+- [ ] Dashboard Email Operations: Add avg open rate, click rate, deliverability health badge
+- [ ] Dashboard Paradigm Engine: Add prospect-to-contact conversion rate, signal response rate
+- [ ] Dashboard Freight Operations: Add revenue per load, carrier acceptance rate, load aging alert
+- [ ] Team: Add bulk role change, org chart view, per-user KPI summary
+- [ ] Team Performance: Add goal setting per rep, CSV export, date range filter, coaching notes
+- [ ] Team Performance > Performance: Add period comparison, leaderboard, drill-down per metric
+- [ ] Team Performance > Credentials: Add bulk reset, expiry tracking, audit log link
+- [ ] Team Performance > Emulate: Add emulation time limit, auto-write to Audit Logs
+
+### CRM (47 items)
+- [ ] Companies List: Add duplicate detection badge, health score column
+- [ ] Companies List View: Add column picker, saved filter views, inline lead status dropdown
+- [ ] Companies Bulk Actions: Wire Enrich to enrichment backend, wire Check Coverage, add bulk CSV export
+- [ ] Company Detail: Add inline email composer, Google Maps embed, relationship graph
+- [ ] Company Detail > Overview Tab: Add inline field editing, field-level change history
+- [ ] Company Detail > Contacts Tab: Add 'Link Existing Contact' button, bulk action toolbar
+- [ ] Company Detail > Deals Tab: Add inline deal creation, mini Kanban view of deals by stage
+- [ ] Company Detail > Tasks Tab: Add inline task creation with auto-link to company
+- [ ] Company Detail > Activities Tab: Add activity type filter, bulk delete, export
+- [ ] Company Detail > Notes Tab: Add note templates, @mention with notification, pin-to-top
+- [ ] Company Detail > Files Tab: Add file versioning, inline PDF/image preview, storage usage indicator
+- [ ] Contacts List: Add lead score column, duplicate badge, bulk email action
+- [ ] Contacts List View: Add column picker, saved views, inline stage dropdown
+- [ ] Contacts Bulk Actions: Wire Enrich to enrichment backend, add bulk email send, bulk stage change
+- [ ] Contact Detail: Add inline email composer, wire call button to Dialer, add LinkedIn URL field
+- [x] Deals: Add probability weighting by stage, bulk stage change, deal aging indicator on cards
+- [ ] Deals Kanban: Add WIP limits per stage, priority color coding, stage collapse toggle
+- [ ] Deals List View: Add saved filter views, bulk CSV export, inline stage dropdown
+- [ ] Deal Detail: Add stage-gate scorecard, competitor field with Battle Cards integration
+- [ ] Tasks: Add recurring task support, task dependencies, time tracking with timer
+- [ ] Calendar Sync: Add task due date sync, conflict detection, meeting-to-deal auto-association
+- [ ] Email Sync: Add inline email composer, attachment preview, email-to-deal association
+- [ ] Dialer: Add AI call transcription via Whisper, call scoring with sentiment, local presence
+- [ ] Dialer: Add call recording playback, call notes auto-save, call-to-deal association
+- [ ] Segments: Add dynamic segment preview count, segment export, segment-to-campaign one-click
+- [ ] Segments: Add AI-suggested segment criteria, segment overlap analysis
+- [ ] Smart Views: Add view scheduling, view-based alerts, view performance tracking
+- [ ] Account Hierarchy: Add drag-and-drop hierarchy editing, hierarchy export, hierarchy visualization
+- [ ] Custom Objects: Add custom object relationships, custom object import/export, field validation rules
+- [ ] Journey Orchestration: Add journey analytics (completion rate, drop-off), journey A/B testing
+- [ ] Journey Orchestration: Add journey pause/resume, journey version history
+- [ ] Proposals: Add proposal analytics (view count, time spent), proposal e-signature integration
+- [ ] Proposals: Add proposal template library, proposal version history
+- [ ] Meeting Prep: Add meeting prep auto-send to attendees, meeting prep history
+- [ ] Battle Cards: Add battle card effectiveness tracking, battle card auto-update on new data
+- [ ] Sequences: Add sequence analytics (open/reply rates per step), sequence A/B testing
+- [ ] Sequences: Add sequence pause/resume per contact, sequence branching logic
+- [ ] Lead Scoring: Add AI-suggested scoring weights, score decay over time, score history chart
+- [ ] B2B Database: Add bulk export, saved search filters, contact enrichment from search results
+- [ ] Visitor Tracking: Add visitor-to-contact auto-match, visitor session replay, visitor alert rules
+- [ ] Ghost Sequences: Add ghost sequence analytics, ghost sequence A/B testing
+- [ ] Quantum Score: Add score explanation breakdown, score comparison vs. industry average
+- [ ] Compliance Engine: Add compliance report export, compliance rule version history
+- [ ] Power Dialer: Add power dialer queue management, power dialer analytics, skip/callback logic
+- [ ] AB Engine: Add test statistical significance indicator, test winner auto-promotion
+- [ ] Anomaly Detection: Add anomaly alert configuration, anomaly history, anomaly resolution tracking
+- [ ] Win Probability: Add win probability trend over time, win probability explanation breakdown
+
+### Marketing (8 items)
+- [ ] Campaigns: Add campaign A/B test results comparison, campaign ROI calculator
+- [ ] Campaigns: Add campaign template library with performance history
+- [ ] Email Builder: Add AI subject line suggestions, email accessibility checker
+- [ ] Email Builder: Add email send-time optimization, email preview across email clients
+- [ ] Domain Health: Add automated DNS fix suggestions, domain health history chart
+- [ ] Email Warmup: Add warmup progress visualization, warmup pause/resume, warmup analytics
+- [ ] Spam Prevention: Add spam score trend chart, spam prevention recommendations
+- [ ] Campaign Analytics: Add campaign attribution modeling, campaign funnel visualization
+
+### Automation (4 items)
+- [ ] Workflows: Add workflow analytics (trigger count, action success rate), workflow version history
+- [ ] Workflows: Add workflow template library, workflow import/export
+- [ ] Workflows: Add workflow pause/resume, workflow error notifications
+- [ ] Workflows: Add workflow A/B testing, workflow branching logic
+
+### Paradigm Engine (8 items)
+- [ ] Signals: Add signal priority scoring, signal-to-sequence auto-enrollment, signal alert rules
+- [ ] Signals: Add signal source analytics, signal deduplication
+- [ ] Pulse Dashboard: Add Quantum Score distribution histogram, signal-to-sequence conversion rate
+- [ ] Pulse Dashboard: Add prospect pipeline funnel visualization, top performer leaderboard
+- [ ] AI Post Writer: Add post performance analytics, post scheduling, post template library
+- [ ] Revenue Autopilot: Add autopilot performance analytics, autopilot recommendation history
+- [ ] AXIOM Autopilot: Add autopilot lane analytics, autopilot recommendation feedback loop
+- [ ] Paradigm Signals: Add signal category breakdown, signal trend analysis
+
+### Compliance & Safety (6 items)
+- [ ] Compliance Engine: Add compliance violation history, compliance report PDF export
+- [ ] Email Deliverability: Add deliverability trend chart, deliverability benchmark comparison
+- [ ] SMTP Accounts: Add SMTP health monitoring, SMTP rotation analytics, SMTP warmup status
+- [ ] Bounce Handling: Add bounce rate trend, bounce category breakdown, bounce suppression list management
+- [ ] Unsubscribe Management: Add unsubscribe reason tracking, unsubscribe trend chart
+- [ ] CAN-SPAM/GDPR: Add compliance checklist per campaign, compliance audit log
+
+### Operations (7 items)
+- [ ] Order Entry: Add order status tracking, order-to-invoice automation, order analytics
+- [ ] Rate Confirmation: Add rate confirmation e-signature, rate confirmation version history
+- [ ] Load Management: Add load aging alerts, load profitability analytics, load template library
+- [ ] Carrier Management: Add carrier performance scorecard, carrier compliance tracking
+- [ ] Driver Management: Add driver availability calendar, driver performance analytics
+- [ ] Dispatch Board: Add dispatch board real-time updates, dispatch analytics, dispatch export
+- [ ] FMCSA Scanner: Add batch FMCSA lookup, FMCSA data caching, carrier status change alerts
+
+### AI Premium (13 items)
+- [ ] DocScan: Add DocScan batch processing, DocScan field mapping customization, DocScan history
+- [ ] AI Ghostwriter: Add ghostwriter tone selector, ghostwriter template library, ghostwriter analytics
+- [ ] Win Probability: Add win probability explanation, win probability trend chart, win probability export
+- [ ] Revenue Autopilot: Add autopilot performance dashboard, autopilot approval threshold
+- [ ] Meeting Prep: Add meeting prep auto-distribution, meeting prep template library
+- [ ] Visitor Tracking: Add visitor-to-contact conversion funnel, visitor alert rules, visitor export
+- [ ] B2B Database: Add database search saved filters, database bulk export, database enrichment
+- [ ] Anomaly Detection: Add anomaly alert configuration, anomaly resolution workflow
+- [ ] AXIOM Autopilot: Add autopilot performance dashboard, autopilot approval threshold, correction feedback loop
+- [ ] AI Post Writer: Add post scheduling, post performance analytics, post A/B testing
+- [ ] Ghost Sequences: Add sequence analytics dashboard, sequence A/B testing, sequence pause/resume
+- [ ] Quantum Score: Add score history chart, score explanation breakdown, score export
+- [ ] Battle Cards: Add battle card effectiveness tracking, battle card auto-update
+
+### Marketplace (2 items)
+- [ ] Freight Marketplace: Add load template library, load performance analytics, load aging alerts
+- [ ] Freight Marketplace: Add carrier rating system, load matching AI suggestions
+
+### Analytics (7 items)
+- [ ] Reports: Add scheduled report delivery, report sharing with shareable link
+- [ ] Report Builder: Add report templates, report version history, iframe embed code
+- [x] Win/Loss Analysis: Add required loss reason field on deal close, monthly trend chart, pie charts, enhanced KPI cards
+- [ ] Smart Views: Add view scheduling, view-based alerts, view usage analytics
+- [ ] Bulk Actions: Add action history with undo, approval workflow for destructive actions, progress bar
+- [ ] Sales Forecasting: Add forecast vs. actual tracking, confidence interval, scenario modeling
+- [ ] Lead Scoring: Add AI-suggested scoring weights, score decay, score history chart
+
+### Resources (26 items)
+- [ ] Help Center: Add full-text search, article feedback (was this helpful?), live chat integration
+- [ ] CRM Bible: Add version history, per-section feedback, PDF export
+- [ ] Settings: Add settings search bar, settings change history log
+- [x] Settings > Profile: Add LinkedIn URL field, job title, bio/about field
+- [ ] Settings > Appearance & Skin: Add custom color theme builder, font size control, high-contrast mode
+- [ ] Settings > Notifications: Add notification digest scheduling, per-event-type granular control
+- [ ] Settings > Account Management: Add account health score, usage analytics, full data export
+- [ ] Settings > Users & Teams: Add CSV user import, team performance comparison, user activity report
+- [ ] Settings > Integrations: Add integration health dashboard, integration usage analytics
+- [ ] Settings > Data Management: Add data quality score, duplicate detection settings
+- [ ] Settings > Data Management > Properties: Add field dependency rules, field usage analytics, field archiving
+- [ ] Settings > Import & Export: Add import validation preview with error highlighting, import history, scheduled export
+- [ ] Settings > Security: Add IP allowlist, device management, security event alerts
+- [ ] Settings > Tools: Add per-role tool toggles, tool usage analytics
+- [ ] Migration: Add migration progress tracker, migration rollback, post-migration quality report
+- [ ] Migration Wizard: Add wizard state saving, embedded video tutorial
+- [ ] White Label: Add white-label live preview, per-tenant configuration
+- [ ] Subscription: Add usage-based billing preview, AI plan recommendation, downgrade impact warning
+- [ ] Multi-Currency: Add automatic exchange rate updates, conversion history, per-deal currency override
+- [ ] Billing & Plans: Add invoice download, billing contact management, tax ID field
+- [ ] Billing History: Add invoice search, spend trend chart, bulk invoice download
+- [ ] Email Infrastructure: Add automated DNS verification, infrastructure health score
+- [ ] Notification Digest: Add per-user digest customization, digest preview, open rate tracking
+- [ ] Scheduled Reports: Add report scheduling from Analytics page, delivery history, recipient management
+- [ ] Conditional Fields: Add conditional field preview, required field conditions, conditional logic export
+- [ ] AI Credits: Add credit usage analytics by feature, credit alert threshold, credit auto-replenishment
+
+### Finance (3 items)
+- [ ] Accounts Receivable: Add automated payment reminders, customer payment portal, AR aging report export
+- [ ] Accounts Payable: Add automated payment scheduling, vendor management, AP aging report
+- [ ] Shipping & Receiving: Add real-time shipment tracking, shipping cost analytics, carrier performance
+
+### AXIOM Platform (7 items)
+- [ ] Platform Dashboard: Add MRR trend chart, churn rate indicator, tenant health score
+- [ ] Platform Dashboard > All Companies: Add bulk plan change, company usage analytics, health score
+- [ ] Platform Dashboard > Active: Add revenue breakdown, churn risk indicator
+- [ ] Platform Dashboard > Trials: Add trial-to-paid conversion rate, automated expiry reminder, trial extension
+- [ ] Platform Dashboard > Issues: Add automated resolution workflow, severity classification, issue history
+- [ ] AI Credits (Platform): Add credit usage analytics by feature, credit alert threshold, auto-replenishment
+- [ ] Payment Management: Add automated dunning, revenue analytics, refund workflow
+
+### Developer (13 items)
+- [ ] Developer > Companies: Add bulk company operations, company data export, company creation form
+- [ ] Developer > All Users: Add bulk user operations, direct impersonation link, user export
+- [ ] System Health: Add historical health charts, alert configuration, health report export
+- [ ] Self-Healing Engine: Add manual trigger of healing tasks, healing history archive, effectiveness metrics
+- [ ] AI Engine Panel: Add manual task trigger per task, priority configuration, execution history
+- [ ] Activity Log: Add event type filter, log export, log retention configuration
+- [ ] Impersonate: Add impersonation audit trail, time limit, optional notification
+- [ ] FMCSA Scanner: Add batch lookup, data caching with refresh, status change alerts
+- [ ] API Keys: Add key rotation, per-key rate limiting, key usage analytics
+- [x] Webhooks: Add webhook event log, retry on failure, payload preview, response body expansion
+- [ ] AI Credit Usage: Add usage forecast, per-user credit limit, credit usage export
+- [ ] Custom Roles: Add role cloning, role usage analytics, role export
+- [ ] SSO Settings: Add SSO health monitoring, login analytics, JIT provisioning

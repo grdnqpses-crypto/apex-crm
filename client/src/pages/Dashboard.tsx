@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import {
   Users, Building2, Kanban, DollarSign, Mail, ListChecks,
@@ -15,6 +16,7 @@ import {
   Package, Brain, Phone, ArrowRight, Sparkles,
   StickyNote, PhoneCall, MailOpen, Calendar, Clock, User, ImagePlus,
   Upload, Wand2, RefreshCw, ArrowRightLeft, CheckCircle, Activity,
+  TrendingDown, Minus, Award, Timer,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useSkin } from "@/contexts/SkinContext";
@@ -98,7 +100,26 @@ function MigrationHealthWidget() {
  *   Gray   (crm-gray)   = Inactive accounts / archived / disabled
  */
 
-function StatCard({ title, value, icon: Icon, subtitle, gradient, iconBg, href }: {
+function TrendBadge({ pct }: { pct: number | undefined }) {
+  if (pct === undefined || pct === null) return null;
+  if (pct > 0) return (
+    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600 bg-emerald-50 rounded-md px-1.5 py-0.5">
+      <TrendingUp className="h-3 w-3" />+{pct}%
+    </span>
+  );
+  if (pct < 0) return (
+    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-red-500 bg-red-50 rounded-md px-1.5 py-0.5">
+      <TrendingDown className="h-3 w-3" />{pct}%
+    </span>
+  );
+  return (
+    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-muted-foreground bg-muted rounded-md px-1.5 py-0.5">
+      <Minus className="h-3 w-3" />0%
+    </span>
+  );
+}
+
+function StatCard({ title, value, icon: Icon, subtitle, gradient, iconBg, href, trend }: {
   title: string;
   value: string | number;
   icon: any;
@@ -106,6 +127,7 @@ function StatCard({ title, value, icon: Icon, subtitle, gradient, iconBg, href }
   gradient: string;
   iconBg: string;
   href?: string;
+  trend?: number;
 }) {
   const content = (
     <div className={`group relative overflow-hidden rounded-2xl border border-border/40 bg-card p-5 transition-all duration-300 hover:shadow-lg hover:shadow-black/[0.03] hover:-translate-y-0.5`}>
@@ -113,7 +135,10 @@ function StatCard({ title, value, icon: Icon, subtitle, gradient, iconBg, href }
         <div className="flex flex-col gap-1.5">
           <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">{title}</span>
           <span className="text-3xl font-bold text-foreground tracking-tight">{value}</span>
-          {subtitle && <span className="text-xs text-muted-foreground">{subtitle}</span>}
+          <div className="flex items-center gap-2">
+            {subtitle && <span className="text-xs text-muted-foreground">{subtitle}</span>}
+            <TrendBadge pct={trend} />
+          </div>
         </div>
         <div className={`h-11 w-11 rounded-xl flex items-center justify-center ${iconBg} transition-transform duration-300 group-hover:scale-110`}>
           <Icon className="h-5 w-5" />
@@ -522,11 +547,41 @@ function TaskCommandCenter() {
   );
 }
 
+// ─── Date range helpers ─────────────────────────────────────────────────────
+type DateRangeKey = "week" | "month" | "quarter" | "year";
+function getDateRange(key: DateRangeKey): { from: number; to: number; label: string } {
+  const now = Date.now();
+  const today = new Date(); today.setHours(23, 59, 59, 999);
+  const to = today.getTime();
+  if (key === "week") {
+    const from = new Date(); from.setDate(from.getDate() - 7); from.setHours(0, 0, 0, 0);
+    return { from: from.getTime(), to, label: "Last 7 Days" };
+  }
+  if (key === "month") {
+    const from = new Date(); from.setDate(1); from.setHours(0, 0, 0, 0);
+    return { from: from.getTime(), to, label: "This Month" };
+  }
+  if (key === "quarter") {
+    const from = new Date(); const qMonth = Math.floor(from.getMonth() / 3) * 3;
+    from.setMonth(qMonth, 1); from.setHours(0, 0, 0, 0);
+    return { from: from.getTime(), to, label: "This Quarter" };
+  }
+  // year
+  const from = new Date(); from.setMonth(0, 1); from.setHours(0, 0, 0, 0);
+  return { from: from.getTime(), to, label: "This Year" };
+}
+
 export default function Dashboard() {
   const { t } = useSkin();
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const { data: stats, isLoading } = trpc.dashboard.stats.useQuery();
+  const [dateRangeKey, setDateRangeKey] = useState<DateRangeKey>("month");
+  const dateRange = useMemo(() => getDateRange(dateRangeKey), [dateRangeKey]);
+  const { data: trendData } = trpc.dashboard.trendStats.useQuery(
+    { from: dateRange.from, to: dateRange.to },
+    { enabled: !!user }
+  );
   const { data: company, refetch: refetchCompany } = trpc.tenants.myCompany.useQuery();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showLogoDialog, setShowLogoDialog] = useState(false);
@@ -824,6 +879,30 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
+      {/* ─── Date Range Selector ─── */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Activity className="h-4 w-4 text-primary" />
+          <span className="text-sm font-semibold text-foreground">Performance Metrics</span>
+          {trendData && (
+            <Badge variant="outline" className="text-[10px] text-muted-foreground">
+              vs. prior period
+            </Badge>
+          )}
+        </div>
+        <Select value={dateRangeKey} onValueChange={(v) => setDateRangeKey(v as DateRangeKey)}>
+          <SelectTrigger className="w-36 h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="week">Last 7 Days</SelectItem>
+            <SelectItem value="month">This Month</SelectItem>
+            <SelectItem value="quarter">This Quarter</SelectItem>
+            <SelectItem value="year">This Year</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -845,10 +924,10 @@ export default function Dashboard() {
               <span className="text-[10px] text-muted-foreground/50 ml-1">Your companies, contacts, deals & pipeline</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard title={t("companies")} value={stats?.totalCompanies ?? 0} icon={Building2} gradient="bg-gradient-to-r from-blue-500 to-blue-400" iconBg="bg-blue-50 text-blue-600" href="/companies" />
-              <StatCard title={t("contacts")} value={stats?.totalContacts ?? 0} icon={Users} gradient="bg-gradient-to-r from-blue-500 to-blue-400" iconBg="bg-blue-50 text-blue-600" href="/contacts" />
-              <StatCard title="Open Deals" value={stats?.openDeals ?? 0} icon={Kanban} subtitle={`${stats?.totalDeals ?? 0} total`} gradient="bg-gradient-to-r from-amber-500 to-amber-400" iconBg="bg-amber-50 text-amber-600" href="/deals" />
-              <StatCard title="Pipeline Value" value={formatCurrency(stats?.totalValue ?? 0)} icon={DollarSign} gradient="bg-gradient-to-r from-emerald-500 to-emerald-400" iconBg="bg-emerald-50 text-emerald-600" href="/deals" />
+              <StatCard title={t("companies")} value={stats?.totalCompanies ?? 0} icon={Building2} gradient="bg-gradient-to-r from-blue-500 to-blue-400" iconBg="bg-blue-50 text-blue-600" href="/companies" trend={trendData?.trends?.companies} />
+              <StatCard title={t("contacts")} value={stats?.totalContacts ?? 0} icon={Users} gradient="bg-gradient-to-r from-blue-500 to-blue-400" iconBg="bg-blue-50 text-blue-600" href="/contacts" trend={trendData?.trends?.contacts} />
+              <StatCard title="Open Deals" value={stats?.openDeals ?? 0} icon={Kanban} subtitle={`${stats?.totalDeals ?? 0} total`} gradient="bg-gradient-to-r from-amber-500 to-amber-400" iconBg="bg-amber-50 text-amber-600" href="/deals" trend={trendData?.trends?.deals} />
+              <StatCard title="Pipeline Value" value={formatCurrency(stats?.totalValue ?? 0)} icon={DollarSign} gradient="bg-gradient-to-r from-emerald-500 to-emerald-400" iconBg="bg-emerald-50 text-emerald-600" href="/deals" trend={trendData?.trends?.wonValue} />
             </div>
           </div>
 
@@ -860,11 +939,52 @@ export default function Dashboard() {
               <span className="text-[10px] text-muted-foreground/50 ml-1">Win rates, task progress & segment health</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard title="Won Deals" value={stats?.wonDeals ?? 0} icon={Trophy} subtitle={formatCurrency(stats?.wonValue ?? 0)} gradient="bg-gradient-to-r from-emerald-500 to-emerald-400" iconBg="bg-emerald-50 text-emerald-600" href="/deals" />
-              <StatCard title="Lost Deals" value={stats?.lostDeals ?? 0} icon={TrendingUp} gradient="bg-gradient-to-r from-red-500 to-red-400" iconBg="bg-red-50 text-red-500" href="/deals" />
-              <StatCard title="Pending Tasks" value={stats?.pendingTasks ?? 0} icon={ListChecks} subtitle={`${stats?.totalTasks ?? 0} total`} gradient="bg-gradient-to-r from-amber-500 to-amber-400" iconBg="bg-amber-50 text-amber-600" href="/tasks" />
-              <StatCard title="Segments" value={(stats as any)?.totalSegments ?? 0} icon={LayoutGrid} gradient="bg-gradient-to-r from-blue-500 to-blue-400" iconBg="bg-blue-50 text-blue-600" href="/segments" />
+              <StatCard title="Won Deals" value={stats?.wonDeals ?? 0} icon={Trophy} subtitle={formatCurrency(stats?.wonValue ?? 0)} gradient="bg-gradient-to-r from-emerald-500 to-emerald-400" iconBg="bg-emerald-50 text-emerald-600" href="/deals" trend={trendData?.trends?.wonDeals} />
+              <StatCard title="Lost Deals" value={stats?.lostDeals ?? 0} icon={TrendingDown} gradient="bg-gradient-to-r from-red-500 to-red-400" iconBg="bg-red-50 text-red-500" href="/deals" />
+              {/* Win Rate */}
+              {(() => {
+                const won = stats?.wonDeals ?? 0;
+                const lost = stats?.lostDeals ?? 0;
+                const total = won + lost;
+                const winRate = total > 0 ? Math.round((won / total) * 100) : 0;
+                const priorWinRate = trendData?.winRate;
+                const winRateTrend = priorWinRate !== undefined ? winRate - priorWinRate : undefined;
+                return (
+                  <StatCard title="Win Rate" value={`${winRate}%`} icon={Award} subtitle={`${won}W / ${lost}L`} gradient="bg-gradient-to-r from-emerald-500 to-teal-400" iconBg="bg-teal-50 text-teal-600" href="/win-loss" trend={winRateTrend} />
+                );
+              })()}
+              {/* Avg Cycle Time */}
+              {(() => {
+                const avgDays = trendData?.avgCycleDays;
+                return (
+                  <StatCard title="Avg Cycle" value={avgDays !== null && avgDays !== undefined ? `${avgDays}d` : "—"} icon={Timer} subtitle="Days to close" gradient="bg-gradient-to-r from-amber-500 to-amber-400" iconBg="bg-amber-50 text-amber-600" href="/deals" />
+                );
+              })()}
             </div>
+
+            {/* ─── Mini Leaderboard ─── */}
+            {trendData?.topReps && trendData.topReps.length > 0 && (
+              <div className="mt-4 rounded-2xl border border-border/40 bg-card p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Award className="h-4 w-4 text-amber-500" />
+                  <span className="text-xs font-bold text-muted-foreground/70 uppercase tracking-wider">Top Performers — {dateRange.label}</span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {trendData.topReps.map((rep, i) => (
+                    <div key={rep.userId} className="flex items-center gap-3">
+                      <span className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                        i === 0 ? 'bg-amber-100 text-amber-700' :
+                        i === 1 ? 'bg-slate-100 text-slate-600' :
+                        'bg-orange-50 text-orange-600'
+                      }`}>{i + 1}</span>
+                      <span className="text-sm font-medium text-foreground flex-1 truncate">{rep.name}</span>
+                      <span className="text-xs font-semibold text-emerald-600">{rep.wonDeals} won</span>
+                      <span className="text-xs text-muted-foreground">{formatCurrency(rep.wonValue)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ─── Email & Paradigm ─── */}

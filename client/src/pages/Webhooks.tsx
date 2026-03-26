@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Webhook, MoreHorizontal, Trash2, Eye, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Webhook, MoreHorizontal, Trash2, Eye, CheckCircle, XCircle, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -40,10 +40,20 @@ export default function Webhooks() {
   const deleteMutation = trpc.webhooks.delete.useMutation({
     onSuccess: () => { utils.webhooks.list.invalidate(); toast.success("Webhook deleted"); },
   });
+  const utils2 = trpc.useUtils();
   const { data: logs } = trpc.webhooks.logs.useQuery(
-    { webhookId: showLogs!, limit: 20 },
+    { webhookId: showLogs!, limit: 50 },
     { enabled: !!showLogs }
   );
+  const retryMutation = trpc.webhooks.retryDelivery.useMutation({
+    onSuccess: (res) => {
+      utils2.webhooks.logs.invalidate();
+      if (res.success) toast.success("Retry delivered successfully");
+      else toast.error(`Retry failed (HTTP ${res.responseStatus ?? "—"})`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const [expandedLog, setExpandedLog] = useState<number | null>(null);
 
   const [form, setForm] = useState({ name: "", url: "", secret: "", events: [] as string[] });
 
@@ -183,31 +193,80 @@ export default function Webhooks() {
       </Dialog>
 
       {/* Logs Dialog */}
-      <Dialog open={!!showLogs} onOpenChange={() => setShowLogs(null)}>
+      <Dialog open={!!showLogs} onOpenChange={() => { setShowLogs(null); setExpandedLog(null); }}>
         <DialogContent className="bg-card border-border max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Webhook Delivery Logs</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-4 w-4" /> Webhook Delivery Logs
+            </DialogTitle>
+          </DialogHeader>
           <div className="space-y-2">
-            {logs?.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No delivery logs yet.</p>
+            {!logs ? (
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-14 rounded-xl bg-muted/30 animate-pulse" />
+                ))}
+              </div>
+            ) : logs.length === 0 ? (
+              <div className="text-center py-10">
+                <Webhook className="h-10 w-10 mx-auto text-muted-foreground/30 mb-3" />
+                <p className="text-sm text-muted-foreground">No delivery logs yet.</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">Logs appear here when events are triggered.</p>
+              </div>
             ) : (
-              logs?.map((log) => (
-                <Card key={log.id} className="bg-secondary/20 border-border">
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {log.responseStatus && log.responseStatus >= 200 && log.responseStatus < 300 ? (
-                          <CheckCircle className="h-4 w-4 text-success" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-destructive" />
-                        )}
-                        <span className="text-sm font-medium text-foreground">{log.event}</span>
-                        <Badge variant="secondary" className="text-[10px]">{log.responseStatus ?? "—"}</Badge>
+              logs.map((log) => {
+                const isSuccess = log.responseStatus !== null && log.responseStatus !== undefined && log.responseStatus >= 200 && log.responseStatus < 300;
+                const isExpanded = expandedLog === log.id;
+                return (
+                  <Card key={log.id} className={`border transition-colors ${isSuccess ? "border-green-200/60 bg-green-50/30" : "border-red-200/60 bg-red-50/30"}`}>
+                    <CardContent className="p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          {isSuccess ? (
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+                          )}
+                          <span className="text-sm font-medium truncate">{log.event}</span>
+                          <Badge
+                            variant={isSuccess ? "default" : "destructive"}
+                            className={`text-[10px] flex-shrink-0 ${isSuccess ? "bg-green-500 hover:bg-green-600" : ""}`}
+                          >
+                            {log.responseStatus ?? "—"}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <span className="text-xs text-muted-foreground">{new Date(log.createdAt).toLocaleString()}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 rounded-lg"
+                            onClick={() => setExpandedLog(isExpanded ? null : log.id)}
+                          >
+                            {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-xs rounded-lg"
+                            onClick={() => retryMutation.mutate({ logId: log.id })}
+                            disabled={retryMutation.isPending}
+                          >
+                            <RefreshCw className={`h-3 w-3 mr-1 ${retryMutation.isPending ? "animate-spin" : ""}`} />
+                            Retry
+                          </Button>
+                        </div>
                       </div>
-                      <span className="text-xs text-muted-foreground">{new Date(log.createdAt).toLocaleString()}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+                      {isExpanded && (log as any).responseBody && (
+                        <div className="mt-2 pt-2 border-t border-border/40">
+                          <p className="text-[10px] text-muted-foreground font-medium mb-1">Response Body</p>
+                          <pre className="text-xs bg-muted/40 rounded-lg p-2 overflow-x-auto max-h-32 text-muted-foreground">{(log as any).responseBody}</pre>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
           </div>
         </DialogContent>
