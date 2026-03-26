@@ -600,7 +600,7 @@ export default function Companies() {
           </Tabs>
           <DialogFooter className="mt-4">
             <Button variant="outline" onClick={() => { setShowCreate(false); setForm(emptyForm); }} className="rounded-xl">Cancel</Button>
-            <Button onClick={handleCreate} disabled={createMutation.isPending} className="rounded-xl shadow-sm">
+            <Button onClick={handleCreate} disabled={createMutation.isPending || !form.name.trim()} className="rounded-xl shadow-sm">
               {createMutation.isPending ? "Creating..." : "Create Company"}
             </Button>
           </DialogFooter>

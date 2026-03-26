@@ -2908,3 +2908,56 @@
 
 ## Credit Pricing Update
 - [x] Set AI credit rate to $10 per 1,500 credits in UI display, default packages, and any seeded data
+
+## Full Audit Completion - Session (2026-03-26j)
+- [ ] Task form: rename Business Category/Business Type labels to Company Category/Company Status
+- [ ] Task form: fix Links tab Company/Contact dropdowns
+- [ ] Campaign: rename New Campaign dashboard button to New Email Campaign
+- [ ] Campaign: add schedule date/time picker
+- [ ] Campaign: make campaign name clickable to open edit dialog
+- [ ] Deal form: add inline Add Company shortcut when company list is empty
+- [ ] Deal form: add inline Add Contact shortcut when contact list is empty
+- [ ] AI enrichment: graceful error handling for rate limit errors
+- [ ] Add Company: convert to single-page layout (remove tabs)
+- [ ] Add Company: grey out Create button until required fields filled
+- [ ] Add Company: Google Places address autocomplete
+- [ ] Add Company: domain-based field auto-population
+- [ ] CompanyAdmin Team table: add Last Login column
+- [ ] CompanyAdmin Team table: add Send Reset Email button per user
+- [ ] CompanyAdmin Team table: add bulk role assignment
+- [ ] Activity Log: add event-type filter
+- [ ] Activity Log: add CSV export
+- [ ] Team Performance: click-through to reps deal list
+- [ ] Team Performance: coaching notes / manager annotations panel
+- [ ] Team Performance: PDF/Excel export
+- [ ] Dashboard: drag-and-drop widget customization
+- [ ] Dashboard: goal-vs-actual progress bars per rep
+- [ ] Dashboard: date-range filter on KPI cards
+- [ ] Dashboard: sparkline trend lines on KPI cards
+- [ ] Dashboard: WebSocket live refresh
+- [ ] Dashboard: inline Add Company drawer from quick actions
+- [ ] Dashboard: inline Create Deal drawer from quick actions
+- [ ] Dashboard: inline campaign quick-start wizard
+- [ ] Dashboard: command palette Cmd+K
+- [ ] SSO Settings: implement actual SSO provider integration
+- [ ] Custom Roles: implement custom role creation
+- [ ] WhatsApp Broadcasts: confirm/complete full send functionality
+- [ ] Voice Campaigns: confirm/complete full UI and calling flow
+- [ ] Bulk Merge: confirm/complete merge logic
+- [ ] Contacts: duplicate detection on import
+- [ ] Contacts: merge duplicate contacts UI
+- [ ] Contacts: Do Not Contact flag with enforcement
+- [ ] Companies: auto-enrich from web on creation
+- [ ] Companies: company health score
+- [ ] Deals: deal dependency linking
+- [ ] Deals: required fields per pipeline stage
+- [ ] Deals: deal cloning
+- [ ] Tasks: recurring task creation UI
+- [ ] Tasks: task templates
+- [ ] Campaigns: preview email in Gmail/Outlook/mobile
+- [ ] Campaigns: unsubscribe rate per campaign
+- [ ] Analytics: custom report builder
+- [ ] Analytics: scheduled report email delivery
+- [ ] Paradigm Engine: prospect Do Not Contact flag
+- [ ] Paradigm Engine: sequence pause/resume per individual prospect
+- [ ] Onboarding: replace video placeholder embeds with proper instructional content

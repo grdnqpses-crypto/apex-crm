@@ -346,7 +346,7 @@ export default function Tasks() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
-            <Label>Business Category</Label>
+            <Label>Company Category</Label>
             <Select value={form.businessCategory || "none"} onValueChange={v => setF("businessCategory", v === "none" ? "" : v)}>
               <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select category" /></SelectTrigger>
               <SelectContent>
@@ -356,7 +356,7 @@ export default function Tasks() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Business Type</Label>
+            <Label>Company Status</Label>
             <Select value={form.businessType || "none"} onValueChange={v => setF("businessType", v === "none" ? "" : v)}>
               <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select type" /></SelectTrigger>
               <SelectContent>

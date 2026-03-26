@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, DollarSign, MoreHorizontal, Trash2, Trophy, X, GripVertical, Kanban, TrendingUp, Building2, User, List, Clock, AlertTriangle, ArrowRightLeft } from "lucide-react";
+import { Plus, DollarSign, MoreHorizontal, Trash2, Trophy, X, GripVertical, Kanban, TrendingUp, Building2, User, List, Clock, AlertTriangle, ArrowRightLeft, ExternalLink } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useMemo } from "react";
@@ -147,6 +147,7 @@ export default function Deals() {
     name: string; value: string; priority: string;
     companyId: number | null; contactId: number | null;
   }>({ name: "", value: "", priority: "medium", companyId: null, contactId: null });
+  const [, navigate] = useLocation();
   const [pipelineForm, setPipelineForm] = useState({ name: "", stages: [...DEFAULT_STAGES] });
 
   const handleCreateDeal = () => {
@@ -606,7 +607,20 @@ export default function Deals() {
                   ))}
                 </SelectContent>
               </Select>
-              {!dealForm.companyId && <p className="text-[11px] text-orange-500 font-medium">Every deal must be linked to a company</p>}
+              {!dealForm.companyId && (
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] text-orange-500 font-medium">Every deal must be linked to a company</p>
+                  {(companiesData?.items?.length ?? 0) === 0 && (
+                    <button
+                      type="button"
+                      className="text-[11px] text-primary hover:underline flex items-center gap-1"
+                      onClick={() => { setShowCreate(false); navigate("/companies"); toast.info("Add a company first, then create your deal"); }}
+                    >
+                      <ExternalLink className="h-3 w-3" /> Add Company
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
             {/* Contact link — filters by selected company */}
             <div className="space-y-2">
@@ -635,7 +649,16 @@ export default function Deals() {
                 </SelectContent>
               </Select>
               {dealForm.companyId && contactsData?.items?.filter(c => c.companyId === dealForm.companyId).length === 0 && (
-                <p className="text-[11px] text-amber-500">No contacts found for this company — add a contact first</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] text-amber-500">No contacts for this company yet</p>
+                  <button
+                    type="button"
+                    className="text-[11px] text-primary hover:underline flex items-center gap-1"
+                    onClick={() => { setShowCreate(false); navigate("/contacts"); toast.info("Add a contact for this company, then create your deal"); }}
+                  >
+                    <ExternalLink className="h-3 w-3" /> Add Contact
+                  </button>
+                </div>
               )}
             </div>
           </div>

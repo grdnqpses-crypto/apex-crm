@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Users, UserPlus, Shield, ShieldCheck, UserCog, User, Mail, Settings, ToggleLeft, ToggleRight, CheckCircle, KeyRound, Eye, EyeOff, Copy, LogIn } from "lucide-react";
+import { Users, UserPlus, Shield, ShieldCheck, UserCog, User, Mail, Settings, ToggleLeft, ToggleRight, CheckCircle, KeyRound, Eye, EyeOff, Copy, LogIn, Clock, MailCheck, ChevronDown } from "lucide-react";
+import { useState } from "react";
 import PageGuide from "@/components/PageGuide";
 import { useSkin } from "@/contexts/SkinContext";
 
@@ -226,6 +227,25 @@ export default function CompanyAdmin() {
   const [resetUserId, setResetUserId] = useState<number | null>(null);
   const [resetPassword, setResetPassword] = useState("");
   const [showResetPassword, setShowResetPassword] = useState(false);
+
+  // Bulk role assignment state
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
+  const [bulkRole, setBulkRole] = useState<string>("");
+  const [showBulkRole, setShowBulkRole] = useState(false);
+
+  // Send reset email mutation
+  const sendResetEmailMutation = trpc.userManagement.resetTeamMemberPassword.useMutation({
+    onSuccess: () => { toast.success("Password reset email sent"); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const handleBulkRoleAssign = () => {
+    if (!bulkRole || selectedUserIds.size === 0) return;
+    const ids = Array.from(selectedUserIds);
+    Promise.all(ids.map(id => setRoleMutation.mutateAsync({ userId: id, systemRole: bulkRole as any })))
+      .then(() => { setSelectedUserIds(new Set()); setBulkRole(""); setShowBulkRole(false); toast.success(`Role updated for ${ids.length} users`); })
+      .catch((e) => toast.error(e.message));
+  };
 
   const createUserMutation = trpc.userManagement.createUser.useMutation({
     onSuccess: (data) => {
@@ -529,12 +549,41 @@ export default function CompanyAdmin() {
           <Card>
             <CardContent className="p-0">
               <Table>
+                {/* Bulk actions bar */}
+                {isAdmin && selectedUserIds.size > 0 && (
+                  <div className="flex items-center gap-3 px-4 py-2 bg-primary/5 border-b border-border">
+                    <span className="text-xs font-medium text-muted-foreground">{selectedUserIds.size} selected</span>
+                    <div className="flex items-center gap-2 ml-auto">
+                      <Select value={bulkRole} onValueChange={setBulkRole}>
+                        <SelectTrigger className="h-7 w-40 text-xs">
+                          <SelectValue placeholder="Assign role..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {isAxiomLevel && <SelectItem value="axiom_admin">Axiom Admin</SelectItem>}
+                          <SelectItem value="company_admin">Company Admin</SelectItem>
+                          <SelectItem value="sales_manager">Sales Manager</SelectItem>
+                          <SelectItem value="office_manager">Office Manager</SelectItem>
+                          <SelectItem value="account_manager">Account Manager</SelectItem>
+                          <SelectItem value="coordinator">Coordinator</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button size="sm" className="h-7 text-xs" onClick={handleBulkRoleAssign} disabled={!bulkRole || setRoleMutation.isPending}>
+                        Apply Role
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setSelectedUserIds(new Set())}>
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 <TableHeader>
                   <TableRow>
+                    {isAdmin && <TableHead className="w-8"><Checkbox checked={selectedUserIds.size === (companyUsers || []).length && (companyUsers || []).length > 0} onCheckedChange={(c) => { if (c) setSelectedUserIds(new Set((companyUsers || []).map((u: any) => u.id))); else setSelectedUserIds(new Set()); }} /></TableHead>}
                     <TableHead>Member</TableHead>
                     <TableHead>Username</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Manager</TableHead>
+                    <TableHead>Last Login</TableHead>
                     <TableHead>Status</TableHead>
                     {isAxiomLevel && <TableHead>Password</TableHead>}
                     <TableHead className="text-right">Actions</TableHead>
@@ -542,12 +591,20 @@ export default function CompanyAdmin() {
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                    <TableRow><TableCell colSpan={isAxiomLevel ? 7 : 6} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={isAxiomLevel ? 9 : 8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
                   ) : (companyUsers || []).map((u: any) => {
                     const RoleIcon = roleIcons[u.systemRole || "user"] || User;
                     const manager = managers.find((m: any) => m.id === u.managerId);
+                    const isSelected = selectedUserIds.has(u.id);
                     return (
-                      <TableRow key={u.id}>
+                      <TableRow key={u.id} className={isSelected ? "bg-primary/5" : ""}>
+                        {isAdmin && (
+                          <TableCell>
+                            <Checkbox checked={isSelected} onCheckedChange={(c) => {
+                              setSelectedUserIds(prev => { const s = new Set(prev); c ? s.add(u.id) : s.delete(u.id); return s; });
+                            }} />
+                          </TableCell>
+                        )}
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold">
@@ -589,6 +646,16 @@ export default function CompanyAdmin() {
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">{manager?.name || "—"}</TableCell>
                         <TableCell>
+                          {u.lastSignedIn ? (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              {new Date(u.lastSignedIn).toLocaleDateString()}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground/40">Never</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           <Badge variant="outline" className={u.isActive !== false ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"}>
                             {u.isActive !== false ? "Active" : "Inactive"}
                           </Badge>
@@ -608,6 +675,18 @@ export default function CompanyAdmin() {
                             {isAdmin && u.username && (
                               <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setResetUserId(u.id); setResetPassword(""); }}>
                                 <KeyRound className="h-3 w-3 mr-1" />Reset PW
+                              </Button>
+                            )}
+                            {isAdmin && u.email && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs text-blue-400 hover:text-blue-300"
+                                onClick={() => sendResetEmailMutation.mutate({ userId: u.id, sendEmail: true })}
+                                disabled={sendResetEmailMutation.isPending}
+                                title="Send password reset email"
+                              >
+                                <MailCheck className="h-3 w-3 mr-1" />Email Reset
                               </Button>
                             )}
                             {isAxiomLevel && u.loginMethod === "credentials" && (
