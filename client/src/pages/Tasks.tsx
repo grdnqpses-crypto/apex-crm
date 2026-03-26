@@ -173,6 +173,7 @@ export default function Tasks() {
 
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const setF = useCallback((key: string, value: any) => setForm(p => ({ ...p, [key]: value })), []);
+  const [taskTab, setTaskTab] = useState("details");
 
   const buildPayload = (f: typeof EMPTY_FORM) => ({
     title: f.title,
@@ -297,7 +298,7 @@ export default function Tasks() {
   };
 
   const TaskForm = () => (
-    <Tabs defaultValue="details" className="w-full">
+    <Tabs value={taskTab} onValueChange={setTaskTab} className="w-full">
       <TabsList className="bg-secondary/30 w-full grid grid-cols-6 text-[10px]">
         <TabsTrigger value="details" className="text-[10px]">Details</TabsTrigger>
         <TabsTrigger value="links" className="text-[10px]">Links</TabsTrigger>
@@ -893,7 +894,7 @@ export default function Tasks() {
       </div>
 
       {/* Create Dialog */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+      <Dialog open={showCreate} onOpenChange={(o) => { setShowCreate(o); if (!o) setTaskTab("details"); }}>
         <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -914,7 +915,7 @@ export default function Tasks() {
       </Dialog>
 
       {/* Edit Dialog */}
-      <Dialog open={!!editingTask} onOpenChange={open => { if (!open) setEditingTask(null); }}>
+      <Dialog open={!!editingTask} onOpenChange={open => { if (!open) { setEditingTask(null); setTaskTab("details"); } }}>
         <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">

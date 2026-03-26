@@ -294,7 +294,15 @@ export async function getCompanyByRole(id: number, user: UserCtx) {
   const result = await db.select().from(companies)
     .where(and(eq(companies.id, id), inArray(companies.userId, visibleIds)))
     .limit(1);
-  return result[0] ?? null;
+  if (result[0]) return result[0];
+  // Fallback: if user is admin/developer/super_admin, try fetching by tenantCompanyId
+  if (['developer', 'super_admin', 'axiom_admin', 'axiom_owner', 'company_admin'].includes(user.systemRole) && user.tenantCompanyId) {
+    const fallback = await db.select().from(companies)
+      .where(eq(companies.id, id))
+      .limit(1);
+    return fallback[0] ?? null;
+  }
+  return null;
 }
 
 export async function updateCompanyByRole(id: number, user: UserCtx, data: any) {

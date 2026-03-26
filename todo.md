@@ -2899,3 +2899,9 @@
 ## Onboarding Wizard Fix - Session (2026-03-26i)
 - [x] Remove __startOnboarding override from OnboardingTutorial so Getting Started button opens new OnboardingWizard
 - [x] Add inline illustrated diagrams (CSS/SVG UI mockups) to each wizard step so it's truly "for dummies"
+
+## Bug Fixes - Audit Session (2026-03-26i)
+- [x] Dashboard: "GA Reversal" was a company name in the Companies page (not a Dashboard label). Dashboard stats already use role-based filtering via getDashboardStatsByRole
+- [x] Company not found on View Details — fixed getCompanyByRole to use tenantCompanyId fallback for admin/developer
+- [x] Task form tab-jumping — fixed by converting to controlled tab state
+- [x] Deals: rename "Kanban" button to "Board"

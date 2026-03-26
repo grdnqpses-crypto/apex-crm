@@ -1,0 +1,13 @@
+{
+  "query": "SHOW TABLES LIKE 'marketplace_loads'; SHOW TABLES LIKE 'order_entry_emails';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SHOW TABLES LIKE 'marketplace_loads'; SHOW TABLES LIKE 'order_entry_emails';",
+  "rows": [
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY (marketplace_loads)": "marketplace_loads"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_mLLZEfmfSEuH47dfeJgVGY (marketplace_loads)\nmarketplace_loads\n",
+  "stderr": "",
+  "execution_time_ms": 408
+}

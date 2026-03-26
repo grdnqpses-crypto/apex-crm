@@ -279,7 +279,7 @@ export default function Deals() {
       {/* ─── Completeness Filter Tabs ─── */}
       <div className="flex gap-2">
         <button onClick={() => { setViewMode("kanban"); setShowIncomplete(false); }} className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${viewMode === "kanban" && !showIncomplete ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
-          <Kanban className="h-3.5 w-3.5" /> Kanban <span className="ml-1 opacity-70">{totalOpenDeals}</span>
+          <Kanban className="h-3.5 w-3.5" /> Board <span className="ml-1 opacity-70">{totalOpenDeals}</span>
         </button>
         <button onClick={() => { setViewMode("list"); setShowIncomplete(false); setSelectedDealIds(new Set()); }} className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${viewMode === "list" && !showIncomplete ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
           <List className="h-3.5 w-3.5" /> List <span className="ml-1 opacity-70">{allDealsFlat.length}</span>

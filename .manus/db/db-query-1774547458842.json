@@ -1,0 +1,13 @@
+{
+  "query": "SHOW TABLES LIKE 'pipeline_inspections';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3REGGwCEMbpiL33.root --database mLLZEfmfSEuH47dfeJgVGY --execute SHOW TABLES LIKE 'pipeline_inspections';",
+  "rows": [
+    {
+      "Tables_in_mLLZEfmfSEuH47dfeJgVGY (pipeline_inspections)": "pipeline_inspections"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_mLLZEfmfSEuH47dfeJgVGY (pipeline_inspections)\npipeline_inspections\n",
+  "stderr": "",
+  "execution_time_ms": 427
+}
