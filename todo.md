@@ -2878,3 +2878,7 @@
 
 ## Bug Fixes - Session (2026-03-26d)
 - [x] Fix logo customization: after generating custom logo, show preview with approve/regenerate/change options before applying — was using applyLogoMutation instead of generateLogoMutation in customize-input step
+
+## Bug Fixes - Session (2026-03-26e)
+- [x] Fix OnboardingWizard logo step: AI Generate shows no preview — now shows full preview with approve/customize/regenerate options before applying
+- [x] Resize AI chat panel to 1/3 of main screen width when opened — now a full-height right-side panel, slides in from right

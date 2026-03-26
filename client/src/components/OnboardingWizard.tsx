@@ -336,6 +336,9 @@ export default function OnboardingWizard({ onClose, onComplete }: OnboardingWiza
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [generatingLogo, setGeneratingLogo] = useState(false);
+  const [logoApproved, setLogoApproved] = useState(false);
+  const [logoCustomizeText, setLogoCustomizeText] = useState("");
+  const [showLogoCustomize, setShowLogoCustomize] = useState(false);
   const [coName, setCoName] = useState("");
   const [coIndustry, setCoIndustry] = useState("Transportation");
   const [inviteEmail, setInviteEmail] = useState("");
@@ -348,8 +351,14 @@ export default function OnboardingWizard({ onClose, onComplete }: OnboardingWiza
   const utils = trpc.useUtils();
 
   const generateLogoMutation = trpc.tenants.generateLogo.useMutation({
-    onSuccess: (data) => { setLogoPreview(data.logoUrl); setGeneratingLogo(false); toast.success("Logo generated!"); },
-    onError: () => { setGeneratingLogo(false); toast.error("Failed to generate logo"); },
+    onSuccess: (data) => {
+      setLogoPreview(data.logoUrl);
+      setGeneratingLogo(false);
+      setLogoApproved(false);
+      setShowLogoCustomize(false);
+      setLogoCustomizeText("");
+    },
+    onError: () => { setGeneratingLogo(false); toast.error("Failed to generate logo. Please try again."); },
   });
 
   const uploadLogoMutation = trpc.tenants.uploadLogo.useMutation({
@@ -646,33 +655,133 @@ export default function OnboardingWizard({ onClose, onComplete }: OnboardingWiza
               <div className="space-y-4">
                 <div>
                   <h4 className="font-bold text-stone-800 mb-1">Add Your Company Logo</h4>
-                  <p className="text-sm text-stone-500">Upload your logo or let AI generate one from your company name.</p>
+                  <p className="text-sm text-stone-500">Upload your logo or let AI generate one. You'll see a preview before anything is applied.</p>
                 </div>
-                <div className="flex flex-col items-center gap-4">
-                  <div className="h-24 w-24 rounded-2xl border-2 border-dashed border-stone-200 flex items-center justify-center bg-stone-50 overflow-hidden">
-                    {logoPreview ? <img src={logoPreview} alt="Logo" className="h-full w-full object-contain" /> : <ImageIcon className="h-8 w-8 text-stone-300" />}
+
+                {/* Generating spinner */}
+                {generatingLogo && (
+                  <div className="flex flex-col items-center gap-3 py-6">
+                    <div className="h-16 w-16 rounded-2xl bg-purple-50 flex items-center justify-center">
+                      <Wand2 className="h-8 w-8 text-purple-500 animate-pulse" />
+                    </div>
+                    <p className="text-sm font-semibold text-stone-700">Creating your logo...</p>
+                    <p className="text-xs text-stone-400">This takes 10–20 seconds. Please wait.</p>
                   </div>
-                  <div className="flex gap-3">
-                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="text-xs">
-                      <Upload className="h-3.5 w-3.5 mr-1.5" /> Upload
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => { setGeneratingLogo(true); generateLogoMutation.mutate({ companyName: myCompany?.name || "AXIOM" }); }} disabled={generatingLogo} className="text-xs border-purple-200 text-purple-700 hover:bg-purple-50">
-                      <Wand2 className="h-3.5 w-3.5 mr-1.5" /> {generatingLogo ? "Generating..." : "AI Generate"}
-                    </Button>
+                )}
+
+                {/* Preview state — show after generation or upload */}
+                {!generatingLogo && logoPreview && !logoApproved && (
+                  <div className="space-y-3">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="rounded-2xl border-2 border-purple-200 bg-purple-50/30 p-5 shadow-sm">
+                        <img src={logoPreview} alt="Logo preview" className="h-32 w-32 object-contain" />
+                      </div>
+                      <p className="text-sm text-stone-600 text-center">Here's your logo preview. Do you want to use it?</p>
+                    </div>
+
+                    {/* Customize input */}
+                    {showLogoCustomize && (
+                      <div className="space-y-2">
+                        <Label className="text-xs font-semibold text-stone-600">Describe changes (colors, style, icon...)</Label>
+                        <textarea
+                          value={logoCustomizeText}
+                          onChange={e => setLogoCustomizeText(e.target.value)}
+                          placeholder="e.g. Use deep blue and gold. Add a truck icon. Bold and modern."
+                          className="w-full text-sm px-3 py-2 rounded-xl border border-stone-200 bg-stone-50 focus:outline-none focus:ring-2 focus:ring-purple-300 resize-none min-h-[72px]"
+                        />
+                        <Button
+                          size="sm"
+                          className="w-full bg-gradient-to-r from-purple-500 to-violet-600 text-white rounded-xl"
+                          disabled={!logoCustomizeText.trim() || generateLogoMutation.isPending}
+                          onClick={() => {
+                            setGeneratingLogo(true);
+                            generateLogoMutation.mutate({ companyName: myCompany?.name || "AXIOM", industry: logoCustomizeText.trim() });
+                          }}
+                        >
+                          <Wand2 className="h-3.5 w-3.5 mr-1.5" /> Regenerate with Changes
+                        </Button>
+                      </div>
+                    )}
+
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        className="w-full bg-gradient-to-r from-purple-500 to-violet-600 text-white font-semibold rounded-xl"
+                        onClick={() => {
+                          // Apply logo to company
+                          uploadLogoMutation.mutate({ dataUrl: logoPreview!, mimeType: "image/png" });
+                          setLogoApproved(true);
+                        }}
+                        disabled={uploadLogoMutation.isPending}
+                      >
+                        {uploadLogoMutation.isPending ? "Applying..." : "✓ Yes, Use This Logo"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full border-purple-200 text-purple-700 hover:bg-purple-50"
+                        onClick={() => setShowLogoCustomize(v => !v)}
+                      >
+                        <Wand2 className="h-3.5 w-3.5 mr-1.5" /> {showLogoCustomize ? "Hide Customize" : "Customize It"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-stone-400"
+                        onClick={() => {
+                          setLogoPreview(null);
+                          setShowLogoCustomize(false);
+                          setLogoCustomizeText("");
+                        }}
+                      >
+                        ↺ Try Again
+                      </Button>
+                    </div>
                   </div>
-                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-                </div>
+                )}
+
+                {/* Approved state */}
+                {!generatingLogo && logoPreview && logoApproved && (
+                  <div className="flex flex-col items-center gap-3 py-2">
+                    <div className="h-16 w-16 rounded-2xl bg-emerald-50 border-2 border-emerald-200 overflow-hidden flex items-center justify-center">
+                      <img src={logoPreview} alt="Logo" className="h-full w-full object-contain" />
+                    </div>
+                    <div className="flex items-center gap-2 text-emerald-700 font-semibold text-sm">
+                      <CheckCircle2 className="h-4 w-4" /> Logo applied!
+                    </div>
+                  </div>
+                )}
+
+                {/* Initial state — no preview yet */}
+                {!generatingLogo && !logoPreview && (
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="h-24 w-24 rounded-2xl border-2 border-dashed border-stone-200 flex items-center justify-center bg-stone-50">
+                      <ImageIcon className="h-8 w-8 text-stone-300" />
+                    </div>
+                    <div className="flex gap-3">
+                      <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="text-xs">
+                        <Upload className="h-3.5 w-3.5 mr-1.5" /> Upload
+                      </Button>
+                      <Button
+                        variant="outline" size="sm"
+                        onClick={() => { setGeneratingLogo(true); generateLogoMutation.mutate({ companyName: myCompany?.name || "AXIOM" }); }}
+                        disabled={generatingLogo}
+                        className="text-xs border-purple-200 text-purple-700 hover:bg-purple-50"
+                      >
+                        <Wand2 className="h-3.5 w-3.5 mr-1.5" /> AI Generate
+                      </Button>
+                    </div>
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                  </div>
+                )}
+
                 <div className="flex justify-between pt-2">
                   <Button variant="ghost" onClick={() => setQuickStep("company")} className="text-stone-400 text-sm">Skip</Button>
-                  <Button onClick={() => {
-                    if (logoFile) {
-                      const reader = new FileReader();
-                      reader.onload = (ev) => uploadLogoMutation.mutate({ dataUrl: ev.target?.result as string, mimeType: logoFile.type });
-                      reader.readAsDataURL(logoFile);
-                    }
-                    setQuickStep("company");
-                  }} className="bg-gradient-to-r from-purple-500 to-violet-600 text-white font-semibold px-6 rounded-xl">
-                    Save & Continue <ArrowRight className="h-4 w-4 ml-2" />
+                  <Button
+                    onClick={() => setQuickStep("company")}
+                    disabled={generatingLogo}
+                    className="bg-gradient-to-r from-purple-500 to-violet-600 text-white font-semibold px-6 rounded-xl"
+                  >
+                    {logoApproved ? "Continue" : "Skip Logo & Continue"} <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </div>
               </div>

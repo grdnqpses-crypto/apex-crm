@@ -75,7 +75,7 @@ export default function AIAssistantPanel({ open, onClose }: { open: boolean; onC
   if (!open) return null;
 
   return (
-    <div className="fixed bottom-16 right-4 z-50 w-[420px] max-h-[600px] flex flex-col bg-white rounded-2xl shadow-2xl border border-amber-100 overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+    <div className="fixed top-0 right-0 bottom-0 z-50 w-1/3 min-w-[320px] max-w-[600px] flex flex-col bg-white shadow-2xl border-l border-amber-100 overflow-hidden animate-in slide-in-from-right duration-300">
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-4 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
         {myCompany?.logoUrl ? (
@@ -99,7 +99,7 @@ export default function AIAssistantPanel({ open, onClose }: { open: boolean; onC
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[300px] max-h-[400px] bg-gradient-to-b from-amber-50/30 to-white">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-amber-50/30 to-white">
         {messages.length === 0 && !isLoading && (
           <div className="text-center py-6">
             {myCompany?.logoUrl ? (
