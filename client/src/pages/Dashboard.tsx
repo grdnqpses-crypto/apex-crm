@@ -1199,7 +1199,7 @@ export default function Dashboard() {
                     setPreviewLogoUrl(null);
                   }}
                 >
-                  Regenerate
+                  <RefreshCw className="h-4 w-4 mr-2" /> Try Again (Regenerate)
                 </Button>
               </div>
             </div>
@@ -1272,22 +1272,22 @@ export default function Dashboard() {
               <div className="flex flex-col gap-2">
                 <Button
                   className="w-full gap-2"
-                  disabled={!customizeIdeas.trim() || applyLogoMutation.isPending}
+                  disabled={!customizeIdeas.trim() || generateLogoMutation.isPending}
                   onClick={() => {
                     setLogoStep('generating');
-                    applyLogoMutation.mutate({
+                    generateLogoMutation.mutate({
                       companyName: company!.name!,
                       industry: customizeIdeas.trim(),
                     });
                   }}
                 >
-                  {applyLogoMutation.isPending ? (
+                  {generateLogoMutation.isPending ? (
                     <><RefreshCw className="h-4 w-4 animate-spin" /> Generating your custom logo...</>
                   ) : (
                     <><Sparkles className="h-4 w-4" /> Generate My Custom Logo</>
                   )}
                 </Button>
-                <Button variant="ghost" className="w-full" onClick={() => setLogoStep('customize-offer')}>
+                <Button variant="ghost" className="w-full" onClick={() => setLogoStep(previewLogoUrl ? 'preview' : 'customize-offer')}>
                   Back
                 </Button>
               </div>

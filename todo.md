@@ -2877,4 +2877,4 @@
 - [x] Redesign Getting Started onboarding into rich multi-step wizard with illustrated steps, video links, and detailed setup instructions for SMTP, contacts import, deals, campaigns, AI features
 
 ## Bug Fixes - Session (2026-03-26d)
-- [ ] Fix logo customization: after generating custom logo, show preview with approve/regenerate/change options before applying — currently silently applies and shows "Logo applied" with no preview
+- [x] Fix logo customization: after generating custom logo, show preview with approve/regenerate/change options before applying — was using applyLogoMutation instead of generateLogoMutation in customize-input step
