@@ -297,6 +297,10 @@ export const companies = mysqlTable("companies", {
   fmcsaOperatingStatus: varchar("fmcsaOperatingStatus", { length: 64 }),
   fmcsaEntityType: varchar("fmcsaEntityType", { length: 64 }),
   fmcsaRawData: json("fmcsaRawData"),
+  // ─── Health Score ───
+  healthScore: int("healthScore").default(50), // 0-100 composite score
+  healthScoreBreakdown: json("healthScoreBreakdown").$type<Record<string, number>>(),
+  healthScoreUpdatedAt: bigint("healthScoreUpdatedAt", { mode: "number" }),
   // ─── Soft-Delete Fields ───
   isDeleted: tinyint("is_deleted").notNull().default(0),
   deletedAt: bigint("deleted_at", { mode: "number" }),
@@ -838,11 +842,11 @@ export const prospects = mysqlTable("prospects", {
   tags: json("tags").$type<string[]>(),
   notes: text("notes"),
   score: int("score").default(0), // overall prospect score
+  sequencePaused: tinyint("sequencePaused").default(0), // 1 = paused
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
 });
-
-export type Prospect = typeof prospects.$inferSelect;
+export type Prospect = typeof prospects.$inferSelect;;
 export type InsertProspect = typeof prospects.$inferInsert;
 
 // ─── Trigger Signals (Sentinel Layer events) ───

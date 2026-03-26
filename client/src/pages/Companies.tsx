@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Search, Building2, Globe, MoreHorizontal, Trash2, Users, ChevronRight, AlertTriangle, MapPin, Phone as PhoneIcon, DollarSign, Kanban, Tag, Briefcase, TrendingUp, MessageSquare, UserCheck, CheckSquare, Workflow, Sparkles, Pencil, Link2, ShieldCheck, Activity } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { MapView } from "@/components/Map";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useMemo } from "react";
@@ -230,6 +230,7 @@ export default function Companies() {
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Open Deals</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Pipeline</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Status</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Health</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70 w-10"></TableHead>
               </TableRow>
             </TableHeader>
@@ -351,6 +352,22 @@ export default function Companies() {
                     </TableCell>
 
                     <TableCell>
+                      {(() => {
+                        const hs = (company as any).healthScore ?? 50;
+                        const color = hs >= 80 ? 'text-emerald-600' : hs >= 60 ? 'text-blue-500' : hs >= 40 ? 'text-amber-500' : 'text-red-500';
+                        const bg = hs >= 80 ? 'bg-emerald-50' : hs >= 60 ? 'bg-blue-50' : hs >= 40 ? 'bg-amber-50' : 'bg-red-50';
+                        const label = hs >= 80 ? 'Excellent' : hs >= 60 ? 'Good' : hs >= 40 ? 'Fair' : 'Poor';
+                        return (
+                          <div className="flex items-center gap-1.5">
+                            <div className={`h-6 px-2 rounded-md ${bg} flex items-center`}>
+                              <span className={`text-[10px] font-bold ${color}`}>{hs}</span>
+                            </div>
+                            <span className={`text-[10px] ${color}`}>{label}</span>
+                          </div>
+                        );
+                      })()}
+                    </TableCell>
+                    <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"><MoreHorizontal className="h-4 w-4" /></Button>
@@ -390,17 +407,10 @@ export default function Companies() {
               Fill in as much as you know now. Incomplete fields will appear in the <strong>Incomplete</strong> tab for follow-up.
             </DialogDescription>
           </DialogHeader>
-          <Tabs defaultValue="identity" className="mt-2">
-            <TabsList className="grid grid-cols-5 w-full text-xs">
-              <TabsTrigger value="identity"><Building2 className="h-3 w-3 mr-1" />Identity</TabsTrigger>
-              <TabsTrigger value="address"><MapPin className="h-3 w-3 mr-1" />Address</TabsTrigger>
-              <TabsTrigger value="commercial"><TrendingUp className="h-3 w-3 mr-1" />Commercial</TabsTrigger>
-              <TabsTrigger value="status"><Tag className="h-3 w-3 mr-1" />Status</TabsTrigger>
-              <TabsTrigger value="social"><Globe className="h-3 w-3 mr-1" />Social</TabsTrigger>
-            </TabsList>
-
-            {/* IDENTITY */}
-            <TabsContent value="identity" className="mt-4 space-y-3">
+          <div className="mt-2 space-y-5">
+            {/* ── IDENTITY ── */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1"><Building2 className="h-3 w-3" /> Identity</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1 col-span-2">
                   <Label className="text-xs font-semibold">Company Name <span className="text-red-500">*</span></Label>
@@ -408,7 +418,18 @@ export default function Companies() {
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs font-semibold">Domain</Label>
-                  <Input value={form.domain} onChange={e => setF("domain", e.target.value)} placeholder="acme.com" className="rounded-xl bg-muted/30" />
+                  <Input
+                    value={form.domain}
+                    onChange={e => {
+                      const d = e.target.value.trim();
+                      setF("domain", d);
+                      // Auto-fill website and email if they're still empty
+                      if (d && !form.website) setF("website", `https://${d}`);
+                      if (d && !form.companyEmail) setF("companyEmail", `info@${d}`);
+                    }}
+                    placeholder="acme.com"
+                    className="rounded-xl bg-muted/30"
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs font-semibold">Company Email</Label>
@@ -466,11 +487,41 @@ export default function Companies() {
                   <Textarea value={form.description} onChange={e => setF("description", e.target.value)} placeholder="Brief description of what this company does..." className="rounded-xl bg-muted/30 resize-none" rows={2} />
                 </div>
               </div>
-            </TabsContent>
-
-            {/* ADDRESS */}
-            <TabsContent value="address" className="mt-4 space-y-3">
+            </div>
+            {/* ── ADDRESS ── */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1"><MapPin className="h-3 w-3" /> Address</p>
               <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1 col-span-2">
+                  <Label className="text-xs font-semibold">Search Address</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                    <Input
+                      id="places-autocomplete"
+                      placeholder="Start typing an address..."
+                      className="rounded-xl bg-muted/30 pl-8"
+                      onFocus={() => {
+                        // Initialize Google Places autocomplete on first focus
+                        const input = document.getElementById('places-autocomplete') as HTMLInputElement;
+                        if (input && (window as any).google?.maps?.places && !(input as any)._autocompleteInit) {
+                          (input as any)._autocompleteInit = true;
+                          const ac = new (window as any).google.maps.places.Autocomplete(input, { types: ['address'] });
+                          ac.addListener('place_changed', () => {
+                            const place = ac.getPlace();
+                            const comps = place.address_components || [];
+                            const get = (type: string) => comps.find((c: any) => c.types.includes(type))?.long_name || '';
+                            const getShort = (type: string) => comps.find((c: any) => c.types.includes(type))?.short_name || '';
+                            setF('streetAddress', `${get('street_number')} ${get('route')}`.trim());
+                            setF('city', get('locality') || get('sublocality'));
+                            setF('stateRegion', getShort('administrative_area_level_1'));
+                            setF('postalCode', get('postal_code'));
+                            setF('country', get('country'));
+                          });
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
                 <div className="space-y-1 col-span-2">
                   <Label className="text-xs font-semibold">Street Address</Label>
                   <Input value={form.streetAddress} onChange={e => setF("streetAddress", e.target.value)} placeholder="123 Main St" className="rounded-xl bg-muted/30" />
@@ -492,10 +543,10 @@ export default function Companies() {
                   <Input value={form.country} onChange={e => setF("country", e.target.value)} placeholder="United States" className="rounded-xl bg-muted/30" />
                 </div>
               </div>
-            </TabsContent>
-
-            {/* COMMERCIAL */}
-            <TabsContent value="commercial" className="mt-4 space-y-3">
+            </div>
+            {/* ── COMMERCIAL ── */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1"><TrendingUp className="h-3 w-3" /> Commercial</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs font-semibold">Annual Revenue</Label>
@@ -541,10 +592,10 @@ export default function Companies() {
                   <Input value={form.lanePreferences} onChange={e => setF("lanePreferences", e.target.value)} placeholder="Chicago to Dallas, Southeast corridor..." className="rounded-xl bg-muted/30" />
                 </div>
               </div>
-            </TabsContent>
-
-            {/* STATUS */}
-            <TabsContent value="status" className="mt-4 space-y-3">
+            </div>
+            {/* ── STATUS ── */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1"><Tag className="h-3 w-3" /> Status</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs font-semibold">Lead Status</Label>
@@ -574,10 +625,10 @@ export default function Companies() {
                   </Select>
                 </div>
               </div>
-            </TabsContent>
-
-            {/* SOCIAL */}
-            <TabsContent value="social" className="mt-4 space-y-3">
+            </div>
+            {/* ── SOCIAL ── */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1"><Globe className="h-3 w-3" /> Social</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs font-semibold">LinkedIn URL</Label>
@@ -596,8 +647,8 @@ export default function Companies() {
                   <Input value={form.youtubeUrl} onChange={e => setF("youtubeUrl", e.target.value)} placeholder="https://youtube.com/..." className="rounded-xl bg-muted/30" />
                 </div>
               </div>
-            </TabsContent>
-          </Tabs>
+            </div>
+          </div>
           <DialogFooter className="mt-4">
             <Button variant="outline" onClick={() => { setShowCreate(false); setForm(emptyForm); }} className="rounded-xl">Cancel</Button>
             <Button onClick={handleCreate} disabled={createMutation.isPending || !form.name.trim()} className="rounded-xl shadow-sm">

@@ -394,6 +394,7 @@ export default function TeamPerformance() {
                         <th className="text-center py-3 px-2 font-medium">Won</th>
                         <th className="text-right py-3 px-2 font-medium">{t("pipeline")}</th>
                         <th className="text-center py-3 px-2 font-medium">{t("tasks")}</th>
+                        <th className="text-center py-3 px-2 font-medium">Goal %</th>
                         <th className="text-center py-3 px-2 font-medium">Status</th>
                         <th className="text-center py-3 px-2 font-medium"></th>
                       </tr>
@@ -442,6 +443,23 @@ export default function TeamPerformance() {
                               <span className="font-medium">${((member.totalDealValue || 0) / 1000).toFixed(0)}K</span>
                             </td>
                             <td className="text-center py-3 px-2">
+                              {(() => {
+                                const quota = member.salesQuota || 0;
+                                const won = member.wonDealValue || 0;
+                                if (!quota) return <span className="text-xs text-muted-foreground">&mdash;</span>;
+                                const pct = Math.round((won / quota) * 100);
+                                const color = pct >= 100 ? 'text-green-600' : pct >= 75 ? 'text-amber-500' : 'text-red-500';
+                                return (
+                                  <div className="flex flex-col items-center gap-0.5">
+                                    <span className={`font-bold text-sm ${color}`}>{pct}%</span>
+                                    <div className="w-14 h-1 bg-muted rounded-full overflow-hidden">
+                                      <div className={`h-full rounded-full ${pct >= 100 ? 'bg-green-500' : pct >= 75 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${Math.min(pct, 100)}%` }} />
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+                            </td>
+                            <td className="text-center py-3 px-2">
                               <div className="flex items-center justify-center gap-1">
                                 <span className="font-medium">{member.totalTasks || 0}</span>
                                 {(member.overdueTasks || 0) > 0 && (
@@ -472,6 +490,7 @@ export default function TeamPerformance() {
                         <td className="text-center py-3 px-2 text-green-600">{wonDeals}</td>
                         <td className="text-right py-3 px-2">${(totalDealValue / 1000).toFixed(0)}K</td>
                         <td className="text-center py-3 px-2">{totalTasks}</td>
+                        <td className="text-center py-3 px-2">&mdash;</td>
                         <td className="text-center py-3 px-2" colSpan={2}>
                           <Badge variant="outline" className="text-xs">{winRate}% win</Badge>
                         </td>

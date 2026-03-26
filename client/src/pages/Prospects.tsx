@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import {
   Plus, Search, Brain, Shield, Ghost, Mail, Flame, Target,
   Trash2, ArrowUpRight, CheckCircle2, XCircle, Loader2,
-  ChevronRight, UserPlus,
+  ChevronRight, UserPlus, Ban, Pause, Play,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
@@ -98,6 +98,16 @@ export default function Prospects() {
       if ("contactId" in r) toast.success("Promoted to CRM contact");
       else toast.error("Promotion failed");
     },
+  });
+  const dncMut = trpc.prospects.setDnc.useMutation({
+    onSuccess: () => { utils.prospects.list.invalidate(); toast.success("DNC status updated"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const pauseSeqMut = trpc.prospects.pauseSequence.useMutation({
+    onSuccess: () => { utils.prospects.list.invalidate(); toast.success("Sequence paused"); },
+  });
+  const resumeSeqMut = trpc.prospects.resumeSequence.useMutation({
+    onSuccess: () => { utils.prospects.list.invalidate(); toast.success("Sequence resumed"); },
   });
 
   const handleAction = async (id: number, action: string) => {
@@ -275,6 +285,27 @@ export default function Prospects() {
                       )}
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/paradigm/prospects/${p.id}`)} title="View Details">
                         <ChevronRight className="h-3.5 w-3.5" />
+                      </Button>
+                      {p.engagementStage === "sequenced" || p.engagementStage === "engaged" ? (
+                        <Button
+                          variant="ghost" size="sm"
+                          onClick={() => (p as any).sequencePaused ? resumeSeqMut.mutate({ id: p.id }) : pauseSeqMut.mutate({ id: p.id })}
+                          title={(p as any).sequencePaused ? 'Resume Sequence' : 'Pause Sequence'}
+                        >
+                          {(p as any).sequencePaused ? <Play className="h-3.5 w-3.5 text-emerald-400" /> : <Pause className="h-3.5 w-3.5 text-amber-400" />}
+                        </Button>
+                      ) : null}
+                      <Button
+                        variant="ghost" size="sm"
+                        onClick={() => {
+                          const isDnc = p.engagementStage === 'disqualified';
+                          if (isDnc) { dncMut.mutate({ id: p.id, doNotContact: false }); return; }
+                          const reason = window.prompt('DNC Reason (optional):');
+                          if (reason !== null) dncMut.mutate({ id: p.id, doNotContact: true, reason: reason || undefined });
+                        }}
+                        title={p.engagementStage === 'disqualified' ? 'Remove DNC' : 'Mark Do Not Contact'}
+                      >
+                        <Ban className={`h-3.5 w-3.5 ${p.engagementStage === 'disqualified' ? 'text-muted-foreground' : 'text-orange-400'}`} />
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => { if (confirm("Delete this prospect?")) deleteMut.mutate({ id: p.id }); }} title="Delete">
                         <Trash2 className="h-3.5 w-3.5 text-red-400" />

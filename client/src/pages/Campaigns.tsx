@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Send, MoreHorizontal, Trash2, Shield, AlertTriangle, CheckCircle, Info, FileText, Users, Loader2, Rocket, Calendar, Edit2 } from "lucide-react";
+import { Plus, Send, MoreHorizontal, Trash2, Shield, AlertTriangle, CheckCircle, Info, FileText, Users, Loader2, Rocket, Calendar, Edit2, Eye } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -336,6 +336,7 @@ export default function Campaigns() {
                 <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Subject</TableHead>
                 <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</TableHead>
                 <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Spam Score</TableHead>
+                <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Unsub Rate</TableHead>
                 <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Scheduled / Created</TableHead>
                 <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground w-10"></TableHead>
               </TableRow>
@@ -389,6 +390,16 @@ export default function Campaigns() {
                         </div>
                       ) : <span className="text-xs text-muted-foreground/50">—</span>}
                     </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const total = (campaign as any).recipientCount || (campaign as any).sent || 0;
+                        const unsub = (campaign as any).unsubscribed || 0;
+                        if (!total) return <span className="text-xs text-muted-foreground/50">&mdash;</span>;
+                        const rate = ((unsub / total) * 100).toFixed(1);
+                        const color = parseFloat(rate) <= 0.5 ? 'text-emerald-600' : parseFloat(rate) <= 2 ? 'text-amber-600' : 'text-red-600';
+                        return <span className={`text-xs font-medium ${color}`}>{rate}%</span>;
+                      })()}
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {(campaign as any).scheduledAt ? (
                         <span className="flex items-center gap-1 text-chart-3">
@@ -407,6 +418,15 @@ export default function Campaigns() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => openEdit(campaign)}>
                             <Edit2 className="mr-2 h-4 w-4" /> Edit Campaign
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            const preview = window.open('', '_blank', 'width=700,height=600');
+                            if (preview) {
+                              preview.document.write(`<html><head><title>Preview: ${campaign.name}</title><style>body{font-family:sans-serif;padding:24px;max-width:600px;margin:auto;color:#111}</style></head><body><h2 style="margin-bottom:4px">${campaign.subject || campaign.name}</h2><p style="color:#666;font-size:13px">From: ${campaign.fromName || 'Unknown'}</p><hr/>${(campaign as any).htmlContent || campaign.body || '<p style="color:#888">No content</p>'}</body></html>`);
+                              preview.document.close();
+                            }
+                          }}>
+                            <Eye className="mr-2 h-4 w-4" /> Preview Email
                           </DropdownMenuItem>
                           {campaign.status === "draft" && (
                             <DropdownMenuItem onClick={() => handleSendCampaign(campaign.id)}>

@@ -679,6 +679,57 @@ export const appRouter = router({
       await drizzleDb.delete(co).where(eq(co.tenantId, tenantId));
       return { success: true };
     }),
+    getHealthScore: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      const drizzleDb = await db.getDb();
+      if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { companies: co, contacts: ct, tasks, deals } = await import('../drizzle/schema.js');
+      const { eq, and, count, gte } = await import('drizzle-orm');
+      const tenantId = ctx.user.tenantCompanyId ?? 0;
+      // Fetch company
+      const [company] = await drizzleDb.select().from(co).where(and(eq(co.id, input.id), eq(co.tenantId, tenantId))).limit(1);
+      if (!company) throw new TRPCError({ code: 'NOT_FOUND' });
+      // Count contacts
+      const [{ value: contactCount }] = await drizzleDb.select({ value: count() }).from(ct).where(and(eq(ct.companyId, input.id), eq(ct.tenantId, tenantId)));
+      // Count open tasks
+      const [{ value: taskCount }] = await drizzleDb.select({ value: count() }).from(tasks).where(and(eq(tasks.companyId, input.id), eq(tasks.tenantId, tenantId)));
+      // Count deals
+      const [{ value: dealCount }] = await drizzleDb.select({ value: count() }).from(deals).where(and(eq(deals.companyId, input.id), eq(deals.tenantId, tenantId)));
+      // Calculate health score breakdown
+      const breakdown: Record<string, number> = {
+        profileCompleteness: Math.round([
+          company.name, company.website, company.phone, company.email,
+          company.city, company.stateRegion, company.industry, company.description
+        ].filter(Boolean).length / 8 * 25),
+        contactCoverage: Math.min(25, contactCount * 5),
+        dealActivity: Math.min(25, dealCount * 8),
+        taskEngagement: Math.min(25, taskCount * 5),
+      };
+      const total = Object.values(breakdown).reduce((a, b) => a + b, 0);
+      // Persist the score
+      await drizzleDb.update(co).set({ healthScore: total, healthScoreBreakdown: breakdown, healthScoreUpdatedAt: Date.now() }).where(eq(co.id, input.id));
+      return { score: total, breakdown, contactCount, taskCount, dealCount };
+    }),
+    recalculateHealthScore: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const drizzleDb = await db.getDb();
+      if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { companies: co, contacts: ct, tasks, deals } = await import('../drizzle/schema.js');
+      const { eq, and, count } = await import('drizzle-orm');
+      const tenantId = ctx.user.tenantCompanyId ?? 0;
+      const [company] = await drizzleDb.select().from(co).where(and(eq(co.id, input.id), eq(co.tenantId, tenantId))).limit(1);
+      if (!company) throw new TRPCError({ code: 'NOT_FOUND' });
+      const [{ value: contactCount }] = await drizzleDb.select({ value: count() }).from(ct).where(and(eq(ct.companyId, input.id), eq(ct.tenantId, tenantId)));
+      const [{ value: taskCount }] = await drizzleDb.select({ value: count() }).from(tasks).where(and(eq(tasks.companyId, input.id), eq(tasks.tenantId, tenantId)));
+      const [{ value: dealCount }] = await drizzleDb.select({ value: count() }).from(deals).where(and(eq(deals.companyId, input.id), eq(deals.tenantId, tenantId)));
+      const breakdown: Record<string, number> = {
+        profileCompleteness: Math.round([company.name, company.website, company.phone, company.email, company.city, company.stateRegion, company.industry, company.description].filter(Boolean).length / 8 * 25),
+        contactCoverage: Math.min(25, contactCount * 5),
+        dealActivity: Math.min(25, dealCount * 8),
+        taskEngagement: Math.min(25, taskCount * 5),
+      };
+      const total = Object.values(breakdown).reduce((a, b) => a + b, 0);
+      await drizzleDb.update(co).set({ healthScore: total, healthScoreBreakdown: breakdown, healthScoreUpdatedAt: Date.now() }).where(eq(co.id, input.id));
+      return { score: total, breakdown };
+    }),
   }),
   pipelines: router({
     list: protectedProcedure.query(async ({ ctx }) => {
@@ -1481,6 +1532,38 @@ export const appRouter = router({
     }),
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
       await db.deleteProspect(input.id, ctx.user.id);
+      return { success: true };
+    }),
+    setDnc: protectedProcedure.input(z.object({
+      id: z.number(),
+      doNotContact: z.boolean(),
+      reason: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const drizzleDb = await db.getDb();
+      if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { prospects: pr } = await import('../drizzle/schema.js');
+      const { eq, and } = await import('drizzle-orm');
+      await drizzleDb.update(pr).set({
+        engagementStage: input.doNotContact ? 'disqualified' : 'discovered',
+        notes: input.doNotContact ? `[DNC] ${input.reason ?? 'Do Not Contact'}` : undefined,
+        updatedAt: Date.now(),
+      }).where(and(eq(pr.id, input.id), eq(pr.userId, ctx.user.id)));
+      return { success: true };
+    }),
+    pauseSequence: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const drizzleDb = await db.getDb();
+      if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { prospects: pr } = await import('../drizzle/schema.js');
+      const { eq, and } = await import('drizzle-orm');
+      await drizzleDb.update(pr).set({ sequencePaused: 1, updatedAt: Date.now() }).where(and(eq(pr.id, input.id), eq(pr.userId, ctx.user.id)));
+      return { success: true };
+    }),
+    resumeSequence: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const drizzleDb = await db.getDb();
+      if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { prospects: pr } = await import('../drizzle/schema.js');
+      const { eq, and } = await import('drizzle-orm');
+      await drizzleDb.update(pr).set({ sequencePaused: 0, updatedAt: Date.now() }).where(and(eq(pr.id, input.id), eq(pr.userId, ctx.user.id)));
       return { success: true };
     }),
     // AI: Verify email via Nutrition layer
