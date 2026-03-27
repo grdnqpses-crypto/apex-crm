@@ -374,6 +374,7 @@ export default function Deals() {
                     <th className="px-4 py-3 text-left font-semibold text-foreground">Stage</th>
                     <th className="px-4 py-3 text-left font-semibold text-foreground">Priority</th>
                     <th className="px-4 py-3 text-left font-semibold text-foreground">Company</th>
+                    <th className="px-4 py-3 text-left font-semibold text-foreground">Prob %</th>
                     <th className="px-4 py-3 text-left font-semibold text-foreground">Age</th>
                     <th className="px-4 py-3 text-left font-semibold text-foreground">Status</th>
                     <th className="px-4 py-3 text-right font-semibold text-foreground">Actions</th>
@@ -381,7 +382,7 @@ export default function Deals() {
                 </thead>
                 <tbody>
                   {allDealsFlat.length === 0 ? (
-                    <tr><td colSpan={9} className="text-center py-12 text-muted-foreground">No deals yet</td></tr>
+                    <tr><td colSpan={10} className="text-center py-12 text-muted-foreground">No deals yet</td></tr>
                   ) : allDealsFlat.map(deal => {
                     const stageName = stages?.find(s => s.id === deal.stageId)?.name ?? "—";
                     const ageDays = daysSince((deal as any).updatedAt ?? (deal as any).createdAt);
@@ -397,6 +398,9 @@ export default function Deals() {
                           <Badge variant="secondary" className={`text-[10px] capitalize rounded-md ${PRIORITY_STYLES[deal.priority] ?? 'bg-muted/60 text-muted-foreground'}`}>{deal.priority}</Badge>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">{deal.companyId ? companyMap.get(deal.companyId) ?? '—' : '—'}</td>
+                        <td className="px-4 py-3">
+                          {(() => { const stg = stages?.find(s => s.id === deal.stageId); const prob = stg?.probability ?? null; return prob !== null ? <span className={`text-xs font-semibold ${prob >= 70 ? 'text-emerald-500' : prob >= 40 ? 'text-amber-500' : 'text-red-400'}`}>{prob}%</span> : <span className="text-xs text-muted-foreground">—</span>; })()}
+                        </td>
                         <td className="px-4 py-3">
                           {ageDays !== null && ageDays >= 7 && (
                             <span className={`inline-flex items-center gap-0.5 text-[10px] font-semibold rounded-md px-1.5 py-0.5 ${ageDays >= 30 ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-600"}`}>

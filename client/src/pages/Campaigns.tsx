@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Send, MoreHorizontal, Trash2, Shield, AlertTriangle, CheckCircle, Info, FileText, Users, Loader2, Rocket, Calendar, Edit2, Eye } from "lucide-react";
+import { Plus, Send, MoreHorizontal, Trash2, Shield, AlertTriangle, CheckCircle, Info, FileText, Users, Loader2, Rocket, Calendar, Edit2, Eye, DollarSign } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -433,6 +433,19 @@ export default function Campaigns() {
                               <Rocket className="mr-2 h-4 w-4 text-green-400" /> Send Campaign
                             </DropdownMenuItem>
                           )}
+                          {campaign.status === "draft" && (
+                            <DropdownMenuItem onClick={() => { updateMutation.mutate({ id: campaign.id, status: "pending_approval" } as any); toast.success("Submitted for approval"); }}>
+                              <CheckCircle className="mr-2 h-4 w-4 text-blue-500" /> Submit for Approval
+                            </DropdownMenuItem>
+                          )}
+                          {(campaign.status as string) === "pending_approval" && (
+                            <DropdownMenuItem onClick={() => { updateMutation.mutate({ id: campaign.id, status: "draft" } as any); toast.success("Approved — moved back to draft for sending"); }}>
+                              <CheckCircle className="mr-2 h-4 w-4 text-emerald-500" /> Approve Campaign
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem onClick={() => toast.info(`Revenue attribution for "${campaign.name}": tracks deals closed within 30 days of receiving this campaign. Connect to Deals module to see attributed revenue.`)}>
+                            <DollarSign className="mr-2 h-4 w-4 text-emerald-500" /> View Revenue Attribution
+                          </DropdownMenuItem>
                           <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate({ id: campaign.id })}>
                             <Trash2 className="mr-2 h-4 w-4" /> Delete
                           </DropdownMenuItem>

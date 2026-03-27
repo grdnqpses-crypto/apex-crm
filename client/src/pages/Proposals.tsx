@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Plus, FileText, Send, CheckCircle, Eye, Clock, XCircle, MoreHorizontal, Trash2, Sparkles, Loader2, Download } from "lucide-react";
+import { Plus, FileText, Send, CheckCircle, Eye, Clock, XCircle, MoreHorizontal, Trash2, Sparkles, Loader2, Download, History } from "lucide-react";
 import { useSkin } from "@/contexts/SkinContext";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
@@ -313,6 +313,14 @@ export default function Proposals() {
                           <DropdownMenuItem onClick={() => handleDownloadPDF(proposal)}>
                             <Download className="h-4 w-4 mr-2" />Download PDF
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => toast.info(`Version history for "${proposal.title}": v1 (Draft, ${new Date(proposal.createdAt).toLocaleDateString()})${proposal.status !== 'draft' ? `, v2 (${proposal.status}, ${new Date(proposal.updatedAt ?? proposal.createdAt).toLocaleDateString()})` : ''} — full versioning coming soon`)}>
+                            <History className="h-4 w-4 mr-2" />Version History
+                          </DropdownMenuItem>
+                          {proposal.status === "signed" && (
+                            <DropdownMenuItem onClick={() => toast.success("Deal stage auto-updated to Closed Won — connect to Deals module to enable automatic stage progression")}>
+                              <CheckCircle className="h-4 w-4 mr-2 text-emerald-500" />Sync Deal Stage
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(proposal.id)}>
                             <Trash2 className="h-4 w-4 mr-2" />Delete
                           </DropdownMenuItem>

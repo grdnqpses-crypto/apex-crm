@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Building2, Globe, MoreHorizontal, Trash2, Users, ChevronRight, AlertTriangle, MapPin, Phone as PhoneIcon, DollarSign, Kanban, Tag, Briefcase, TrendingUp, MessageSquare, UserCheck, CheckSquare, Workflow, Sparkles, Pencil, Link2, ShieldCheck, Activity, UserPlus } from "lucide-react";
+import { Plus, Search, Building2, Globe, MoreHorizontal, Trash2, Users, ChevronRight, AlertTriangle, MapPin, Phone as PhoneIcon, DollarSign, Kanban, Tag, Briefcase, TrendingUp, MessageSquare, UserCheck, CheckSquare, Workflow, Sparkles, Pencil, Link2, ShieldCheck, Activity, UserPlus, ArrowRightLeft } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MapView } from "@/components/Map";
@@ -378,6 +378,9 @@ export default function Companies() {
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setLocation(`/contacts?companyId=${company.id}&addNew=true`); }} className="rounded-lg">
                             <UserPlus className="mr-2 h-4 w-4" /> Add Contact
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); toast.info(`Merge company: select the target company to merge "${company.name}" into — this feature moves all contacts, deals, and activities to the target company.`); }} className="rounded-lg">
+                            <ArrowRightLeft className="mr-2 h-4 w-4 text-blue-500" /> Merge into Another
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem

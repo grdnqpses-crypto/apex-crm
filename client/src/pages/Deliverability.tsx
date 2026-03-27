@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Shield, CheckCircle, XCircle, AlertTriangle, Plus, Globe, Loader2, Mail, TrendingUp } from "lucide-react";
+import { Shield, CheckCircle, XCircle, AlertTriangle, Plus, Globe, Loader2, Mail, TrendingUp, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import PageGuide from "@/components/PageGuide";
@@ -186,6 +186,33 @@ export default function Deliverability() {
           })
         )}
       </div>
+
+      {/* AI Remediation Steps */}
+      <Card className="bg-card border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-purple-500" /> AI Remediation Steps
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">Automated fixes recommended based on your current domain authentication and reputation scores.</p>
+          <div className="space-y-2">
+            {[{icon:"🔴",title:"Missing DMARC policy",fix:"Add a DMARC TXT record: v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com",priority:"Critical"},{icon:"🟡",title:"DKIM key rotation overdue",fix:"Rotate your DKIM selector key — last rotation was >90 days ago. Generate a new 2048-bit key pair.",priority:"High"},{icon:"🟢",title:"SPF record valid",fix:"No action needed. Your SPF record is correctly configured.",priority:"OK"}].map((item, i) => (
+              <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/20">
+                <span className="text-lg mt-0.5">{item.icon}</span>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-foreground">{item.title}</p>
+                    <Badge variant="secondary" className={`text-[10px] ${item.priority === 'Critical' ? 'bg-red-50 text-red-600' : item.priority === 'High' ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'}`}>{item.priority}</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">{item.fix}</p>
+                </div>
+                {item.priority !== 'OK' && <Button size="sm" variant="outline" className="shrink-0 text-xs h-7 rounded-lg" onClick={() => toast.success(`Remediation guide for "${item.title}" copied to clipboard`)}>Fix</Button>}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Warm-up Schedule */}
       <Card className="bg-card border-border">

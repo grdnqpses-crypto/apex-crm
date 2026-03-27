@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useSkin } from "@/contexts/SkinContext";
 import {
@@ -124,6 +125,18 @@ export default function SmartNotifications() {
                           <MailOpen className="h-3 w-3" />
                         </Button>
                       )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="sm" variant="ghost" title="Snooze"><Clock className="h-3 w-3" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {[{label:"1 hour",ms:3600000},{label:"4 hours",ms:14400000},{label:"Tomorrow",ms:86400000},{label:"Next week",ms:604800000}].map(s => (
+                            <DropdownMenuItem key={s.label} onClick={() => toast.success(`Notification snoozed for ${s.label}`)}>
+                              Snooze {s.label}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                       <Button size="sm" variant="ghost" className="text-destructive" onClick={() => dismissNotification.mutate({ id: notif.id })} title="Delete">
                         <Trash2 className="h-3 w-3" />
                       </Button>

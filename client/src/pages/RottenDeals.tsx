@@ -5,16 +5,26 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skull, AlertTriangle, Clock, DollarSign, RefreshCw } from "lucide-react";
+import { Skull, AlertTriangle, Clock, DollarSign, RefreshCw, Download, Zap, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { useSkin } from "@/contexts/SkinContext";
 
 export default function RottenDeals() {
   const { t } = useSkin();
   const [thresholdDays, setThresholdDays] = useState(14);
+  const [engagingId, setEngagingId] = useState<number | null>(null);
 
+  const utils = trpc.useUtils();
   const { data: rottenDealsData, isLoading, refetch } = trpc.rottenDeals.list.useQuery({ thresholdDays });
   const rottenDeals = rottenDealsData ?? [];
+
+  const createTask = trpc.tasks.create.useMutation({
+    onSuccess: () => {
+      toast.success("Re-engagement task created — check your Tasks page");
+      setEngagingId(null);
+    },
+    onError: () => { toast.error("Failed to create task"); setEngagingId(null); },
+  });
 
   const totalValue = rottenDeals.reduce((s: number, d: any) => s + (d.value ?? 0), 0);
 
@@ -24,9 +34,40 @@ export default function RottenDeals() {
     return "outline";
   }
 
+  function handleReEngage(deal: any) {
+    setEngagingId(deal.id);
+    createTask.mutate({
+      title: `Re-engage: ${deal.name}`,
+      taskType: "follow_up",
+      priority: deal.daysSinceUpdate >= 30 ? "high" : "medium",
+      dealId: deal.id,
+      description: `This deal has been stale for ${deal.daysSinceUpdate} days. Last updated: ${new Date(deal.updatedAt).toLocaleDateString()}. Take action to move it forward or mark as lost.`,
+      dueDate: Date.now() + 86400000, // tomorrow
+    });
+  }
+
+  function handleExportCsv() {
+    if (!rottenDeals.length) { toast.error("No rotten deals to export"); return; }
+    const headers = ["Deal Name", "Value", "Stage", "Days Stale", "Last Updated"];
+    const rows = rottenDeals.map((d: any) => [
+      `"${d.name}"`,
+      d.value ?? 0,
+      d.stageId ?? "",
+      d.daysSinceUpdate,
+      new Date(d.updatedAt).toLocaleDateString(),
+    ]);
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `rotten-deals-${thresholdDays}d.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Exported rotten deals CSV");
+  }
+
   return (
       <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <Skull className="h-7 w-7 text-destructive" />
             <div>
@@ -34,7 +75,7 @@ export default function RottenDeals() {
               <p className="text-muted-foreground text-sm">Deals with no activity past your threshold — act now before they go cold.</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Label htmlFor="threshold" className="text-sm whitespace-nowrap">Stale after</Label>
             <Input
               id="threshold"
@@ -48,6 +89,9 @@ export default function RottenDeals() {
             <span className="text-sm text-muted-foreground">days</span>
             <Button variant="outline" size="sm" onClick={() => refetch()}>
               <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={!rottenDeals.length}>
+              <Download className="h-4 w-4 mr-1" /> Export CSV
             </Button>
           </div>
         </div>
@@ -105,7 +149,8 @@ export default function RottenDeals() {
                       <th className="text-left py-2 pr-4 font-medium">Value</th>
                       <th className="text-left py-2 pr-4 font-medium">Stage</th>
                       <th className="text-left py-2 pr-4 font-medium">Days Stale</th>
-                      <th className="text-left py-2 font-medium">Last Updated</th>
+                      <th className="text-left py-2 pr-4 font-medium">Last Updated</th>
+                      <th className="text-left py-2 font-medium">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -121,8 +166,23 @@ export default function RottenDeals() {
                             {deal.daysSinceUpdate}d
                           </Badge>
                         </td>
-                        <td className="py-3 text-muted-foreground">
+                        <td className="py-3 pr-4 text-muted-foreground">
                           {new Date(deal.updatedAt).toLocaleDateString()}
+                        </td>
+                        <td className="py-3">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1.5 text-xs h-7 rounded-lg"
+                            disabled={engagingId === deal.id || createTask.isPending}
+                            onClick={() => handleReEngage(deal)}
+                          >
+                            {engagingId === deal.id ? (
+                              <><CheckCircle2 className="h-3 w-3 text-green-500" /> Creating…</>
+                            ) : (
+                              <><Zap className="h-3 w-3 text-amber-500" /> Re-engage</>
+                            )}
+                          </Button>
                         </td>
                       </tr>
                     ))}

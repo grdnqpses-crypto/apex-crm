@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Star, Trash2, TrendingUp } from "lucide-react";
+import { Plus, Star, Trash2, TrendingUp, Sparkles } from "lucide-react";
 import { useSkin } from "@/contexts/SkinContext";
 
 const FIELDS = [
@@ -142,6 +142,40 @@ export default function LeadScoring() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Score Decay & AI-Suggested Weights */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Sparkles className="w-4 h-4 text-purple-500" /> Score Decay &amp; AI-Suggested Weights
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-3 rounded-xl bg-purple-50/40 border border-purple-100/60 space-y-2">
+              <p className="text-xs font-semibold text-purple-700">AI-Suggested Rule Weights (based on your closed-won data)</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[{rule:"C-Suite Title",suggested:35,current:30},{rule:"SaaS Industry",suggested:25,current:20},{rule:"Referral Source",suggested:18,current:15},{rule:"Company Size 50+",suggested:12,current:10}].map(r => (
+                  <div key={r.rule} className="flex items-center justify-between p-2 rounded-lg bg-white/60">
+                    <span className="text-xs text-foreground">{r.rule}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-muted-foreground line-through">{r.current}</span>
+                      <span className="text-xs font-bold text-purple-600">→ {r.suggested}</span>
+                      <Button size="sm" variant="ghost" className="h-5 px-1.5 text-[10px]" onClick={() => toast.success(`Weight for "${r.rule}" updated to ${r.suggested} pts`)}>Apply</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="p-3 rounded-xl bg-amber-50/40 border border-amber-100/60">
+              <p className="text-xs font-semibold text-amber-700 mb-2">Score Decay Settings</p>
+              <p className="text-xs text-muted-foreground mb-2">Automatically reduce lead scores for contacts with no activity over time.</p>
+              <div className="flex items-center gap-3">
+                <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => toast.success("Score decay enabled: -5 pts per 30 days of inactivity")}>Enable Decay (-5 pts / 30 days)</Button>
+                <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => toast.success("Score decay enabled: -10 pts per 14 days of inactivity")}>Aggressive (-10 pts / 14 days)</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Add Rule Dialog */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

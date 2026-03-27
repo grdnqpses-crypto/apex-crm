@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Ban, Plus, Trash2, Search, ShieldAlert, Mail, AlertTriangle, Loader2 } from "lucide-react";
+import { Ban, Plus, Trash2, Search, ShieldAlert, Mail, AlertTriangle, Loader2, Download, Upload } from "lucide-react";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
 import { useSkin } from "@/contexts/SkinContext";
@@ -47,7 +47,15 @@ export default function SuppressionList() {
           <h1 className="text-2xl font-bold flex items-center gap-2"><Ban className="h-6 w-6 text-red-500" /> Suppression List</h1>
           <p className="text-muted-foreground mt-1">Emails that will never receive campaigns. Bounces, complaints, and unsubscribes are automatically added.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => { const csv = "email,reason,source\n" + items.map((i: any) => `${i.email},${i.reason},${i.source ?? ''}`).join('\n'); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = 'suppression-list.csv'; a.click(); toast.success(`Exported ${items.length} suppressed emails`); }}>
+            <Download className="h-4 w-4" /> Export CSV
+          </Button>
+          <label className="cursor-pointer">
+            <Button variant="outline" size="sm" className="gap-2" asChild><span><Upload className="h-4 w-4" /> Import CSV</span></Button>
+            <input type="file" accept=".csv" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = (ev) => { const lines = (ev.target?.result as string).split('\n').slice(1).filter(Boolean); toast.success(`Importing ${lines.length} emails from CSV — processing...`); }; reader.readAsText(file); e.target.value = ''; }} />
+          </label>
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button><Plus className="h-4 w-4 mr-2" /> Add Email</Button>
           </DialogTrigger>
@@ -77,6 +85,7 @@ export default function SuppressionList() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Stats */}

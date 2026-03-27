@@ -354,6 +354,7 @@ export default function Contacts() {
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Email</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Phone</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Stage</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Lead Score</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Status</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70 w-10"></TableHead>
               </TableRow>
@@ -427,6 +428,14 @@ export default function Contacts() {
                       <Badge variant="secondary" className={`text-[10px] font-semibold uppercase rounded-lg ${STAGE_COLORS[contact.lifecycleStage as string] ?? "bg-muted/60 text-muted-foreground"}`}>
                         {contact.lifecycleStage}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {(() => { const s = (contact as any).leadScore ?? 0; return s > 0 ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-xs font-bold ${s >= 70 ? 'text-emerald-500' : s >= 40 ? 'text-amber-500' : 'text-red-400'}`}>{s}</span>
+                          <div className="w-12 h-1.5 rounded-full bg-muted overflow-hidden"><div className={`h-full rounded-full ${s >= 70 ? 'bg-emerald-500' : s >= 40 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${Math.min(s, 100)}%` }} /></div>
+                        </div>
+                      ) : <span className="text-xs text-muted-foreground/40">&mdash;</span>; })()}
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">

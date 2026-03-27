@@ -2961,3 +2961,153 @@
 - [ ] Paradigm Engine: prospect Do Not Contact flag
 - [ ] Paradigm Engine: sequence pause/resume per individual prospect
 - [ ] Onboarding: replace video placeholder embeds with proper instructional content
+
+## Complete Gap Audit - All 124 Tabs (from Excel sheets)
+
+### Already Implemented in Previous Sessions
+- [x] AnomalyDetection: AI explanation display + threshold config
+- [x] PipelineInspection: CSV export + coaching notes
+- [x] Workflows: Dry-run simulation + version history
+- [x] Templates: Version history + clone
+- [x] AxiomPaymentManagement: Dunning + churn risk + trial extension tabs
+- [x] SmtpAccounts: Health monitoring + failover config tabs
+- [x] DevActivityLog: Retention config UI
+- [x] AxiomAutopilot: Healing history + effectiveness metrics
+- [x] AxiomDashboard: MRR/churn KPI cards
+- [x] GDPRTools: Retention policies tab
+- [x] ComplianceCenter: Compliance scan + training tabs
+- [x] AccountsReceivable: Aging export button
+- [x] AICreditUsage: Usage forecast section
+- [x] SSOSettings: Test connection button
+- [x] Contacts: Bulk tag/DNC/status action bar
+
+### CRM Section - Remaining Gaps
+- [ ] Companies: Merge button in list + duplicate warning badge + health score column
+- [ ] Contacts: Lead score column + duplicate badge + bulk email action
+- [ ] Deals: Probability weighting display + bulk stage change + aging badge
+- [ ] Tasks: Recurring tasks + task dependencies + time tracking timer
+- [ ] Email Sync: Inline email composer + attachment preview + email-to-deal association
+- [ ] Proposals: Version history + reading heatmap + auto-update deal stage on sign
+- [ ] Custom Objects: Automation triggers + bulk CSV import
+- [ ] Rotten Deals: One-click re-engagement task + per-stage threshold + CSV export
+- [ ] Account Hierarchy: Revenue roll-up + export to PDF/Excel
+- [ ] Territory Management: Performance dashboard + auto-assignment rules + conflict detection
+- [ ] Product Catalog: Inventory tracking + product win/loss analytics + bundle builder
+- [ ] AI Next Best Action: Recommendation rationale + one-click execution + thumbs feedback
+- [ ] Web Forms Builder: Multi-step forms + conditional logic + form analytics
+- [ ] E-Signature: Bulk send + document template library + audit certificate download
+- [ ] Reputation Mgmt: Response templates + sentiment analysis + multi-platform support
+- [ ] OOO Detection: Return-date parsing + OOO analytics
+- [ ] Email Sequences: AI reply branching + A/B comparison
+- [ ] Journey Orchestration: Real-time analytics overlay + version history + dry-run
+- [ ] SMS Inbox: Delivery status tracking + opt-out management
+- [ ] WhatsApp Messaging: Read receipt tracking + API health indicator
+- [ ] Social Scheduler: Post analytics dashboard + approval workflow
+- [ ] WhatsApp Broadcasts: Delivery analytics + opt-out management + A/B testing
+- [ ] AI Post Writer: Tone selector + direct scheduling to Social Scheduler
+- [ ] Bulk Merge: Auto-merge threshold + merge audit log + multi-record merge
+- [ ] Proposal Analytics: Reading heatmap + A/B template testing + per-rep leaderboard
+- [ ] Power Dialer: Predictive dialing + call script side panel
+
+### Marketing Section - Remaining Gaps
+- [ ] Campaigns: Approval workflow + revenue attribution
+- [ ] Templates: Per-template analytics + AI generation from brief
+- [ ] Deliverability: AI remediation steps + seed list inbox placement + industry benchmark
+- [ ] A/B Tests: Multivariate testing + statistical significance badge + auto-send winner
+- [ ] Domain Optimizer: Automated warm-up scheduler + competitor comparison
+- [ ] Email Masking: Expiry setting + per-mask analytics + bulk creation via CSV
+- [ ] A/B Engine: Direct integration into Campaigns UI + test archive
+
+### Automation Section - Remaining Gaps
+- [ ] Workflow Builder: AI template suggestions + live enrollment counter + error highlighting
+- [ ] Integration Hub: Two-way sync + health monitoring with alerts + webhook event log
+- [ ] Segments: Overlap analysis + segment performance analytics + CSV export
+
+### Paradigm Engine Section - Remaining Gaps
+- [ ] Pulse Dashboard: Trend charts + conversion funnel + export
+- [ ] Prospects: Dedup check against Contacts + CSV import + score explanation tooltip
+- [ ] Signals: Custom signal source config + auto-enrollment rules
+- [ ] Website Monitor: Target account alerts
+- [ ] Ghost Sequences: Sentiment-based branching + A/B testing
+- [ ] Battle Cards: Auto-update from Signals + view tracking + effectiveness rating
+- [ ] Paradigm Integrations: Health status + data freshness + cost tracking
+- [ ] Quantum Score: Score explanation + score history/trend + custom scoring model
+
+### Compliance & Safety Section - Remaining Gaps
+- [ ] Audit Logs: CSV/PDF export + real-time alert rules
+- [ ] Suppression List: Bulk import + reason tracking + export
+- [ ] Sender Settings: Per-campaign sender override + sender reputation score + multi-brand profiles
+- [ ] Domain Stats: Domain comparison + threshold alerts + export
+
+### Analytics Section - Remaining Gaps
+- [ ] Reports: Scheduled delivery + shareable report link
+- [ ] Report Builder: Report templates + version history + iframe embed code
+- [ ] Win/Loss Analysis: Required loss reason field + competitor breakdown + cohort analysis
+- [ ] Smart Views: Scheduled view runs + view-based alerts + view usage analytics
+- [ ] Bulk Actions: Action history with undo + approval workflow + progress bar
+- [ ] Sales Forecasting: Forecast vs. actual + confidence interval + scenario modeling
+- [ ] Lead Scoring: AI-suggested weights + score decay + score history chart
+
+### AI Premium Section - Remaining Gaps
+- [ ] Voice Agent: Performance analytics + custom voice/persona selection
+- [ ] DocScan: Batch processing + document classification + confidence score queue
+- [ ] Carrier Packets: Status dashboard + automated reminders + template library
+- [ ] Win Probability: Model explanation breakdown + probability trend chart + drop alert
+- [ ] Revenue Autopilot: Action approval queue + performance analytics + per-deal pause/resume
+- [ ] Smart Notifications: Snooze + grouping + notification analytics
+- [ ] AI Ghostwriter: Brand voice training + tone selector + draft history
+- [ ] Meeting Prep: Post-meeting summary + shareable meeting brief link
+- [ ] Call Intelligence: Searchable call library + rep coaching score
+- [ ] B2B Database: Data freshness indicator + export limit tracking + dedup check
+- [ ] Email Warmup: Warmup progress chart + pause/resume + per-mailbox analytics
+- [ ] Visitor Tracking: Target account alerts + Paradigm Signal integration
+- [ ] Command Center: Manual task trigger + priority reordering + task history archive
+
+### AXIOM Platform Section - Remaining Gaps
+- [ ] Platform Dashboard: MRR trend chart (live data) + tenant health score
+- [ ] AI Credits: Usage analytics by feature + alert threshold + auto-replenishment
+- [ ] Payment Management: Revenue analytics + refund workflow
+
+### Finance Section - Remaining Gaps
+- [ ] Accounts Receivable: Automated payment reminders + customer payment portal
+- [ ] Accounts Payable: Automated payment scheduling + vendor management + aging report
+- [ ] Shipping & Receiving: Cost analytics + carrier performance
+
+### Operations Section - Remaining Gaps
+- [ ] Load Management: Load document management
+- [ ] Carrier Vetting: Automated re-vetting on expiry + carrier blacklist + performance scoring
+- [ ] Invoicing: Invoice aging report
+- [ ] Customer Portal: Portal analytics + self-service document upload + portal notifications
+- [ ] Onboarding: Progress tracking per customer + automated follow-up + onboarding analytics
+- [ ] Order Entry: Order templates + order duplication + order validation rules
+- [ ] Rate Confirmation: E-signature integration + template library + bulk generation
+
+### Developer Section - Remaining Gaps
+- [ ] Dev Companies: Bulk operations + export
+- [ ] Dev Users: Bulk operations + export
+- [ ] System Health: Historical charts + alert configuration + export
+- [ ] AI Engine Panel: Manual trigger per task + priority configuration + execution history
+- [ ] FMCSA Scanner: Batch lookup + caching with refresh + status change alerts
+- [ ] API Keys: Key rotation + per-key rate limits + usage analytics
+- [ ] Webhooks: Event log + retry logic + payload preview
+- [ ] Custom Roles: Role cloning + usage analytics + export
+
+### Resources Section - Remaining Gaps
+- [ ] Help Center: Search within Help Center + article feedback
+- [ ] CRM Bible: Per-section feedback + print/PDF export
+- [ ] Settings: Settings search + settings change history
+- [ ] Migration: Migration progress tracker + post-migration data quality report
+- [ ] White Label: Preview before publishing + white-label analytics
+- [ ] Subscription: Usage-based billing preview + plan recommendation + downgrade impact warning
+- [ ] Multi-Currency: Currency conversion history + per-deal currency override
+- [ ] Billing & Plans: Invoice download + billing contact management + tax ID field
+- [ ] Billing History: Invoice search + bulk invoice download
+- [ ] Email Infrastructure: Automated DNS verification + infrastructure health score
+- [ ] Notification Digest: Per-user digest customization + digest preview
+- [ ] Scheduled Reports: Scheduled report history + recipient management
+- [ ] Conditional Fields: Conditional field preview + required field logic + export
+
+### Overview Section - Remaining Gaps
+- [ ] Dashboard: Date-range filter on KPIs + goal-vs-actual progress bars
+- [ ] Team: Bulk role change + team hierarchy visualization
+- [ ] Team Performance: Goal-vs-actual tracking per rep + CSV export + date range filter
