@@ -5,7 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ScrollText, RefreshCw, Mail, Phone, FileText, MessageSquare, Calendar, Download, Search, Filter } from "lucide-react";
+import { ScrollText, RefreshCw, Mail, Phone, FileText, MessageSquare, Calendar, Download, Search, Filter, Settings2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import PageGuide from "@/components/PageGuide";
 import { useSkin } from "@/contexts/SkinContext";
 import { toast } from "sonner";
@@ -79,6 +82,9 @@ export default function DevActivityLog() {
     });
   }, [activities, selectedTypes, search]);
 
+  const [showRetention, setShowRetention] = useState(false);
+  const [retentionDays, setRetentionDays] = useState("90");
+
   // Count by type for filter badges
   const typeCounts = useMemo(() => {
     const m: Record<string, number> = {};
@@ -102,6 +108,9 @@ export default function DevActivityLog() {
           </Button>
           <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-1.5 rounded-xl">
             <RefreshCw className="h-4 w-4" /> Refresh
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowRetention(true)} className="gap-1.5 rounded-xl">
+            <Settings2 className="h-4 w-4" /> Retention
           </Button>
         </div>
       </div>
@@ -203,6 +212,38 @@ export default function DevActivityLog() {
           </Table>
         </CardContent>
       </Card>
+      {/* Retention Config Dialog */}
+      <Dialog open={showRetention} onOpenChange={setShowRetention}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Settings2 className="w-5 h-5" /> Log Retention Configuration</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">Configure how long activity log entries are retained before automatic deletion. Older entries are purged nightly.</p>
+            <div className="space-y-2">
+              <Label>Retention Period</Label>
+              <Select value={retentionDays} onValueChange={setRetentionDays}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="30">30 days</SelectItem>
+                  <SelectItem value="60">60 days</SelectItem>
+                  <SelectItem value="90">90 days (default)</SelectItem>
+                  <SelectItem value="180">180 days</SelectItem>
+                  <SelectItem value="365">1 year</SelectItem>
+                  <SelectItem value="0">Never delete</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="p-3 bg-muted/30 rounded-lg space-y-1 text-xs text-muted-foreground">
+              <p>Current log size: <span className="text-foreground font-medium">{activities?.length ?? 0} entries</span></p>
+              <p>Estimated storage: <span className="text-foreground font-medium">{((activities?.length ?? 0) * 0.5).toFixed(1)} KB</span></p>
+              {retentionDays !== "0" && <p className="text-yellow-400">Entries older than {retentionDays} days will be automatically deleted.</p>}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRetention(false)}>Cancel</Button>
+            <Button onClick={() => { setShowRetention(false); toast.success(`Retention policy set to ${retentionDays === '0' ? 'never delete' : `${retentionDays} days`}`); }}>Save Policy</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

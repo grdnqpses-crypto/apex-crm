@@ -697,7 +697,7 @@ export const appRouter = router({
       // Calculate health score breakdown
       const breakdown: Record<string, number> = {
         profileCompleteness: Math.round([
-          company.name, company.website, company.phone, company.email,
+          company.name, company.website, company.phone, company.companyEmail,
           company.city, company.stateRegion, company.industry, company.description
         ].filter(Boolean).length / 8 * 25),
         contactCoverage: Math.min(25, contactCount * 5),
@@ -721,7 +721,7 @@ export const appRouter = router({
       const [{ value: taskCount }] = await drizzleDb.select({ value: count() }).from(tasks).where(and(eq(tasks.companyId, input.id), eq(tasks.tenantId, tenantId)));
       const [{ value: dealCount }] = await drizzleDb.select({ value: count() }).from(deals).where(and(eq(deals.companyId, input.id), eq(deals.tenantId, tenantId)));
       const breakdown: Record<string, number> = {
-        profileCompleteness: Math.round([company.name, company.website, company.phone, company.email, company.city, company.stateRegion, company.industry, company.description].filter(Boolean).length / 8 * 25),
+        profileCompleteness: Math.round([company.name, company.website, company.phone, company.companyEmail, company.city, company.stateRegion, company.industry, company.description].filter(Boolean).length / 8 * 25),
         contactCoverage: Math.min(25, contactCount * 5),
         dealActivity: Math.min(25, dealCount * 8),
         taskEngagement: Math.min(25, taskCount * 5),
@@ -1358,6 +1358,13 @@ export const appRouter = router({
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
       await db.deleteApiKey(input.id, ctx.user.id);
       return { success: true };
+    }),
+    rotate: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const rawKey = `axiom_${nanoid(32)}`;
+      const keyHash = createHash("sha256").update(rawKey).digest("hex");
+      const keyPrefix = rawKey.substring(0, 12);
+      await db.rotateApiKey(input.id, ctx.user.id, keyHash, keyPrefix);
+      return { key: rawKey };
     }),
   }),
 
@@ -3742,16 +3749,32 @@ export const appRouter = router({
     }),
 
     // Impersonate user (returns user data for viewing)
-    impersonateUser: adminProcedure.input(z.object({ userId: z.number() })).query(async ({ input }) => {
+    impersonateUser: adminProcedure.input(z.object({ userId: z.number() })).query(async ({ ctx, input }) => {
       const allUsers = await db.getAllUsersWithCompany();
       const target = allUsers.find((u: any) => u.user.id === input.userId);
       if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
       const features = await db.getUserFeatures(input.userId);
+      // Log impersonation start
+      await db.logImpersonationStart({
+        emulatorUserId: ctx.user.id,
+        emulatorName: ctx.user.name || null,
+        emulatorEmail: ctx.user.email || null,
+        emulatedUserId: input.userId,
+        emulatedName: target.user.name || null,
+        emulatedEmail: target.user.email || null,
+        ipAddress: (ctx.req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || ctx.req.socket?.remoteAddress || null,
+        userAgent: ctx.req.headers['user-agent'] || null,
+      });
       return {
         user: target.user,
         companyName: target.companyName,
         features,
       };
+    }),
+
+    // Get impersonation audit log
+    impersonationAuditLog: adminProcedure.input(z.object({ limit: z.number().default(100), offset: z.number().default(0) }).optional()).query(async ({ input }) => {
+      return db.getImpersonationAuditLog(input?.limit ?? 100, input?.offset ?? 0);
     }),
   }),
 

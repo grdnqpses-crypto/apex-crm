@@ -67,6 +67,12 @@ export default function Contacts() {
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [showCreate, setShowCreate] = useState(false);
+  const [dupCheckEmail, setDupCheckEmail] = useState("");
+  const { data: dupCheck } = trpc.contacts.list.useQuery(
+    { search: dupCheckEmail, limit: 3 },
+    { enabled: dupCheckEmail.length > 4 && dupCheckEmail.includes("@") }
+  );
+  const dupMatches = (dupCheck?.items || []).filter((c: any) => c.email?.toLowerCase() === dupCheckEmail.toLowerCase());
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
 
@@ -197,6 +203,10 @@ export default function Contacts() {
   });
   const [bulkActivityDialog, setBulkActivityDialog] = useState(false);
   const [bulkActivityForm, setBulkActivityForm] = useState({ activityType: "note" as "note"|"call"|"email_sent"|"meeting", subject: "", body: "" });
+  const [bulkTagDialog, setBulkTagDialog] = useState(false);
+  const [bulkTagInput, setBulkTagInput] = useState("");
+  const [bulkStatusDialog, setBulkStatusDialog] = useState(false);
+  const [bulkStatusValue, setBulkStatusValue] = useState("Cold");
   const trackActivityMutation = trpc.bulkActions.trackBulkActivity.useMutation({
     onSuccess: (d) => { utils.contacts.list.invalidate(); setSelectedIds(new Set()); setBulkActivityDialog(false); setBulkActivityForm({ activityType: "note", subject: "", body: "" }); toast.success(`Activity logged for ${d.logged} contacts`); },
     onError: (e: any) => toast.error(e.message),
@@ -304,6 +314,15 @@ export default function Contacts() {
           </Button>
           <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => setBulkActivityDialog(true)}>
             <Activity className="h-3.5 w-3.5 text-rose-500" /> Track Activity
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => setBulkTagDialog(true)}>
+            <Tag className="h-3.5 w-3.5 text-blue-500" /> Add Tags
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => setBulkStatusDialog(true)}>
+            <UserCheck className="h-3.5 w-3.5 text-green-500" /> Set Status
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8 text-orange-600 border-orange-300" onClick={() => { if (confirm(`Mark ${selectedIds.size} contacts as Do Not Contact?`)) bulkUpdateContacts.mutate({ ids: Array.from(selectedIds), updates: { leadStatus: "do_not_contact" } }); }}>
+            <Ban className="h-3.5 w-3.5" /> Mark DNC
           </Button>
           <Button variant="destructive" size="sm" className="gap-1.5 rounded-xl text-xs h-8" disabled={bulkDeleteContacts.isPending} onClick={() => { if (confirm(`Delete ${selectedIds.size} selected contacts? This cannot be undone.`)) bulkDeleteContacts.mutate({ ids: Array.from(selectedIds) }); }}>
             <Trash2 className="h-3.5 w-3.5" /> {bulkDeleteContacts.isPending ? "Deleting..." : "Delete Selected"}
@@ -530,7 +549,21 @@ export default function Contacts() {
 
               <TabsContent value="communication" className="mt-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label className="text-xs font-semibold">Email *</Label><Input type="email" {...f("email")} placeholder="john@company.com" className="rounded-xl bg-muted/30 border-border/50" /></div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold">Email *</Label>
+                    <Input type="email" {...f("email")} placeholder="john@company.com" className="rounded-xl bg-muted/30 border-border/50" onChange={(e) => { setForm(p => ({ ...p, email: e.target.value })); setDupCheckEmail(e.target.value); }} />
+                    {dupMatches.length > 0 && (
+                      <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs">
+                        <span className="text-amber-500 mt-0.5">⚠</span>
+                        <div>
+                          <p className="font-semibold text-amber-600">Possible duplicate detected</p>
+                          {dupMatches.map((m: any) => (
+                            <p key={m.id} className="text-muted-foreground">{m.firstName} {m.lastName} — {m.email}</p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <div className="space-y-2"><Label className="text-xs font-semibold">Direct Phone *</Label><Input {...f("directPhone")} placeholder="+1 555 0123" className="rounded-xl bg-muted/30 border-border/50" /></div>
                   <div className="space-y-2"><Label className="text-xs font-semibold">Mobile Phone *</Label><Input {...f("mobilePhone")} placeholder="+1 555 0456" className="rounded-xl bg-muted/30 border-border/50" /></div>
                   <div className="space-y-2"><Label className="text-xs font-semibold">Company Phone</Label><Input {...f("companyPhone")} placeholder="+1 555 0000" className="rounded-xl bg-muted/30 border-border/50" /></div>
@@ -627,6 +660,43 @@ export default function Contacts() {
             <Button onClick={handleCreate} disabled={createMutation.isPending} className="rounded-xl shadow-sm">
               {createMutation.isPending ? "Creating..." : "Create Contact"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Bulk Add Tags Dialog */}
+      <Dialog open={bulkTagDialog} onOpenChange={setBulkTagDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Add Tags to {selectedIds.size} Contacts</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-2">
+            <Label>Tags (comma-separated)</Label>
+            <Input placeholder="e.g. vip, hot-lead, q4-prospect" value={bulkTagInput} onChange={e => setBulkTagInput(e.target.value)} className="rounded-xl" />
+            <p className="text-xs text-muted-foreground">These tags will be added to all selected contacts.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkTagDialog(false)} className="rounded-xl">Cancel</Button>
+            <Button disabled={!bulkTagInput.trim() || bulkUpdateContacts.isPending} onClick={() => {
+              const tags = bulkTagInput.split(",").map(t => t.trim()).filter(Boolean);
+              bulkUpdateContacts.mutate({ ids: Array.from(selectedIds), updates: { tags } }, { onSuccess: () => { setBulkTagDialog(false); setBulkTagInput(""); setSelectedIds(new Set()); } });
+            }} className="rounded-xl">{bulkUpdateContacts.isPending ? "Applying..." : `Apply Tags to ${selectedIds.size} Contacts`}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Bulk Set Status Dialog */}
+      <Dialog open={bulkStatusDialog} onOpenChange={setBulkStatusDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Set Status for {selectedIds.size} Contacts</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-2">
+            <Label>New Lead Status</Label>
+            <Select value={bulkStatusValue} onValueChange={setBulkStatusValue}>
+              <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+              <SelectContent>{LEAD_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkStatusDialog(false)} className="rounded-xl">Cancel</Button>
+            <Button disabled={bulkUpdateContacts.isPending} onClick={() => {
+              bulkUpdateContacts.mutate({ ids: Array.from(selectedIds), updates: { leadStatus: bulkStatusValue } }, { onSuccess: () => { setBulkStatusDialog(false); setSelectedIds(new Set()); } });
+            }} className="rounded-xl">{bulkUpdateContacts.isPending ? "Updating..." : `Update ${selectedIds.size} Contacts`}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

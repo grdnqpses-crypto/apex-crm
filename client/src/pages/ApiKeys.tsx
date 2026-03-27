@@ -6,19 +6,19 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Key, Copy, Trash2, MoreHorizontal, Shield, Code } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Plus, Key, Copy, Trash2, MoreHorizontal, Shield, Code, RotateCcw } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { toast } from "sonner";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
 import { useSkin } from "@/contexts/SkinContext";
 
-
 export default function ApiKeys() {
   const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
   const [newKey, setNewKey] = useState<string | null>(null);
+  const [rotatedKeyId, setRotatedKeyId] = useState<number | null>(null);
   const utils = trpc.useUtils();
 
   const { data: keys, isLoading } = trpc.apiKeys.list.useQuery();
@@ -27,7 +27,11 @@ export default function ApiKeys() {
     onError: (e) => toast.error(e.message),
   });
   const deleteMutation = trpc.apiKeys.delete.useMutation({
-    onSuccess: () => { utils.apiKeys.list.invalidate(); toast.success("API key deleted"); },
+    onSuccess: () => { utils.apiKeys.list.invalidate(); toast.success("API key revoked"); },
+  });
+  const rotateMutation = trpc.apiKeys.rotate.useMutation({
+    onSuccess: (data) => { utils.apiKeys.list.invalidate(); setNewKey(data.key); setShowCreate(true); toast.success("API key rotated — copy your new key"); },
+    onError: (e) => toast.error(e.message),
   });
 
   const [form, setForm] = useState({ name: "", expiresIn: "" });
@@ -49,7 +53,7 @@ export default function ApiKeys() {
           <h1 className="text-2xl font-bold text-foreground">API Keys</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Manage API keys for programmatic access to your CRM data.</p>
         </div>
-        <Button onClick={() => { setNewKey(null); setShowCreate(true); }} size="sm" className="gap-2">
+        <Button onClick={() => { setNewKey(null); setRotatedKeyId(null); setShowCreate(true); }} size="sm" className="gap-2">
           <Plus className="h-4 w-4" /> Generate Key
         </Button>
       </div>
@@ -78,7 +82,7 @@ export default function ApiKeys() {
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent">
                 <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name</TableHead>
-                <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Key</TableHead>
+                <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Key Prefix</TableHead>
                 <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Permissions</TableHead>
                 <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</TableHead>
                 <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Last Used</TableHead>
@@ -133,6 +137,10 @@ export default function ApiKeys() {
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => { setRotatedKeyId(key.id); rotateMutation.mutate({ id: key.id }); }}>
+                            <RotateCcw className="mr-2 h-4 w-4" /> Rotate Key
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate({ id: key.id })}>
                             <Trash2 className="mr-2 h-4 w-4" /> Revoke
                           </DropdownMenuItem>
@@ -147,22 +155,27 @@ export default function ApiKeys() {
         </CardContent>
       </Card>
 
-      {/* Create Key Dialog */}
-      <Dialog open={showCreate} onOpenChange={(open) => { setShowCreate(open); if (!open) setNewKey(null); }}>
+      {/* Create / Rotate Key Dialog */}
+      <Dialog open={showCreate} onOpenChange={(open) => { setShowCreate(open); if (!open) { setNewKey(null); setRotatedKeyId(null); } }}>
         <DialogContent className="bg-card border-border">
-          <DialogHeader><DialogTitle>{newKey ? "API Key Created" : "Generate API Key"}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{newKey ? (rotatedKeyId ? "Key Rotated — Save Your New Key" : "API Key Created") : "Generate API Key"}</DialogTitle>
+          </DialogHeader>
           {newKey ? (
             <div className="space-y-4">
               <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
                 <p className="text-sm font-medium text-warning mb-2">Copy this key now. You will not be able to see it again.</p>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 text-xs bg-secondary/30 p-2 rounded font-mono break-all text-foreground">{newKey}</code>
-                  <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(newKey); toast.success("Copied!"); }}>
+                  <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(newKey!); toast.success("Copied!"); }}>
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
-              <Button onClick={() => { setShowCreate(false); setNewKey(null); }} className="w-full">Done</Button>
+              {rotatedKeyId && (
+                <p className="text-xs text-muted-foreground">The previous key has been invalidated. Update any integrations using the old key immediately.</p>
+              )}
+              <Button onClick={() => { setShowCreate(false); setNewKey(null); setRotatedKeyId(null); }} className="w-full">Done</Button>
             </div>
           ) : (
             <>

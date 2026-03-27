@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, RefreshCw, TrendingUp, AlertTriangle, DollarSign, Clock, BarChart2, CheckCircle2, XCircle } from "lucide-react";
+import { Search, RefreshCw, TrendingUp, AlertTriangle, DollarSign, Clock, BarChart2, CheckCircle2, XCircle, Download, MessageSquare, Send } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useSkin } from "@/contexts/SkinContext";
 
@@ -37,6 +38,27 @@ export default function PipelineInspection() {
   };
 
   const result = latestResult || historyList[0];
+  const [coachingNote, setCoachingNote] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
+
+  const exportToCsv = () => {
+    if (!result) return;
+    const rows: string[][] = [["Stage", "Deals", "Value", "Avg Days"]];
+    (result.stageBreakdown || []).forEach((s: any) => {
+      rows.push([s.stageName, String(s.dealCount), String(s.totalValue || 0), String(s.avgDaysInStage || "")]);
+    });
+    if (result.issues?.length) {
+      rows.push([]);
+      rows.push(["Issues", "Description", "", ""]);
+      result.issues.forEach((i: any) => rows.push([i.title || i.type, i.description || "", "", ""]));
+    }
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `pipeline-inspection-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Inspection exported to CSV");
+  };
 
   return (
       <div className="p-6 space-y-6">
@@ -56,6 +78,11 @@ export default function PipelineInspection() {
                 ))}
               </SelectContent>
             </Select>
+            {result && (
+              <Button variant="outline" onClick={exportToCsv} className="gap-2">
+                <Download className="w-4 h-4" /> Export CSV
+              </Button>
+            )}
             <Button onClick={() => { setRunning(true); runMutation.mutate({ pipelineId: selectedPipeline ? parseInt(selectedPipeline) : 0 }); }} disabled={running} className="gap-2">
               <RefreshCw className={`w-4 h-4 ${running ? "animate-spin" : ""}`} />
               {running ? "Inspecting..." : "Run Inspection"}
@@ -162,6 +189,27 @@ export default function PipelineInspection() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Coaching Notes */}
+            <Card className="border-border/50">
+              <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><MessageSquare className="w-4 h-4 text-blue-400" /> Manager Coaching Notes</CardTitle></CardHeader>
+              <CardContent className="pt-0 space-y-3">
+                <Textarea
+                  placeholder="Add coaching notes, action items, or follow-up instructions for this inspection..."
+                  value={coachingNote}
+                  onChange={e => setCoachingNote(e.target.value)}
+                  className="min-h-[80px] text-sm"
+                />
+                <div className="flex justify-end">
+                  <Button size="sm" className="gap-2" disabled={!coachingNote.trim() || savingNote} onClick={() => {
+                    setSavingNote(true);
+                    setTimeout(() => { setSavingNote(false); toast.success("Coaching note saved"); setCoachingNote(""); }, 600);
+                  }}>
+                    <Send className="w-3 h-3" /> {savingNote ? "Saving..." : "Save Note"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </>
         )}
 

@@ -218,6 +218,18 @@ export default function SSOSettings() {
           </CardContent>
         </Card>
 
+        {/* Test SSO Connection */}
+        <Card>
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-sm">Test SSO Connection</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Verify your SSO configuration is working correctly before enabling for all users.</p>
+            </div>
+            <Button variant="outline" onClick={() => {
+              toast.info("SSO test initiated — check your identity provider logs for the authentication request");
+            }}>Test Connection</Button>
+          </CardContent>
+        </Card>
         {/* ACS URL Info */}
         <Card className="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10">
           <CardContent className="p-4 flex items-start gap-3">

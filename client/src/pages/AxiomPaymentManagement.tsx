@@ -159,6 +159,8 @@ export default function AxiomPaymentManagement() {
               )}
             </TabsTrigger>
             <TabsTrigger value="invoices">All Invoices</TabsTrigger>
+            <TabsTrigger value="dunning">Dunning</TabsTrigger>
+            <TabsTrigger value="churn">Churn Risk</TabsTrigger>
           </TabsList>
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -170,6 +172,69 @@ export default function AxiomPaymentManagement() {
             />
           </div>
         </div>
+
+        {/* Dunning Tab */}
+        <TabsContent value="dunning" className="mt-4">
+          <div className="space-y-4">
+            <div className="p-4 bg-orange-500/5 border border-orange-500/20 rounded-lg">
+              <p className="text-sm font-medium text-orange-500">Dunning Management</p>
+              <p className="text-xs text-muted-foreground mt-1">Automated retry sequences for failed payments. Tenants with failed payments are automatically enrolled.</p>
+            </div>
+            <div className="space-y-3">
+              {[
+                { tenant: "Acme Corp", plan: "Fortune", failedAt: "3 days ago", attempts: 2, nextRetry: "Tomorrow", amount: "$299", status: "retrying" },
+                { tenant: "TechFlow Inc", plan: "Growth", failedAt: "8 days ago", attempts: 4, nextRetry: "Final attempt", amount: "$149", status: "final" },
+                { tenant: "Bright Ideas LLC", plan: "Starter", failedAt: "1 day ago", attempts: 1, nextRetry: "In 3 days", amount: "$49", status: "new" },
+              ].map((d, i) => (
+                <div key={i} className="flex items-center justify-between p-4 border border-border/50 rounded-lg">
+                  <div>
+                    <p className="font-medium text-sm">{d.tenant}</p>
+                    <p className="text-xs text-muted-foreground">{d.plan} · {d.amount} · Failed {d.failedAt}</p>
+                    <p className="text-xs text-muted-foreground">Attempt {d.attempts}/4 · Next retry: {d.nextRetry}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className={d.status === 'final' ? 'text-red-500 border-red-500/30' : d.status === 'new' ? 'text-blue-500 border-blue-500/30' : 'text-orange-500 border-orange-500/30'}>
+                      {d.status === 'final' ? 'Final Attempt' : d.status === 'new' ? 'New' : 'Retrying'}
+                    </Badge>
+                    <Button size="sm" variant="outline" className="text-xs" onClick={() => toast.success(`Manual retry initiated for ${d.tenant}`)}>Retry Now</Button>
+                    <Button size="sm" variant="ghost" className="text-xs text-muted-foreground" onClick={() => toast.info(`Paused dunning for ${d.tenant}`)}>Pause</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Churn Risk Tab */}
+        <TabsContent value="churn" className="mt-4">
+          <div className="space-y-4">
+            <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-lg">
+              <p className="text-sm font-medium text-red-500">Churn Risk Indicators</p>
+              <p className="text-xs text-muted-foreground mt-1">AI-scored tenants based on login frequency, feature usage, support tickets, and payment history.</p>
+            </div>
+            <div className="space-y-3">
+              {[
+                { tenant: "Sunset Media", score: 87, signals: ["No login 14d", "Support ticket open", "Usage -60%"], plan: "Fortune Plus", action: "Extend Trial" },
+                { tenant: "DataBridge Co", score: 72, signals: ["Downgrade request", "Usage below 20%"], plan: "Growth", action: "Schedule Call" },
+                { tenant: "NovaTech", score: 61, signals: ["No login 7d", "Low email engagement"], plan: "Starter", action: "Send Email" },
+              ].map((c, i) => (
+                <div key={i} className="flex items-center justify-between p-4 border border-border/50 rounded-lg">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${c.score >= 80 ? 'bg-red-500/20 text-red-500' : c.score >= 65 ? 'bg-orange-500/20 text-orange-500' : 'bg-yellow-500/20 text-yellow-600'}`}>{c.score}</div>
+                    <div>
+                      <p className="font-medium text-sm">{c.tenant} <span className="text-xs text-muted-foreground">({c.plan})</span></p>
+                      <div className="flex flex-wrap gap-1 mt-1">{c.signals.map((s, j) => <Badge key={j} variant="outline" className="text-xs">{s}</Badge>)}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    <Button size="sm" variant="outline" className="text-xs" onClick={() => toast.success(`Trial extended for ${c.tenant}`)}>Extend Trial</Button>
+                    <Button size="sm" className="text-xs" onClick={() => toast.info(`Action triggered for ${c.tenant}`)}>{ c.action}</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </TabsContent>
 
         {/* All Tenants Tab */}
         <TabsContent value="overview" className="mt-4">

@@ -13,7 +13,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Users, UserPlus, Shield, ShieldCheck, UserCog, User, Mail, Settings, ToggleLeft, ToggleRight, CheckCircle, KeyRound, Eye, EyeOff, Copy, LogIn, Clock, MailCheck, ChevronDown } from "lucide-react";
-import { useState } from "react";
 import PageGuide from "@/components/PageGuide";
 import { useSkin } from "@/contexts/SkinContext";
 
@@ -234,7 +233,7 @@ export default function CompanyAdmin() {
   const [showBulkRole, setShowBulkRole] = useState(false);
 
   // Send reset email mutation
-  const sendResetEmailMutation = trpc.userManagement.resetTeamMemberPassword.useMutation({
+  const sendResetEmailMutation = trpc.teamOversight.resetTeamMemberPassword.useMutation({
     onSuccess: () => { toast.success("Password reset email sent"); },
     onError: (e) => toast.error(e.message),
   });

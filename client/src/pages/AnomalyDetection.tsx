@@ -3,7 +3,8 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Activity, CheckCircle2, RefreshCw, Shield, TrendingDown, TrendingUp, Zap } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertTriangle, Activity, CheckCircle2, RefreshCw, Shield, TrendingDown, TrendingUp, Zap, Brain, Settings2, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { useSkin } from "@/contexts/SkinContext";
 
@@ -26,10 +27,13 @@ export default function AnomalyDetection() {
     onError: (e) => toast.error(e.message),
   });
 
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [showThresholds, setShowThresholds] = useState(false);
+
   const alertList = alerts as any[] || [];
-  const openAlerts = alertList.filter((a: any) => a.status === "open");
-  const criticalAlerts = alertList.filter((a: any) => a.severity === "critical" && a.status === "open");
-  const resolvedAlerts = alertList.filter((a: any) => a.status === "resolved");
+  const openAlerts = alertList.filter((a: any) => !a.isResolved);
+  const criticalAlerts = alertList.filter((a: any) => a.severity === "critical" && !a.isResolved);
+  const resolvedAlerts = alertList.filter((a: any) => a.isResolved);
 
   const severityColor: Record<string, string> = {
     critical: "bg-red-500/20 text-red-400 border-red-500/30",
@@ -48,6 +52,7 @@ export default function AnomalyDetection() {
   };
 
   return (
+    <>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -56,6 +61,9 @@ export default function AnomalyDetection() {
             <p className="text-muted-foreground mt-1">Continuous monitoring of revenue, pipeline, and email metrics — AI flags unusual patterns before they become problems</p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowThresholds(true)}>
+              <Settings2 className="w-4 h-4" /> Thresholds
+            </Button>
             {openAlerts.length > 0 && (
               <Button variant="outline" onClick={() => resolveAllMutation.mutate()} disabled={resolveAllMutation.isPending}>
                 {resolveAllMutation.isPending ? "Resolving..." : "Resolve All"}
@@ -122,31 +130,46 @@ export default function AnomalyDetection() {
               <div className="space-y-3">
                 {openAlerts.map((alert: any) => {
                   const Icon = typeIcon[alert.anomalyType] || AlertTriangle;
+                  const isExpanded = expandedId === alert.id;
                   return (
                     <Card key={alert.id} className={`border ${severityColor[alert.severity]?.split(" ").pop() || "border-border/50"}`}>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between gap-4">
-                          <div className="flex items-start gap-3">
+                          <div className="flex items-start gap-3 flex-1 min-w-0">
                             <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${severityColor[alert.severity]?.split(" ").slice(0, 2).join(" ") || "bg-gray-500/20 text-gray-400"}`}>
                               <Icon className="w-5 h-5" />
                             </div>
-                            <div>
+                            <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="font-semibold">{alert.title || alert.anomalyType?.replace(/_/g, " ")}</span>
                                 <Badge className={severityColor[alert.severity] || "bg-gray-500/20 text-gray-400"}>{alert.severity}</Badge>
+                                <span className="text-xs text-muted-foreground">{new Date(alert.detectedAt || alert.createdAt).toLocaleString()}</span>
                               </div>
                               <p className="text-sm text-muted-foreground mt-1">{alert.description}</p>
                               {alert.affectedMetric && (
                                 <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
                                   <span>Metric: <span className="text-foreground">{alert.affectedMetric}</span></span>
-                                  {alert.currentValue !== null && <span>Current: <span className="text-foreground">{alert.currentValue}</span></span>}
-                                  {alert.expectedValue !== null && <span>Expected: <span className="text-foreground">{alert.expectedValue}</span></span>}
-                                  {alert.deviation !== null && <span>Deviation: <span className={alert.deviation > 0 ? "text-red-400" : "text-green-400"}>{alert.deviation > 0 ? "+" : ""}{alert.deviation?.toFixed(1)}%</span></span>}
+                                  {alert.currentValue != null && <span>Current: <span className="text-foreground">{typeof alert.currentValue === 'number' ? alert.currentValue.toFixed(1) : alert.currentValue}</span></span>}
+                                  {alert.previousValue != null && <span>Previous: <span className="text-foreground">{typeof alert.previousValue === 'number' ? alert.previousValue.toFixed(1) : alert.previousValue}</span></span>}
+                                  {alert.changePercent != null && <span>Change: <span className={alert.changePercent < 0 ? "text-red-400" : "text-green-400"}>{alert.changePercent > 0 ? "+" : ""}{alert.changePercent?.toFixed(1)}%</span></span>}
                                 </div>
                               )}
                               {alert.suggestedAction && (
                                 <div className="mt-2 p-2 bg-primary/5 rounded text-xs text-muted-foreground border border-primary/10">
                                   <span className="text-primary font-medium">Suggested: </span>{alert.suggestedAction}
+                                </div>
+                              )}
+                              {/* AI Explanation */}
+                              {alert.aiExplanation && (
+                                <div className="mt-2">
+                                  <button className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300" onClick={() => setExpandedId(isExpanded ? null : alert.id)}>
+                                    <Brain className="w-3 h-3" /> AI Root Cause Analysis {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                  </button>
+                                  {isExpanded && (
+                                    <div className="mt-2 p-3 bg-purple-500/5 border border-purple-500/20 rounded-lg text-xs text-muted-foreground whitespace-pre-wrap">
+                                      {alert.aiExplanation}
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -185,5 +208,33 @@ export default function AnomalyDetection() {
           )}
         </div>
       </div>
+
+      {/* Threshold Config Dialog */}
+      <Dialog open={showThresholds} onOpenChange={setShowThresholds}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Settings2 className="w-5 h-5" /> Detection Thresholds</DialogTitle></DialogHeader>
+          <div className="space-y-4 text-sm">
+            <p className="text-muted-foreground">These thresholds control when anomalies are flagged. Adjust sensitivity based on your business volatility.</p>
+            {[
+              { label: "Revenue Drop Alert", desc: "Flag when revenue drops more than X% week-over-week", default: "20%" },
+              { label: "Deal Velocity Slowdown", desc: "Flag when avg deal cycle increases by more than X%", default: "30%" },
+              { label: "Email Bounce Rate", desc: "Flag when bounce rate exceeds X%", default: "5%" },
+              { label: "Pipeline Stall", desc: "Flag deals stuck in same stage for more than X days", default: "14 days" },
+              { label: "Activity Spike", desc: "Flag when activity volume increases by more than X%", default: "200%" },
+              { label: "Conversion Drop", desc: "Flag when lead-to-deal conversion drops by more than X%", default: "25%" },
+            ].map(t => (
+              <div key={t.label} className="flex items-start justify-between gap-3 p-3 rounded-lg bg-muted/30">
+                <div className="flex-1">
+                  <p className="font-medium">{t.label}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t.desc}</p>
+                </div>
+                <Badge variant="outline" className="text-xs flex-shrink-0">{t.default}</Badge>
+              </div>
+            ))}
+            <p className="text-xs text-muted-foreground italic">Custom threshold configuration is available in the Enterprise plan. Current thresholds are optimized defaults.</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

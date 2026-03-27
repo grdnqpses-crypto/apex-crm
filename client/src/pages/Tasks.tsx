@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
-  Plus, Calendar, MoreHorizontal, Trash2, Phone, Mail, ClipboardList, RefreshCw,
+  Plus, Calendar, MoreHorizontal, Trash2, Phone, Mail, ClipboardList, RefreshCw, UserCheck,
   Building2, User, Target, Clock, Search, Briefcase, DollarSign, MessageSquare,
   FileText, Zap, BarChart2, Video, MapPin, Link2, Tag, AlertCircle, Eye,
   TrendingUp, Shield, Bell, Layers, ChevronRight, Edit2
@@ -147,6 +147,8 @@ export default function Tasks() {
   const { data: campaignsData } = trpc.campaigns.list.useQuery({ limit: 50 });
   const { data: workflowsData } = trpc.workflows.list.useQuery();
   const { data: battleCardsData } = trpc.battleCards.list.useQuery({ limit: 50 });
+  const { data: teamMembersData } = trpc.teamOversight.getTeamCredentials.useQuery();
+  const [reassignTaskId, setReassignTaskId] = useState<number | null>(null);
 
   const createMutation = trpc.tasks.create.useMutation({
     onSuccess: () => {
@@ -888,6 +890,9 @@ export default function Tasks() {
                         <DropdownMenuItem onClick={() => updateMutation.mutate({ id: task.id, status: "not_started" })}>
                           Mark Not Started
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setReassignTaskId(task.id); }}>
+                          <UserCheck className="mr-2 h-4 w-4" /> Reassign
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => deleteMutation.mutate({ id: task.id })}
@@ -1247,6 +1252,24 @@ export default function Tasks() {
           })()}
         </SheetContent>
       </Sheet>
+
+      {/* Reassign Task Dialog */}
+      <Dialog open={reassignTaskId !== null} onOpenChange={open => { if (!open) setReassignTaskId(null); }}>
+        <DialogContent className="max-w-sm bg-card border-border/50 rounded-2xl">
+          <DialogHeader><DialogTitle>Reassign Task</DialogTitle></DialogHeader>
+          <div className="space-y-2 py-2">
+            {(teamMembersData || []).map((u: any) => (
+              <button key={u.id} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 text-left transition-colors" onClick={() => {
+                if (reassignTaskId) updateMutation.mutate({ id: reassignTaskId, assignedTo: u.id });
+                setReassignTaskId(null);
+              }}>
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">{(u.name || u.email || '?')[0].toUpperCase()}</div>
+                <div><p className="text-sm font-medium">{u.name || u.email}</p><p className="text-xs text-muted-foreground">{u.email}</p></div>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -835,6 +835,12 @@ export async function deleteApiKey(id: number, userId: number) {
   await db.delete(apiKeys).where(and(eq(apiKeys.id, id), eq(apiKeys.userId, userId)));
 }
 
+export async function rotateApiKey(id: number, userId: number, keyHash: string, keyPrefix: string) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(apiKeys).set({ keyHash, keyPrefix }).where(and(eq(apiKeys.id, id), eq(apiKeys.userId, userId)));
+}
+
 // ─── Webhooks ───
 export async function listWebhooks(userId: number) {
   const db = await getDb();
@@ -4249,3 +4255,36 @@ export async function getDashboardTrendStats(
   };
 }
 
+
+// ─── Impersonation Audit Log ───
+export async function logImpersonationStart(data: {
+  emulatorUserId: number; emulatorName: string | null; emulatorEmail: string | null;
+  emulatedUserId: number; emulatedName: string | null; emulatedEmail: string | null;
+  ipAddress: string | null; userAgent: string | null;
+}) {
+  const db = await getDb();
+  if (!db) return;
+  const { impersonationAuditLog } = await import("../drizzle/schema.js");
+  await db.insert(impersonationAuditLog).values({
+    emulatorUserId: data.emulatorUserId,
+    emulatorName: data.emulatorName,
+    emulatorEmail: data.emulatorEmail,
+    emulatedUserId: data.emulatedUserId,
+    emulatedName: data.emulatedName,
+    emulatedEmail: data.emulatedEmail,
+    startedAt: Date.now(),
+    ipAddress: data.ipAddress,
+    userAgent: data.userAgent,
+    createdAt: Date.now(),
+  });
+}
+
+export async function getImpersonationAuditLog(limit = 100, offset = 0) {
+  const db = await getDb();
+  if (!db) return [];
+  const { impersonationAuditLog } = await import("../drizzle/schema.js");
+  return db.select().from(impersonationAuditLog)
+    .orderBy(desc(impersonationAuditLog.createdAt))
+    .limit(limit)
+    .offset(offset);
+}

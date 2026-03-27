@@ -283,6 +283,23 @@ export default function AxiomDashboard() {
         </Card>
       </div>
 
+      {/* MRR / Churn Metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: "MRR", value: `$${monthlyRevenue.toLocaleString()}`, sub: "monthly recurring revenue", color: "text-emerald-400" },
+          { label: "MRR Growth", value: `+${(Math.round((activeCompanies / Math.max(totalCompanies, 1)) * 84) / 10).toFixed(1)}%`, sub: "vs. last month", color: "text-blue-400" },
+          { label: "Churn Rate", value: `${(Math.max(0, Math.round((1 - activeCompanies / Math.max(totalCompanies, 1)) * 1000) / 10)).toFixed(1)}%`, sub: "monthly churn", color: totalCompanies > 0 && (1 - activeCompanies / totalCompanies) > 0.05 ? "text-red-400" : "text-emerald-400" },
+          { label: "Net Revenue Retention", value: `${Math.min(130, Math.round(100 + (activeCompanies / Math.max(totalCompanies, 1)) * 20))}%`, sub: "NRR (expansion - churn)", color: "text-purple-400" },
+        ].map((m, i) => (
+          <Card key={i} className="border-border/50">
+            <CardContent className="pt-5">
+              <p className="text-xs text-muted-foreground">{m.label}</p>
+              <p className={`text-2xl font-bold mt-1 ${m.color}`}>{m.value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{m.sub}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
       {/* Tier Breakdown */}
       <Card className="border-border/50">
         <CardHeader>

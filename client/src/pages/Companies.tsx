@@ -6,9 +6,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Building2, Globe, MoreHorizontal, Trash2, Users, ChevronRight, AlertTriangle, MapPin, Phone as PhoneIcon, DollarSign, Kanban, Tag, Briefcase, TrendingUp, MessageSquare, UserCheck, CheckSquare, Workflow, Sparkles, Pencil, Link2, ShieldCheck, Activity } from "lucide-react";
+import { Plus, Search, Building2, Globe, MoreHorizontal, Trash2, Users, ChevronRight, AlertTriangle, MapPin, Phone as PhoneIcon, DollarSign, Kanban, Tag, Briefcase, TrendingUp, MessageSquare, UserCheck, CheckSquare, Workflow, Sparkles, Pencil, Link2, ShieldCheck, Activity, UserPlus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MapView } from "@/components/Map";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -376,6 +376,10 @@ export default function Companies() {
                           <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setLocation(`/companies/${company.id}`); }} className="rounded-lg">
                             <ChevronRight className="mr-2 h-4 w-4" /> View Details
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setLocation(`/contacts?companyId=${company.id}&addNew=true`); }} className="rounded-lg">
+                            <UserPlus className="mr-2 h-4 w-4" /> Add Contact
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-destructive rounded-lg"
                             onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: company.id, name: company.name }); }}

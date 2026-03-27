@@ -422,7 +422,7 @@ export default function Campaigns() {
                           <DropdownMenuItem onClick={() => {
                             const preview = window.open('', '_blank', 'width=700,height=600');
                             if (preview) {
-                              preview.document.write(`<html><head><title>Preview: ${campaign.name}</title><style>body{font-family:sans-serif;padding:24px;max-width:600px;margin:auto;color:#111}</style></head><body><h2 style="margin-bottom:4px">${campaign.subject || campaign.name}</h2><p style="color:#666;font-size:13px">From: ${campaign.fromName || 'Unknown'}</p><hr/>${(campaign as any).htmlContent || campaign.body || '<p style="color:#888">No content</p>'}</body></html>`);
+                              preview.document.write(`<html><head><title>Preview: ${campaign.name}</title><style>body{font-family:sans-serif;padding:24px;max-width:600px;margin:auto;color:#111}</style></head><body><h2 style="margin-bottom:4px">${campaign.subject || campaign.name}</h2><p style="color:#666;font-size:13px">From: ${campaign.fromName || 'Unknown'}</p><hr/>${(campaign as any).htmlContent || '<p style="color:#888">No content</p>'}</body></html>`);
                               preview.document.close();
                             }
                           }}>

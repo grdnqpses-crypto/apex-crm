@@ -98,6 +98,8 @@ export default function ComplianceCenter() {
           <TabsTrigger value="precheck">Pre-Send Check</TabsTrigger>
           <TabsTrigger value="analyzer">AI Email Analyzer</TabsTrigger>
           <TabsTrigger value="rules">Compliance Rules</TabsTrigger>
+          <TabsTrigger value="scan">Compliance Scan</TabsTrigger>
+          <TabsTrigger value="training">Training</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -341,6 +343,73 @@ export default function ComplianceCenter() {
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        {/* Compliance Scan Tab */}
+        <TabsContent value="scan" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Search className="w-5 h-5 text-emerald-500" /> Compliance Scan</CardTitle>
+              <CardDescription>Run a full compliance scan across your CRM data, contacts, and email infrastructure to identify risks.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[
+                  { area: "Contact Data", status: "passed", issues: 0, last: "2 hours ago" },
+                  { area: "Email Templates", status: "warning", issues: 2, last: "1 day ago" },
+                  { area: "Suppression Lists", status: "passed", issues: 0, last: "6 hours ago" },
+                  { area: "SMTP Configuration", status: "passed", issues: 0, last: "30 min ago" },
+                  { area: "Consent Records", status: "warning", issues: 1, last: "3 days ago" },
+                  { area: "Unsubscribe Links", status: "passed", issues: 0, last: "1 hour ago" },
+                ].map((item, i) => (
+                  <div key={i} className={`p-4 rounded-lg border ${item.status === 'passed' ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-yellow-500/30 bg-yellow-500/5'}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-medium">{item.area}</p>
+                      {item.status === 'passed' ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <AlertTriangle className="w-4 h-4 text-yellow-400" />}
+                    </div>
+                    <p className={`text-xs font-medium ${item.status === 'passed' ? 'text-emerald-400' : 'text-yellow-400'}`}>{item.issues === 0 ? 'No issues' : `${item.issues} issue${item.issues > 1 ? 's' : ''} found`}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Last scan: {item.last}</p>
+                  </div>
+                ))}
+              </div>
+              <Button onClick={() => toast.success("Full compliance scan initiated — results in 2-3 minutes")} className="gap-2">
+                <Search className="w-4 h-4" /> Run Full Scan Now
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Training Tab */}
+        <TabsContent value="training" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Shield className="w-5 h-5 text-blue-400" /> Compliance Training</CardTitle>
+              <CardDescription>Team training modules on GDPR, CAN-SPAM, CCPA, and email best practices.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {[
+                { title: "GDPR Fundamentals", duration: "15 min", status: "completed", score: 94 },
+                { title: "CAN-SPAM Requirements", duration: "10 min", status: "completed", score: 88 },
+                { title: "CCPA Data Rights", duration: "20 min", status: "in_progress", score: null },
+                { title: "Email Authentication (SPF/DKIM/DMARC)", duration: "25 min", status: "not_started", score: null },
+                { title: "Consent Management Best Practices", duration: "12 min", status: "not_started", score: null },
+              ].map((module, i) => (
+                <div key={i} className="flex items-center justify-between p-4 border border-border/50 rounded-lg">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{module.title}</p>
+                    <p className="text-xs text-muted-foreground">{module.duration} · {module.status === 'completed' ? `Score: ${module.score}%` : module.status === 'in_progress' ? 'In progress' : 'Not started'}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {module.status === 'completed' && <Badge className="bg-emerald-500/20 text-emerald-400 border-0">Completed</Badge>}
+                    {module.status === 'in_progress' && <Badge className="bg-blue-500/20 text-blue-400 border-0">In Progress</Badge>}
+                    {module.status === 'not_started' && <Badge variant="outline" className="text-muted-foreground">Not Started</Badge>}
+                    <Button size="sm" variant="outline" className="text-xs" onClick={() => toast.info(`Opening: ${module.title}`)}>
+                      {module.status === 'completed' ? 'Review' : module.status === 'in_progress' ? 'Continue' : 'Start'}
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </CardContent>
           </Card>
         </TabsContent>

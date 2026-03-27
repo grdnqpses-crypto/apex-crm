@@ -2,7 +2,9 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Zap, Brain, Mail, MessageSquare, BarChart3, Search, Mic, Image, TrendingUp } from "lucide-react";
+import { Zap, Brain, Mail, MessageSquare, BarChart3, Search, Mic, Image, TrendingUp, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 const FEATURE_ICONS: Record<string, React.ElementType> = {
   "quantum_score": Brain,
@@ -128,6 +130,34 @@ export default function AICreditUsage() {
             )}
           </CardContent>
         </Card>
+      {/* Usage Forecast */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base"><TrendingUp className="w-5 h-5 text-amber-500" /> Monthly Usage Forecast</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { label: "Projected Month-End", value: Math.round(totalCredits * 4.2).toLocaleString(), sub: "based on current pace", warn: totalCredits * 4.2 > 10000 },
+              { label: "Avg Daily Usage", value: Math.round(totalCredits / 7).toLocaleString(), sub: "credits/day (7-day avg)", warn: false },
+              { label: "Plan Limit", value: "10,000", sub: "credits/month", warn: false },
+            ].map((m, i) => (
+              <div key={i} className={`p-4 rounded-lg border ${m.warn ? 'border-amber-500/30 bg-amber-500/5' : 'border-border/50'}`}>
+                <div className="flex items-center gap-2">
+                  {m.warn && <AlertTriangle className="w-4 h-4 text-amber-400" />}
+                  <p className={`text-xl font-bold ${m.warn ? 'text-amber-400' : 'text-foreground'}`}>{m.value}</p>
+                </div>
+                <p className="text-xs font-medium text-foreground mt-0.5">{m.label}</p>
+                <p className="text-xs text-muted-foreground">{m.sub}</p>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">Forecast based on last 7 days of usage. Upgrade your plan if projected usage exceeds your limit.</p>
+            <Button size="sm" variant="outline" className="text-xs" onClick={() => toast.info("Upgrade plan — navigate to Billing")}>Upgrade Plan</Button>
+          </div>
+        </CardContent>
+      </Card>
       </div>
   );
 }

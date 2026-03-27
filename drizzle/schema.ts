@@ -3895,3 +3895,20 @@ export const emulationSessions = mysqlTable("emulation_sessions", {
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
 });
 export type EmulationSession = typeof emulationSessions.$inferSelect;
+
+export const impersonationAuditLog = mysqlTable("impersonation_audit_log", {
+  id: int("id").autoincrement().primaryKey(),
+  emulatorUserId: int("emulator_user_id").notNull(),
+  emulatorName: varchar("emulator_name", { length: 256 }),
+  emulatorEmail: varchar("emulator_email", { length: 256 }),
+  emulatedUserId: int("emulated_user_id").notNull(),
+  emulatedName: varchar("emulated_name", { length: 256 }),
+  emulatedEmail: varchar("emulated_email", { length: 256 }),
+  startedAt: bigint("started_at", { mode: "number" }).notNull(),
+  endedAt: bigint("ended_at", { mode: "number" }),
+  actionsTaken: int("actions_taken").default(0),
+  ipAddress: varchar("ip_address", { length: 64 }),
+  userAgent: varchar("user_agent", { length: 512 }),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+export type ImpersonationAuditLog = typeof impersonationAuditLog.$inferSelect;

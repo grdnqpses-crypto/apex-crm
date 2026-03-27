@@ -1,14 +1,16 @@
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
+import { useState, useMemo } from "react";
 import {
   CreditCard, Download, ExternalLink, RefreshCw, AlertCircle,
-  CheckCircle2, Clock, XCircle, Calendar, TrendingUp, Receipt
+  CheckCircle2, Clock, XCircle, Calendar, TrendingUp, Receipt, Search
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { useSkin } from "@/contexts/SkinContext";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
@@ -48,9 +50,31 @@ export default function BillingHistory() {
     );
   }
 
+  const [search, setSearch] = useState("");
   const sub = data?.subscriptionStatus;
   const invoices = data?.invoices ?? [];
   const totalPaid = invoices.filter(i => i.status === "paid").reduce((sum, i) => sum + i.amount, 0);
+  const filteredInvoices = useMemo(() => {
+    if (!search.trim()) return invoices;
+    const q = search.toLowerCase();
+    return invoices.filter((i: any) => i.number?.toLowerCase().includes(q) || String(i.amount / 100).includes(q) || i.status?.toLowerCase().includes(q));
+  }, [invoices, search]);
+  // Monthly spend trend
+  const monthlySpend = useMemo(() => {
+    const map: Record<string, number> = {};
+    invoices.filter((i: any) => i.status === "paid").forEach((i: any) => {
+      const key = new Date(i.date).toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+      map[key] = (map[key] || 0) + i.amount;
+    });
+    return Object.entries(map).slice(-6).map(([month, amount]) => ({ month, amount }));
+  }, [invoices]);
+  const maxSpend = Math.max(...monthlySpend.map(m => m.amount), 1);
+  const handleBulkDownload = () => {
+    const rows = ["Invoice,Date,Amount,Status", ...filteredInvoices.map((i: any) => `${i.number || i.id},${new Date(i.date).toLocaleDateString()},${(i.amount / 100).toFixed(2)},${i.status}`)];
+    const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "billing-history.csv"; a.click(); URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -141,10 +165,34 @@ export default function BillingHistory() {
       {/* Invoice Table */}
       <Card className="border-stone-200 shadow-sm">
         <CardHeader className="pb-3 px-5 pt-5">
-          <CardTitle className="text-base font-semibold text-stone-800 flex items-center gap-2">
-            <Receipt className="w-4 h-4 text-amber-500" />
-            Invoice History
-          </CardTitle>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <CardTitle className="text-base font-semibold text-stone-800 flex items-center gap-2">
+              <Receipt className="w-4 h-4 text-amber-500" />
+              Invoice History
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
+                <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search invoices..." className="pl-8 h-8 text-xs w-48 bg-stone-50 border-stone-200" />
+              </div>
+              <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={handleBulkDownload} disabled={filteredInvoices.length === 0}>
+                <Download className="w-3.5 h-3.5" /> Export CSV
+              </Button>
+            </div>
+          </div>
+          {monthlySpend.length > 1 && (
+            <div className="mt-4">
+              <p className="text-xs text-stone-500 mb-2">Monthly Spend (last 6 months)</p>
+              <div className="flex items-end gap-1.5 h-16">
+                {monthlySpend.map(m => (
+                  <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
+                    <div className="w-full rounded-t bg-amber-400/70 hover:bg-amber-500 transition-colors" style={{ height: `${Math.round((m.amount / maxSpend) * 48)}px` }} title={`$${(m.amount / 100).toFixed(2)}`} />
+                    <span className="text-[9px] text-stone-400">{m.month}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </CardHeader>
         <CardContent className="px-0 pb-0">
           {isLoading ? (
@@ -170,11 +218,11 @@ export default function BillingHistory() {
                   </tr>
                 </thead>
                 <tbody>
-                  {invoices.map((inv, i) => {
+                  {filteredInvoices.map((inv, i) => {
                     const statusCfg = STATUS_CONFIG[inv.status ?? "draft"] ?? STATUS_CONFIG.draft;
                     const StatusIcon = statusCfg.icon;
                     return (
-                      <tr key={inv.id} className={`border-b border-stone-50 hover:bg-stone-50/50 transition-colors ${i === invoices.length - 1 ? "border-0" : ""}`}>
+                      <tr key={inv.id} className={`border-b border-stone-50 hover:bg-stone-50/50 transition-colors ${i === filteredInvoices.length - 1 ? "border-0" : ""}`}>
                         <td className="px-5 py-4 font-mono text-xs text-stone-600">{inv.number ?? inv.id.slice(-8).toUpperCase()}</td>
                         <td className="px-5 py-4 text-stone-700 max-w-[200px] truncate">{inv.description}</td>
                         <td className="px-5 py-4 text-stone-600 whitespace-nowrap">

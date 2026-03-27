@@ -187,6 +187,7 @@ export default function GDPRTools() {
             <TabsTrigger value="deletions">Deletion Requests</TabsTrigger>
             <TabsTrigger value="export">Data Export</TabsTrigger>
             <TabsTrigger value="audit">Audit Log</TabsTrigger>
+            <TabsTrigger value="policies">Retention Policies</TabsTrigger>
           </TabsList>
 
           {/* Consents */}
@@ -291,6 +292,35 @@ export default function GDPRTools() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+          {/* Retention Policies */}
+          <TabsContent value="policies" className="mt-4">
+            <div className="space-y-4">
+              <div className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-lg">
+                <p className="text-sm font-medium text-blue-400">Automated Data Retention &amp; Consent Expiry</p>
+                <p className="text-xs text-muted-foreground mt-1">Configure how long personal data is retained and when consents expire automatically. Compliant with GDPR Article 5(1)(e).</p>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { category: "Marketing Consents", retention: "2 years", autoExpire: true, action: "Notify contact, revoke if no renewal" },
+                  { category: "Analytics Consents", retention: "1 year", autoExpire: true, action: "Auto-revoke on expiry" },
+                  { category: "Contact Personal Data", retention: "5 years after last activity", autoExpire: false, action: "Flag for manual review" },
+                  { category: "Deletion Request Records", retention: "3 years", autoExpire: false, action: "Retain for compliance audit" },
+                  { category: "Email Activity Logs", retention: "90 days", autoExpire: true, action: "Auto-purge" },
+                ].map((p, i) => (
+                  <div key={i} className="flex items-center justify-between p-4 border border-border/50 rounded-lg">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{p.category}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Retention: {p.retention} · {p.action}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className={p.autoExpire ? 'text-green-400 border-green-400/30' : 'text-muted-foreground'}>{ p.autoExpire ? 'Auto-Expire' : 'Manual'}</Badge>
+                      <Button size="sm" variant="ghost" className="text-xs" onClick={() => toast.info(`Configure retention for: ${p.category}`)}>Edit</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

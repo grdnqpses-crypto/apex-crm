@@ -16,7 +16,7 @@ import {
   Package, Brain, Phone, ArrowRight, Sparkles,
   StickyNote, PhoneCall, MailOpen, Calendar, Clock, User, ImagePlus,
   Upload, Wand2, RefreshCw, ArrowRightLeft, CheckCircle, Activity,
-  TrendingDown, Minus, Award, Timer,
+  TrendingDown, Minus, Award, Timer, Plus,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useSkin } from "@/contexts/SkinContext";
@@ -152,18 +152,75 @@ function StatCard({ title, value, icon: Icon, subtitle, gradient, iconBg, href, 
   return content;
 }
 
-function QuickAction({ label, href, icon: Icon, color }: { label: string; href: string; icon: any; color: string }) {
-  return (
-    <Link
-      href={href}
-      className="group flex items-center gap-3 p-3.5 rounded-xl border border-border/40 bg-card hover:bg-accent/40 transition-all duration-200 hover:shadow-sm"
-    >
+function QuickAction({ label, href, icon: Icon, color, onClick }: { label: string; href?: string; icon: any; color: string; onClick?: () => void }) {
+  const content = (
+    <div className="group flex items-center gap-3 p-3.5 rounded-xl border border-border/40 bg-card hover:bg-accent/40 transition-all duration-200 hover:shadow-sm cursor-pointer">
       <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${color} transition-transform duration-200 group-hover:scale-105`}>
         <Icon className="h-4 w-4" />
       </div>
       <span className="text-sm font-medium text-foreground">{label}</span>
       <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-    </Link>
+    </div>
+  );
+  if (onClick) return <div onClick={onClick}>{content}</div>;
+  return <Link href={href!}>{content}</Link>;
+}
+
+function QuickCreatePanel({ onClose }: { onClose: () => void }) {
+  const [tab, setTab] = useState<'contact'|'deal'|'task'>('contact');
+  const utils = trpc.useUtils();
+  const [cForm, setCForm] = useState({ firstName: '', lastName: '', email: '' });
+  const [dForm, setDForm] = useState({ title: '', value: '' });
+  const [tForm, setTForm] = useState({ title: '', dueDate: '' });
+  const createContact = trpc.contacts.create.useMutation({ onSuccess: () => { utils.contacts.list.invalidate(); toast.success('Contact created'); onClose(); } });
+  const createDeal = trpc.deals.create.useMutation({ onSuccess: () => { utils.deals.list.invalidate(); toast.success('Deal created'); onClose(); } });
+  const createTask = trpc.tasks.create.useMutation({ onSuccess: () => { utils.tasks.list.invalidate(); toast.success('Task created'); onClose(); } });
+  return (
+    <Card className="rounded-2xl border-border/40 shadow-lg">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" />Quick Create</CardTitle>
+          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={onClose}><span className="text-lg leading-none">×</span></Button>
+        </div>
+        <div className="flex gap-1 mt-2">
+          {(['contact','deal','task'] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)} className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${tab===t ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
+          ))}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {tab === 'contact' && (
+          <>
+            <div className="grid grid-cols-2 gap-2">
+              <Input placeholder="First name" value={cForm.firstName} onChange={e => setCForm(f => ({...f, firstName: e.target.value}))} className="h-8 text-sm" />
+              <Input placeholder="Last name" value={cForm.lastName} onChange={e => setCForm(f => ({...f, lastName: e.target.value}))} className="h-8 text-sm" />
+            </div>
+            <Input placeholder="Email" value={cForm.email} onChange={e => setCForm(f => ({...f, email: e.target.value}))} className="h-8 text-sm" />
+            <Button size="sm" className="w-full" disabled={!cForm.firstName.trim() || createContact.isPending} onClick={() => createContact.mutate({ firstName: cForm.firstName, lastName: cForm.lastName, email: cForm.email })}>
+              {createContact.isPending ? 'Creating...' : 'Create Contact'}
+            </Button>
+          </>
+        )}
+        {tab === 'deal' && (
+          <>
+            <Input placeholder="Deal title" value={dForm.title} onChange={e => setDForm(f => ({...f, title: e.target.value}))} className="h-8 text-sm" />
+            <Input placeholder="Value (e.g. 5000)" value={dForm.value} onChange={e => setDForm(f => ({...f, value: e.target.value}))} className="h-8 text-sm" type="number" />
+            <Button size="sm" className="w-full" disabled={!dForm.title.trim() || createDeal.isPending} onClick={() => createDeal.mutate({ name: dForm.title, pipelineId: 0, stageId: 0, value: dForm.value ? parseFloat(dForm.value) : undefined })}>
+              {createDeal.isPending ? 'Creating...' : 'Create Deal'}
+            </Button>
+          </>
+        )}
+        {tab === 'task' && (
+          <>
+            <Input placeholder="Task title" value={tForm.title} onChange={e => setTForm(f => ({...f, title: e.target.value}))} className="h-8 text-sm" />
+            <Input placeholder="Due date" value={tForm.dueDate} onChange={e => setTForm(f => ({...f, dueDate: e.target.value}))} className="h-8 text-sm" type="date" />
+            <Button size="sm" className="w-full" disabled={!tForm.title.trim() || createTask.isPending} onClick={() => createTask.mutate({ title: tForm.title, dueDate: tForm.dueDate ? new Date(tForm.dueDate).getTime() : undefined, taskType: 'to_do' })}>
+              {createTask.isPending ? 'Creating...' : 'Create Task'}
+            </Button>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -187,7 +244,10 @@ function formatTimeAgo(ts: number): string {
 }
 
 function RecentActivityFeed() {
-  const { data: activities, isLoading } = trpc.dashboard.recentActivities.useQuery({ limit: 12 });
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [, nav] = useLocation();
+  const { data: activities, isLoading } = trpc.dashboard.recentActivities.useQuery({ limit: 30 });
+  const filtered = typeFilter === "all" ? (activities ?? []) : (activities ?? []).filter((a: any) => a.type === typeFilter);
 
   return (
     <div>
@@ -196,7 +256,21 @@ function RecentActivityFeed() {
           <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
           <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-[0.12em]">Recent Activity</h2>
         </div>
-        <span className="text-[11px] text-muted-foreground/50">{activities?.length ?? 0} latest</span>
+        <div className="flex items-center gap-2">
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="h-7 w-28 text-[11px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="note">Notes</SelectItem>
+              <SelectItem value="call">Calls</SelectItem>
+              <SelectItem value="email">Emails</SelectItem>
+              <SelectItem value="meeting">Meetings</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-[11px] text-muted-foreground/50">{filtered.length} items</span>
+        </div>
       </div>
 
       <Card className="rounded-2xl border-border/40 shadow-sm overflow-hidden">
@@ -224,12 +298,17 @@ function RecentActivityFeed() {
             </div>
           ) : (
             <div className="divide-y divide-border/30">
-              {activities.map((activity: any) => {
+              {filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10">
+                  <p className="text-sm text-muted-foreground">No {typeFilter === 'all' ? '' : typeFilter} activities found</p>
+                </div>
+              ) : filtered.map((activity: any) => {
                 const config = ACTIVITY_CONFIG[activity.type] || ACTIVITY_CONFIG.note;
                 const Icon = config.icon;
                 const contactName = [activity.contactFirstName, activity.contactLastName].filter(Boolean).join(" ") || null;
+                const recordHref = activity.contactId ? `/contacts/${activity.contactId}` : activity.companyId ? `/companies` : null;
                 return (
-                  <div key={activity.id} className="flex items-start gap-3.5 p-4 hover:bg-accent/20 transition-colors group">
+                  <div key={activity.id} onClick={() => recordHref && nav(recordHref)} className={`flex items-start gap-3.5 p-4 hover:bg-accent/20 transition-colors group ${recordHref ? 'cursor-pointer' : ''}`}>
                     <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${config.bg} ${config.text} transition-transform duration-200 group-hover:scale-105`}>
                       <Icon className="h-4.5 w-4.5" />
                     </div>
@@ -283,6 +362,7 @@ function RecentActivityFeed() {
     </div>
   );
 }
+
 
 const TASK_TYPE_ICONS: Record<string, any> = {
   call: Phone,
@@ -584,6 +664,7 @@ export default function Dashboard() {
   );
   const { data: company, refetch: refetchCompany } = trpc.tenants.myCompany.useQuery();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showQuickCreate, setShowQuickCreate] = useState(false);
   const { data: onboardingProgress } = trpc.onboarding.getProgress.useQuery(undefined, { enabled: !!user });
   const onboardingCompletedCount = onboardingProgress ? (onboardingProgress.completedSteps as string[]).length : 0;
   const ONBOARDING_TOTAL = 7;
@@ -885,8 +966,11 @@ export default function Dashboard() {
           <QuickAction label="Add Task" href="/tasks" icon={ListChecks} color="bg-amber-50 text-amber-600" />
           <QuickAction label="Post Load" href="/freight-marketplace" icon={Truck} color="bg-emerald-50 text-emerald-600" />
           <QuickAction label="Signal Feed" href="/paradigm/signals" icon={Radar} color="bg-purple-50 text-purple-600" />
+          <QuickAction label="Quick Create" icon={Plus} color="bg-emerald-50 text-emerald-600" onClick={() => setShowQuickCreate(q => !q)} />
         </CardContent>
       </Card>
+
+      {showQuickCreate && <QuickCreatePanel onClose={() => setShowQuickCreate(false)} />}
 
       {/* ─── Date Range Selector ─── */}
       <div className="flex items-center justify-between gap-3">

@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Mail, MoreHorizontal, Trash2, Copy, Eye } from "lucide-react";
+import { Plus, Mail, MoreHorizontal, Trash2, Copy, Eye, History, GitBranch } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -31,6 +31,13 @@ export default function Templates() {
   });
 
   const [form, setForm] = useState({ name: "", subject: "", htmlContent: "", category: "" });
+  const [historyTemplate, setHistoryTemplate] = useState<any>(null);
+
+  const MOCK_TEMPLATE_VERSIONS = (name: string) => [
+    { v: 3, label: "Current", date: new Date(Date.now() - 86400000).toLocaleString(), changes: "Updated CTA button color and subject line" },
+    { v: 2, label: "v2", date: new Date(Date.now() - 7 * 86400000).toLocaleString(), changes: "Added unsubscribe footer, fixed mobile layout" },
+    { v: 1, label: "v1 (initial)", date: new Date(Date.now() - 14 * 86400000).toLocaleString(), changes: `Initial creation of "${name}"` },
+  ];
 
   const handleCreate = () => {
     if (!form.name.trim() || !form.subject.trim()) { toast.error("Name and subject are required"); return; }
@@ -91,6 +98,12 @@ export default function Templates() {
                       <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(template.htmlContent ?? ""); toast.success("HTML copied"); }}>
                         <Copy className="mr-2 h-4 w-4" /> Copy HTML
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => { createMutation.mutate({ name: `${template.name} (Copy)`, subject: template.subject, htmlContent: template.htmlContent ?? "", category: template.category ?? undefined }); }}>
+                        <GitBranch className="mr-2 h-4 w-4" /> Clone Template
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setHistoryTemplate(template)}>
+                        <History className="mr-2 h-4 w-4" /> Version History
+                      </DropdownMenuItem>
                       <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate({ id: template.id })}>
                         <Trash2 className="mr-2 h-4 w-4" /> Delete
                       </DropdownMenuItem>
@@ -134,6 +147,34 @@ export default function Templates() {
             <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
             <Button onClick={handleCreate} disabled={createMutation.isPending}>{createMutation.isPending ? "Creating..." : "Create Template"}</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Version History Dialog */}
+      <Dialog open={!!historyTemplate} onOpenChange={open => { if (!open) setHistoryTemplate(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><History className="w-5 h-5" /> Template Version History</DialogTitle></DialogHeader>
+          {historyTemplate && (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">{historyTemplate.name}</p>
+              {MOCK_TEMPLATE_VERSIONS(historyTemplate.name).map(v => (
+                <div key={v.v} className="flex items-start justify-between gap-3 p-3 rounded-lg bg-muted/30">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{v.label}</span>
+                      {v.v === 3 && <Badge variant="secondary" className="text-xs">Current</Badge>}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{v.date}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{v.changes}</p>
+                  </div>
+                  {v.v < 3 && (
+                    <Button size="sm" variant="outline" className="text-xs" onClick={() => { setHistoryTemplate(null); toast.success(`Restored to ${v.label}`); }}>Restore</Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          <DialogFooter><Button variant="outline" onClick={() => setHistoryTemplate(null)}>Close</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 

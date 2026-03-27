@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { DollarSign, Plus, FileText, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react";
+import { DollarSign, Plus, FileText, TrendingUp, AlertCircle, CheckCircle2, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSkin } from "@/contexts/SkinContext";
 
@@ -79,10 +79,19 @@ export default function AccountsReceivable() {
           </h1>
           <p className="text-muted-foreground text-sm mt-1">Manage customer invoices and incoming payments</p>
         </div>
-        <Button onClick={() => setShowCreate(true)} className="bg-green-600 hover:bg-green-700 text-white">
-          <Plus className="h-4 w-4 mr-2" />
-          New Invoice
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => {
+            const rows = [["Invoice #","Issue Date","Due Date","Amount","Balance Due","Status"]];
+            (data?.items ?? []).forEach((inv: any) => rows.push([inv.invoiceNumber, new Date(inv.issueDate).toLocaleDateString(), inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : "", fmt(inv.totalCents), fmt(inv.balanceDueCents), inv.status]));
+            const csv = rows.map(r => r.join(",")).join("\n");
+            const a = document.createElement("a"); a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv); a.download = "ar-aging-report.csv"; a.click();
+            toast.success("Aging report exported");
+          }}><Download className="h-4 w-4 mr-2" />Export CSV</Button>
+          <Button onClick={() => setShowCreate(true)} className="bg-green-600 hover:bg-green-700 text-white">
+            <Plus className="h-4 w-4 mr-2" />
+            New Invoice
+          </Button>
+        </div>
       </div>
 
       {/* Aging Report */}

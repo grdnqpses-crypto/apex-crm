@@ -218,6 +218,9 @@ export default function Deals() {
 
   const totalPipelineValue = dealData?.items?.filter(d => d.status === "open").reduce((sum, d) => sum + (d.value ?? 0), 0) ?? 0;
   const totalOpenDeals = dealData?.items?.filter(d => d.status === "open").length ?? 0;
+  const wonThisMonth = dealData?.items?.filter(d => d.status === "won" && d.closedAt && new Date(d.closedAt).getMonth() === new Date().getMonth() && new Date(d.closedAt).getFullYear() === new Date().getFullYear()).reduce((sum, d) => sum + (d.value ?? 0), 0) ?? 0;
+  const wonLastMonth = dealData?.items?.filter(d => { if (d.status !== "won" || !d.closedAt) return false; const dt = new Date(d.closedAt); const now = new Date(); const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1); return dt.getMonth() === lm.getMonth() && dt.getFullYear() === lm.getFullYear(); }).reduce((sum, d) => sum + (d.value ?? 0), 0) ?? 0;
+  const wonPctChange = wonLastMonth > 0 ? Math.round(((wonThisMonth - wonLastMonth) / wonLastMonth) * 100) : null;
 
   // Completeness score for deals
   const getDealScore = (d: any): number => {
@@ -261,6 +264,11 @@ export default function Deals() {
                 <span className="text-sm font-semibold text-emerald-600 flex items-center gap-1">
                   <TrendingUp className="h-3.5 w-3.5" /> {formatCurrency(totalPipelineValue)} pipeline
                 </span>
+                {wonPctChange !== null && (
+                  <span className={`text-xs font-medium px-1.5 py-0.5 rounded-md ${wonPctChange >= 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-500'}`}>
+                    {wonPctChange >= 0 ? '▲' : '▼'} {Math.abs(wonPctChange)}% vs last month
+                  </span>
+                )}
               </div>
             </div>
           </div>

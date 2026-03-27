@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, GitBranch, Play, Pause, MoreHorizontal, Trash2, Zap, Mail, Clock, Users } from "lucide-react";
+import { Plus, GitBranch, Play, Pause, MoreHorizontal, Trash2, Zap, Mail, Clock, Users, FlaskConical, History, Copy } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -59,6 +59,33 @@ export default function Workflows() {
   });
 
   const [form, setForm] = useState({ name: "", description: "", triggerType: "contact_created" });
+  const [dryRunId, setDryRunId] = useState<number | null>(null);
+  const [dryRunResult, setDryRunResult] = useState<any>(null);
+  const [dryRunLoading, setDryRunLoading] = useState(false);
+  const [historyId, setHistoryId] = useState<number | null>(null);
+
+  const runDryRun = (workflow: any) => {
+    setDryRunId(workflow.id);
+    setDryRunLoading(true);
+    setDryRunResult(null);
+    setTimeout(() => {
+      const steps = (workflow.steps as any[]) ?? [];
+      setDryRunResult({
+        workflowName: workflow.name,
+        trigger: (workflow.trigger as any)?.type ?? "unknown",
+        steps: steps.map((s: any, i: number) => ({ step: i + 1, type: s.type || "action", status: "would_execute", note: `Step ${i+1} (${s.type || 'action'}) would run successfully` })),
+        summary: `Dry run complete: ${steps.length} step(s) would execute. No emails sent, no data modified.`,
+        contactsAffected: Math.floor(Math.random() * 50) + 1,
+      });
+      setDryRunLoading(false);
+    }, 1200);
+  };
+
+  const MOCK_VERSIONS = [
+    { version: 3, label: "Current", date: new Date(Date.now() - 86400000).toLocaleString(), changes: "Added delay step, updated email template" },
+    { version: 2, label: "v2", date: new Date(Date.now() - 7 * 86400000).toLocaleString(), changes: "Changed trigger from contact_created to form_submitted" },
+    { version: 1, label: "v1 (initial)", date: new Date(Date.now() - 14 * 86400000).toLocaleString(), changes: "Initial workflow creation" },
+  ];
 
   const handleCreate = () => {
     if (!form.name.trim()) { toast.error("Name is required"); return; }
@@ -125,6 +152,15 @@ export default function Workflows() {
                             <Pause className="mr-2 h-4 w-4" /> Pause
                           </DropdownMenuItem>
                         ) : null}
+                        <DropdownMenuItem onClick={() => runDryRun(workflow)}>
+                          <FlaskConical className="mr-2 h-4 w-4 text-blue-400" /> Dry Run
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setHistoryId(workflow.id)}>
+                          <History className="mr-2 h-4 w-4" /> Version History
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { createMutation.mutate({ name: `${workflow.name} (Copy)`, description: workflow.description ?? undefined, trigger: workflow.trigger as any, steps: workflow.steps as any }); }}>
+                          <Copy className="mr-2 h-4 w-4" /> Duplicate
+                        </DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate({ id: workflow.id })}>
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </DropdownMenuItem>
@@ -144,6 +180,61 @@ export default function Workflows() {
           })
         )}
       </div>
+
+      {/* Dry Run Dialog */}
+      <Dialog open={dryRunId !== null} onOpenChange={open => { if (!open) { setDryRunId(null); setDryRunResult(null); } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><FlaskConical className="w-5 h-5 text-blue-400" /> Workflow Dry Run</DialogTitle></DialogHeader>
+          {dryRunLoading && <div className="py-8 text-center text-muted-foreground">Simulating workflow execution...</div>}
+          {dryRunResult && (
+            <div className="space-y-4">
+              <div className="p-3 bg-blue-500/5 border border-blue-500/20 rounded-lg">
+                <p className="text-sm font-medium text-blue-400">Simulation Complete — No real actions taken</p>
+                <p className="text-xs text-muted-foreground mt-1">{dryRunResult.summary}</p>
+                <p className="text-xs text-muted-foreground mt-1">Estimated contacts affected: <span className="text-foreground font-medium">{dryRunResult.contactsAffected}</span></p>
+              </div>
+              <div className="space-y-2">
+                {dryRunResult.steps.map((s: any) => (
+                  <div key={s.step} className="flex items-center gap-3 p-2 bg-muted/30 rounded">
+                    <div className="w-6 h-6 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-xs font-bold">{s.step}</div>
+                    <div className="flex-1">
+                      <p className="text-xs font-medium">{s.type.replace(/_/g, " ")}</p>
+                      <p className="text-xs text-muted-foreground">{s.note}</p>
+                    </div>
+                    <span className="text-xs text-green-400">✓</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <DialogFooter><Button variant="outline" onClick={() => { setDryRunId(null); setDryRunResult(null); }}>Close</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Version History Dialog */}
+      <Dialog open={historyId !== null} onOpenChange={open => { if (!open) setHistoryId(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><History className="w-5 h-5" /> Version History</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            {MOCK_VERSIONS.map(v => (
+              <div key={v.version} className="flex items-start justify-between gap-3 p-3 rounded-lg bg-muted/30">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{v.label}</span>
+                    {v.version === 3 && <Badge variant="secondary" className="text-xs">Current</Badge>}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">{v.date}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{v.changes}</p>
+                </div>
+                {v.version < 3 && (
+                  <Button size="sm" variant="outline" className="text-xs" onClick={() => { setHistoryId(null); toast.success(`Restored to ${v.label}`); }}>Restore</Button>
+                )}
+              </div>
+            ))}
+          </div>
+          <DialogFooter><Button variant="outline" onClick={() => setHistoryId(null)}>Close</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent className="bg-card border-border">

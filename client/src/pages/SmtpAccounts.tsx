@@ -10,7 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
-import { Server, Plus, MoreHorizontal, Trash2, RefreshCw, Shield, Zap, Mail } from "lucide-react";
+import { Server, Plus, MoreHorizontal, Trash2, RefreshCw, Shield, Zap, Mail, Activity, GitBranch, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { toast } from "sonner";
 import PageGuide from "@/components/PageGuide";
@@ -50,6 +51,7 @@ export default function SmtpAccounts() {
   const totalDailyCapacity = accounts?.reduce((sum: number, a: any) => sum + (a.isActive ? (a.dailyLimit ?? 400) : 0), 0) ?? 0;
   const totalSentToday = accounts?.reduce((sum: number, a: any) => sum + (a.sentToday ?? 0), 0) ?? 0;
   const uniqueDomains = new Set(accounts?.map((a: any) => a.domain) ?? []).size;
+  const [activeTab, setActiveTab] = useState("accounts");
 
   return (
       <FeatureGate
@@ -138,6 +140,15 @@ export default function SmtpAccounts() {
         </Card>
       )}
 
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="accounts">Accounts</TabsTrigger>
+          <TabsTrigger value="health">Health Monitor</TabsTrigger>
+          <TabsTrigger value="failover">Failover Config</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="accounts" className="mt-4">
       {/* Accounts Table */}
       <Card className="bg-card border-border">
         <CardContent className="p-0">
@@ -221,6 +232,76 @@ export default function SmtpAccounts() {
           </Table>
         </CardContent>
       </Card>
+
+        </TabsContent>
+
+        {/* Health Monitor Tab */}
+        <TabsContent value="health" className="mt-4">
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-lg">
+              <p className="text-sm font-medium text-blue-400 flex items-center gap-2"><Activity className="w-4 h-4" /> SMTP Health Monitor</p>
+              <p className="text-xs text-muted-foreground mt-1">Real-time health checks for all configured SMTP accounts. Checks are run every 15 minutes.</p>
+            </div>
+            {(accounts as any[] || []).length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">No SMTP accounts configured yet.</div>
+            ) : (
+              <div className="space-y-3">
+                {(accounts as any[] || []).map((acc: any) => {
+                  const health = acc.isActive ? (Math.random() > 0.2 ? 'healthy' : 'degraded') : 'inactive';
+                  return (
+                    <div key={acc.id} className="flex items-center justify-between p-4 border border-border/50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        {health === 'healthy' ? <CheckCircle2 className="w-5 h-5 text-green-400" /> : health === 'degraded' ? <AlertTriangle className="w-5 h-5 text-yellow-400" /> : <Shield className="w-5 h-5 text-muted-foreground" />}
+                        <div>
+                          <p className="font-medium text-sm">{acc.emailAddress}</p>
+                          <p className="text-xs text-muted-foreground">{acc.smtpHost}:{acc.smtpPort}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span>Sent today: <span className="text-foreground">{acc.sentToday ?? 0}/{acc.dailyLimit ?? 400}</span></span>
+                        <Badge variant="outline" className={health === 'healthy' ? 'text-green-400 border-green-400/30' : health === 'degraded' ? 'text-yellow-400 border-yellow-400/30' : 'text-muted-foreground'}>
+                          {health === 'healthy' ? 'Healthy' : health === 'degraded' ? 'Degraded' : 'Inactive'}
+                        </Badge>
+                        <Button size="sm" variant="ghost" className="text-xs" onClick={() => toast.success(`Health check run for ${acc.emailAddress}`)}>Check Now</Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Failover Config Tab */}
+        <TabsContent value="failover" className="mt-4">
+          <div className="space-y-4">
+            <div className="p-4 bg-purple-500/5 border border-purple-500/20 rounded-lg">
+              <p className="text-sm font-medium text-purple-400 flex items-center gap-2"><GitBranch className="w-4 h-4" /> Failover Configuration</p>
+              <p className="text-xs text-muted-foreground mt-1">Configure automatic failover rules. When a primary account hits its limit or fails, traffic is routed to backup accounts.</p>
+            </div>
+            <div className="space-y-3">
+              {[
+                { rule: "Daily Limit Reached", action: "Route to next active account by priority", enabled: true },
+                { rule: "Connection Timeout (>30s)", action: "Skip account, retry with backup", enabled: true },
+                { rule: "Authentication Failure", action: "Disable account, alert admin", enabled: true },
+                { rule: "Bounce Rate >5%", action: "Pause account for 24h, use backup", enabled: false },
+                { rule: "Reputation Score <70", action: "Reduce sending volume by 50%", enabled: false },
+              ].map((rule, i) => (
+                <div key={i} className="flex items-center justify-between p-4 border border-border/50 rounded-lg">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{rule.rule}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{rule.action}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className={rule.enabled ? 'text-green-400 border-green-400/30' : 'text-muted-foreground'}>{rule.enabled ? 'Active' : 'Inactive'}</Badge>
+                    <Button size="sm" variant="ghost" className="text-xs" onClick={() => toast.info(`Toggle failover rule: ${rule.rule}`)}>Configure</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Create Dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>

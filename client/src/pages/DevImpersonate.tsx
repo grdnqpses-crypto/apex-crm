@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { Eye, Search, Shield, ShieldCheck, UserCog, User, X, CheckCircle, XCircle, Palette, RotateCcw } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Eye, Search, Shield, ShieldCheck, UserCog, User, X, CheckCircle, XCircle, Palette, RotateCcw, ClipboardList } from "lucide-react";
 import PageGuide from "@/components/PageGuide";
 import { SkinQAPanel } from "@/components/SkinQAPanel";
 import { useSkin, SkinId, SKINS } from "@/contexts/SkinContext";
@@ -52,7 +52,7 @@ export default function DevImpersonate() {
   const { data: allFeatures } = trpc.tenants.allFeatures.useQuery();
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<"users" | "skins">("users");
+  const [activeTab, setActiveTab] = useState<"users" | "skins" | "audit">("users");
   const { skinId, setSkin } = useSkin();
 
   const { data: impersonatedUser, isLoading: impLoading } = trpc.devTools.impersonateUser.useQuery(
@@ -60,13 +60,16 @@ export default function DevImpersonate() {
     { enabled: !!selectedUserId }
   );
 
-  // Fetch the client's skin when a user is selected
+  const { data: auditLog, isLoading: auditLoading } = trpc.devTools.impersonationAuditLog.useQuery(
+    undefined,
+    { enabled: activeTab === "audit" }
+  );
+
   const { data: clientSkinData } = trpc.migration.getClientSkin.useQuery(
     { userId: selectedUserId! },
     { enabled: !!selectedUserId }
   );
 
-  // Auto-apply the client's skin when a user is selected
   useEffect(() => {
     if (clientSkinData?.skin && selectedUserId) {
       setSkin(clientSkinData.skin as SkinId);
@@ -87,12 +90,13 @@ export default function DevImpersonate() {
       <PageGuide title="Developer Tools" description="View clients as they see it, and QA-test all skins" sections={[
         { title: "User Impersonation", content: "Select a user to view their profile, features, and — critically — their active CRM skin. The UI automatically switches to match their skin so you see exactly what they see.", icon: "purpose" },
         { title: "Skin QA Switcher", content: "Manually switch between all 7 competitor skins to verify colors, fonts, terminology, and layouts are correct before client delivery.", icon: "purpose" },
+        { title: "Audit Trail", content: "Every impersonation session is logged here with the admin who triggered it, the account accessed, timestamp, and IP address.", icon: "purpose" },
       ]} />
 
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Developer Tools</h1>
-          <p className="text-muted-foreground text-sm mt-1">Impersonate clients and QA-test all skins</p>
+          <p className="text-muted-foreground text-sm mt-1">Impersonate clients, QA-test all skins, and review audit logs</p>
         </div>
         {skinId !== "axiom" && (
           <div className="flex items-center gap-2">
@@ -108,21 +112,14 @@ export default function DevImpersonate() {
 
       {/* Tab switcher */}
       <div className="flex gap-1 p-1 bg-muted/40 rounded-xl w-fit">
-        <Button
-          variant={activeTab === "users" ? "default" : "ghost"}
-          size="sm"
-          className="rounded-lg gap-2"
-          onClick={() => setActiveTab("users")}
-        >
+        <Button variant={activeTab === "users" ? "default" : "ghost"} size="sm" className="rounded-lg gap-2" onClick={() => setActiveTab("users")}>
           <Eye className="h-4 w-4" /> User Impersonation
         </Button>
-        <Button
-          variant={activeTab === "skins" ? "default" : "ghost"}
-          size="sm"
-          className="rounded-lg gap-2"
-          onClick={() => setActiveTab("skins")}
-        >
+        <Button variant={activeTab === "skins" ? "default" : "ghost"} size="sm" className="rounded-lg gap-2" onClick={() => setActiveTab("skins")}>
           <Palette className="h-4 w-4" /> Skin QA Switcher
+        </Button>
+        <Button variant={activeTab === "audit" ? "default" : "ghost"} size="sm" className="rounded-lg gap-2" onClick={() => setActiveTab("audit")}>
+          <ClipboardList className="h-4 w-4" /> Audit Trail
         </Button>
       </div>
 
@@ -130,10 +127,75 @@ export default function DevImpersonate() {
       {activeTab === "skins" && (
         <Card className="rounded-2xl border-border/40 shadow-sm">
           <CardContent className="p-6">
-            <SkinQAPanel
-              clientSkin={clientSkin}
-              clientName={impersonatedUser?.user?.name ?? undefined}
-            />
+            <SkinQAPanel clientSkin={clientSkin} clientName={impersonatedUser?.user?.name ?? undefined} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Audit Trail tab */}
+      {activeTab === "audit" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <ClipboardList className="h-4 w-4 text-primary" /> Impersonation Audit Log
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">Every admin impersonation session is recorded here for compliance and security review.</p>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border hover:bg-transparent">
+                  <TableHead className="text-xs uppercase tracking-wider text-muted-foreground">Admin</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider text-muted-foreground">Impersonated</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider text-muted-foreground">Started At</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider text-muted-foreground">IP Address</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider text-muted-foreground">User Agent</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {auditLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i} className="border-border">
+                      {Array.from({ length: 5 }).map((_, j) => (
+                        <TableCell key={j}><div className="h-4 w-24 bg-muted rounded animate-pulse" /></TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : !auditLog?.length ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                      No impersonation sessions recorded yet.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  auditLog.map((entry: any) => (
+                    <TableRow key={entry.id} className="border-border hover:bg-secondary/30">
+                      <TableCell>
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{entry.emulatorName || "Unknown"}</p>
+                          <p className="text-xs text-muted-foreground">{entry.emulatorEmail}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{entry.emulatedName || "Unknown"}</p>
+                          <p className="text-xs text-muted-foreground">{entry.emulatedEmail}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(entry.startedAt).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground font-mono">
+                        {entry.ipAddress || "—"}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
+                        {entry.userAgent || "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       )}
@@ -190,43 +252,26 @@ export default function DevImpersonate() {
                 <CardContent className="py-16 text-center text-muted-foreground">
                   <Eye className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>Select a user to view their perspective</p>
-                  <p className="text-xs mt-2 opacity-60">The UI will automatically switch to their active skin</p>
+                  <p className="text-xs mt-2 opacity-60">The UI will automatically switch to their active skin. Session will be logged in the Audit Trail.</p>
                 </CardContent>
               </Card>
             ) : impLoading ? (
               <Card><CardContent className="py-16 text-center text-muted-foreground">Loading user data...</CardContent></Card>
             ) : impersonatedUser ? (
               <>
-                {/* Skin indicator for this client */}
                 {clientSkin && (
-                  <div
-                    className="flex items-center gap-3 p-3 rounded-xl border"
-                    style={{
-                      background: `${SKINS[clientSkin]?.primaryColor}12`,
-                      borderColor: `${SKINS[clientSkin]?.primaryColor}30`,
-                    }}
-                  >
+                  <div className="flex items-center gap-3 p-3 rounded-xl border" style={{ background: `${SKINS[clientSkin]?.primaryColor}12`, borderColor: `${SKINS[clientSkin]?.primaryColor}30` }}>
                     <span className="text-xl">{SKINS[clientSkin]?.logo}</span>
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-foreground">
-                        Viewing in <span style={{ color: SKINS[clientSkin]?.primaryColor }}>{clientSkinName}</span> skin
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        This client migrated from {clientSkinName}. The entire UI now matches their experience.
-                      </p>
+                      <p className="text-sm font-semibold text-foreground">Viewing in <span style={{ color: SKINS[clientSkin]?.primaryColor }}>{clientSkinName}</span> skin</p>
+                      <p className="text-xs text-muted-foreground">This client migrated from {clientSkinName}. The entire UI now matches their experience.</p>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="rounded-lg text-xs gap-1.5 shrink-0"
-                      onClick={() => { setActiveTab("skins"); }}
-                    >
+                    <Button variant="outline" size="sm" className="rounded-lg text-xs gap-1.5 shrink-0" onClick={() => setActiveTab("skins")}>
                       <Palette className="h-3.5 w-3.5" /> Change Skin
                     </Button>
                   </div>
                 )}
 
-                {/* User Profile Card */}
                 <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between">
@@ -262,10 +307,14 @@ export default function DevImpersonate() {
                       <div><span className="text-muted-foreground">Phone:</span> <span className="font-medium">{impersonatedUser.user.phone || "N/A"}</span></div>
                       <div><span className="text-muted-foreground">Last Login:</span> <span className="font-medium">{impersonatedUser.user.lastSignedIn ? new Date(impersonatedUser.user.lastSignedIn).toLocaleString() : "Never"}</span></div>
                     </div>
+                    <div className="pt-2 border-t border-border">
+                      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <ClipboardList className="h-3.5 w-3.5" /> This session has been logged in the <button className="text-primary underline" onClick={() => setActiveTab("audit")}>Audit Trail</button>.
+                      </p>
+                    </div>
                   </CardContent>
                 </Card>
 
-                {/* Feature Access Card */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base">Feature Access ({impersonatedUser.features.length}/{allFeatures?.length || 0})</CardTitle>
