@@ -47,6 +47,8 @@ import { socialMediaRouter } from "./routers/social-media";
 import { proposalAnalyticsRouter } from "./routers/proposal-analytics";
 import { bulkOperationsRouter } from "./routers/bulk-operations";
 import { crmGuidesRouter } from "./routers/crm-guides";
+import { crmGapsRouter } from "./routers/crm-gaps";
+import { remainingFeaturesRouter } from "./routers/remaining-features";
 
 export const appRouter = router({
   system: systemRouter,
@@ -121,6 +123,8 @@ export const appRouter = router({
   socialMedia: socialMediaRouter,
   bulkOperations: bulkOperationsRouter,
   crmGuides: crmGuidesRouter,
+  crmGaps: crmGapsRouter,
+  remainingFeatures: remainingFeaturesRouter,
   auth: router({
     me: publicProcedure.query(async ({ ctx }) => {
       if (!ctx.user) return null;

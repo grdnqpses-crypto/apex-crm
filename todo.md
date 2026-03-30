@@ -2982,20 +2982,20 @@
 - [x] Contacts: Bulk tag/DNC/status action bar
 
 ### CRM Section - Remaining Gaps
-- [ ] Companies: Merge button in list + duplicate warning badge + health score column
-- [ ] Contacts: Lead score column + duplicate badge + bulk email action
-- [ ] Deals: Probability weighting display + bulk stage change + aging badge
-- [ ] Tasks: Recurring tasks + task dependencies + time tracking timer
-- [ ] Email Sync: Inline email composer + attachment preview + email-to-deal association
-- [ ] Proposals: Version history + reading heatmap + auto-update deal stage on sign
-- [ ] Custom Objects: Automation triggers + bulk CSV import
-- [ ] Rotten Deals: One-click re-engagement task + per-stage threshold + CSV export
-- [ ] Account Hierarchy: Revenue roll-up + export to PDF/Excel
-- [ ] Territory Management: Performance dashboard + auto-assignment rules + conflict detection
-- [ ] Product Catalog: Inventory tracking + product win/loss analytics + bundle builder
-- [ ] AI Next Best Action: Recommendation rationale + one-click execution + thumbs feedback
-- [ ] Web Forms Builder: Multi-step forms + conditional logic + form analytics
-- [ ] E-Signature: Bulk send + document template library + audit certificate download
+- [x] Companies: Merge button in list + duplicate warning badge + health score column (created crmGapsRouter)
+- [x] Contacts: Lead score column + duplicate badge + bulk email action (created crmGapsRouter)
+- [x] Deals: Probability weighting display + bulk stage change + aging badge (created crmGapsRouter)
+- [x] Tasks: Recurring tasks + task dependencies + time tracking timer (created crmGapsRouter)
+- [x] Email Sync: Inline email composer + attachment preview + email-to-deal association (created crmGapsRouter)
+- [x] Proposals: Version history + reading heatmap + auto-update deal stage on sign (created crmGapsRouter)
+- [x] Custom Objects: Automation triggers + bulk CSV import (created crmGapsRouter)
+- [x] Rotten Deals: One-click re-engagement task + per-stage threshold + CSV export (created crmGapsRouter)
+- [x] Account Hierarchy: Revenue roll-up + export to PDF/Excel (created crmGapsRouter)
+- [x] Territory Management: Performance dashboard + auto-assignment rules + conflict detection (created crmGapsRouter)
+- [x] Product Catalog: Inventory tracking + product win/loss analytics + bundle builder (created crmGapsRouter)
+- [x] AI Next Best Action: Recommendation rationale + one-click execution + thumbs feedback (created crmGapsRouter)
+- [x] Web Forms Builder: Multi-step forms + conditional logic + form analytics (created remainingFeaturesRouter)
+- [x] E-Signature: Bulk send + document template library + audit certificate download (created crmGapsRouter)
 - [x] Reputation Mgmt: Response templates + sentiment analysis + multi-platform support (created reputation-management.ts router)
 - [x] Power Dialer: Predictive dialing + call script side panel + contact integration (created power-dialer-integration.ts router)
 - [x] Bulk SMS/WhatsApp: Send SMS/WhatsApp buttons in Contacts bulk action bar
@@ -3016,38 +3016,38 @@
 - [x] Power Dialer: Predictive dialing + call script side panel (created power-dialer-integration.ts router + enhanced UI)
 
 ### Marketing Section - Remaining Gaps
-- [ ] Campaigns: Approval workflow + revenue attribution
-- [ ] Templates: Per-template analytics + AI generation from brief
-- [ ] Deliverability: AI remediation steps + seed list inbox placement + industry benchmark
-- [ ] A/B Tests: Multivariate testing + statistical significance badge + auto-send winner
-- [ ] Domain Optimizer: Automated warm-up scheduler + competitor comparison
-- [ ] Email Masking: Expiry setting + per-mask analytics + bulk creation via CSV
-- [ ] A/B Engine: Direct integration into Campaigns UI + test archive
+- [x] Campaigns: Approval workflow + revenue attribution (created remainingFeaturesRouter)
+- [x] Templates: Per-template analytics + AI generation from brief (created remainingFeaturesRouter)
+- [x] Deliverability: AI remediation steps + seed list inbox placement + industry benchmark (created remainingFeaturesRouter)
+- [x] A/B Tests: Multivariate testing + statistical significance badge + auto-send winner (created remainingFeaturesRouter)
+- [x] Domain Optimizer: Automated warm-up scheduler + competitor comparison (created remainingFeaturesRouter)
+- [x] Email Masking: Expiry setting + per-mask analytics + bulk creation via CSV
+- [x] A/B Engine: Direct integration into Campaigns UI + test archive
 
 ### Automation Section - Remaining Gaps
-- [ ] Workflow Builder: AI template suggestions + live enrollment counter + error highlighting
-- [ ] Integration Hub: Two-way sync + health monitoring with alerts + webhook event log
-- [ ] Segments: Overlap analysis + segment performance analytics + CSV export
+- [x] Workflow Builder: AI template suggestions + live enrollment counter + error highlighting (created remainingFeaturesRouter)
+- [x] Integration Hub: Two-way sync + health monitoring with alerts + webhook event log (created remainingFeaturesRouter)
+- [x] Segments: Overlap analysis + segment performance analytics + CSV export (created remainingFeaturesRouter)
 
 ### Paradigm Engine Section - Remaining Gaps
-- [ ] Pulse Dashboard: Trend charts + conversion funnel + export
-- [ ] Prospects: Dedup check against Contacts + CSV import + score explanation tooltip
-- [ ] Signals: Custom signal source config + auto-enrollment rules
-- [ ] Website Monitor: Target account alerts
-- [ ] Ghost Sequences: Sentiment-based branching + A/B testing
-- [ ] Battle Cards: Auto-update from Signals + view tracking + effectiveness rating
-- [ ] Paradigm Integrations: Health status + data freshness + cost tracking
-- [ ] Quantum Score: Score explanation + score history/trend + custom scoring model
+- [x] Pulse Dashboard: Trend charts + conversion funnel + export (created remainingFeaturesRouter)
+- [x] Prospects: Dedup check against Contacts + CSV import + score explanation tooltip (created remainingFeaturesRouter)
+- [x] Signals: Custom signal source config + auto-enrollment rules (created remainingFeaturesRouter)
+- [x] Website Monitor: Target account alerts
+- [x] Ghost Sequences: Sentiment-based branching + A/B testing
+- [x] Battle Cards: Auto-update from Signals + view tracking + effectiveness rating
+- [x] Paradigm Integrations: Health status + data freshness + cost tracking
+- [x] Quantum Score: Score explanation + score history/trend + custom scoring model (created remainingFeaturesRouter)
 
 ### Compliance & Safety Section - Remaining Gaps
-- [ ] Audit Logs: CSV/PDF export + real-time alert rules
-- [ ] Suppression List: Bulk import + reason tracking + export
-- [ ] Sender Settings: Per-campaign sender override + sender reputation score + multi-brand profiles
-- [ ] Domain Stats: Domain comparison + threshold alerts + export
+- [x] Audit Logs: CSV/PDF export + real-time alert rules (created remainingFeaturesRouter)
+- [x] Suppression List: Bulk import + reason tracking + export (created remainingFeaturesRouter)
+- [x] Sender Settings: Per-campaign sender override + sender reputation score + multi-brand profiles
+- [x] Domain Stats: Domain comparison + threshold alerts + export
 
 ### Analytics Section - Remaining Gaps
-- [ ] Reports: Scheduled delivery + shareable report link
-- [ ] Report Builder: Report templates + version history + iframe embed code
+- [x] Reports: Scheduled delivery + shareable report link (created remainingFeaturesRouter)
+- [x] Report Builder: Report templates + version history + iframe embed code (created remainingFeaturesRouter)
 - [ ] Win/Loss Analysis: Required loss reason field + competitor breakdown + cohort analysis
 - [ ] Smart Views: Scheduled view runs + view-based alerts + view usage analytics
 - [ ] Bulk Actions: Action history with undo + approval workflow + progress bar
