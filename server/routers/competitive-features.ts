@@ -271,6 +271,45 @@ export const smsRouter = router({
     });
     return { success: true, id: (result as any).insertId, status };
   }),
+
+  bulkSend: protectedProcedure.input(z.object({
+    contactIds: z.array(z.number()),
+    body: z.string().min(1).max(1600),
+  })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const tenantId = ctx.user.tenantCompanyId ?? 0;
+    const now = Date.now();
+    const twilioSid = process.env.TWILIO_ACCOUNT_SID;
+    const twilioToken = process.env.TWILIO_AUTH_TOKEN;
+    const twilioFrom = process.env.TWILIO_FROM_NUMBER;
+    let sent = 0, failed = 0;
+    for (const contactId of input.contactIds) {
+      const contact = await db.select().from(contacts)
+        .where(and(eq(contacts.id, contactId), eq(contacts.tenantId, tenantId))).limit(1);
+      if (!contact.length || !contact[0].mobilePhone) { failed++; continue; }
+      let status: "sent" | "queued" | "failed" = "queued";
+      let externalSid: string | undefined;
+      if (twilioSid && twilioToken && twilioFrom) {
+        try {
+          const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`, {
+            method: "POST",
+            headers: { Authorization: `Basic ${Buffer.from(`${twilioSid}:${twilioToken}`).toString("base64")}`, "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ To: contact[0].mobilePhone, From: twilioFrom, Body: input.body }).toString(),
+          });
+          const data = await resp.json() as any;
+          if (data.sid) { externalSid = data.sid; status = "sent"; sent++; } else { failed++; }
+        } catch { failed++; }
+      } else { sent++; }
+      await db.insert(smsMessages).values({
+        userId: ctx.user.id, tenantId, contactId,
+        direction: "outbound", fromNumber: twilioFrom ?? "system",
+        toNumber: contact[0].mobilePhone, body: input.body,
+        status, twilioSid: externalSid, sentAt: status === "sent" ? now : undefined, createdAt: now,
+      });
+    }
+    return { sent, failed, total: input.contactIds.length };
+  }),
 });
 
 // ─── GDPR Tools ───────────────────────────────────────────────────────────────

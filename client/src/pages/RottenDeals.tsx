@@ -26,8 +26,12 @@ export default function RottenDeals() {
     onError: () => { toast.error("Failed to create task"); setEngagingId(null); },
   });
 
-  // Plan of action generation - backend procedure to be implemented
-  // const generatePlanMutation = trpc.rottenDeals.generatePlanOfAction.useMutation({...});
+  const generatePlanMutation = trpc.rottenDeals.generatePlanOfAction.useMutation({
+    onSuccess: (data: any) => {
+      toast.success("Plan of action generated", { description: data.plan });
+    },
+    onError: (e: any) => toast.error("Failed to generate plan", { description: e.message }),
+  });
 
   const totalValue = rottenDeals.reduce((s: number, d: any) => s + (d.value ?? 0), 0);
 
@@ -49,7 +53,14 @@ export default function RottenDeals() {
     });
   }
 
-  // function handleGeneratePlan(deal: any) {...}
+  function handleGeneratePlan(deal: any) {
+    generatePlanMutation.mutate({
+      dealId: deal.id,
+      dealName: deal.name,
+      value: deal.value,
+      daysSinceUpdate: deal.daysSinceUpdate,
+    });
+  }
 
   function handleExportCsv() {
     if (!rottenDeals.length) { toast.error("No rotten deals to export"); return; }

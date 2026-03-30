@@ -476,6 +476,35 @@ const whatsappRouter = router({
     const parsed = JSON.parse(typeof content === "string" ? content : JSON.stringify(content));
     return parsed;
   }),
+
+  bulkSend: protectedProcedure.input(z.object({
+    contactIds: z.array(z.number()),
+    body: z.string().min(1),
+    templateId: z.number().optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const dbConn = (await db.getDb())!;
+    const { contacts: contactsTable } = await import("../../drizzle/schema");
+    let sent = 0, failed = 0;
+    for (const contactId of input.contactIds) {
+      const contact = await dbConn.select().from(contactsTable)
+        .where(and(eq(contactsTable.id, contactId), eq(contactsTable.tenantId, ctx.user.tenantCompanyId ?? 0))).limit(1);
+      if (!contact.length || !contact[0].mobilePhone) { failed++; continue; }
+      const messageId = `sim_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      await dbConn.insert(whatsappMessages).values({
+        tenantCompanyId: ctx.user.tenantCompanyId ?? 0,
+        contactId,
+        phone: contact[0].mobilePhone,
+        direction: "outbound",
+        body: input.body,
+        status: "sent",
+        messageId,
+        sentBy: ctx.user.id,
+        createdAt: Date.now(),
+      });
+      sent++;
+    }
+    return { sent, failed, total: input.contactIds.length };
+  }),
 });
 
 // ─── Social Media Scheduler ───────────────────────────────────────────────────

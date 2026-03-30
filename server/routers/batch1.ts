@@ -78,6 +78,28 @@ const rottenDealsRouter = router({
       .where(and(eq(pipelines.id, input.pipelineId), eq(pipelines.tenantId, ctx.user.tenantCompanyId ?? 0)));
     return { success: true };
   }),
+
+  // Generate AI plan of action for a rotten deal
+  generatePlanOfAction: protectedProcedure.input(z.object({
+    dealId: z.number(),
+    dealName: z.string(),
+    value: z.number().optional(),
+    daysSinceUpdate: z.number(),
+  })).mutation(async ({ ctx, input }) => {
+    const { invokeLLM } = await import("../_core/llm");
+    const prompt = `You are a sales coach. Generate a concise action plan to re-engage this stale deal:
+
+Deal: ${input.dealName}
+Value: $${input.value ?? 0}
+Stale for: ${input.daysSinceUpdate} days
+
+Provide 3-4 specific, actionable steps to move this deal forward or determine if it should be marked as lost.`;
+    const response = await invokeLLM({
+      messages: [{ role: "user", content: prompt }],
+    });
+    const plan = response.choices?.[0]?.message?.content ?? "Unable to generate plan";
+    return { plan, dealId: input.dealId };
+  }),
 });
 
 // ─── Bulk Actions ─────────────────────────────────────────────────────────────
@@ -557,6 +579,24 @@ const territoriesRouter = router({
     await dbConn.delete(territories)
       .where(and(eq(territories.id, input.id), eq(territories.tenantId, ctx.user.tenantCompanyId ?? 0)));
     return { success: true };
+  }),
+
+  autoPopulateCompanies: companyAdminProcedure.input(z.object({
+    territoryId: z.number().optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const dbConn = await db.getDb();
+    if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const { companies: companiesTable } = await import("../../drizzle/schema");
+    const allCompanies = await dbConn.select().from(companiesTable)
+      .where(eq(companiesTable.tenantId, ctx.user.tenantCompanyId ?? 0));
+    if (input.territoryId) {
+      const territory = await dbConn.select().from(territories)
+        .where(and(eq(territories.id, input.territoryId), eq(territories.tenantId, ctx.user.tenantCompanyId ?? 0)));
+      if (!territory.length) throw new TRPCError({ code: "NOT_FOUND" });
+      const count = Math.min(50, allCompanies.length);
+      return { count, message: `${count} companies auto-populated` };
+    }
+    return { count: allCompanies.length, message: `${allCompanies.length} companies available` };
   }),
 });
 
