@@ -235,14 +235,16 @@ const journeysRouter = router({
     description: z.string().optional(),
     triggerType: z.enum(["manual", "contact_created", "deal_stage", "form_submit", "tag_added"]).default("manual"),
     triggerConfig: z.record(z.string(), z.unknown()).optional(),
+    nodes: z.array(z.unknown()).optional(),
+    edges: z.array(z.unknown()).optional(),
   })).mutation(async ({ ctx, input }) => {
     const dbConn = (await db.getDb())!;
     const now = Date.now();
-    const defaultNodes = [
+    const defaultNodes = input.nodes || [
       { id: "trigger", type: "trigger", position: { x: 250, y: 50 }, data: { label: "Trigger", triggerType: input.triggerType } },
       { id: "end", type: "end", position: { x: 250, y: 400 }, data: { label: "End" } },
     ];
-    const defaultEdges: unknown[] = [];
+    const defaultEdges = input.edges ?? [];
     const [result] = await dbConn.insert(journeys).values({
       tenantCompanyId: ctx.user.tenantCompanyId ?? 0,
       name: input.name,

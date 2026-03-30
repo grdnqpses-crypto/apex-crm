@@ -34,7 +34,18 @@ export default function JourneyOrchestration() {
     onError: (e) => toast.error(e.message),
   });
   const generateAIMutation = trpc.journeyOrchestration.generateWithAI.useMutation({
-    onSuccess: () => { utils.journeyOrchestration.list.invalidate(); setShowAI(false); setAiGoal(""); toast.success("AI journey created"); },
+    onSuccess: (data) => {
+      createMutation.mutate({
+        name: `AI Journey - ${new Date().toLocaleDateString()}`,
+        description: aiGoal,
+        triggerType: "manual",
+        nodes: data.nodes,
+        edges: data.edges,
+      });
+      setShowAI(false);
+      setAiGoal("");
+      toast.success("AI journey generated and saved");
+    },
     onError: (e) => toast.error(e.message),
   });
 
