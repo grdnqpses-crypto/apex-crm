@@ -41,6 +41,8 @@ import { fmcsaRouter } from "./routers/fmcsa";
 import { portalRouter } from "./routers/portal";
 import { websiteMonitorRouter, syncCompanyMonitor } from "./routers/website-monitor";
 import { enrichmentRouter } from "./routers/enrichment";
+import { reputationManagementRouter } from "./routers/reputation-management";
+import { powerDialerIntegrationRouter } from "./routers/power-dialer-integration";
 
 export const appRouter = router({
   system: systemRouter,
@@ -110,6 +112,8 @@ export const appRouter = router({
   portalTokens: portalRouter,
   websiteMonitor: websiteMonitorRouter,
   enrichment: enrichmentRouter,
+  reputationManagement: reputationManagementRouter,
+  powerDialerIntegration: powerDialerIntegrationRouter,
   auth: router({
     me: publicProcedure.query(async ({ ctx }) => {
       if (!ctx.user) return null;

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, UserPlus, Mail, Phone, MoreHorizontal, Trash2, Upload, Download, Users, Building2, Plus, CheckSquare, Square, Tag, UserCheck, Workflow, Sparkles, Pencil, Link2, ShieldCheck, Activity, Ban } from "lucide-react";
+import { Search, UserPlus, Mail, Phone, MoreHorizontal, Trash2, Upload, Download, Users, Building2, Plus, CheckSquare, Square, Tag, UserCheck, Workflow, Sparkles, Pencil, Link2, ShieldCheck, Activity, Ban, MessageSquare, MessageCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
@@ -207,6 +207,18 @@ export default function Contacts() {
   const [bulkTagInput, setBulkTagInput] = useState("");
   const [bulkStatusDialog, setBulkStatusDialog] = useState(false);
   const [bulkStatusValue, setBulkStatusValue] = useState("Cold");
+  const [bulkSmsDialog, setBulkSmsDialog] = useState(false);
+  const [bulkSmsBody, setBulkSmsBody] = useState("");
+  const [bulkWhatsappDialog, setBulkWhatsappDialog] = useState(false);
+  const [bulkWhatsappBody, setBulkWhatsappBody] = useState("");
+  const bulkSmsSendMutation = trpc.sms.bulkSend.useMutation({
+    onSuccess: (d) => { utils.contacts.list.invalidate(); setSelectedIds(new Set()); setBulkSmsDialog(false); setBulkSmsBody(""); toast.success(`SMS sent to ${d.sent} contacts (${d.failed} failed)`); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const bulkWhatsappSendMutation = trpc.whatsapp.bulkSend.useMutation({
+    onSuccess: (d) => { utils.contacts.list.invalidate(); setSelectedIds(new Set()); setBulkWhatsappDialog(false); setBulkWhatsappBody(""); toast.success(`WhatsApp sent to ${d.sent} contacts (${d.failed} failed)`); },
+    onError: (e: any) => toast.error(e.message),
+  });
   const trackActivityMutation = trpc.bulkActions.trackBulkActivity.useMutation({
     onSuccess: (d) => { utils.contacts.list.invalidate(); setSelectedIds(new Set()); setBulkActivityDialog(false); setBulkActivityForm({ activityType: "note", subject: "", body: "" }); toast.success(`Activity logged for ${d.logged} contacts`); },
     onError: (e: any) => toast.error(e.message),
@@ -320,6 +332,12 @@ export default function Contacts() {
           </Button>
           <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => setBulkStatusDialog(true)}>
             <UserCheck className="h-3.5 w-3.5 text-green-500" /> Set Status
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => setBulkSmsDialog(true)}>
+            <MessageSquare className="h-3.5 w-3.5 text-blue-500" /> Send SMS
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8" onClick={() => setBulkWhatsappDialog(true)}>
+            <MessageCircle className="h-3.5 w-3.5 text-green-600" /> Send WhatsApp
           </Button>
           <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8 text-orange-600 border-orange-300" onClick={() => { if (confirm(`Mark ${selectedIds.size} contacts as Do Not Contact?`)) bulkUpdateContacts.mutate({ ids: Array.from(selectedIds), updates: { leadStatus: "do_not_contact" } }); }}>
             <Ban className="h-3.5 w-3.5" /> Mark DNC
@@ -806,6 +824,49 @@ export default function Contacts() {
         </DialogContent>
       </Dialog>
 
+      {/* Bulk Send SMS Dialog */}
+      <Dialog open={bulkSmsDialog} onOpenChange={setBulkSmsDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Send SMS to {selectedIds.size} Contacts</DialogTitle>
+            <DialogDescription>SMS will be sent to all selected contacts with valid mobile phone numbers.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Message *</Label>
+              <textarea value={bulkSmsBody} onChange={e => setBulkSmsBody(e.target.value)} placeholder="Enter your SMS message (max 1600 characters)" maxLength={1600} className="w-full min-h-[100px] rounded-xl border border-border/50 bg-muted/30 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+              <p className="text-xs text-muted-foreground">{bulkSmsBody.length}/1600 characters</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setBulkSmsDialog(false); setBulkSmsBody(""); }} className="rounded-xl">Cancel</Button>
+            <Button disabled={!bulkSmsBody.trim() || bulkSmsSendMutation.isPending} onClick={() => bulkSmsSendMutation.mutate({ contactIds: Array.from(selectedIds), body: bulkSmsBody })} className="rounded-xl">
+              {bulkSmsSendMutation.isPending ? "Sending..." : `Send SMS to ${selectedIds.size} Contacts`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Bulk Send WhatsApp Dialog */}
+      <Dialog open={bulkWhatsappDialog} onOpenChange={setBulkWhatsappDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Send WhatsApp to {selectedIds.size} Contacts</DialogTitle>
+            <DialogDescription>WhatsApp messages will be sent to all selected contacts with valid mobile phone numbers.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Message *</Label>
+              <textarea value={bulkWhatsappBody} onChange={e => setBulkWhatsappBody(e.target.value)} placeholder="Enter your WhatsApp message" className="w-full min-h-[100px] rounded-xl border border-border/50 bg-muted/30 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setBulkWhatsappDialog(false); setBulkWhatsappBody(""); }} className="rounded-xl">Cancel</Button>
+            <Button disabled={!bulkWhatsappBody.trim() || bulkWhatsappSendMutation.isPending} onClick={() => bulkWhatsappSendMutation.mutate({ contactIds: Array.from(selectedIds), body: bulkWhatsappBody })} className="rounded-xl">
+              {bulkWhatsappSendMutation.isPending ? "Sending..." : `Send WhatsApp to ${selectedIds.size} Contacts`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Do Not Contact Dialog */}
       <Dialog open={!!dncContact} onOpenChange={(o) => { if (!o) { setDncContact(null); setDncReason(""); } }}>
         <DialogContent className="max-w-sm">
