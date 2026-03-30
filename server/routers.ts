@@ -49,6 +49,9 @@ import { bulkOperationsRouter } from "./routers/bulk-operations";
 import { crmGuidesRouter } from "./routers/crm-guides";
 import { crmGapsRouter } from "./routers/crm-gaps";
 import { remainingFeaturesRouter } from "./routers/remaining-features";
+import { communicationGapsRouter } from "./routers/communication-gaps";
+import { analyticsGapsRouter } from "./routers/analytics-gaps";
+import { aiPremiumRouter } from "./routers/ai-premium";
 
 export const appRouter = router({
   system: systemRouter,
@@ -125,6 +128,9 @@ export const appRouter = router({
   crmGuides: crmGuidesRouter,
   crmGaps: crmGapsRouter,
   remainingFeatures: remainingFeaturesRouter,
+  communicationGaps: communicationGapsRouter,
+  analyticsGaps: analyticsGapsRouter,
+  aiPremium: aiPremiumRouter,
   auth: router({
     me: publicProcedure.query(async ({ ctx }) => {
       if (!ctx.user) return null;

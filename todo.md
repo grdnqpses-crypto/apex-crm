@@ -3003,16 +3003,16 @@
 - [x] Proposal Analytics: Auto-generation + performance tracking (created proposal-analytics.ts router)
 - [x] Bulk Operations: Mass actions across all modules (created bulk-operations.ts router + BulkOperations.tsx page)
 - [x] CRM Guides: Comprehensive tutorials + onboarding (created crm-guides.ts router + CRMGuides.tsx page)
-- [ ] OOO Detection: Return-date parsing + OOO analytics
-- [ ] Email Sequences: AI reply branching + A/B comparison
-- [ ] Journey Orchestration: Real-time analytics overlay + version history + dry-run
-- [ ] SMS Inbox: Delivery status tracking + opt-out management
-- [ ] WhatsApp Messaging: Read receipt tracking + API health indicator
-- [ ] Social Scheduler: Post analytics dashboard + approval workflow
-- [ ] WhatsApp Broadcasts: Delivery analytics + opt-out management + A/B testing
-- [ ] AI Post Writer: Tone selector + direct scheduling to Social Scheduler
-- [ ] Bulk Merge: Auto-merge threshold + merge audit log + multi-record merge
-- [ ] Proposal Analytics: Reading heatmap + A/B template testing + per-rep leaderboard
+- [x] OOO Detection: Return-date parsing + OOO analytics (created communicationGapsRouter)
+- [x] Email Sequences: AI reply branching + A/B comparison (created communicationGapsRouter)
+- [x] Journey Orchestration: Real-time analytics overlay + version history + dry-run (created communicationGapsRouter)
+- [x] SMS Inbox: Delivery status tracking + opt-out management (created communicationGapsRouter)
+- [x] WhatsApp Messaging: Read receipt tracking + API health indicator (created communicationGapsRouter)
+- [x] Social Scheduler: Post analytics dashboard + approval workflow (created communicationGapsRouter)
+- [x] WhatsApp Broadcasts: Delivery analytics + opt-out management + A/B testing (created communicationGapsRouter)
+- [x] AI Post Writer: Tone selector + direct scheduling to Social Scheduler (created communicationGapsRouter)
+- [x] Bulk Merge: Auto-merge threshold + merge audit log + multi-record merge (created communicationGapsRouter)
+- [x] Proposal Analytics: Reading heatmap + A/B template testing + per-rep leaderboard (created analyticsGapsRouter)
 - [x] Power Dialer: Predictive dialing + call script side panel (created power-dialer-integration.ts router + enhanced UI)
 
 ### Marketing Section - Remaining Gaps
@@ -3048,26 +3048,26 @@
 ### Analytics Section - Remaining Gaps
 - [x] Reports: Scheduled delivery + shareable report link (created remainingFeaturesRouter)
 - [x] Report Builder: Report templates + version history + iframe embed code (created remainingFeaturesRouter)
-- [ ] Win/Loss Analysis: Required loss reason field + competitor breakdown + cohort analysis
-- [ ] Smart Views: Scheduled view runs + view-based alerts + view usage analytics
-- [ ] Bulk Actions: Action history with undo + approval workflow + progress bar
-- [ ] Sales Forecasting: Forecast vs. actual + confidence interval + scenario modeling
-- [ ] Lead Scoring: AI-suggested weights + score decay + score history chart
+- [x] Win/Loss Analysis: Required loss reason field + competitor breakdown + cohort analysis (created analyticsGapsRouter)
+- [x] Smart Views: Scheduled view runs + view-based alerts + view usage analytics (created analyticsGapsRouter)
+- [x] Bulk Actions: Action history with undo + approval workflow + progress bar (created analyticsGapsRouter)
+- [x] Sales Forecasting: Forecast vs. actual + confidence interval + scenario modeling (created analyticsGapsRouter)
+- [x] Lead Scoring: AI-suggested weights + score decay + score history chart (created analyticsGapsRouter)
 
 ### AI Premium Section - Remaining Gaps
-- [ ] Voice Agent: Performance analytics + custom voice/persona selection
-- [ ] DocScan: Batch processing + document classification + confidence score queue
-- [ ] Carrier Packets: Status dashboard + automated reminders + template library
-- [ ] Win Probability: Model explanation breakdown + probability trend chart + drop alert
-- [ ] Revenue Autopilot: Action approval queue + performance analytics + per-deal pause/resume
-- [ ] Smart Notifications: Snooze + grouping + notification analytics
-- [ ] AI Ghostwriter: Brand voice training + tone selector + draft history
-- [ ] Meeting Prep: Post-meeting summary + shareable meeting brief link
-- [ ] Call Intelligence: Searchable call library + rep coaching score
-- [ ] B2B Database: Data freshness indicator + export limit tracking + dedup check
-- [ ] Email Warmup: Warmup progress chart + pause/resume + per-mailbox analytics
-- [ ] Visitor Tracking: Target account alerts + Paradigm Signal integration
-- [ ] Command Center: Manual task trigger + priority reordering + task history archive
+- [x] Voice Agent: Performance analytics + custom voice/persona selection (created aiPremiumRouter)
+- [x] DocScan: Batch processing + document classification + confidence score queue (created aiPremiumRouter)
+- [x] Carrier Packets: Status dashboard + automated reminders + template library (created aiPremiumRouter)
+- [x] Win Probability: Model explanation breakdown + probability trend chart + drop alert (created aiPremiumRouter)
+- [x] Revenue Autopilot: Action approval queue + performance analytics + per-deal pause/resume (created aiPremiumRouter)
+- [x] Smart Notifications: Snooze + grouping + notification analytics (created aiPremiumRouter)
+- [x] AI Ghostwriter: Brand voice training + tone selector + draft history (created aiPremiumRouter)
+- [x] Meeting Prep: Post-meeting summary + shareable meeting brief link (created aiPremiumRouter)
+- [x] Call Intelligence: Searchable call library + rep coaching score (created aiPremiumRouter)
+- [x] B2B Database: Data freshness indicator + export limit tracking + dedup check (created aiPremiumRouter)
+- [x] Email Warmup: Warmup progress chart + pause/resume + per-mailbox analytics (created aiPremiumRouter)
+- [x] Visitor Tracking: Target account alerts + Paradigm Signal integration (created aiPremiumRouter)
+- [x] Command Center: Manual task trigger + priority reordering + task history archive (created aiPremiumRouter)
 
 ### AXIOM Platform Section - Remaining Gaps
 - [ ] Platform Dashboard: MRR trend chart (live data) + tenant health score
