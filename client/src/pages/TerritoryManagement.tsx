@@ -46,14 +46,8 @@ export default function TerritoryManagement() {
     },
   });
 
-  const autoPopulateMutation = trpc.territories.autoPopulateCompanies.useMutation({
-    onSuccess: (data) => {
-      toast.success(`Auto-populated ${data.count} companies`);
-      utils.territories.list.invalidate();
-      setShowAutoPopulate(false);
-    },
-    onError: (e) => toast.error(e.message || "Auto-population failed"),
-  });
+  // Auto-populate companies - backend procedure to be implemented
+  // const autoPopulateMutation = trpc.territories.autoPopulateCompanies.useMutation({...});
 
   return (
       <div className="p-6 space-y-6">
