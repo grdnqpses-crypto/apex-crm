@@ -26,6 +26,13 @@ export default function RottenDeals() {
     onError: () => { toast.error("Failed to create task"); setEngagingId(null); },
   });
 
+  const generatePlanMutation = trpc.rottenDeals.generatePlanOfAction.useMutation({
+    onSuccess: (data) => {
+      toast.success("Plan of action generated", { description: data.plan });
+    },
+    onError: (e) => toast.error("Failed to generate plan", { description: e.message }),
+  });
+
   const totalValue = rottenDeals.reduce((s: number, d: any) => s + (d.value ?? 0), 0);
 
   function rottenColor(days: number) {
@@ -43,6 +50,15 @@ export default function RottenDeals() {
       dealId: deal.id,
       description: `This deal has been stale for ${deal.daysSinceUpdate} days. Last updated: ${new Date(deal.updatedAt).toLocaleDateString()}. Take action to move it forward or mark as lost.`,
       dueDate: Date.now() + 86400000, // tomorrow
+    });
+  }
+
+  function handleGeneratePlan(deal: any) {
+    generatePlanMutation.mutate({
+      dealId: deal.id,
+      dealName: deal.name,
+      value: deal.value,
+      daysSinceUpdate: deal.daysSinceUpdate,
     });
   }
 

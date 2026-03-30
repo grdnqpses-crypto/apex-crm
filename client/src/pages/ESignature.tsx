@@ -69,6 +69,7 @@ export default function ESignature() {
   const [aiCompany, setAiCompany] = useState("");
   const [aiContact, setAiContact] = useState("");
   const [aiInstructions, setAiInstructions] = useState("");
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const resetForm = () => {
     setDocTitle("");
@@ -97,6 +98,19 @@ export default function ESignature() {
       return;
     }
     createMutation.mutate({ title: docTitle, content: docContent, signers: validSigners });
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("File too large", { description: "Maximum 10MB" });
+        return;
+      }
+      setUploadedFile(file);
+      setDocTitle(file.name.replace(/\.[^.]+$/, ""));
+      toast.success("File uploaded", { description: `Ready to send for signature` });
+    }
   };
 
   const docs = data?.items ?? [];
