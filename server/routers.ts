@@ -43,6 +43,10 @@ import { websiteMonitorRouter, syncCompanyMonitor } from "./routers/website-moni
 import { enrichmentRouter } from "./routers/enrichment";
 import { reputationManagementRouter } from "./routers/reputation-management";
 import { powerDialerIntegrationRouter } from "./routers/power-dialer-integration";
+import { socialMediaRouter } from "./routers/social-media";
+import { proposalAnalyticsRouter } from "./routers/proposal-analytics";
+import { bulkOperationsRouter } from "./routers/bulk-operations";
+import { crmGuidesRouter } from "./routers/crm-guides";
 
 export const appRouter = router({
   system: systemRouter,
@@ -114,6 +118,9 @@ export const appRouter = router({
   enrichment: enrichmentRouter,
   reputationManagement: reputationManagementRouter,
   powerDialerIntegration: powerDialerIntegrationRouter,
+  socialMedia: socialMediaRouter,
+  bulkOperations: bulkOperationsRouter,
+  crmGuides: crmGuidesRouter,
   auth: router({
     me: publicProcedure.query(async ({ ctx }) => {
       if (!ctx.user) return null;

@@ -90,8 +90,8 @@ export const reputationManagementRouter = router({
     if (input.sentiment !== "all") {
       filtered = mentions.filter(m => m.sentiment === input.sentiment);
     }
-    if (input.platform) {
-      filtered = filtered.filter(m => m.source.toLowerCase() === input.platform.toLowerCase());
+    if (input.platform && typeof input.platform === 'string') {
+      filtered = filtered.filter(m => m.source.toLowerCase() === input.platform!.toLowerCase());
     }
 
     return filtered.slice(0, input.limit);
@@ -186,7 +186,7 @@ export const reputationManagementRouter = router({
   // Get response templates by sentiment
   getResponseTemplates: protectedProcedure.input(z.object({
     sentiment: z.enum(["positive", "neutral", "negative"]).optional(),
-  })).query(async ({ ctx, input }) => {
+  }).optional()).query(async ({ ctx, input }) => {
     // Simulated templates
     const templates = {
       positive: [
@@ -206,7 +206,7 @@ export const reputationManagementRouter = router({
       ],
     };
 
-    if (input.sentiment) {
+    if (input && input.sentiment) {
       return templates[input.sentiment] || [];
     }
     return Object.values(templates).flat();

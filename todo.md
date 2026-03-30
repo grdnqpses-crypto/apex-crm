@@ -2997,6 +2997,12 @@
 - [ ] Web Forms Builder: Multi-step forms + conditional logic + form analytics
 - [ ] E-Signature: Bulk send + document template library + audit certificate download
 - [x] Reputation Mgmt: Response templates + sentiment analysis + multi-platform support (created reputation-management.ts router)
+- [x] Power Dialer: Predictive dialing + call script side panel + contact integration (created power-dialer-integration.ts router)
+- [x] Bulk SMS/WhatsApp: Send SMS/WhatsApp buttons in Contacts bulk action bar
+- [x] Social Media: Bulk posting + scheduling + analytics (created social-media.ts router + SocialMedia.tsx page)
+- [x] Proposal Analytics: Auto-generation + performance tracking (created proposal-analytics.ts router)
+- [x] Bulk Operations: Mass actions across all modules (created bulk-operations.ts router + BulkOperations.tsx page)
+- [x] CRM Guides: Comprehensive tutorials + onboarding (created crm-guides.ts router + CRMGuides.tsx page)
 - [ ] OOO Detection: Return-date parsing + OOO analytics
 - [ ] Email Sequences: AI reply branching + A/B comparison
 - [ ] Journey Orchestration: Real-time analytics overlay + version history + dry-run
