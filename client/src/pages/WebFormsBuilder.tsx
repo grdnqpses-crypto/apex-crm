@@ -38,6 +38,7 @@ const FIELD_TYPES: { value: FieldType; label: string }[] = [
 
 export default function WebFormsBuilder() {
   const { t } = useSkin();
+  const [showGuide, setShowGuide] = useState(false);
   const utils = trpc.useUtils();
 
   const { data: forms, isLoading } = trpc.webForms.list.useQuery();
@@ -127,6 +128,22 @@ export default function WebFormsBuilder() {
 
   return (
     <div className="p-6 space-y-6">
+      <Card className="bg-green-500/5 border-green-500/20">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2"><FileText className="w-5 h-5 text-green-500" /> Web Forms 101</span>
+            <Button size="sm" variant="ghost" onClick={() => setShowGuide(!showGuide)}>{ showGuide ? "Hide" : "Show"}</Button>
+          </CardTitle>
+        </CardHeader>
+        {showGuide && (
+          <CardContent className="space-y-3 text-sm">
+            <p><strong>What are Web Forms?</strong> Embeddable forms you place on your website to capture visitor information. When someone fills it out, they automatically become a contact/lead in your CRM.</p>
+            <p><strong>How to use:</strong> (1) Create a form with fields like Name, Email, Phone. (2) Copy the embed code. (3) Paste it on your website. (4) Leads auto-populate in Contacts.</p>
+            <p><strong>Example:</strong> Create a "Demo Request" form with fields: Name, Email, Company, Phone. Embed on your pricing page.</p>
+          </CardContent>
+        )}
+      </Card>
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Web Forms Builder</h1>

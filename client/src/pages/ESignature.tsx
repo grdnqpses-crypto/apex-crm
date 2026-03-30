@@ -23,6 +23,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
 
 export default function ESignature() {
   const { t } = useSkin();
+  const [showGuide, setShowGuide] = useState(false);
   const utils = trpc.useUtils();
 
   const { data, isLoading } = trpc.eSignature.listDocuments.useQuery({});

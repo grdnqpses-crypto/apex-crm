@@ -14,6 +14,7 @@ import { useSkin } from "@/contexts/SkinContext";
 
 export default function EmailSequences() {
   const { t } = useSkin();
+  const [showGuide, setShowGuide] = useState(false);
   const utils = trpc.useUtils();
   const { data: sequences, isLoading } = trpc.emailSequences.list.useQuery();
   const [selected, setSelected] = useState<any>(null);

@@ -80,11 +80,29 @@ export default function CustomObjects() {
   };
 
   const selectedType = objectTypes.find(t => t.id === selectedObjectId);
+  const [showGuide, setShowGuide] = useState(false);
 
   return (
     <>
 
       <div className="p-6 max-w-6xl mx-auto space-y-6">
+        {/* For Dummies Guide */}
+        <Card className="bg-blue-500/5 border-blue-500/20">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span className="flex items-center gap-2"><Database className="w-5 h-5 text-blue-500" /> Custom Objects 101</span>
+              <Button size="sm" variant="ghost" onClick={() => setShowGuide(!showGuide)}>{ showGuide ? "Hide" : "Show"}</Button>
+            </CardTitle>
+          </CardHeader>
+          {showGuide && (
+            <CardContent className="space-y-3 text-sm">
+              <p><strong>What are Custom Objects?</strong> Think of them as custom database tables. Instead of storing data in Contacts or Companies, you can create your own object types (e.g., "Projects", "Subscriptions", "Assets") with custom fields.</p>
+              <p><strong>How to use:</strong> (1) Click "New Object Type" to define a new object (e.g., "Project"). (2) Add fields like "Project Name", "Budget", "Status". (3) Use these objects in workflows, reports, and automations.</p>
+              <p><strong>Example:</strong> Create a "Service Ticket" object with fields: Ticket ID, Customer, Issue Description, Priority, Status, Resolution Date.</p>
+            </CardContent>
+          )}
+        </Card>
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Custom Objects</h1>

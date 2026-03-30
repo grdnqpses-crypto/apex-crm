@@ -13,6 +13,7 @@ import { useSkin } from "@/contexts/SkinContext";
 
 export default function OOODetection() {
   const { t } = useSkin();
+  const [showGuide, setShowGuide] = useState(false);
   const utils = trpc.useUtils();
 
   const { data, isLoading } = trpc.oooDetection.list.useQuery({});

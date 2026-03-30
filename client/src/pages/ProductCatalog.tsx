@@ -25,6 +25,7 @@ type Product = {
 
 export default function ProductCatalog() {
   const { t } = useSkin();
+  const [showGuide, setShowGuide] = useState(false);
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
