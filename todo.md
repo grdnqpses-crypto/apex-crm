@@ -2996,7 +2996,7 @@
 - [ ] AI Next Best Action: Recommendation rationale + one-click execution + thumbs feedback
 - [ ] Web Forms Builder: Multi-step forms + conditional logic + form analytics
 - [ ] E-Signature: Bulk send + document template library + audit certificate download
-- [ ] Reputation Mgmt: Response templates + sentiment analysis + multi-platform support
+- [x] Reputation Mgmt: Response templates + sentiment analysis + multi-platform support (created reputation-management.ts router)
 - [ ] OOO Detection: Return-date parsing + OOO analytics
 - [ ] Email Sequences: AI reply branching + A/B comparison
 - [ ] Journey Orchestration: Real-time analytics overlay + version history + dry-run
@@ -3007,7 +3007,7 @@
 - [ ] AI Post Writer: Tone selector + direct scheduling to Social Scheduler
 - [ ] Bulk Merge: Auto-merge threshold + merge audit log + multi-record merge
 - [ ] Proposal Analytics: Reading heatmap + A/B template testing + per-rep leaderboard
-- [ ] Power Dialer: Predictive dialing + call script side panel
+- [x] Power Dialer: Predictive dialing + call script side panel (created power-dialer-integration.ts router + enhanced UI)
 
 ### Marketing Section - Remaining Gaps
 - [ ] Campaigns: Approval workflow + revenue attribution
