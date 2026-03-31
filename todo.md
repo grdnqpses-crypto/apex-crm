@@ -3196,3 +3196,65 @@ Successfully implemented ALL 53+ Sheet15 audit items as comprehensive backend ro
 - [x] Implement audit logging for all critical operations
 - [x] Add comprehensive analytics tracking
 - [x] Implement role-based access control (RBAC) for all features
+
+
+## CRITICAL BUGS TO FIX (From Audit Document - PRIORITY)
+
+### Bug 1: Logo Population Button ("Use It" after AI generation)
+- [x] Test logo generation flow end-to-end
+- [x] Verify "Use It" button correctly populates logo into database
+- [x] Verify logo appears in dashboard after population
+- [x] Test with different logo formats and sizes
+- [x] FIX: Changed restoreLogo permission check to allow any user in company to update logo
+
+### Bug 2: Comparison Panel - Show AXIOM Winning Accurately
+- [x] Fix comparison panel column logic to accurately show AXIOM advantages
+- [x] Ensure competitors don't show all red X marks (false representation)
+- [x] Verify data accuracy in comparison display
+- [x] Test scroll panel rendering and alignment
+- [x] FIX: Changed false values for competitors to show "Not available" (orange) instead of red X
+
+### Bug 3: Role Hierarchy - Test Failures
+- [ ] Fix aiEngine procedure access level (wrong guard causing test failures)
+- [ ] Fix systemHealth procedure access level (wrong guard causing test failures)
+- [ ] Run all 326 role hierarchy tests and verify passing
+- [ ] Verify Developer > Axiom Admin > Company Admin hierarchy works
+
+### Bug 4: Custom Objects - Crash and Stub Router Issues
+- [ ] Remove 42 duplicate stub routers that override real implementations
+- [ ] Fix Custom Objects crash caused by stub router conflicts
+- [ ] Verify all real routers are being used, not stubs
+- [ ] Test Custom Objects CRUD operations end-to-end
+
+### Bug 5: Browser Tab Title
+- [ ] Change browser tab title from "APEX" to "AXIOM"
+- [ ] Verify title persists across all pages
+- [ ] Test in multiple browsers
+
+### Bug 6: LLM API Configuration
+- [ ] Use Forge API as primary (not Gemini with quota limits)
+- [ ] Remove Gemini quota error failures
+- [ ] Test all AI features use Forge API first
+- [ ] Verify fallback mechanism works correctly
+
+### Bug 7: Video Production Issues
+- [ ] Review video generation workflow
+- [ ] Verify only final version is kept (not 10 "FINAL" versions)
+- [ ] Clean up 39 MP4 files and 3.2 GB of duplicate videos
+- [ ] Implement proper video versioning to prevent duplicates
+
+### Bug 8: Verification Gates - Add Testing Before Completion Claims
+- [ ] Implement browser-based testing for all UI features before announcing completion
+- [ ] Load each page and verify functionality works
+- [ ] Test user workflows end-to-end
+- [ ] Never announce completion without actual verification
+
+### Bug 9: Context Preservation
+- [ ] Verify user requirements are not lost during context compaction
+- [ ] Test that all user corrections are preserved
+- [ ] Verify project state persists across hibernation
+
+### Bug 10: Hibernation Re-initialization
+- [ ] Implement persistent build cache to prevent re-initialization after hibernation
+- [ ] Verify project state is preserved across sandbox hibernation
+- [ ] Test that no re-reading of files is needed after wake-up

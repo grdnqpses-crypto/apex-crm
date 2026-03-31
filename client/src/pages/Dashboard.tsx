@@ -908,7 +908,7 @@ export default function Dashboard() {
               )}
               <div>
                 <h1 className="text-2xl font-bold text-foreground">
-                  {greeting()}, {user?.name?.split(" ")[0] || "there"}
+                  {greeting()}, {company?.name || user?.name?.split(" ")[0] || "there"}
                 </h1>
                 {company?.name && (
                   <p className="text-xs font-semibold text-primary/70 mt-0.5">{company.name}</p>

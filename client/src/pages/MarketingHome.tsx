@@ -1058,8 +1058,8 @@ export default function MarketingHome({
                               textShadow: ci===0 ? '0 0 10px rgba(240,192,64,0.8)' : 'none'
                             }}>✓</span>
                           : val===false
-                          /* false = red X */
-                          ?<span style={{color:'#ef4444',fontWeight:'900',fontSize:'15px',lineHeight:'1',textShadow:'0 0 8px rgba(239,68,68,0.7)'}}>✗</span>
+                          /* false = show "Not available" for competitors (orange), red X only for AXIOM if it's truly missing */
+                          ?(ci===0 ? <span style={{color:'#ef4444',fontWeight:'900',fontSize:'15px',lineHeight:'1',textShadow:'0 0 8px rgba(239,68,68,0.7)'}}>✗</span> : <span style={{color:'#f97316',fontWeight:'600',fontSize:'8px',lineHeight:'1.2',display:'block'}}>Not available</span>)
                           /* string = gold for AXIOM, orange/amber for competitors (not red — add-ons aren't failures, just costly) */
                           :<span style={{
                               color: ci===0 ? '#c9a84c' : '#f97316',

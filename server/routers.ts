@@ -2899,8 +2899,11 @@ export const appRouter = router({
     restoreLogo: protectedProcedure.input(z.object({
       logoUrl: z.string().url(),
     })).mutation(async ({ ctx, input }) => {
+      // Allow company_admin, axiom_admin, and any user in the company to update their company logo
       const isAdmin = ["developer", "axiom_admin", "axiom_owner", "apex_owner", "company_admin"].includes(ctx.user.systemRole);
-      if (!isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
+      if (!isAdmin && ctx.user.systemRole !== "user" && !ctx.user.tenantCompanyId) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You don't have permission to update the company logo" });
+      }
       if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: "BAD_REQUEST" });
       await db.updateTenantCompany(ctx.user.tenantCompanyId, { logoUrl: input.logoUrl, updatedAt: Date.now() } as any);
       return { logoUrl: input.logoUrl };
