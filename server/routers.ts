@@ -179,6 +179,42 @@ export const appRouter = router({
       return { success: true } as const;
     }),
 
+    register: publicProcedure.input(z.object({
+      email: z.string().email(),
+      password: z.string().min(8),
+      name: z.string().min(1),
+    })).mutation(async ({ input, ctx }) => {
+      const existing = await db.getUserByUsername(input.email);
+      if (existing) throw new TRPCError({ code: 'CONFLICT', message: 'Email already registered' });
+      const hash = await bcrypt.hash(input.password, 12);
+      const userId = await db.createCredentialUser({
+        username: input.email,
+        email: input.email,
+        name: input.name,
+        passwordHash: hash,
+        systemRole: 'user',
+        tenantCompanyId: 1,
+      });
+      if (!userId) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create user' });
+      const user = await db.getUserById(userId);
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.cookie(COOKIE_NAME, String(userId), { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      return { success: true, user };
+    }),
+
+    login: publicProcedure.input(z.object({
+      email: z.string().email(),
+      password: z.string().min(1),
+    })).mutation(async ({ input, ctx }) => {
+      const user = await db.getUserByUsername(input.email);
+      if (!user || !user.passwordHash) throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid email or password' });
+      const valid = await bcrypt.compare(input.password, user.passwordHash);
+      if (!valid) throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid email or password' });
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.cookie(COOKIE_NAME, String(user.id), { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      return { success: true, user };
+    }),
+
     forgotPassword: publicProcedure.input(z.object({
       email: z.string().email(),
       origin: z.string().url(),
