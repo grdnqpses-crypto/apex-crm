@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useSkin } from "@/contexts/SkinContext";
-import DnsRecordGuide from "@/components/DnsRecordGuide";
+import { DnsRecordGuide } from "@/components/DnsRecordGuide";
 import {
   Mail, Globe, CheckCircle2, XCircle, AlertCircle, Copy, RefreshCw,
   ArrowLeft, ArrowRight, Wifi, Building2, Sparkles, ExternalLink,
