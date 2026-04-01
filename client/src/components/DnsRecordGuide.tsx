@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Copy, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
