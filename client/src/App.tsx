@@ -67,7 +67,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Contacts = lazy(() => import("./pages/Contacts"));
 const ContactDetail = lazy(() => import("./pages/ContactDetail"));
 const Leads = lazy(() => import("./pages/Leads"));
-const EinsteinAI = lazy(() => import("./pages/EinsteinAI"));
+const AxiomAI = lazy(() => import("./pages/EinsteinAI"));
 const Companies = lazy(() => import("./pages/Companies"));
 const Deals = lazy(() => import("./pages/Deals"));
 const Tasks = lazy(() => import("./pages/Tasks"));
@@ -230,7 +230,7 @@ function Router() {
           <Route path="/contacts" component={Contacts} />
           <Route path="/contacts/:id" component={ContactDetail} />
           <Route path="/leads" component={Leads} />
-          <Route path="/ai" component={EinsteinAI} />
+          <Route path="/ai" component={AxiomAI} />
           <Route path="/companies" component={Companies} />
           <Route path="/deals" component={Deals} />
           <Route path="/tasks" component={Tasks} />

@@ -199,7 +199,7 @@ const SKINS: Record<SkinId, SkinConfig> = {
       { label: "Opportunities", icon: "TrendingUp", path: "/deals" },
       { label: "Activities",    icon: "Calendar",   path: "/activities" },
       { label: "Campaigns",     icon: "Megaphone",  path: "/campaigns" },
-      { label: "Einstein AI",   icon: "Brain",      path: "/ai" },
+      { label: "AXIOM AI",   icon: "Brain",      path: "/ai" },
       { label: "Reports",       icon: "BarChart3",  path: "/reports" },
       { label: "Chatter",       icon: "MessageSquare", path: "/inbox" },
       { label: "Setup",         icon: "Settings",   path: "/settings" },

@@ -7,13 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Send, Sparkles, Brain, Zap, Target, TrendingUp } from "lucide-react";
+import { invokeLLM } from "@/server/_core/llm";
 
-export default function EinsteinAI() {
+export default function AxiomAI() {
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([
     {
       role: "assistant",
-      content: "Hello! I'm Einstein AI, your intelligent sales assistant. I can help you with insights, recommendations, and automations. What would you like to know?",
+      content: "Hello! I'm AXIOM AI, your intelligent sales copilot. I can help you with insights, recommendations, and automations. What would you like to know?",
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,13 +50,13 @@ export default function EinsteinAI() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-              <Brain className="w-6 h-6 text-purple-600" />
+            <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center">
+              <Brain className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Einstein AI</h1>
-              <p className="text-sm text-muted-foreground">Your intelligent sales assistant</p>
+              <h1 className="text-3xl font-bold text-foreground">AXIOM AI</h1>
+              <p className="text-sm text-muted-foreground">Your intelligent sales copilot powered by advanced AI</p>
             </div>
           </div>
         </div>
@@ -67,8 +68,8 @@ export default function EinsteinAI() {
           <Card className="h-96 flex flex-col">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-purple-500" />
-                Chat with Einstein
+                <Sparkles className="w-5 h-5 text-blue-500" />
+                Chat with AXIOM AI
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col overflow-hidden">
@@ -102,7 +103,7 @@ export default function EinsteinAI() {
               {/* Input */}
               <div className="flex gap-2">
                 <Input
-                  placeholder="Ask Einstein AI anything..."
+                  placeholder="Ask AXIOM AI anything..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
