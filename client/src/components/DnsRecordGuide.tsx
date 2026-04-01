@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Copy, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
@@ -68,7 +67,7 @@ const GUIDES: Record<string, Record<string, any>> = {
         "5. Click 'Create new record'",
         "6. For 'Type', select 'TXT' from the dropdown",
         "7. For 'Name', leave it blank (or type @ )",
-        "8. For 'TTL', set it to 3600",
+        "8. For 'TTL', set it to 3600 (or select '1 hour' if available)",
         "9. For 'Data', paste the SPF record we gave you (the long string starting with 'v=spf1')",
         "10. Click 'Create'",
       ],
@@ -85,7 +84,7 @@ const GUIDES: Record<string, Record<string, any>> = {
     description: "DKIM digitally signs your emails so providers know they're really from you",
     whatItDoes: "DKIM is like your digital signature on emails. It proves the email came from you and wasn't changed by anyone else.",
     why: "Email providers trust signed emails more. This helps your emails get to the inbox instead of spam.",
-    recordType: "CNAME or TXT",
+    recordType: "TXT (NOT CNAME - CNAME does not work for DKIM)",
     registrarSteps: {
       godaddy: [
         "1. Open godaddy.com and log in",
@@ -94,14 +93,14 @@ const GUIDES: Record<string, Record<string, any>> = {
         "4. Click 'Manage DNS'",
         "5. Scroll to 'DNS Records' section",
         "6. Click '+ Add' button",
-        "7. For 'Type', select 'CNAME' from the dropdown (CNAME is a special type of DNS record)",
-        "8. For 'Name' or 'Host', type exactly: selector._domainkey",
-        "   (This is the exact text - don't change it, don't add your domain)",
-        "9. For 'Points to' or 'Value', paste the DKIM record we gave you",
-        "10. For 'TTL', leave as default (usually '1 hour' or 'Auto')",
+        "7. For 'Type', select 'TXT' from the dropdown (IMPORTANT: Must be TXT, not CNAME)",
+        "8. For 'Name' or 'Host', type exactly what your email provider gave you",
+        "   Example: google._domainkey (or selector._domainkey if using a different selector)",
+        "   ⚠️ Do NOT change this - use exactly what your email provider specified",
+        "9. For 'Value', paste the DKIM public key that your email provider gave you",
+        "   This is a long string that looks like: v=DKIM1; k=rsa; p=MIGfMA0BgQD...",
+        "10. For 'TTL', select '1 hour' (or 'Auto' if available)",
         "11. Click 'Save'",
-        "",
-        "⚠️ IMPORTANT: If you get an error saying CNAME doesn't work, try again with Type = 'TXT' instead",
       ],
       namecheap: [
         "1. Open namecheap.com and log in",
@@ -109,9 +108,12 @@ const GUIDES: Record<string, Record<string, any>> = {
         "3. Click 'Manage' next to your domain",
         "4. Click 'Advanced DNS' tab",
         "5. Click '+ Add New Record'",
-        "6. For 'Type', select 'CNAME Record'",
-        "7. For 'Host', type exactly: selector._domainkey",
-        "8. For 'Value', paste the DKIM record we gave you",
+        "6. For 'Type', select 'TXT Record' (IMPORTANT: Must be TXT, not CNAME)",
+        "7. For 'Host', type exactly what your email provider gave you",
+        "   Example: google._domainkey (or selector._domainkey if using a different selector)",
+        "   ⚠️ Do NOT change this - use exactly what your email provider specified",
+        "8. For 'Value', paste the DKIM public key that your email provider gave you",
+        "   This is a long string that looks like: v=DKIM1; k=rsa; p=MIGfMA0BgQD...",
         "9. Leave 'TTL' as default",
         "10. Click the checkmark (✓) to save",
       ],
@@ -120,9 +122,12 @@ const GUIDES: Record<string, Record<string, any>> = {
         "2. Click your domain",
         "3. Click 'DNS' tab",
         "4. Click '+ Add record'",
-        "5. For 'Type', select 'CNAME'",
-        "6. For 'Name', type exactly: selector._domainkey",
-        "7. For 'Target', paste the DKIM record we gave you",
+        "5. For 'Type', select 'TXT' (IMPORTANT: Must be TXT, not CNAME)",
+        "6. For 'Name', type exactly what your email provider gave you",
+        "   Example: google._domainkey (or selector._domainkey if using a different selector)",
+        "   ⚠️ Do NOT change this - use exactly what your email provider specified",
+        "7. For 'Content', paste the DKIM public key that your email provider gave you",
+        "   This is a long string that looks like: v=DKIM1; k=rsa; p=MIGfMA0BgQD...",
         "8. Leave 'TTL' as 'Auto'",
         "9. Click 'Save'",
       ],
@@ -132,18 +137,22 @@ const GUIDES: Record<string, Record<string, any>> = {
         "3. Click 'DNS' on the left",
         "4. Scroll to 'Custom records'",
         "5. Click 'Create new record'",
-        "6. For 'Type', select 'CNAME'",
-        "7. For 'Name', type exactly: selector._domainkey",
+        "6. For 'Type', select 'TXT' (IMPORTANT: Must be TXT, not CNAME)",
+        "7. For 'Name', type exactly what your email provider gave you",
+        "   Example: google._domainkey (or selector._domainkey if using a different selector)",
+        "   ⚠️ Do NOT change this - use exactly what your email provider specified",
         "8. For 'TTL', select '1 hour' (or '30 minutes' if available)",
-        "9. For 'Data', paste the DKIM record we gave you",
+        "9. For 'Data', paste the DKIM public key that your email provider gave you",
+        "   This is a long string that looks like: v=DKIM1; k=rsa; p=MIGfMA0BgQD...",
         "10. Click 'Create'",
       ],
     },
     commonMistakes: [
-      "❌ Changing 'selector._domainkey' - This MUST stay exactly as written",
-      "❌ Adding your domain to the name field - Just use 'selector._domainkey', nothing else",
-      "❌ Pasting the wrong value - Make sure you copy the DKIM value, not the SPF or DMARC value",
-      "❌ Using TXT instead of CNAME - Try CNAME first, only use TXT if CNAME fails",
+      "❌ Using CNAME instead of TXT - CNAME does NOT work for DKIM. Always use TXT.",
+      "❌ Changing the selector/host name - Use EXACTLY what your email provider gave you (e.g., google._domainkey)",
+      "❌ Adding your domain to the name field - Just use what your provider specified, nothing else",
+      "❌ Pasting the wrong value - Make sure you copy the DKIM public key, not the SPF or DMARC value",
+      "❌ Forgetting to include the full key - The DKIM value is usually very long (200+ characters). Make sure you paste the entire thing.",
     ],
   },
   dmarc: {
@@ -164,7 +173,8 @@ const GUIDES: Record<string, Record<string, any>> = {
         "8. For 'Name' or 'Host', type exactly: _dmarc",
         "   (This is the exact text - don't change it)",
         "9. For 'Value', paste the DMARC record we gave you",
-        "10. For 'TTL', leave as default (usually '1 hour' or 'Auto')",
+        "   Example: v=DMARC1; p=quarantine; rua=mailto:admin@yourdomain.com",
+        "10. For 'TTL', select '1 hour' (or 'Auto' if available)",
         "11. Click 'Save'",
       ],
       namecheap: [
@@ -176,6 +186,7 @@ const GUIDES: Record<string, Record<string, any>> = {
         "6. For 'Type', select 'TXT Record'",
         "7. For 'Host', type exactly: _dmarc",
         "8. For 'Value', paste the DMARC record we gave you",
+        "   Example: v=DMARC1; p=quarantine; rua=mailto:admin@yourdomain.com",
         "9. Leave 'TTL' as default",
         "10. Click the checkmark (✓) to save",
       ],
@@ -187,6 +198,7 @@ const GUIDES: Record<string, Record<string, any>> = {
         "5. For 'Type', select 'TXT'",
         "6. For 'Name', type exactly: _dmarc",
         "7. For 'Content', paste the DMARC record we gave you",
+        "   Example: v=DMARC1; p=quarantine; rua=mailto:admin@yourdomain.com",
         "8. Leave 'TTL' as 'Auto'",
         "9. Click 'Save'",
       ],
@@ -200,20 +212,22 @@ const GUIDES: Record<string, Record<string, any>> = {
         "7. For 'Name', type exactly: _dmarc",
         "8. For 'TTL', select '1 hour' (or '30 minutes' if available)",
         "9. For 'Data', paste the DMARC record we gave you",
+        "   Example: v=DMARC1; p=quarantine; rua=mailto:admin@yourdomain.com",
         "10. Click 'Create'",
       ],
     },
     commonMistakes: [
       "❌ Changing '_dmarc' - This MUST stay exactly as written",
-      "❌ Pasting the wrong value - Make sure you copy the DMARC value, not SPF or DKIM",
-      "❌ Forgetting the underscore - It's _dmarc (with underscore), not dmarc",
+      "❌ Adding your domain to the name field - Just use '_dmarc', nothing else",
+      "❌ Pasting the wrong value - Make sure you copy the DMARC value, not the SPF or DKIM value",
+      "❌ Forgetting the email address - Make sure the DMARC record includes an email (rua=mailto:...)",
     ],
   },
   mx: {
     title: "MX Record Setup - Plain English Guide",
-    description: "MX records tell email providers where to send emails to your domain",
-    whatItDoes: "MX is like your mailing address. It tells the postal service where to deliver letters to your domain.",
-    why: "Without MX records, people can't send you emails to your domain.",
+    description: "MX records route incoming emails to your mail server",
+    whatItDoes: "MX is like a mailbox address. It tells email providers where to deliver emails sent to your domain.",
+    why: "Without MX records, people can't send you emails at your domain.",
     recordType: "MX",
     registrarSteps: {
       godaddy: [
@@ -222,12 +236,13 @@ const GUIDES: Record<string, Record<string, any>> = {
         "3. Find your domain and click the three dots (...)",
         "4. Click 'Manage DNS'",
         "5. Scroll to 'DNS Records' section",
-        "6. Look for existing MX records (they might already be there)",
+        "6. Look for existing MX records (they should already be there)",
         "7. If you need to add one, click '+ Add' button",
         "8. For 'Type', select 'MX' from the dropdown",
         "9. For 'Name' or 'Host', type: @ (just the @ symbol)",
-        "10. For 'Points to' or 'Value', paste the MX record we gave you",
-        "11. For 'Priority', enter: 10 (this is the priority number)",
+        "10. For 'Points to' or 'Value', enter your mail server address (your email provider will give you this)",
+        "    Example: mail.yourdomain.com or mail.google.com",
+        "11. For 'Priority', enter a number (usually 10 or 20 - lower numbers are tried first)",
         "12. For 'TTL', select '1 hour' (or 'Auto' if available)",
         "13. Click 'Save'",
       ],
@@ -236,12 +251,13 @@ const GUIDES: Record<string, Record<string, any>> = {
         "2. Click 'Domain List' on the left",
         "3. Click 'Manage' next to your domain",
         "4. Click 'Advanced DNS' tab",
-        "5. Look for existing MX records (they might already be there)",
+        "5. Look for existing MX records (they should already be there)",
         "6. If you need to add one, click '+ Add New Record'",
         "7. For 'Type', select 'MX Record'",
         "8. For 'Host', type: @ (just the @ symbol)",
-        "9. For 'Mail Server', paste the MX record we gave you",
-        "10. For 'Priority', enter: 10",
+        "9. For 'Value', enter your mail server address (your email provider will give you this)",
+        "    Example: mail.yourdomain.com or mail.google.com",
+        "10. For 'Priority', enter a number (usually 10 or 20 - lower numbers are tried first)",
         "11. Leave 'TTL' as default",
         "12. Click the checkmark (✓) to save",
       ],
@@ -249,12 +265,13 @@ const GUIDES: Record<string, Record<string, any>> = {
         "1. Open cloudflare.com and log in",
         "2. Click your domain",
         "3. Click 'DNS' tab",
-        "4. Look for existing MX records (they might already be there)",
+        "4. Look for existing MX records (they should already be there)",
         "5. If you need to add one, click '+ Add record'",
         "6. For 'Type', select 'MX'",
         "7. For 'Name', type: @ (just the @ symbol)",
-        "8. For 'Mail server', paste the MX record we gave you",
-        "9. For 'Priority', enter: 10",
+        "8. For 'Mail Server', enter your mail server address (your email provider will give you this)",
+        "    Example: mail.yourdomain.com or mail.google.com",
+        "9. For 'Priority', enter a number (usually 10 or 20 - lower numbers are tried first)",
         "10. Leave 'TTL' as 'Auto'",
         "11. Click 'Save'",
       ],
@@ -262,164 +279,155 @@ const GUIDES: Record<string, Record<string, any>> = {
         "1. Open domains.google.com and log in",
         "2. Click your domain",
         "3. Click 'DNS' on the left",
-        "4. Look for existing MX records (they might already be there)",
-        "5. If you need to add one, scroll to 'Custom records'",
-        "6. Click 'Create new record'",
-        "7. For 'Type', select 'MX'",
-        "8. For 'Name', leave blank or type: @",
-        "9. For 'TTL', set to 3600",
-        "10. For 'Data', paste the MX record we gave you",
-        "11. Click 'Create'",
+        "4. Look for existing MX records (they should already be there)",
+        "5. If you need to add one, scroll to 'Custom records' and click 'Create new record'",
+        "6. For 'Type', select 'MX'",
+        "7. For 'Name', leave blank (or type @ )",
+        "8. For 'TTL', select '1 hour' (or '30 minutes' if available)",
+        "9. For 'Data', enter your mail server address (your email provider will give you this)",
+        "    Example: mail.yourdomain.com or mail.google.com",
+        "10. Click 'Create'",
       ],
     },
     commonMistakes: [
-      "❌ Changing the MX value - Copy and paste it exactly as shown",
-      "❌ Using the wrong priority - Usually use 10, unless you have multiple MX records",
-      "❌ Forgetting to save - Make sure you click Save/Create at the end",
+      "❌ Forgetting the priority number - MX records need a priority (usually 10 or 20)",
+      "❌ Using the wrong mail server address - Ask your email provider for the exact address",
+      "❌ Deleting existing MX records - Keep the ones that are already there unless your provider says to remove them",
+      "❌ Using the wrong 'Name' field - Always use @ (at symbol)",
     ],
   },
 };
 
-export default function DnsRecordGuide({
+export function DnsRecordGuide({
   recordType,
   domain,
   recordValue,
   isOpen,
   onClose,
 }: DnsRecordGuideProps) {
+  const guide = GUIDES[recordType];
   const [selectedRegistrar, setSelectedRegistrar] = useState<string>("godaddy");
   const [expandedMistakes, setExpandedMistakes] = useState(false);
-  const guide = GUIDES[recordType];
 
   if (!guide) return null;
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(recordValue);
     toast.success("Copied to clipboard!");
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{guide.title}</DialogTitle>
           <DialogDescription>{guide.description}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* What it does - Plain English */}
+          {/* In Plain English */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm font-semibold text-blue-900 mb-2">In Plain English:</p>
-            <p className="text-sm text-blue-800">{guide.whatItDoes}</p>
-            <p className="text-sm text-blue-700 mt-3">
-              <span className="font-semibold">Why this matters:</span> {guide.why}
-            </p>
+            <h3 className="font-semibold text-blue-900 mb-2">In Plain English:</h3>
+            <p className="text-blue-800">{guide.whatItDoes}</p>
           </div>
 
-          {/* Record Value - Clear Instructions */}
-          <div className="bg-stone-50 border border-stone-200 rounded-lg p-4">
-            <p className="text-sm font-semibold text-stone-900 mb-3">
-              📋 Copy This Exact Text:
-            </p>
-            <div className="flex items-start gap-2">
-              <code className="flex-1 bg-white border border-stone-300 rounded p-3 text-xs font-mono text-stone-700 break-all leading-relaxed">
-                {recordValue}
-              </code>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => copyToClipboard(recordValue)}
-                className="flex-shrink-0 mt-0.5"
-              >
-                <Copy className="w-4 h-4 mr-1" />
-                Copy
-              </Button>
+          {/* Why This Matters */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h3 className="font-semibold text-green-900 mb-2">Why this matters:</h3>
+            <p className="text-green-800">{guide.why}</p>
+          </div>
+
+          {/* Record Type */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <h3 className="font-semibold text-yellow-900 mb-2">Record Type:</h3>
+            <p className="text-yellow-800 font-mono">{guide.recordType}</p>
+          </div>
+
+          {/* Copy This Exact Text */}
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <h3 className="font-semibold text-purple-900 mb-3">Copy This Exact Text:</h3>
+            <div className="bg-white border border-purple-300 rounded p-3 font-mono text-sm break-all mb-3">
+              {recordValue}
             </div>
-            <p className="text-xs text-stone-600 mt-2">
-              👆 Click the Copy button above, then paste this into your registrar
+            <Button onClick={copyToClipboard} className="w-full" variant="outline">
+              <Copy className="w-4 h-4 mr-2" />
+              Copy to Clipboard
+            </Button>
+            <p className="text-sm text-purple-700 mt-3">
+              ⚠️ Click the Copy button above, then paste this exact value into your registrar. Do not change anything.
             </p>
           </div>
 
-          {/* Registrar Selection */}
+          {/* Which Registrar */}
           <div>
-            <p className="text-sm font-semibold text-stone-900 mb-3">
-              🌐 Which registrar do you use? (Click one):
-            </p>
+            <h3 className="font-semibold mb-3">Which registrar do you use? (Click one):</h3>
             <div className="grid grid-cols-2 gap-2">
               {REGISTRARS.map((registrar) => (
-                <button
+                <Button
                   key={registrar}
                   onClick={() => setSelectedRegistrar(registrar)}
-                  className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                    selectedRegistrar === registrar
-                      ? "border-amber-500 bg-amber-50 text-amber-900"
-                      : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
-                  }`}
+                  variant={selectedRegistrar === registrar ? "default" : "outline"}
+                  className="capitalize"
                 >
-                  {registrar.charAt(0).toUpperCase() + registrar.slice(1)}
-                </button>
+                  {registrar}
+                </Button>
               ))}
             </div>
           </div>
 
-          {/* Step-by-Step Instructions */}
-          <div className="bg-white border border-stone-200 rounded-lg p-4">
-            <p className="text-sm font-semibold text-stone-900 mb-4">
-              👇 Follow These Steps (for {selectedRegistrar.charAt(0).toUpperCase() + selectedRegistrar.slice(1)}):
-            </p>
-            <ol className="space-y-3">
+          {/* Steps for Selected Registrar */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <h3 className="font-semibold mb-3 capitalize">
+              Follow These Steps (for {selectedRegistrar}):
+            </h3>
+            <ol className="space-y-2">
               {guide.registrarSteps[selectedRegistrar]?.map((step: string, idx: number) => (
-                <li key={idx} className="text-sm text-stone-700 flex gap-3">
-                  <span className="font-bold text-amber-600 flex-shrink-0 bg-amber-100 w-6 h-6 rounded-full flex items-center justify-center text-xs">
-                    {idx + 1}
-                  </span>
-                  <span className="pt-0.5">{step}</span>
+                <li key={idx} className="text-sm text-gray-700 leading-relaxed">
+                  {step}
                 </li>
               ))}
             </ol>
           </div>
 
           {/* Common Mistakes */}
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="border border-red-200 rounded-lg overflow-hidden">
             <button
               onClick={() => setExpandedMistakes(!expandedMistakes)}
-              className="w-full flex items-center justify-between text-sm font-semibold text-red-900 hover:text-red-700"
+              className="w-full bg-red-50 p-4 flex items-center justify-between hover:bg-red-100 transition"
             >
-              <span className="flex items-center gap-2">
-                <AlertCircle className="w-4 h-4" />
-                Common Mistakes to Avoid
-              </span>
-              {expandedMistakes ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              <h3 className="font-semibold text-red-900">Common Mistakes to Avoid</h3>
+              {expandedMistakes ? (
+                <ChevronUp className="w-5 h-5 text-red-600" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-red-600" />
+              )}
             </button>
             {expandedMistakes && (
-              <ul className="text-sm text-red-800 space-y-2 mt-3 list-none">
+              <div className="bg-red-50 p-4 space-y-2 border-t border-red-200">
                 {guide.commonMistakes?.map((mistake: string, idx: number) => (
-                  <li key={idx} className="flex gap-2">
-                    <span className="flex-shrink-0">⚠️</span>
-                    <span>{mistake}</span>
-                  </li>
+                  <p key={idx} className="text-sm text-red-800">
+                    {mistake}
+                  </p>
                 ))}
-              </ul>
+              </div>
             )}
           </div>
 
-          {/* Verification */}
-          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-            <p className="text-sm font-semibold text-emerald-900 mb-3">✅ After You Add the Record:</p>
-            <ul className="text-sm text-emerald-800 space-y-2">
-              <li>⏳ Wait 5-30 minutes (DNS changes are slow - this is normal)</li>
-              <li>🔄 Come back to AXIOM CRM and click "Re-check DNS"</li>
-              <li>⏰ If it still shows as pending, wait longer (sometimes up to 24 hours) and try again</li>
-              <li>💡 Tip: You can check your DNS records at mxtoolbox.com (just paste your domain)</li>
+          {/* Quick Timeline */}
+          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+            <h3 className="font-semibold text-indigo-900 mb-3">Quick Timeline:</h3>
+            <ul className="space-y-2 text-sm text-indigo-800">
+              <li>✓ Add records to your registrar: 5-10 minutes</li>
+              <li>✓ DNS propagates globally: 5 minutes to 24 hours</li>
+              <li>✓ Click "Re-check DNS" to verify: After 5-10 minutes</li>
             </ul>
           </div>
+        </div>
 
-          {/* Footer */}
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={onClose}>
-              Close
-            </Button>
-          </div>
+        <div className="flex justify-end gap-2 pt-4">
+          <Button onClick={onClose} variant="outline">
+            Close
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
