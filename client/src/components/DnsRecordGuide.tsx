@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Copy, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
+import { Copy, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface DnsRecordGuideProps {
@@ -16,228 +16,267 @@ const REGISTRARS = ["godaddy", "namecheap", "cloudflare", "google"];
 
 const GUIDES: Record<string, Record<string, any>> = {
   spf: {
-    title: "SPF Record Setup",
-    description: "SPF (Sender Policy Framework) proves your domain is authorized to send emails",
-    whatItDoes: "Tells email providers which servers are allowed to send emails from your domain",
-    why: "Prevents email spoofing and improves deliverability",
+    title: "SPF Record Setup - Plain English Guide",
+    description: "SPF proves your domain is authorized to send emails",
+    whatItDoes: "Think of SPF like a permission slip. It tells email providers: 'Yes, this server has permission to send emails from my domain'",
+    why: "Without SPF, scammers can pretend to be you. SPF stops that.",
     recordType: "TXT",
     registrarSteps: {
       godaddy: [
-        "1. Go to godaddy.com and log in",
-        "2. Click 'Domains' in the top menu",
-        "3. Find your domain and click the 3 dots → 'Manage DNS'",
-        "4. Scroll to 'DNS Records' section",
-        "5. Click '+ Add' button",
-        "6. Select Type: TXT",
-        "7. Name/Host: @ (or leave blank)",
-        "8. Value: Paste the SPF record below",
-        "9. TTL: 3600 (default)",
-        "10. Click 'Save'",
+        "1. Open godaddy.com in your browser and log in with your username and password",
+        "2. Look for 'Domains' at the top of the page and click it",
+        "3. Find your domain name in the list (example: yourdomain.com)",
+        "4. Click the three dots (...) next to your domain name",
+        "5. Click 'Manage DNS' from the menu that appears",
+        "6. Scroll down until you see a section called 'DNS Records' (it shows a list of existing records)",
+        "7. Look for a button that says '+ Add' or '+ Add Record' and click it",
+        "8. A form will pop up. For 'Type', select 'TXT' from the dropdown menu",
+        "9. For 'Name' or 'Host', type: @ (just the @ symbol, nothing else)",
+        "10. For 'Value', paste the SPF record that we gave you above (the long string starting with 'v=spf1')",
+        "11. Leave 'TTL' as is (usually 3600 or 1 hour)",
+        "12. Click the 'Save' button",
+        "13. You're done! The record is now added.",
       ],
       namecheap: [
-        "1. Log in to namecheap.com",
-        "2. Click 'Domain List' on the left",
-        "3. Click 'Manage' next to your domain",
-        "4. Go to 'Advanced DNS' tab",
-        "5. Click '+ Add New Record'",
-        "6. Type: TXT Record",
-        "7. Host: @ (root domain)",
-        "8. Value: Paste the SPF record below",
-        "9. TTL: 3600",
-        "10. Click the checkmark to save",
+        "1. Open namecheap.com and log in",
+        "2. On the left side, click 'Domain List'",
+        "3. Find your domain and click 'Manage' next to it",
+        "4. Click the 'Advanced DNS' tab at the top",
+        "5. Look for a button that says '+ Add New Record' and click it",
+        "6. For 'Type', select 'TXT Record' from the dropdown",
+        "7. For 'Host', type: @ (just the @ symbol)",
+        "8. For 'Value', paste the SPF record we gave you (the long string starting with 'v=spf1')",
+        "9. Leave 'TTL' as the default (usually 3600)",
+        "10. Click the checkmark (✓) button to save",
       ],
       cloudflare: [
-        "1. Log in to cloudflare.com",
-        "2. Select your domain",
-        "3. Go to 'DNS' tab",
-        "4. Click '+ Add record'",
-        "5. Type: TXT",
-        "6. Name: @ (your domain)",
-        "7. Content: Paste the SPF record below",
-        "8. TTL: Auto",
+        "1. Open cloudflare.com and log in",
+        "2. Click on your domain name",
+        "3. Click the 'DNS' tab on the left side",
+        "4. Click '+ Add record' button",
+        "5. For 'Type', select 'TXT' from the dropdown",
+        "6. For 'Name', type: @ (just the @ symbol)",
+        "7. For 'Content', paste the SPF record we gave you (the long string starting with 'v=spf1')",
+        "8. Leave 'TTL' set to 'Auto'",
         "9. Click 'Save'",
       ],
       google: [
-        "1. Go to domains.google.com",
-        "2. Select your domain",
-        "3. Click 'DNS' on the left",
-        "4. Scroll to 'Custom records'",
+        "1. Open domains.google.com and log in",
+        "2. Click on your domain name",
+        "3. On the left side, click 'DNS'",
+        "4. Scroll down to 'Custom records' section",
         "5. Click 'Create new record'",
-        "6. Type: TXT",
-        "7. Name: @ (leave blank for root)",
-        "8. TTL: 3600",
-        "9. Data: Paste the SPF record below",
+        "6. For 'Type', select 'TXT' from the dropdown",
+        "7. For 'Name', leave it blank (or type @ )",
+        "8. For 'TTL', set it to 3600",
+        "9. For 'Data', paste the SPF record we gave you (the long string starting with 'v=spf1')",
         "10. Click 'Create'",
       ],
     },
+    commonMistakes: [
+      "❌ Typing the record value wrong - Copy and paste it exactly as shown",
+      "❌ Using the wrong 'Name' field - Always use @ (at symbol)",
+      "❌ Forgetting to save - Make sure you click Save/Create at the end",
+      "❌ Checking too quickly - DNS changes take 5-30 minutes to show up",
+    ],
   },
   dkim: {
-    title: "DKIM Record Setup",
-    description: "DKIM (DomainKeys Identified Mail) cryptographically signs your emails",
-    whatItDoes: "Adds a digital signature to prove emails came from your domain",
-    why: "Prevents email spoofing and improves trust with email providers",
+    title: "DKIM Record Setup - Plain English Guide",
+    description: "DKIM digitally signs your emails so providers know they're really from you",
+    whatItDoes: "DKIM is like your digital signature on emails. It proves the email came from you and wasn't changed by anyone else.",
+    why: "Email providers trust signed emails more. This helps your emails get to the inbox instead of spam.",
     recordType: "CNAME or TXT",
     registrarSteps: {
       godaddy: [
-        "1. Go to godaddy.com and log in",
-        "2. Click 'Domains' → find your domain",
-        "3. Click the 3 dots → 'Manage DNS'",
-        "4. Scroll to 'DNS Records'",
-        "5. Click '+ Add'",
-        "6. Type: CNAME (or TXT if CNAME doesn't work)",
-        "7. Name/Host: selector._domainkey (or what your provider specifies)",
-        "8. Points to: Paste the DKIM value below",
-        "9. TTL: 3600",
-        "10. Click 'Save'",
+        "1. Open godaddy.com and log in",
+        "2. Click 'Domains' at the top",
+        "3. Find your domain and click the three dots (...)",
+        "4. Click 'Manage DNS'",
+        "5. Scroll to 'DNS Records' section",
+        "6. Click '+ Add' button",
+        "7. For 'Type', select 'CNAME' from the dropdown (CNAME is a special type of DNS record)",
+        "8. For 'Name' or 'Host', type exactly: selector._domainkey",
+        "   (This is the exact text - don't change it, don't add your domain)",
+        "9. For 'Points to' or 'Value', paste the DKIM record we gave you",
+        "10. Leave 'TTL' as default (3600)",
+        "11. Click 'Save'",
+        "",
+        "⚠️ IMPORTANT: If you get an error saying CNAME doesn't work, try again with Type = 'TXT' instead",
       ],
       namecheap: [
-        "1. Log in to namecheap.com",
-        "2. Click 'Domain List' → 'Manage' next to your domain",
-        "3. Go to 'Advanced DNS' tab",
-        "4. Click '+ Add New Record'",
-        "5. Type: CNAME Record",
-        "6. Host: selector._domainkey",
-        "7. Value: Paste the DKIM record below",
-        "8. TTL: 3600",
-        "9. Click the checkmark",
+        "1. Open namecheap.com and log in",
+        "2. Click 'Domain List' on the left",
+        "3. Click 'Manage' next to your domain",
+        "4. Click 'Advanced DNS' tab",
+        "5. Click '+ Add New Record'",
+        "6. For 'Type', select 'CNAME Record'",
+        "7. For 'Host', type exactly: selector._domainkey",
+        "8. For 'Value', paste the DKIM record we gave you",
+        "9. Leave 'TTL' as default",
+        "10. Click the checkmark (✓) to save",
       ],
       cloudflare: [
-        "1. Log in to cloudflare.com",
-        "2. Select your domain",
-        "3. Go to 'DNS' tab",
+        "1. Open cloudflare.com and log in",
+        "2. Click your domain",
+        "3. Click 'DNS' tab",
         "4. Click '+ Add record'",
-        "5. Type: CNAME",
-        "6. Name: selector._domainkey",
-        "7. Target: Paste the DKIM record below",
-        "8. TTL: Auto",
+        "5. For 'Type', select 'CNAME'",
+        "6. For 'Name', type exactly: selector._domainkey",
+        "7. For 'Target', paste the DKIM record we gave you",
+        "8. Leave 'TTL' as 'Auto'",
         "9. Click 'Save'",
       ],
       google: [
-        "1. Go to domains.google.com",
-        "2. Select your domain",
+        "1. Open domains.google.com and log in",
+        "2. Click your domain",
         "3. Click 'DNS' on the left",
         "4. Scroll to 'Custom records'",
         "5. Click 'Create new record'",
-        "6. Type: CNAME",
-        "7. Name: selector._domainkey",
-        "8. TTL: 3600",
-        "9. Data: Paste the DKIM record below",
+        "6. For 'Type', select 'CNAME'",
+        "7. For 'Name', type exactly: selector._domainkey",
+        "8. For 'TTL', set to 3600",
+        "9. For 'Data', paste the DKIM record we gave you",
         "10. Click 'Create'",
       ],
     },
+    commonMistakes: [
+      "❌ Changing 'selector._domainkey' - This MUST stay exactly as written",
+      "❌ Adding your domain to the name field - Just use 'selector._domainkey', nothing else",
+      "❌ Pasting the wrong value - Make sure you copy the DKIM value, not the SPF or DMARC value",
+      "❌ Using TXT instead of CNAME - Try CNAME first, only use TXT if CNAME fails",
+    ],
   },
   dmarc: {
-    title: "DMARC Record Setup",
-    description: "DMARC (Domain-based Message Authentication) tells providers what to do with unauth emails",
-    whatItDoes: "Protects your domain from being impersonated by specifying what to do with failed emails",
-    why: "Prevents phishing attacks and improves email security",
+    title: "DMARC Record Setup - Plain English Guide",
+    description: "DMARC tells email providers what to do if someone tries to fake your domain",
+    whatItDoes: "DMARC is like a security policy. It says: 'If an email fails SPF or DKIM checks, here's what you should do with it'",
+    why: "This protects your domain from being impersonated and stops phishing attacks.",
     recordType: "TXT",
     registrarSteps: {
       godaddy: [
-        "1. Go to godaddy.com and log in",
-        "2. Click 'Domains' → find your domain",
-        "3. Click the 3 dots → 'Manage DNS'",
-        "4. Scroll to 'DNS Records'",
-        "5. Click '+ Add'",
-        "6. Type: TXT",
-        "7. Name/Host: _dmarc",
-        "8. Value: Paste the DMARC record below",
-        "9. TTL: 3600",
-        "10. Click 'Save'",
-      ],
-      namecheap: [
-        "1. Log in to namecheap.com",
-        "2. Click 'Domain List' → 'Manage'",
-        "3. Go to 'Advanced DNS'",
-        "4. Click '+ Add New Record'",
-        "5. Type: TXT Record",
-        "6. Host: _dmarc",
-        "7. Value: Paste the DMARC record below",
-        "8. TTL: 3600",
-        "9. Click the checkmark",
-      ],
-      cloudflare: [
-        "1. Log in to cloudflare.com",
-        "2. Select your domain",
-        "3. Go to 'DNS' tab",
-        "4. Click '+ Add record'",
-        "5. Type: TXT",
-        "6. Name: _dmarc",
-        "7. Content: Paste the DMARC record below",
-        "8. TTL: Auto",
-        "9. Click 'Save'",
-      ],
-      google: [
-        "1. Go to domains.google.com",
-        "2. Select your domain",
-        "3. Click 'DNS'",
-        "4. Scroll to 'Custom records'",
-        "5. Click 'Create new record'",
-        "6. Type: TXT",
-        "7. Name: _dmarc",
-        "8. TTL: 3600",
-        "9. Data: Paste the DMARC record below",
-        "10. Click 'Create'",
-      ],
-    },
-  },
-  mx: {
-    title: "MX Record Setup",
-    description: "MX (Mail Exchange) records route incoming emails to your mail server",
-    whatItDoes: "Tells email providers where to send emails addressed to your domain",
-    why: "Ensures people can send emails to your domain and you receive them",
-    recordType: "MX",
-    registrarSteps: {
-      godaddy: [
-        "1. Go to godaddy.com and log in",
-        "2. Click 'Domains' → find your domain",
-        "3. Click the 3 dots → 'Manage DNS'",
-        "4. Scroll to 'DNS Records'",
-        "5. Click '+ Add'",
-        "6. Type: MX",
-        "7. Name/Host: @ (root domain)",
-        "8. Points to: Paste the MX value below",
-        "9. Priority: 10 (or as specified)",
-        "10. TTL: 3600",
+        "1. Open godaddy.com and log in",
+        "2. Click 'Domains' at the top",
+        "3. Find your domain and click the three dots (...)",
+        "4. Click 'Manage DNS'",
+        "5. Scroll to 'DNS Records' section",
+        "6. Click '+ Add' button",
+        "7. For 'Type', select 'TXT' from the dropdown",
+        "8. For 'Name' or 'Host', type exactly: _dmarc",
+        "   (This is the exact text - don't change it)",
+        "9. For 'Value', paste the DMARC record we gave you",
+        "10. Leave 'TTL' as default (3600)",
         "11. Click 'Save'",
       ],
       namecheap: [
-        "1. Log in to namecheap.com",
-        "2. Click 'Domain List' → 'Manage'",
-        "3. Go to 'Advanced DNS'",
-        "4. Look for existing MX records or click '+ Add New Record'",
-        "5. Type: MX Record",
-        "6. Host: @",
-        "7. Mail Server: Paste the MX value below",
-        "8. Priority: 10",
-        "9. TTL: 3600",
-        "10. Click the checkmark",
+        "1. Open namecheap.com and log in",
+        "2. Click 'Domain List' on the left",
+        "3. Click 'Manage' next to your domain",
+        "4. Click 'Advanced DNS' tab",
+        "5. Click '+ Add New Record'",
+        "6. For 'Type', select 'TXT Record'",
+        "7. For 'Host', type exactly: _dmarc",
+        "8. For 'Value', paste the DMARC record we gave you",
+        "9. Leave 'TTL' as default",
+        "10. Click the checkmark (✓) to save",
       ],
       cloudflare: [
-        "1. Log in to cloudflare.com",
-        "2. Select your domain",
-        "3. Go to 'DNS' tab",
+        "1. Open cloudflare.com and log in",
+        "2. Click your domain",
+        "3. Click 'DNS' tab",
         "4. Click '+ Add record'",
-        "5. Type: MX",
-        "6. Name: @ (your domain)",
-        "7. Mail server: Paste the MX value below",
-        "8. Priority: 10",
-        "9. TTL: Auto",
-        "10. Click 'Save'",
+        "5. For 'Type', select 'TXT'",
+        "6. For 'Name', type exactly: _dmarc",
+        "7. For 'Content', paste the DMARC record we gave you",
+        "8. Leave 'TTL' as 'Auto'",
+        "9. Click 'Save'",
       ],
       google: [
-        "1. Go to domains.google.com",
-        "2. Select your domain",
-        "3. Click 'DNS'",
+        "1. Open domains.google.com and log in",
+        "2. Click your domain",
+        "3. Click 'DNS' on the left",
         "4. Scroll to 'Custom records'",
         "5. Click 'Create new record'",
-        "6. Type: MX",
-        "7. Name: @ (leave blank)",
-        "8. TTL: 3600",
-        "9. Data: Paste the MX value below",
+        "6. For 'Type', select 'TXT'",
+        "7. For 'Name', type exactly: _dmarc",
+        "8. For 'TTL', set to 3600",
+        "9. For 'Data', paste the DMARC record we gave you",
         "10. Click 'Create'",
       ],
     },
+    commonMistakes: [
+      "❌ Changing '_dmarc' - This MUST stay exactly as written",
+      "❌ Pasting the wrong value - Make sure you copy the DMARC value, not SPF or DKIM",
+      "❌ Forgetting the underscore - It's _dmarc (with underscore), not dmarc",
+    ],
+  },
+  mx: {
+    title: "MX Record Setup - Plain English Guide",
+    description: "MX records tell email providers where to send emails to your domain",
+    whatItDoes: "MX is like your mailing address. It tells the postal service where to deliver letters to your domain.",
+    why: "Without MX records, people can't send you emails to your domain.",
+    recordType: "MX",
+    registrarSteps: {
+      godaddy: [
+        "1. Open godaddy.com and log in",
+        "2. Click 'Domains' at the top",
+        "3. Find your domain and click the three dots (...)",
+        "4. Click 'Manage DNS'",
+        "5. Scroll to 'DNS Records' section",
+        "6. Look for existing MX records (they might already be there)",
+        "7. If you need to add one, click '+ Add' button",
+        "8. For 'Type', select 'MX' from the dropdown",
+        "9. For 'Name' or 'Host', type: @ (just the @ symbol)",
+        "10. For 'Points to' or 'Value', paste the MX record we gave you",
+        "11. For 'Priority', enter: 10 (this is the priority number)",
+        "12. Leave 'TTL' as default (3600)",
+        "13. Click 'Save'",
+      ],
+      namecheap: [
+        "1. Open namecheap.com and log in",
+        "2. Click 'Domain List' on the left",
+        "3. Click 'Manage' next to your domain",
+        "4. Click 'Advanced DNS' tab",
+        "5. Look for existing MX records (they might already be there)",
+        "6. If you need to add one, click '+ Add New Record'",
+        "7. For 'Type', select 'MX Record'",
+        "8. For 'Host', type: @ (just the @ symbol)",
+        "9. For 'Mail Server', paste the MX record we gave you",
+        "10. For 'Priority', enter: 10",
+        "11. Leave 'TTL' as default",
+        "12. Click the checkmark (✓) to save",
+      ],
+      cloudflare: [
+        "1. Open cloudflare.com and log in",
+        "2. Click your domain",
+        "3. Click 'DNS' tab",
+        "4. Look for existing MX records (they might already be there)",
+        "5. If you need to add one, click '+ Add record'",
+        "6. For 'Type', select 'MX'",
+        "7. For 'Name', type: @ (just the @ symbol)",
+        "8. For 'Mail server', paste the MX record we gave you",
+        "9. For 'Priority', enter: 10",
+        "10. Leave 'TTL' as 'Auto'",
+        "11. Click 'Save'",
+      ],
+      google: [
+        "1. Open domains.google.com and log in",
+        "2. Click your domain",
+        "3. Click 'DNS' on the left",
+        "4. Look for existing MX records (they might already be there)",
+        "5. If you need to add one, scroll to 'Custom records'",
+        "6. Click 'Create new record'",
+        "7. For 'Type', select 'MX'",
+        "8. For 'Name', leave blank or type: @",
+        "9. For 'TTL', set to 3600",
+        "10. For 'Data', paste the MX record we gave you",
+        "11. Click 'Create'",
+      ],
+    },
+    commonMistakes: [
+      "❌ Changing the MX value - Copy and paste it exactly as shown",
+      "❌ Using the wrong priority - Usually use 10, unless you have multiple MX records",
+      "❌ Forgetting to save - Make sure you click Save/Create at the end",
+    ],
   },
 };
 
@@ -249,6 +288,7 @@ export default function DnsRecordGuide({
   onClose,
 }: DnsRecordGuideProps) {
   const [selectedRegistrar, setSelectedRegistrar] = useState<string>("godaddy");
+  const [expandedMistakes, setExpandedMistakes] = useState(false);
   const guide = GUIDES[recordType];
 
   if (!guide) return null;
@@ -260,27 +300,29 @@ export default function DnsRecordGuide({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{guide.title}</DialogTitle>
           <DialogDescription>{guide.description}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* What it does */}
+          {/* What it does - Plain English */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm font-semibold text-blue-900 mb-1">What this record does:</p>
+            <p className="text-sm font-semibold text-blue-900 mb-2">In Plain English:</p>
             <p className="text-sm text-blue-800">{guide.whatItDoes}</p>
-            <p className="text-sm text-blue-700 mt-2">
-              <span className="font-semibold">Why it matters:</span> {guide.why}
+            <p className="text-sm text-blue-700 mt-3">
+              <span className="font-semibold">Why this matters:</span> {guide.why}
             </p>
           </div>
 
-          {/* Record Value */}
+          {/* Record Value - Clear Instructions */}
           <div className="bg-stone-50 border border-stone-200 rounded-lg p-4">
-            <p className="text-sm font-semibold text-stone-900 mb-2">Record Value (copy this):</p>
+            <p className="text-sm font-semibold text-stone-900 mb-3">
+              📋 Copy This Exact Text:
+            </p>
             <div className="flex items-start gap-2">
-              <code className="flex-1 bg-white border border-stone-300 rounded p-3 text-xs font-mono text-stone-700 break-all">
+              <code className="flex-1 bg-white border border-stone-300 rounded p-3 text-xs font-mono text-stone-700 break-all leading-relaxed">
                 {recordValue}
               </code>
               <Button
@@ -289,14 +331,20 @@ export default function DnsRecordGuide({
                 onClick={() => copyToClipboard(recordValue)}
                 className="flex-shrink-0 mt-0.5"
               >
-                <Copy className="w-4 h-4" />
+                <Copy className="w-4 h-4 mr-1" />
+                Copy
               </Button>
             </div>
+            <p className="text-xs text-stone-600 mt-2">
+              👆 Click the Copy button above, then paste this into your registrar
+            </p>
           </div>
 
           {/* Registrar Selection */}
           <div>
-            <p className="text-sm font-semibold text-stone-900 mb-3">Select your domain registrar:</p>
+            <p className="text-sm font-semibold text-stone-900 mb-3">
+              🌐 Which registrar do you use? (Click one):
+            </p>
             <div className="grid grid-cols-2 gap-2">
               {REGISTRARS.map((registrar) => (
                 <button
@@ -317,25 +365,52 @@ export default function DnsRecordGuide({
           {/* Step-by-Step Instructions */}
           <div className="bg-white border border-stone-200 rounded-lg p-4">
             <p className="text-sm font-semibold text-stone-900 mb-4">
-              Step-by-Step Instructions for {selectedRegistrar.charAt(0).toUpperCase() + selectedRegistrar.slice(1)}:
+              👇 Follow These Steps (for {selectedRegistrar.charAt(0).toUpperCase() + selectedRegistrar.slice(1)}):
             </p>
-            <ol className="space-y-2">
+            <ol className="space-y-3">
               {guide.registrarSteps[selectedRegistrar]?.map((step: string, idx: number) => (
                 <li key={idx} className="text-sm text-stone-700 flex gap-3">
-                  <span className="font-semibold text-amber-600 flex-shrink-0">{idx + 1}.</span>
-                  <span>{step}</span>
+                  <span className="font-bold text-amber-600 flex-shrink-0 bg-amber-100 w-6 h-6 rounded-full flex items-center justify-center text-xs">
+                    {idx + 1}
+                  </span>
+                  <span className="pt-0.5">{step}</span>
                 </li>
               ))}
             </ol>
           </div>
 
+          {/* Common Mistakes */}
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <button
+              onClick={() => setExpandedMistakes(!expandedMistakes)}
+              className="w-full flex items-center justify-between text-sm font-semibold text-red-900 hover:text-red-700"
+            >
+              <span className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4" />
+                Common Mistakes to Avoid
+              </span>
+              {expandedMistakes ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            {expandedMistakes && (
+              <ul className="text-sm text-red-800 space-y-2 mt-3 list-none">
+                {guide.commonMistakes?.map((mistake: string, idx: number) => (
+                  <li key={idx} className="flex gap-2">
+                    <span className="flex-shrink-0">⚠️</span>
+                    <span>{mistake}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           {/* Verification */}
           <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-            <p className="text-sm font-semibold text-emerald-900 mb-2">After adding the record:</p>
-            <ul className="text-sm text-emerald-800 space-y-1 list-disc list-inside">
-              <li>Wait 5-30 minutes for DNS to propagate (sometimes up to 24 hours)</li>
-              <li>Come back to AXIOM and click "Re-check DNS"</li>
-              <li>If still showing as pending, wait longer and try again</li>
+            <p className="text-sm font-semibold text-emerald-900 mb-3">✅ After You Add the Record:</p>
+            <ul className="text-sm text-emerald-800 space-y-2">
+              <li>⏳ Wait 5-30 minutes (DNS changes are slow - this is normal)</li>
+              <li>🔄 Come back to AXIOM CRM and click "Re-check DNS"</li>
+              <li>⏰ If it still shows as pending, wait longer (sometimes up to 24 hours) and try again</li>
+              <li>💡 Tip: You can check your DNS records at mxtoolbox.com (just paste your domain)</li>
             </ul>
           </div>
 
