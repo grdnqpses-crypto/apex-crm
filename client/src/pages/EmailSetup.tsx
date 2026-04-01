@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useSkin } from "@/contexts/SkinContext";
-import { DnsRecordGuide } from "@/components/DnsRecordGuide";
 import {
   Mail, Globe, CheckCircle2, XCircle, AlertCircle, Copy, RefreshCw,
   ArrowLeft, ArrowRight, Wifi, Building2, Sparkles, ExternalLink,
@@ -43,8 +42,6 @@ export default function EmailSetup() {
   const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
   const [dnsRecords, setDnsRecords] = useState<DnsRecord[] | null>(null);
   const [step, setStep] = useState(1);
-  const [guideOpen, setGuideOpen] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState<{ type: string; value: string } | null>(null);
 
   const verifyMutation = trpc.emailSetup.verifyDomain.useMutation();
   const generateMutation = trpc.emailSetup.generateDnsRecords.useMutation();
@@ -214,7 +211,7 @@ export default function EmailSetup() {
                     <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm">2</div>
                     <span className="font-medium text-stone-800">DNS Check Results — {verifyResult.domain}</span>
                   </div>
-                  <Badge className={verifyResult.allPassed ? "bg-emerald-100 text-emerald-700 border-0" : "bg-red-100 text-red-700 border-0"}>
+                  <Badge className={verifyResult.allPassed ? "bg-emerald-100 text-emerald-700 border-0" : "bg-amber-100 text-amber-700 border-0"}>
                     {passedCount}/{totalChecks} Passing
                   </Badge>
                 </div>
@@ -243,28 +240,13 @@ export default function EmailSetup() {
                               </div>
                             )}
                             {!val.found && val.recommendation && (
-                              <div className="mt-3 space-y-2">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <AlertCircle className="w-4 h-4 text-red-600" />
-                                  <p className="text-xs font-semibold text-red-700">Action Required: Add {key.toUpperCase()} Record</p>
-                                  <button 
-                                    onClick={() => { 
-                                      setSelectedRecord({ type: key, value: val.recommendation! }); 
-                                      setGuideOpen(true); 
-                                    }} 
-                                    className="ml-auto text-xs text-blue-600 hover:text-blue-700 underline font-medium"
-                                  >
-                                    View Step-by-Step Guide →
+                              <div className="mt-2">
+                                <p className="text-xs font-medium text-red-700 mb-1">Action required:</p>
+                                <div className="flex items-start gap-2">
+                                  <code className="text-xs bg-white border border-red-200 px-2 py-1.5 rounded-lg text-stone-700 flex-1">{val.recommendation}</code>
+                                  <button onClick={() => copyToClipboard(val.recommendation!)} className="p-1 rounded hover:bg-red-100 flex-shrink-0 mt-0.5">
+                                    <Copy className="w-3.5 h-3.5 text-red-400" />
                                   </button>
-                                </div>
-                                <div className="bg-white border border-red-200 rounded-lg p-3 space-y-2">
-                                  <p className="text-xs text-stone-600 font-medium">Record Value (copy this):</p>
-                                  <div className="flex items-start gap-2">
-                                    <code className="text-xs bg-stone-50 border border-stone-200 px-2 py-1.5 rounded-lg text-stone-700 flex-1 break-all font-mono">{val.recommendation}</code>
-                                    <button onClick={() => copyToClipboard(val.recommendation!)} className="p-1 rounded hover:bg-blue-100 flex-shrink-0 mt-0.5">
-                                      <Copy className="w-4 h-4 text-blue-500" />
-                                    </button>
-                                  </div>
                                 </div>
                               </div>
                             )}
@@ -279,26 +261,16 @@ export default function EmailSetup() {
                   <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3">
                     <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0" />
                     <div>
-                      <p className="font-semibold text-emerald-800">✓ All checks passed!</p>
+                      <p className="font-semibold text-emerald-800">All checks passed!</p>
                       <p className="text-sm text-emerald-700 mt-0.5">Your domain is fully configured for professional email sending.</p>
                     </div>
                   </div>
                 ) : (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-xl space-y-3">
-                    <div className="flex items-start gap-3">
-                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-semibold text-red-800">⚠ Action Required: Add Missing DNS Records</p>
-                        <p className="text-sm text-red-700 mt-0.5">Click "View Step-by-Step Guide" next to each missing record above for detailed instructions for your registrar (GoDaddy, Namecheap, Cloudflare, etc.)</p>
-                      </div>
-                    </div>
-                    <div className="bg-white border border-red-200 rounded-lg p-3 text-xs text-stone-600 space-y-1">
-                      <p className="font-semibold text-stone-700">Quick Timeline:</p>
-                      <ul className="list-disc list-inside space-y-1 text-stone-600">
-                        <li>Add records to your registrar (5-10 minutes)</li>
-                        <li>DNS propagates globally (5 minutes to 24 hours)</li>
-                        <li>Click "Re-check DNS" to verify</li>
-                      </ul>
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-amber-800">Action required</p>
+                      <p className="text-sm text-amber-700 mt-0.5">Add the missing records to your DNS provider, then click Check DNS again. DNS changes can take up to 24 hours to propagate.</p>
                     </div>
                   </div>
                 )}
@@ -311,17 +283,6 @@ export default function EmailSetup() {
             </Card>
           )}
         </div>
-      )}
-
-      {/* DNS Record Guide Modal */}
-      {selectedRecord && (
-        <DnsRecordGuide
-          recordType={selectedRecord.type as "spf" | "dkim" | "dmarc" | "mx"}
-          domain={domain}
-          recordValue={selectedRecord.value}
-          isOpen={guideOpen}
-          onClose={() => setGuideOpen(false)}
-        />
       )}
 
       {/* PATH: Google Workspace */}
@@ -348,6 +309,7 @@ export default function EmailSetup() {
               </CardContent>
             </Card>
           )}
+          {dnsRecords && <DnsRecordTable records={dnsRecords} domain={domain} onCopy={copyToClipboard} onVerify={() => { setPath("existing"); setStep(1); }} />}
         </div>
       )}
 
@@ -375,6 +337,7 @@ export default function EmailSetup() {
               </CardContent>
             </Card>
           )}
+          {dnsRecords && <DnsRecordTable records={dnsRecords} domain={domain} onCopy={copyToClipboard} onVerify={() => { setPath("existing"); setStep(1); }} />}
         </div>
       )}
 
@@ -382,13 +345,185 @@ export default function EmailSetup() {
       {path === "fresh" && (
         <div className="space-y-5">
           <h2 className="font-semibold text-stone-800">Setting up from scratch</h2>
+
+          {/* Step 1: Choose a domain */}
           <Card className="border-stone-200 shadow-sm">
-            <CardContent className="p-5">
-              <p className="text-sm text-stone-600">Coming soon: Complete guide to purchase a domain and set up email from scratch.</p>
+            <CardContent className="p-5 space-y-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm">1</div>
+                <span className="font-semibold text-stone-800">Choose and purchase a domain name</span>
+              </div>
+              <p className="text-sm text-stone-600">Your domain is your professional identity. Choose something short, memorable, and related to your business name. Aim for a <code className="text-xs bg-stone-100 px-1 rounded">.com</code> if possible.</p>
+
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={domain}
+                  onChange={e => setDomain(e.target.value)}
+                  placeholder="yourbusiness.com"
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
+                />
+                <Button
+                  onClick={async () => {
+                    if (!domain.trim()) return;
+                    const result = await checkAvailabilityMutation.mutateAsync({ domain: domain.trim() });
+                    if (result.available) {
+                      toast.success(`${domain} appears to be available! Check a registrar to confirm.`);
+                    } else {
+                      toast.error(`${domain} is already registered. Try a variation.`);
+                    }
+                  }}
+                  disabled={!domain.trim() || checkAvailabilityMutation.isPending}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  {checkAvailabilityMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
+                  Check Availability
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                {Object.values(REGISTRAR_LINKS).map(reg => (
+                  <a key={reg.name} href={reg.url} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-xl border border-stone-200 hover:border-amber-300 hover:bg-amber-50/30 transition-all group">
+                    <span className="text-xl">{reg.logo}</span>
+                    <div className="flex-1">
+                      <p className="font-medium text-stone-800 text-sm">{reg.name}</p>
+                      <p className="text-xs text-stone-500">Purchase domain</p>
+                    </div>
+                    <ExternalLink className="w-3.5 h-3.5 text-stone-400 group-hover:text-amber-500" />
+                  </a>
+                ))}
+              </div>
             </CardContent>
           </Card>
+
+          {/* Step 2: Set up email hosting */}
+          <Card className="border-stone-200 shadow-sm">
+            <CardContent className="p-5 space-y-3">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm">2</div>
+                <span className="font-semibold text-stone-800">Set up email hosting</span>
+              </div>
+              <p className="text-sm text-stone-600">We recommend <strong>Google Workspace</strong> ($6/user/month) — it gives you professional Gmail addresses, Google Drive, Meet, and Calendar all in one.</p>
+              <div className="flex gap-3">
+                <a href="https://workspace.google.com/landing/partners/referral/googleapps.html" target="_blank" rel="noopener noreferrer">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
+                    <ExternalLink className="w-4 h-4" />
+                    Set Up Google Workspace
+                  </Button>
+                </a>
+                <a href="https://www.microsoft.com/en-us/microsoft-365/business/compare-all-plans" target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" className="gap-2">
+                    <ExternalLink className="w-4 h-4" />
+                    Microsoft 365 Instead
+                  </Button>
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Step 3: Configure DNS */}
+          <Card className="border-stone-200 shadow-sm">
+            <CardContent className="p-5 space-y-3">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm">3</div>
+                <span className="font-semibold text-stone-800">Configure DNS records</span>
+              </div>
+              <p className="text-sm text-stone-600">Once you have your domain and email hosting, generate the DNS records you need to add to your registrar:</p>
+              <div className="flex gap-3 flex-wrap">
+                <Button onClick={() => handleGenerateRecords("google")} disabled={!domain.trim() || generateMutation.isPending} className="bg-amber-500 hover:bg-amber-600 text-white gap-2">
+                  Generate Google Workspace Records
+                </Button>
+                <Button onClick={() => handleGenerateRecords("microsoft")} disabled={!domain.trim() || generateMutation.isPending} variant="outline" className="gap-2">
+                  Generate Microsoft 365 Records
+                </Button>
+              </div>
+              {!domain.trim() && <p className="text-xs text-amber-600">Enter your domain name above first</p>}
+            </CardContent>
+          </Card>
+
+          {/* Step 4: Verify */}
+          {dnsRecords && (
+            <>
+              <DnsRecordTable records={dnsRecords} domain={domain} onCopy={copyToClipboard} onVerify={() => { setPath("existing"); setStep(1); }} />
+              <Card className="border-stone-200 shadow-sm">
+                <CardContent className="p-5 space-y-3">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm">4</div>
+                    <span className="font-semibold text-stone-800">Verify your setup</span>
+                  </div>
+                  <p className="text-sm text-stone-600">After adding the DNS records, wait 15-60 minutes for propagation, then verify everything is working:</p>
+                  <Button onClick={() => { setPath("existing"); setVerifyResult(null); }} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Verify My Domain Now
+                  </Button>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
       )}
     </div>
+  );
+}
+
+function DnsRecordTable({ records, domain, onCopy, onVerify }: {
+  records: DnsRecord[];
+  domain: string;
+  onCopy: (text: string) => void;
+  onVerify: () => void;
+}) {
+  return (
+    <Card className="border-stone-200 shadow-sm">
+      <CardContent className="p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-stone-800">DNS Records for {domain}</h3>
+          <Badge className="bg-amber-100 text-amber-700 border-0">{records.length} records</Badge>
+        </div>
+        <p className="text-sm text-stone-600">Add these records to your domain registrar's DNS settings. Copy each value exactly as shown.</p>
+        <div className="overflow-x-auto rounded-xl border border-stone-200">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-stone-50 border-b border-stone-200">
+                <th className="text-left px-4 py-2.5 font-medium text-stone-600">Type</th>
+                <th className="text-left px-4 py-2.5 font-medium text-stone-600">Host / Name</th>
+                <th className="text-left px-4 py-2.5 font-medium text-stone-600">Value</th>
+                <th className="text-left px-4 py-2.5 font-medium text-stone-600">TTL</th>
+                <th className="text-right px-4 py-2.5 font-medium text-stone-600">Copy</th>
+              </tr>
+            </thead>
+            <tbody>
+              {records.map((rec, i) => (
+                <tr key={i} className="border-b border-stone-100 last:border-0 hover:bg-stone-50/50">
+                  <td className="px-4 py-3">
+                    <Badge className="bg-stone-100 text-stone-700 border-0 font-mono text-xs">{rec.type}</Badge>
+                  </td>
+                  <td className="px-4 py-3 font-mono text-stone-700 max-w-[120px] truncate">{rec.host}</td>
+                  <td className="px-4 py-3 font-mono text-stone-600 max-w-[200px] truncate" title={rec.value}>{rec.value}</td>
+                  <td className="px-4 py-3 text-stone-500">{rec.ttl}s{rec.priority !== undefined ? ` (P${rec.priority})` : ""}</td>
+                  <td className="px-4 py-3 text-right">
+                    <button onClick={() => onCopy(rec.value)} className="p-1.5 rounded-lg hover:bg-stone-100 transition-colors">
+                      <Copy className="w-3.5 h-3.5 text-stone-400" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex gap-3 pt-1">
+          <Button onClick={onVerify} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+            <CheckCircle2 className="w-4 h-4" />
+            Verify My Domain
+          </Button>
+          <Button variant="outline" onClick={() => onCopy(records.map(r => `${r.type}\t${r.host}\t${r.value}`).join("\n"))} className="gap-2">
+            <Copy className="w-4 h-4" />
+            Copy All Records
+          </Button>
+        </div>
+        <p className="text-xs text-stone-400">DNS changes can take up to 24 hours to propagate globally. Most changes take effect within 15-60 minutes.</p>
+      </CardContent>
+    </Card>
   );
 }

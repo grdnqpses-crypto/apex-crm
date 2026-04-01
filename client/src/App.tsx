@@ -231,6 +231,7 @@ function Router() {
           <Route path="/contacts/:id" component={ContactDetail} />
           <Route path="/leads" component={Leads} />
           <Route path="/ai" component={AxiomAI} />
+          <Route path="/axiom-ai" component={AxiomAI} />
           <Route path="/companies" component={Companies} />
           <Route path="/deals" component={Deals} />
           <Route path="/tasks" component={Tasks} />

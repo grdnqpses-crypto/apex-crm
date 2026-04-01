@@ -3258,3 +3258,12 @@ Successfully implemented ALL 53+ Sheet15 audit items as comprehensive backend ro
 - [ ] Implement persistent build cache to prevent re-initialization after hibernation
 - [ ] Verify project state is preserved across sandbox hibernation
 - [ ] Test that no re-reading of files is needed after wake-up
+
+
+## AXIOM AI LLM Integration (New Task)
+- [ ] Create axiomAI tRPC router with chat procedure
+- [ ] Integrate with Manus Gemini API (GOOGLE_GEMINI_API_KEY)
+- [ ] Add sales data context to LLM prompts (pipeline, leads, opportunities)
+- [ ] Implement streaming support for real-time responses
+- [ ] Test AXIOM AI chat with actual LLM responses
+- [ ] Verify AI can answer sales questions and provide recommendations

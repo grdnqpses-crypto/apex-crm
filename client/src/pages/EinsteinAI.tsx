@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Send, Sparkles, Brain, Zap, Target, TrendingUp } from "lucide-react";
-
+import { invokeLLM } from "@/server/_core/llm";
 
 export default function AxiomAI() {
   const [query, setQuery] = useState("");
