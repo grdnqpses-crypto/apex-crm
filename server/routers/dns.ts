@@ -4,6 +4,7 @@ import { GoDaddyDNSClient, DNSRecordGenerator, GoDaddyOAuthClient } from '../dns
 import { DNSProviderDetector } from '../dns/provider-detector';
 import { DNSPropagationChecker } from '../dns/propagation-checker';
 import { migrationEngineEvents } from '../migration-engine-events';
+import { DNSProviderFactory, UnifiedDNSManager } from '../dns/dns-provider-factory';
 
 export const dnsRouter = router({
   /**
@@ -94,13 +95,13 @@ export const dnsRouter = router({
     }),
 
   /**
-   * Configure DNS records on GoDaddy
+   * Configure DNS records on any provider
    */
   configureDNSRecords: protectedProcedure
     .input(z.object({
       domain: z.string(),
-      apiKey: z.string(),
-      apiSecret: z.string(),
+      provider: z.enum(['godaddy', 'namecheap', 'route53', 'cloudflare', 'google-domains']),
+      credentials: z.record(z.string()),
       records: z.array(z.object({
         type: z.enum(['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS', 'SOA', 'SRV']),
         name: z.string(),
@@ -116,13 +117,14 @@ export const dnsRouter = router({
           migrationEngineEvents.onDNSSetupStart(input.jobId, input.domain);
         }
 
-        const client = new GoDaddyDNSClient({
-          apiKey: input.apiKey,
-          apiSecret: input.apiSecret,
-          domain: input.domain,
-        });
+        // Create provider instance using factory
+        const client = DNSProviderFactory.createProvider(
+          input.provider,
+          input.domain,
+          input.credentials
+        );
 
-        // Add records to GoDaddy
+        // Add records to provider
         await client.addRecords(input.records);
 
         if (input.jobId) {
@@ -131,7 +133,8 @@ export const dnsRouter = router({
 
         return {
           success: true,
-          message: `DNS records configured for ${input.domain}`,
+          message: `DNS records configured on ${DNSProviderFactory.getProviderName(input.provider)} for ${input.domain}`,
+          provider: input.provider,
         };
       } catch (error) {
         if (input.jobId) {
