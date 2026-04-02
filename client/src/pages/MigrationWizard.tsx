@@ -11,6 +11,7 @@ import { useSkin } from "@/contexts/SkinContext";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { MigrationProgress } from "@/components/MigrationProgress";
 import { EmailProviderSetup } from "@/components/EmailProviderSetup";
+import { SetupDomain } from "@/components/SetupDomain";
 import {
   CheckCircle2, ArrowRight, Upload, Zap, Users, Building2,
   Briefcase, Activity, Puzzle, FileText, AlertCircle, RefreshCw,
@@ -18,7 +19,7 @@ import {
 } from "lucide-react";
 
 type ImportMode = "extension" | "csv" | "api";
-type Step = "mode" | "select" | "connect" | "migrating" | "email-setup" | "complete";
+type Step = "mode" | "select" | "connect" | "migrating" | "email-setup" | "dns-setup" | "complete";
 
 const STATUS_LABELS: Record<string, string> = {
   validating: "Validating connection...",
@@ -788,6 +789,34 @@ export default function MigrationWizard() {
         <EmailProviderSetup
           onComplete={(provider, email) => {
             toast.success(`Email provider configured: ${email}`);
+            setStep("dns-setup");
+          }}
+          onSkip={() => setStep("dns-setup")}
+          showSkip={true}
+        />
+      </div>
+    );
+  }
+
+  // Step: DNS Setup
+  if (step === "dns-setup") {
+    return (
+      <div className="max-w-2xl mx-auto p-6 space-y-8">
+        <button
+          onClick={() => setStep("email-setup")}
+          className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1"
+        >
+          ← Back
+        </button>
+
+        <div className="space-y-4">
+          <h1 className="text-3xl font-black text-gray-900">Setup Email Domain</h1>
+          <p className="text-gray-500">Configure your domain's DNS records to ensure your emails reach the inbox</p>
+        </div>
+
+        <SetupDomain
+          onComplete={(domain, provider) => {
+            toast.success(`Domain configured on ${provider}: ${domain}`);
             setStep("complete");
           }}
           onSkip={() => setStep("complete")}

@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 interface SetupDomainProps {
-  onComplete?: (domain: string) => void;
+  onComplete?: (domain: string, provider: string) => void;
   onSkip?: () => void;
   showSkip?: boolean;
   migrationJobId?: string;
@@ -99,6 +99,10 @@ export const SetupDomain: React.FC<SetupDomainProps> = ({
       toast.error(error instanceof Error ? error.message : 'Failed to configure DNS');
       setStep('records-generated');
     }
+  };
+
+  const handleComplete = () => {
+    onComplete?.(domain, provider?.registrar || 'unknown');
   };
 
   const copyToClipboard = (text: string, recordType: string) => {
@@ -305,14 +309,24 @@ export const SetupDomain: React.FC<SetupDomainProps> = ({
               </>
             )}
           </Button>
-          <Button
-            onClick={() => setStep('domain-entry')}
-            variant="outline"
-            size="lg"
-          >
-            Back
-          </Button>
-        </div>
+              <Button
+                onClick={() => setStep('domain-entry')}
+                variant="outline"
+                size="lg"
+              >
+                Back
+              </Button>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex gap-2">
+                <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-900">
+                  <p className="font-semibold">Multi-Provider Support</p>
+                  <p className="mt-1 text-xs">We support GoDaddy, Namecheap, Route53, Cloudflare, and Google Domains</p>
+                </div>
+              </div>
+            </div>
       </div>
     );
   }
