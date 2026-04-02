@@ -3267,3 +3267,60 @@ Successfully implemented ALL 53+ Sheet15 audit items as comprehensive backend ro
 - [ ] Implement streaming support for real-time responses
 - [ ] Test AXIOM AI chat with actual LLM responses
 - [ ] Verify AI can answer sales questions and provide recommendations
+
+
+## Migration & Setup Automation (In Progress)
+
+### Phase 1: Real-Time Migration Progress Display
+- [x] Create migration event system (MigrationEventEmitter)
+- [x] Build Server-Sent Events endpoint for real-time streaming
+- [x] Create React hook (useMigrationProgress) for event subscription
+- [x] Build MigrationProgress UI component with hierarchical event display
+- [x] Integrate event emissions into migration engine
+- [x] Wire up Express endpoint in server startup
+- [x] Add MigrationProgress component to MigrationWizard
+
+### Phase 2: Automated Email Provider Setup
+- [x] Create email provider configuration types
+- [x] Build tRPC procedures for Gmail OAuth, Office 365 OAuth, custom SMTP
+- [x] Create EmailProviderSetup React component
+- [x] Create OAuth callback page for email providers
+- [x] Add email provider router to main tRPC router
+- [x] Integrate EmailProviderSetup into migration wizard as post-migration step
+- [x] Add `/email-oauth-callback` route to App.tsx
+
+### Phase 3: One-Click GoDaddy DNS Configuration (NEXT)
+- [ ] Create GoDaddy API client with OAuth flow
+- [ ] Implement automatic DNS provider detection (WHOIS lookup)
+- [ ] Build DNS record generator (SPF, DKIM, DMARC, CNAME)
+- [ ] Create global DNS propagation checker (multiple resolvers)
+- [ ] Build SetupDomain React component for one-click DNS setup
+- [ ] Implement DNS configuration step in migration wizard
+- [ ] Add auto-retry with exponential backoff
+- [ ] Create fallback UI for manual DNS setup
+- [ ] Test GoDaddy integration with real domain
+- [ ] Add event emissions for DNS setup progress
+
+### Phase 4: Multi-Provider DNS Support
+- [ ] Add Namecheap API integration
+- [ ] Add Route53 (AWS) integration
+- [ ] Add Cloudflare API integration
+- [ ] Add Google Domains integration
+- [ ] Create provider abstraction layer
+- [ ] Test all providers with real domains
+
+### Phase 5: Domain Verification & Validation
+- [ ] Implement DKIM key generation and storage
+- [ ] Create email deliverability test (send test email)
+- [ ] Build SPF/DKIM/DMARC header validation
+- [ ] Implement domain reputation checking
+- [ ] Add pre-send compliance validation
+- [ ] Create domain health dashboard
+
+### Phase 6: Post-Migration Automation
+- [ ] Auto-create team accounts during setup
+- [ ] Apply industry-specific templates
+- [ ] Configure default workflows
+- [ ] Set up email signatures
+- [ ] Initialize contact lists
+- [ ] Create onboarding tasks
