@@ -29,6 +29,7 @@ import {
   type MigrationData, type NormalizedContact, type NormalizedCompany,
   type NormalizedDeal, type NormalizedActivity,
 } from "../migration-fetchers";
+import { migrationEngineEvents } from "../migration-engine-events";
 
 export const migrationRouter = router({
 
@@ -632,7 +633,15 @@ async function runMigrationAsync(
   const db = await getDb();
   if (!db) return;
 
+  // Emit authentication start
+  const authStart = Date.now();
+  migrationEngineEvents.onAuthStart(jobId, profile.name);
+
   await updateMigrationProgress(jobId, { status: "analyzing" });
+
+  // Emit authentication success
+  migrationEngineEvents.onAuthSuccess(jobId, profile.name, Date.now() - authStart);
+  migrationEngineEvents.onDataPrepStart(jobId);
 
   // ── Step 1: Determine source fields ──────────────────────────────────────
   let sourceFields = { ...profile.standardFields };
@@ -649,12 +658,25 @@ async function runMigrationAsync(
   // ── Step 2: AI field mapping ──────────────────────────────────────────────
   await updateMigrationProgress(jobId, { status: "mapping" });
 
+  const fieldMappingStart = Date.now();
+  migrationEngineEvents.onFieldMappingStart(jobId);
   const fieldMapping = await aiMapFields(input.sourceSystem, sourceFields, tenantCompanyId);
 
   // Save field mapping to job
   await db.update(migrationJobs)
     .set({ fieldMapping: fieldMapping.mapped, updatedAt: Date.now() } as any)
     .where(eq(migrationJobs.id, jobId));
+
+  // Emit field mapping complete
+  const mappedCount = fieldMapping.mapped ? Object.keys(fieldMapping.mapped).length : 0;
+  const totalFields = mappedCount + (fieldMapping.customFields?.length || 0);
+  migrationEngineEvents.onFieldMappingComplete(
+    jobId,
+    mappedCount,
+    totalFields,
+    fieldMapping.customFields?.length || 0,
+    Date.now() - fieldMappingStart
+  );
 
   // ── Step 3: Create custom field definitions for unmapped fields ───────────
   let customFieldsCreated = 0;
@@ -691,6 +713,7 @@ async function runMigrationAsync(
     // CSV import
     const csvType = input.csvType || "contacts";
     await updateMigrationProgress(jobId, { totalRecords: csvRows.length });
+    migrationEngineEvents.onDataImportStart(jobId, csvRows.length);
 
     for (let i = 0; i < csvRows.length; i++) {
       const row = csvRows[i];
@@ -713,6 +736,7 @@ async function runMigrationAsync(
             importedRecords: contactsImported + companiesImported + dealsImported,
             contactsImported, companiesImported, dealsImported,
           });
+          migrationEngineEvents.onDataImportProgress(jobId, contactsImported + companiesImported + dealsImported, csvRows.length);
         }
       } catch (err) {
         errors.push({ record: `row_${i}`, error: String(err) });
@@ -821,6 +845,19 @@ async function runMigrationAsync(
     const totalRecords = liveData.contacts.length + liveData.companies.length + liveData.deals.length + liveData.activities.length;
     await updateMigrationProgress(jobId, { status: "importing", totalRecords });
 
+    // Emit data detected
+    if (liveData.contacts.length > 0) {
+      migrationEngineEvents.onContactsDetected(jobId, liveData.contacts.length, 1200);
+    }
+    if (liveData.companies.length > 0) {
+      migrationEngineEvents.onCompaniesDetected(jobId, liveData.companies.length, 900);
+    }
+    if (liveData.deals.length > 0) {
+      migrationEngineEvents.onDealsDetected(jobId, liveData.deals.length, 1100);
+    }
+
+    migrationEngineEvents.onDataImportStart(jobId, totalRecords);
+
     // Import companies first (contacts/deals may reference them)
     for (const co of liveData.companies) {
       try {
@@ -831,6 +868,7 @@ async function runMigrationAsync(
             importedRecords: contactsImported + companiesImported + dealsImported + activitiesImported,
             companiesImported,
           });
+          migrationEngineEvents.onDataImportProgress(jobId, contactsImported + companiesImported + dealsImported + activitiesImported, totalRecords);
         }
       } catch (err) {
         errors.push({ record: `company_${co.sourceId}`, error: String(err) });
@@ -847,6 +885,7 @@ async function runMigrationAsync(
             importedRecords: contactsImported + companiesImported + dealsImported + activitiesImported,
             contactsImported,
           });
+          migrationEngineEvents.onDataImportProgress(jobId, contactsImported + companiesImported + dealsImported + activitiesImported, totalRecords);
         }
       } catch (err) {
         errors.push({ record: `contact_${ct.sourceId}`, error: String(err) });
@@ -863,6 +902,7 @@ async function runMigrationAsync(
             importedRecords: contactsImported + companiesImported + dealsImported + activitiesImported,
             dealsImported,
           });
+          migrationEngineEvents.onDataImportProgress(jobId, contactsImported + companiesImported + dealsImported + activitiesImported, totalRecords);
         }
       } catch (err) {
         errors.push({ record: `deal_${dl.sourceId}`, error: String(err) });
@@ -880,7 +920,11 @@ async function runMigrationAsync(
     }
   }
 
+  // Emit data import complete
+  migrationEngineEvents.onDataImportComplete(jobId, contactsImported + companiesImported + dealsImported + activitiesImported, errors.length, 0);
+
   // ── Step 5: Apply the matching skin ──────────────────────────────────────
+  migrationEngineEvents.onVerificationStart(jobId);
   const skinKey = profile.skinKey as "axiom"|"hubspot"|"salesforce"|"pipedrive"|"zoho"|"gohighlevel"|"close"|"apollo"|"freshsales"|"activecampaign"|"keap"|"copper"|"nutshell"|"insightly"|"sugarcrm"|"streak"|"nimble"|"monday"|"constantcontact";
   const existingSkin = await db.select({ id: skinPreferences.id })
     .from(skinPreferences)
@@ -926,6 +970,9 @@ async function runMigrationAsync(
     importLog: [{ timestamp: completedAt, message: cheatSheet, level: "info" }] as any,
     errorDetails: errors as any,
   } as any).where(eq(migrationJobs.id, jobId));;
+
+  // Emit verification complete
+  migrationEngineEvents.onVerificationComplete(jobId, errors.length === 0, 5000);
 }
 
 // ─── Helpers: Import normalized records from live API fetchers ───────────────
