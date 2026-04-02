@@ -52,9 +52,11 @@ import { remainingFeaturesRouter } from "./routers/remaining-features";
 import { communicationGapsRouter } from "./routers/communication-gaps";
 import { analyticsGapsRouter } from "./routers/analytics-gaps";
 import { aiPremiumRouter } from "./routers/ai-premium";
+import { emailProviderRouter } from "./routers/email-provider";
 
 export const appRouter = router({
   system: systemRouter,
+  emailProvider: emailProviderRouter,
   // batch1 sub-routers (flattened for direct frontend access)
   rottenDeals: rottenDealsRouter,
   bulkActions: bulkActionsRouter,

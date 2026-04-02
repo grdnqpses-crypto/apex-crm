@@ -197,6 +197,7 @@ const WhatsAppBroadcasts = lazy(() => import("./pages/WhatsAppBroadcasts"));
 const AIPostWriter = lazy(() => import("./pages/AIPostWriter"));
 const ConditionalFields = lazy(() => import("./pages/ConditionalFields"));
 const OAuthCallback = lazy(() => import("./pages/OAuthCallback"));
+const EmailOAuthCallback = lazy(() => import("./pages/EmailOAuthCallback"));
 const SMSInbox = lazy(() => import("./pages/SMSInbox"));
 const GDPRTools = lazy(() => import("./pages/GDPRTools"));
 const PublicBookingPage = lazy(() => import("./pages/PublicBookingPage"));
@@ -403,6 +404,11 @@ function App() {
             <Route path="/oauth-callback">
               <Suspense fallback={<PageLoader />}>
                 <OAuthCallback />
+              </Suspense>
+            </Route>
+            <Route path="/email-oauth-callback">
+              <Suspense fallback={<PageLoader />}>
+                <EmailOAuthCallback />
               </Suspense>
             </Route>
             <Route path="/book/:profileId">

@@ -4288,3 +4288,55 @@ export async function getImpersonationAuditLog(limit = 100, offset = 0) {
     .limit(limit)
     .offset(offset);
 }
+
+
+// ─── Email Provider Configuration ───
+/**
+ * Store email provider configuration for a user
+ * Uses in-memory cache for now; can be extended to database storage
+ */
+const emailProviderCache = new Map<number, any>();
+
+export async function saveEmailProviderConfig(userId: number, config: any): Promise<void> {
+  try {
+    // Store in memory cache (in production, store in database)
+    emailProviderCache.set(userId, config);
+    console.log(`[Email Provider] Saved configuration for user ${userId}`);
+  } catch (error) {
+    console.error("[Email Provider] Failed to save configuration:", error);
+    throw error;
+  }
+}
+
+export async function getEmailProviderConfig(userId: number): Promise<any | null> {
+  try {
+    const config = emailProviderCache.get(userId);
+    return config || null;
+  } catch (error) {
+    console.error("[Email Provider] Failed to get configuration:", error);
+    return null;
+  }
+}
+
+export async function removeEmailProviderConfig(userId: number): Promise<void> {
+  try {
+    emailProviderCache.delete(userId);
+    console.log(`[Email Provider] Removed configuration for user ${userId}`);
+  } catch (error) {
+    console.error("[Email Provider] Failed to remove configuration:", error);
+    throw error;
+  }
+}
+
+export async function listEmailProviderConfigs(): Promise<Array<{ userId: number; config: any }>> {
+  try {
+    const configs: Array<{ userId: number; config: any }> = [];
+    emailProviderCache.forEach((config, userId) => {
+      configs.push({ userId, config });
+    });
+    return configs;
+  } catch (error) {
+    console.error("[Email Provider] Failed to list configurations:", error);
+    return [];
+  }
+}

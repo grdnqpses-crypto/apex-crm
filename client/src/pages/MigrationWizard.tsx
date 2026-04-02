@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useSkin } from "@/contexts/SkinContext";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { MigrationProgress } from "@/components/MigrationProgress";
+import { EmailProviderSetup } from "@/components/EmailProviderSetup";
 import {
   CheckCircle2, ArrowRight, Upload, Zap, Users, Building2,
   Briefcase, Activity, Puzzle, FileText, AlertCircle, RefreshCw,
@@ -17,7 +18,7 @@ import {
 } from "lucide-react";
 
 type ImportMode = "extension" | "csv" | "api";
-type Step = "mode" | "select" | "connect" | "migrating" | "complete";
+type Step = "mode" | "select" | "connect" | "migrating" | "email-setup" | "complete";
 
 const STATUS_LABELS: Record<string, string> = {
   validating: "Validating connection...",
@@ -737,7 +738,15 @@ export default function MigrationWizard() {
         {/* Action Buttons */}
         <div className="flex gap-3 justify-center">
           <Button
+            onClick={() => setStep("email-setup")}
+            size="lg"
+            className="gap-2"
+          >
+            Setup Email Provider <ArrowRight className="w-4 h-4" />
+          </Button>
+          <Button
             onClick={() => window.location.href = "/"}
+            variant="outline"
             size="lg"
             className="gap-2"
           >
@@ -756,6 +765,34 @@ export default function MigrationWizard() {
             Run Another Migration
           </Button>
         </div>
+      </div>
+    );
+  }
+
+  // Step: Email Provider Setup
+  if (step === "email-setup") {
+    return (
+      <div className="max-w-2xl mx-auto p-6 space-y-8">
+        <button
+          onClick={() => setStep("complete")}
+          className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1"
+        >
+          Back
+        </button>
+
+        <div className="space-y-4">
+          <h1 className="text-3xl font-black text-gray-900">Setup Email Provider</h1>
+          <p className="text-gray-500">Connect your email account to start sending campaigns and automated emails</p>
+        </div>
+
+        <EmailProviderSetup
+          onComplete={(provider, email) => {
+            toast.success(`Email provider configured: ${email}`);
+            setStep("complete");
+          }}
+          onSkip={() => setStep("complete")}
+          showSkip={true}
+        />
       </div>
     );
   }
