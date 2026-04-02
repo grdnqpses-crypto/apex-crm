@@ -12,6 +12,7 @@ import { extensionImportRouter } from "../extension-import";
 import { registerErrorInterceptor, startHealthMonitor } from "../self-healing";
 import { startAIEngine } from "../ai-engine";
 import { startAutoSyncRunner } from "../migration-autosync-runner";
+import { setupMigrationStreamEndpoint } from "./setup-migration-stream";
 import rateLimit from "express-rate-limit";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -74,6 +75,8 @@ async function startServer() {
   registerOAuthRoutes(app);
   // Extension import API (before tRPC)
   app.use(extensionImportRouter);
+  // Migration stream endpoint (Server-Sent Events)
+  setupMigrationStreamEndpoint(app);
   // tRPC API
   app.use(
     "/api/trpc",
