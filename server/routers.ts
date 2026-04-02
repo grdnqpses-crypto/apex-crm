@@ -54,11 +54,13 @@ import { analyticsGapsRouter } from "./routers/analytics-gaps";
 import { aiPremiumRouter } from "./routers/ai-premium";
 import { emailProviderRouter } from "./routers/email-provider";
 import { dnsRouter } from "./routers/dns";
+import { postMigrationRouter } from "./routers/post-migration";
 
 export const appRouter = router({
   system: systemRouter,
   emailProvider: emailProviderRouter,
   dns: dnsRouter,
+  postMigration: postMigrationRouter,
   // batch1 sub-routers (flattened for direct frontend access)
   rottenDeals: rottenDealsRouter,
   bulkActions: bulkActionsRouter,
