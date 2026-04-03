@@ -1,5 +1,5 @@
 import { useAuth } from '@/_core/hooks/useAuth';
-import { OneClickSetup } from '@/components/OneClickSetup';
+import { OneClickSetupAutomation } from '@/components/OneClickSetupAutomation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,9 +13,9 @@ import { toast } from 'sonner';
 export default function SetupDomainPage() {
   const { user } = useAuth();
   const [setupMode, setSetupMode] = useState<'choose' | 'domain' | 'emailonly'>('choose');
-  const [domain, setDomain] = useState('gareversal.com');
+  const [domain, setDomain] = useState('');
   const [customDomain, setCustomDomain] = useState('');
-  const [email, setEmail] = useState('crypto@gareversal.com');
+  const [email, setEmail] = useState('');
   const [emailProvider, setEmailProvider] = useState<'office365' | 'gmail' | 'custom'>('office365');
   const [setupComplete, setSetupComplete] = useState(false);
   const [testEmailOpen, setTestEmailOpen] = useState(false);
@@ -115,13 +115,81 @@ export default function SetupDomainPage() {
               </div>
             </CardContent>
           </Card>
-        ) : !setupComplete && setupMode === 'domain' ? (
-          <OneClickSetup
-            domain={customDomain || domain}
+        ) : setupComplete && setupMode === 'domain' ? (
+          <OneClickSetupAutomation
+            domain={domain}
             email={email}
             emailProvider={emailProvider}
-            onComplete={() => setSetupComplete(true)}
+            onComplete={() => {
+              // Navigate back to dashboard or show success
+              window.location.href = '/dashboard';
+            }}
           />
+        ) : !setupComplete && setupMode === 'domain' ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>One-Click Domain Setup</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="setup-domain">Your Domain</Label>
+                <Input
+                  id="setup-domain"
+                  placeholder="example.com"
+                  value={domain}
+                  onChange={(e) => setDomain(e.target.value)}
+                  className="rounded-xl bg-muted/30"
+                />
+                <p className="text-xs text-muted-foreground">Enter your domain name (e.g., yourcompany.com)</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="setup-email">Email Address</Label>
+                <Input
+                  id="setup-email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="rounded-xl bg-muted/30"
+                />
+                <p className="text-xs text-muted-foreground">The email address that will send your campaigns</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="setup-provider">Email Provider</Label>
+                <select
+                  id="setup-provider"
+                  value={emailProvider}
+                  onChange={(e) => setEmailProvider(e.target.value as 'office365' | 'gmail' | 'custom')}
+                  className="w-full px-3 py-2 border border-border rounded-xl bg-muted/30"
+                >
+                  <option value="office365">Office 365</option>
+                  <option value="gmail">Gmail</option>
+                  <option value="custom">Custom SMTP</option>
+                </select>
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setSetupMode('choose')}
+                  className="flex-1"
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (!domain || !email) {
+                      toast.error('Please enter both domain and email address');
+                      return;
+                    }
+                    setSetupComplete(true);
+                  }}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                >
+                  Start One-Click Setup
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         ) : !setupComplete && setupMode === 'emailonly' ? (
           <Card>
             <CardHeader>
