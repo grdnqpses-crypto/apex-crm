@@ -1,5 +1,5 @@
-import { useAuth } from '@/_core/hooks/useAuth';
 import { OneClickSetupAutomation } from '@/components/OneClickSetupAutomation';
+import { EmailComposer, type EmailData } from '@/components/EmailComposer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,8 @@ import { ArrowLeft, Zap, Mail, Send } from 'lucide-react';
 import { Link } from 'wouter';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useAuth } from '@/_core/hooks/useAuth';
+import { trpc } from '@/lib/trpc';
 
 export default function SetupDomainPage() {
   const { user } = useAuth();
@@ -18,39 +20,21 @@ export default function SetupDomainPage() {
   const [email, setEmail] = useState('');
   const [emailProvider, setEmailProvider] = useState<'office365' | 'gmail' | 'custom'>('office365');
   const [setupComplete, setSetupComplete] = useState(false);
-  const [testEmailOpen, setTestEmailOpen] = useState(false);
-  const [testEmailRecipient, setTestEmailRecipient] = useState('');
-  const [sendingTestEmail, setSendingTestEmail] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const sendTestEmailMutation = trpc.emailProvider.sendTestEmail.useMutation();
 
-  const handleSendTestEmail = async () => {
-    if (!testEmailRecipient) {
-      toast.error('Please enter a recipient email');
-      return;
-    }
-    setSendingTestEmail(true);
+  const handleSendTestEmail = async (emailData: EmailData) => {
     try {
-      // Call backend to send test email
-      const response = await fetch('/api/trpc/email.sendTestEmail', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          recipientEmail: testEmailRecipient,
-          senderEmail: email,
-          domain: customDomain || domain,
-        }),
+      await sendTestEmailMutation.mutateAsync({
+        recipientEmail: emailData.to,
+        senderEmail: emailData.from,
+        domain: customDomain || domain,
+        provider: emailProvider === 'office365' ? 'office365' : emailProvider === 'gmail' ? 'gmail' : 'smtp',
       });
-      
-      if (response.ok) {
-        toast.success(`Test email sent to ${testEmailRecipient}`);
-        setTestEmailOpen(false);
-        setTestEmailRecipient('');
-      } else {
-        toast.error('Failed to send test email');
-      }
+      toast.success(`Test email sent to ${emailData.to}`);
+      setComposerOpen(false);
     } catch (error) {
-      toast.error('Error sending test email');
-    } finally {
-      setSendingTestEmail(false);
+      toast.error(`Failed to send test email: ${String(error)}`);
     }
   };
 
@@ -300,39 +284,22 @@ export default function SetupDomainPage() {
               </div>
 
               <div className="flex gap-3">
-                <Dialog open={testEmailOpen} onOpenChange={setTestEmailOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="flex-1 bg-blue-600 hover:bg-blue-700" variant="default">
-                      <Send className="h-4 w-4 mr-2" />
-                      Send Test Email
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Send Test Email</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="test-recipient">Recipient Email Address</Label>
-                        <Input
-                          id="test-recipient"
-                          type="email"
-                          placeholder="recipient@example.com"
-                          value={testEmailRecipient}
-                          onChange={(e) => setTestEmailRecipient(e.target.value)}
-                          className="rounded-xl"
-                        />
-                      </div>
-                      <Button
-                        onClick={handleSendTestEmail}
-                        disabled={sendingTestEmail}
-                        className="w-full bg-blue-600 hover:bg-blue-700"
-                      >
-                        {sendingTestEmail ? 'Sending...' : 'Send Test Email'}
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <Button
+                  onClick={() => setComposerOpen(true)}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  variant="default"
+                  disabled={sendTestEmailMutation.isPending}
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  Send Test Email
+                </Button>
+                <EmailComposer
+                  isOpen={composerOpen}
+                  onClose={() => setComposerOpen(false)}
+                  onSend={handleSendTestEmail}
+                  defaultFrom={email}
+                  isLoading={sendTestEmailMutation.isPending}
+                />
                 <Link href="/campaigns" className="flex-1">
                   <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
                     Go to Campaigns
