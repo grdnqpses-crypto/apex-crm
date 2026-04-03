@@ -19,6 +19,7 @@ import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
 import { useSkin } from "@/contexts/SkinContext";
 import CustomFieldsPanel from "@/components/CustomFieldsPanel";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 const STAGES = ["subscriber", "lead", "mql", "sql", "opportunity", "customer", "evangelist"] as const;
 const STAGE_COLORS: Record<string, string> = {
@@ -625,6 +626,22 @@ function EditContactForm({ contact, companies, onSave, saving }: { contact: any;
 
         <TabsContent value="address" className="mt-4">
           <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <AddressAutocomplete
+                onAddressSelect={(addr) => {
+                  setForm(p => ({
+                    ...p,
+                    streetAddress: addr.streetAddress,
+                    city: addr.city,
+                    stateRegion: addr.stateRegion,
+                    postalCode: addr.postalCode,
+                    country: addr.country,
+                  }));
+                  toast.success("Address populated automatically");
+                }}
+                placeholder="Start typing an address anywhere in the world..."
+              />
+            </div>
             <div className="space-y-2 col-span-2"><Label className="text-xs font-semibold">Street Address</Label><Input value={form.streetAddress} onChange={(e) => setForm(p => ({ ...p, streetAddress: e.target.value }))} className={inputCls} /></div>
             <div className="space-y-2 col-span-2"><Label className="text-xs font-semibold">Address Line 2</Label><Input value={form.addressLine2} onChange={(e) => setForm(p => ({ ...p, addressLine2: e.target.value }))} className={inputCls} /></div>
             <div className="space-y-2"><Label className="text-xs font-semibold">City</Label><Input value={form.city} onChange={(e) => setForm(p => ({ ...p, city: e.target.value }))} className={inputCls} /></div>

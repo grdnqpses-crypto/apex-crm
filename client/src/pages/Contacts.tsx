@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useSkin } from "@/contexts/SkinContext";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 const STAGES = ["subscriber", "lead", "mql", "sql", "opportunity", "customer", "evangelist"] as const;
 const STAGE_COLORS: Record<string, string> = {
@@ -601,6 +602,22 @@ export default function Contacts() {
 
               <TabsContent value="address" className="mt-4">
                 <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <AddressAutocomplete
+                      onAddressSelect={(addr) => {
+                        setForm(p => ({
+                          ...p,
+                          streetAddress: addr.streetAddress,
+                          city: addr.city,
+                          stateRegion: addr.stateRegion,
+                          postalCode: addr.postalCode,
+                          country: addr.country,
+                        }));
+                        toast.success("Address populated automatically");
+                      }}
+                      placeholder="Start typing an address anywhere in the world..."
+                    />
+                  </div>
                   <div className="space-y-2 col-span-2"><Label className="text-xs font-semibold">Street Address</Label><Input {...f("streetAddress")} placeholder="123 Main St" className="rounded-xl bg-muted/30 border-border/50" /></div>
                   <div className="space-y-2 col-span-2"><Label className="text-xs font-semibold">Address Line 2</Label><Input {...f("addressLine2")} placeholder="Suite 100" className="rounded-xl bg-muted/30 border-border/50" /></div>
                   <div className="space-y-2"><Label className="text-xs font-semibold">City</Label><Input {...f("city")} placeholder="New York" className="rounded-xl bg-muted/30 border-border/50" /></div>

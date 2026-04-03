@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useSkin } from "@/contexts/SkinContext";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 export default function Companies() {
   const { t } = useSkin();
@@ -499,35 +500,18 @@ export default function Companies() {
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1"><MapPin className="h-3 w-3" /> Address</p>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1 col-span-2">
-                  <Label className="text-xs font-semibold">Search Address</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-                    <Input
-                      id="places-autocomplete"
-                      placeholder="Start typing an address..."
-                      className="rounded-xl bg-muted/30 pl-8"
-                      onFocus={() => {
-                        // Initialize Google Places autocomplete on first focus
-                        const input = document.getElementById('places-autocomplete') as HTMLInputElement;
-                        if (input && (window as any).google?.maps?.places && !(input as any)._autocompleteInit) {
-                          (input as any)._autocompleteInit = true;
-                          const ac = new (window as any).google.maps.places.Autocomplete(input, { types: ['address'] });
-                          ac.addListener('place_changed', () => {
-                            const place = ac.getPlace();
-                            const comps = place.address_components || [];
-                            const get = (type: string) => comps.find((c: any) => c.types.includes(type))?.long_name || '';
-                            const getShort = (type: string) => comps.find((c: any) => c.types.includes(type))?.short_name || '';
-                            setF('streetAddress', `${get('street_number')} ${get('route')}`.trim());
-                            setF('city', get('locality') || get('sublocality'));
-                            setF('stateRegion', getShort('administrative_area_level_1'));
-                            setF('postalCode', get('postal_code'));
-                            setF('country', get('country'));
-                          });
-                        }
-                      }}
-                    />
-                  </div>
+                <div className="col-span-2">
+                  <AddressAutocomplete
+                    onAddressSelect={(addr) => {
+                      setF('streetAddress', addr.streetAddress);
+                      setF('city', addr.city);
+                      setF('stateRegion', addr.stateRegion);
+                      setF('postalCode', addr.postalCode);
+                      setF('country', addr.country);
+                      toast.success("Address populated automatically");
+                    }}
+                    placeholder="Start typing an address anywhere in the world..."
+                  />
                 </div>
                 <div className="space-y-1 col-span-2">
                   <Label className="text-xs font-semibold">Street Address</Label>
