@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # Failover Monitor Service
+  failover-monitor:
+    image: node:22-alpine
+    container_name: axiom-failover-monitor
+    working_dir: /app
+    environment:
+      NODE_ENV: production
+      PRIMARY_DB_HOST: 149.102.157.23
+      PRIMARY_DB_PORT: 5432
+      PRIMARY_DB_NAME: axiom_crm
+      PRIMARY_DB_USER: axiom_user
+      PRIMARY_DB_PASSWORD: ${DB_PASSWORD}
+      STANDBY_DB_HOST: localhost
+      STANDBY_DB_PORT: 5433
+      STANDBY_DB_NAME: axiom_crm
+      STANDBY_DB_USER: axiom_user
+      STANDBY_DB_PASSWORD: ${DB_PASSWORD}
+      HEALTH_CHECK_INTERVAL: 60000
+      FAILOVER_NOTIFICATION_EMAIL: ${OWNER_EMAIL}
+    volumes:
+      - ./server/failover-config.ts:/app/failover-config.ts:ro
+      - ./server/routers/health.ts:/app/health.ts:ro
+    restart: unless-stopped
+    networks:
+      - axiom-network
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL Standby (Manus)
+  postgres-standby:
+    image: postgres:16-alpine
+    container_name: axiom-crm-db-standby
+    environment:
+      POSTGRES_USER: axiom_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: axiom_crm
+    volumes:
+      - postgres_standby_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U axiom_user -d axiom_crm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - axiom-network
+
+  # Replication Monitor
+  replication-monitor:
+    image: node:22-alpine
+    container_name: axiom-replication-monitor
+    working_dir: /app
+    environment:
+      PRIMARY_HOST: 149.102.157.23
+      STANDBY_HOST: postgres-standby
+      CHECK_INTERVAL: 30000
+    volumes:
+      - ./monitoring/replication-monitor.js:/app/monitor.js:ro
+    restart: unless-stopped
+    networks:
+      - axiom-network
+    depends_on:
+      - postgres-standby
+
+volumes:
+  postgres_standby_data:
+    driver: local
+
+networks:
+  axiom-network:
+    driver: bridge
