@@ -210,6 +210,7 @@ const PublicPortalView = lazy(() => import("./pages/PublicPortalView"));
 const SocialMedia = lazy(() => import("./pages/SocialMedia"));
 const BulkOperations = lazy(() => import("./pages/BulkOperations"));
 const CRMGuides = lazy(() => import("./pages/CRMGuides"));
+const SetupDomainPage = lazy(() => import("./pages/SetupDomainPage"));
 
 function PageLoader() {
   return (
@@ -340,7 +341,8 @@ function Router() {
           <Route path="/ai-next-best-action" component={AINextBestAction} />
           <Route path="/web-forms" component={WebFormsBuilder} />
           <Route path="/signup" component={Signup} />
-      <Route path="/signup-new" component={SignupRedesigned} />
+          <Route path="/signup-new" component={SignupRedesigned} />
+          <Route path="/setup/domain" component={SetupDomainPage} />
           <Route path="/reputation" component={ReputationManagement} />
           <Route path="/ooo-detection" component={OOODetection} />
           <Route path="/email-sequences" component={EmailSequences} />

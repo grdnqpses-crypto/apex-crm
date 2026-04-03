@@ -943,6 +943,12 @@ export default function Dashboard() {
               >
                 <RefreshCw className="h-3.5 w-3.5" /> Migrate from CRM
               </Link>
+              <Link
+                href="/setup/domain"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-bold shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-1.5"
+              >
+                <Zap className="h-3.5 w-3.5" /> One-Click Setup
+              </Link>
             </div>
           </div>
         </div>
