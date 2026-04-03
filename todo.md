@@ -3357,3 +3357,17 @@ Successfully implemented ALL 53+ Sheet15 audit items as comprehensive backend ro
 - [x] Implement recommended optimizations engine
 - [x] Create setup completion checklist with progress tracking
 - [x] Build migration success metrics and ROI calculator
+
+
+## Phase 7: Signup Form Redesign & Onboarding Optimization
+- [x] Audit current signup form and identify gaps vs competitors
+- [ ] Redesign form with 4-step flow (Account → Business Intel → Payment → Setup)
+- [ ] Step 1: Email, Password, Company (minimal friction)
+- [ ] Step 2: Job Title, Company Size, Industry, Challenge (thorough qualification)
+- [ ] Step 3: Credit Card, Billing Address, Billing Frequency (commitment)
+- [ ] Step 4: Migration, Email Setup, Team Invitation (differentiator)
+- [ ] Add OAuth options (Google, Microsoft, Apple)
+- [ ] Emphasize one-click migration differentiator
+- [ ] Emphasize one-click email setup differentiator
+- [ ] Add social proof (testimonials, case studies)
+- [ ] Test signup flow end-to-end

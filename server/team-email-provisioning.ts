@@ -1,4 +1,3 @@
-import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { users, emailAccounts } from "../drizzle/schema";
 

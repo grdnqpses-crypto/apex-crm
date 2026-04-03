@@ -82,16 +82,17 @@ export class Route53DNSClient {
    */
   async getHostedZoneId(): Promise<string> {
     const response = await this.makeRequest('GET', '/hostedzone');
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(response, 'text/xml');
-    
-    const zones = doc.getElementsByTagName('HostedZone');
-    for (let i = 0; i < zones.length; i++) {
-      const zone = zones[i];
-      const name = zone.getElementsByTagName('Name')[0]?.textContent;
-      if (name === `${this.domain}.`) {
-        const id = zone.getElementsByTagName('Id')[0]?.textContent;
-        return id?.split('/').pop() || '';
+    // Parse XML response manually since DOMParser is not available in Node
+    const zoneMatch = response.match(/<HostedZone>([\s\S]*?)<\/HostedZone>/g);
+    if (!zoneMatch) {
+      throw new Error(`Hosted zone not found for domain ${this.domain}`);
+    }
+
+    for (const zone of zoneMatch) {
+      const nameMatch = zone.match(/<Name>([^<]+)<\/Name>/);
+      const idMatch = zone.match(/<Id>\/hostedzone\/([^<]+)<\/Id>/);
+      if (nameMatch && nameMatch[1] === `${this.domain}.` && idMatch) {
+        return idMatch[1];
       }
     }
 
@@ -105,27 +106,28 @@ export class Route53DNSClient {
     const zoneId = await this.getHostedZoneId();
     const response = await this.makeRequest('GET', `/hostedzone/${zoneId}/rrset`);
     
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(response, 'text/xml');
-    
     const records: any[] = [];
-    const rrsets = doc.getElementsByTagName('ResourceRecordSet');
+    // Parse XML response manually using regex since DOMParser is not available in Node
+    const rrsetMatches = response.match(/<ResourceRecordSet>([\s\S]*?)<\/ResourceRecordSet>/g) || [];
     
-    for (let i = 0; i < rrsets.length; i++) {
-      const rrset = rrsets[i];
-      const name = rrset.getElementsByTagName('Name')[0]?.textContent || '';
-      const type = rrset.getElementsByTagName('Type')[0]?.textContent || '';
-      const ttl = rrset.getElementsByTagName('TTL')[0]?.textContent || '300';
-      const values = rrset.getElementsByTagName('ResourceRecord');
+    for (const rrset of rrsetMatches) {
+      const nameMatch = rrset.match(/<Name>([^<]+)<\/Name>/);
+      const typeMatch = rrset.match(/<Type>([^<]+)<\/Type>/);
+      const ttlMatch = rrset.match(/<TTL>([^<]+)<\/TTL>/);
+      const valueMatches = rrset.match(/<Value>([^<]+)<\/Value>/g) || [];
       
-      for (let j = 0; j < values.length; j++) {
-        const value = values[j].getElementsByTagName('Value')[0]?.textContent || '';
-        records.push({
-          name: name.replace(/\.$/, ''),
-          type,
-          data: value,
-          ttl: parseInt(ttl),
-        });
+      if (nameMatch && typeMatch) {
+        for (const valueMatch of valueMatches) {
+          const value = valueMatch.match(/<Value>([^<]+)<\/Value>/);
+          if (value) {
+            records.push({
+              name: nameMatch[1].replace(/\.$/, ''),
+              type: typeMatch[1],
+              data: value[1],
+              ttl: ttlMatch ? parseInt(ttlMatch[1]) : 300,
+            });
+          }
+        }
       }
     }
 

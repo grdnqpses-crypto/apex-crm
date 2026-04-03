@@ -49,17 +49,12 @@ export class NamecheapDNSClient {
   /**
    * Parse XML response from Namecheap
    */
-  private parseXML(xml: string): any {
-    // Simple XML parser for Namecheap responses
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xml, 'text/xml');
-    
-    if (doc.getElementsByTagName('Error').length > 0) {
-      const error = doc.getElementsByTagName('Error')[0];
-      throw new Error(`Namecheap API Error: ${error.textContent}`);
+  private parseXML(xml: string): void {
+    // Check for errors in XML response
+    const errorMatch = xml.match(/<Error>([^<]+)<\/Error>/);
+    if (errorMatch) {
+      throw new Error(`Namecheap API Error: ${errorMatch[1]}`);
     }
-
-    return doc;
   }
 
   /**
@@ -74,20 +69,28 @@ export class NamecheapDNSClient {
 
     const response = await fetch(url);
     const xml = await response.text();
-    const doc = this.parseXML(xml);
+    this.parseXML(xml);
 
     const records: any[] = [];
-    const hosts = doc.getElementsByTagName('host');
+    // Parse host elements using regex since DOMParser is not available in Node
+    const hostMatches = xml.match(/<host[^>]*>/g) || [];
     
-    for (let i = 0; i < hosts.length; i++) {
-      const host = hosts[i];
-      records.push({
-        name: host.getAttribute('Name'),
-        type: host.getAttribute('Type'),
-        data: host.getAttribute('Address'),
-        ttl: host.getAttribute('TTL'),
-        priority: host.getAttribute('MXPref'),
-      });
+    for (const hostMatch of hostMatches) {
+      const nameMatch = hostMatch.match(/Name="([^"]+)"/);
+      const typeMatch = hostMatch.match(/Type="([^"]+)"/);
+      const dataMatch = hostMatch.match(/Address="([^"]+)"/);
+      const ttlMatch = hostMatch.match(/TTL="([^"]+)"/);
+      const priorityMatch = hostMatch.match(/MXPref="([^"]+)"/);
+      
+      if (nameMatch && typeMatch && dataMatch) {
+        records.push({
+          name: nameMatch[1],
+          type: typeMatch[1],
+          data: dataMatch[1],
+          ttl: ttlMatch ? ttlMatch[1] : '3600',
+          priority: priorityMatch ? priorityMatch[1] : undefined,
+        });
+      }
     }
 
     return records;

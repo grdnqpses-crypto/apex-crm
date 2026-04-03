@@ -150,6 +150,7 @@ const Proposals = lazy(() => import("./pages/Proposals"));
 const Dialer = lazy(() => import("./pages/Dialer"));
 const AxiomDashboard = lazy(() => import("./pages/AxiomDashboard"));
 const Signup = lazy(() => import("./pages/Signup"));
+const SignupRedesigned = lazy(() => import("./pages/SignupRedesigned"));
 const MarketingHome = lazy(() => import("./pages/MarketingHome"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Billing = lazy(() => import("./pages/Billing"));
@@ -338,7 +339,8 @@ function Router() {
           <Route path="/lead-scoring" component={LeadScoring} />
           <Route path="/ai-next-best-action" component={AINextBestAction} />
           <Route path="/web-forms" component={WebFormsBuilder} />
-          <Route path="/esignature" component={ESignature} />
+          <Route path="/signup" component={Signup} />
+      <Route path="/signup-new" component={SignupRedesigned} />
           <Route path="/reputation" component={ReputationManagement} />
           <Route path="/ooo-detection" component={OOODetection} />
           <Route path="/email-sequences" component={EmailSequences} />
