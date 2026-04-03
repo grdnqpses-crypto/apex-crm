@@ -55,12 +55,14 @@ import { aiPremiumRouter } from "./routers/ai-premium";
 import { emailProviderRouter } from "./routers/email-provider";
 import { dnsRouter } from "./routers/dns";
 import { postMigrationRouter } from "./routers/post-migration";
+import { oneClickSetupRouter } from "./routers/one-click-setup";
 
 export const appRouter = router({
   system: systemRouter,
   emailProvider: emailProviderRouter,
   dns: dnsRouter,
   postMigration: postMigrationRouter,
+  oneClickSetup: oneClickSetupRouter,
   // batch1 sub-routers (flattened for direct frontend access)
   rottenDeals: rottenDealsRouter,
   bulkActions: bulkActionsRouter,
