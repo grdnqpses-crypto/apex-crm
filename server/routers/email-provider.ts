@@ -411,4 +411,129 @@ export const emailProviderRouter = router({
       });
     }
   }),
+
+  /**
+   * Send a test email to verify configuration
+   */
+  sendTestEmail: protectedProcedure
+    .input(z.object({
+      recipientEmail: z.string().email(),
+      senderEmail: z.string().email().optional(),
+      domain: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const config = await db.getEmailProviderConfig(ctx.user.id);
+        if (!config) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "No email provider configured",
+          });
+        }
+
+        const testSubject = "Test Email from AXIOM CRM";
+        const testBody = `
+          <html>
+            <body style="font-family: Arial, sans-serif; color: #333;">
+              <h2>Test Email Verification</h2>
+              <p>This is a test email from <strong>AXIOM CRM</strong>.</p>
+              <p>If you received this email, your email configuration is working correctly!</p>
+              <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;" />
+              <p style="font-size: 12px; color: #999;">
+                Sent from: ${config.email}<br/>
+                Domain: ${input.domain || 'default'}<br/>
+                Time: ${new Date().toISOString()}
+              </p>
+            </body>
+          </html>
+        `;
+
+        if (config.provider === "gmail" && config.accessToken) {
+          const message = {
+            raw: Buffer.from(
+              `From: ${config.email}\r\n` +
+              `To: ${input.recipientEmail}\r\n` +
+              `Subject: ${testSubject}\r\n` +
+              `Content-Type: text/html; charset="UTF-8"\r\n\r\n` +
+              testBody
+            ).toString("base64"),
+          };
+
+          const response = await fetch("https://www.googleapis.com/gmail/v1/users/me/messages/send", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${config.accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(message),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Gmail API error: ${response.statusText}`);
+          }
+        } else if (config.provider === "office365" && config.accessToken) {
+          const response = await fetch("https://graph.microsoft.com/v1.0/me/sendMail", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${config.accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              message: {
+                subject: testSubject,
+                body: {
+                  contentType: "HTML",
+                  content: testBody,
+                },
+                toRecipients: [
+                  {
+                    emailAddress: {
+                      address: input.recipientEmail,
+                    },
+                  },
+                ],
+              },
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Office 365 API error: ${response.statusText}`);
+          }
+        } else if (config.provider === "custom_smtp" && config.smtpHost) {
+          const nodemailer = require("nodemailer");
+          const transporter = nodemailer.createTransport({
+            host: config.smtpHost,
+            port: config.smtpPort || 587,
+            secure: config.smtpTls !== false,
+            auth: {
+              user: config.smtpUsername,
+              pass: config.smtpPassword,
+            },
+          });
+
+          await transporter.sendMail({
+            from: config.email,
+            to: input.recipientEmail,
+            subject: testSubject,
+            html: testBody,
+          });
+        } else {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Email provider not properly configured",
+          });
+        }
+
+        return {
+          success: true,
+          message: `Test email sent successfully to ${input.recipientEmail}`,
+        };
+      } catch (error) {
+        console.error("Test email error:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to send test email: ${String(error)}`,
+        });
+      }
+    }),
 });

@@ -3380,3 +3380,18 @@ Successfully implemented ALL 53+ Sheet15 audit items as comprehensive backend ro
 - [x] Auto-populate address fields (street, city, state, country, postal code)
 - [x] Replace all address inputs across CRM with AddressAutocomplete component (Contacts, Companies, ContactDetail, CompanyDetail)
 - [x] Test address autocomplete on Contacts, Companies, Tasks, and other address fields
+
+
+## Phase 10: Test Email & Flexible Domain Setup
+
+### Test Email Feature
+- [ ] Add test email button to setup completion page
+- [ ] Create test email dialog with recipient email input
+- [ ] Implement backend endpoint to send test emails
+- [ ] Show success/failure feedback to user
+
+### Flexible Domain Setup
+- [ ] Modify SetupDomainPage to allow custom domain input
+- [ ] Add option to skip domain setup and configure email-only
+- [ ] Support both paths: custom domain + email OR email-only
+- [ ] Update OneClickSetup component to handle both scenarios
