@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Send, MoreHorizontal, Trash2, Shield, AlertTriangle, CheckCircle, Info, FileText, Users, Loader2, Rocket, Calendar, Edit2, Eye, DollarSign } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { toast } from "sonner";
 import PageGuide from "@/components/PageGuide";
 import { pageGuides } from "@/lib/pageGuides";
@@ -135,6 +135,32 @@ export default function Campaigns() {
     return isNaN(dt.getTime()) ? undefined : dt.getTime();
   };
 
+  const handleTemplateChange = useCallback((v: string) => {
+    setSelectedTemplateId(v);
+    const tpl = (templates ?? []).find((t: any) => t.id === Number(v));
+    if (tpl) {
+      setForm(p => ({ ...p, subject: tpl.subject ?? p.subject, htmlContent: tpl.htmlContent ?? p.htmlContent }));
+      toast.success("Template content loaded");
+    }
+  }, [templates]);
+
+  const handleSegmentChange = useCallback((v: string) => {
+    setForm(p => ({ ...p, segmentId: v === "all" ? "" : v }));
+    setSelectedSegmentId(v);
+  }, []);
+
+  const handleStatusChange = useCallback((v: string) => {
+    setForm(p => ({ ...p, status: v }));
+  }, []);
+
+  const handleDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm(p => ({ ...p, scheduledAt: e.target.value, status: e.target.value ? "scheduled" : p.status }));
+  }, []);
+
+  const handleTimeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm(p => ({ ...p, scheduledTime: e.target.value }));
+  }, []);
+
   const handleCreate = () => {
     if (!form.name.trim()) { toast.error("Campaign name is required"); return; }
     if (form.status === "scheduled" && !form.scheduledAt) {
@@ -192,14 +218,7 @@ export default function Campaigns() {
       </div>
       <div className="space-y-2">
         <Label className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5 text-cyan-400" /> Load from Template</Label>
-        <Select value={selectedTemplateId} onValueChange={(v) => {
-          setSelectedTemplateId(v);
-          const tpl = (templates ?? []).find((t: any) => t.id === Number(v));
-          if (tpl) {
-            setForm(p => ({ ...p, subject: tpl.subject ?? p.subject, htmlContent: tpl.htmlContent ?? p.htmlContent }));
-            toast.success("Template content loaded");
-          }
-        }}>
+        <Select value={selectedTemplateId} onValueChange={handleTemplateChange}>
           <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select template..." /></SelectTrigger>
           <SelectContent>
             {(templates ?? []).map((t: any) => (
@@ -214,10 +233,7 @@ export default function Campaigns() {
       </div>
       <div className="space-y-2">
         <Label className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-violet-400" /> Target Segment</Label>
-        <Select value={form.segmentId || "all"} onValueChange={(v) => {
-          setForm(p => ({ ...p, segmentId: v === "all" ? "" : v }));
-          setSelectedSegmentId(v);
-        }}>
+        <Select value={form.segmentId || "all"} onValueChange={handleSegmentChange}>
           <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="All contacts" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All contacts with email</SelectItem>
@@ -250,7 +266,7 @@ export default function Campaigns() {
         <div className="grid grid-cols-3 gap-3">
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Status</Label>
-            <Select value={form.status} onValueChange={(v) => setForm(p => ({ ...p, status: v }))}>
+            <Select value={form.status} onValueChange={handleStatusChange}>
               <SelectTrigger className="bg-secondary/30 h-9">
                 <SelectValue />
               </SelectTrigger>
@@ -265,7 +281,7 @@ export default function Campaigns() {
             <Input
               type="date"
               value={form.scheduledAt}
-              onChange={(e) => setForm(p => ({ ...p, scheduledAt: e.target.value, status: e.target.value ? "scheduled" : p.status }))}
+              onChange={handleDateChange}
               className="bg-secondary/30 h-9"
               min={new Date().toISOString().split("T")[0]}
             />
@@ -275,7 +291,7 @@ export default function Campaigns() {
             <Input
               type="time"
               value={form.scheduledTime}
-              onChange={(e) => setForm(p => ({ ...p, scheduledTime: e.target.value }))}
+              onChange={handleTimeChange}
               className="bg-secondary/30 h-9"
               disabled={!form.scheduledAt}
             />
