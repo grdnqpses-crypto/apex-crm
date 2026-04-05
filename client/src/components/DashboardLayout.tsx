@@ -84,6 +84,8 @@ const standardSections = [
   {
     label: "CRM",
     items: [
+      { icon: Mail, label: "📧 Compose Email", path: "/email-compose" },
+      { icon: Inbox, label: "Inbox", path: "/email-inbox" },
       { icon: Building2, label: "Companies", path: "/companies" },
       { icon: Users, label: "Contacts", path: "/contacts" },
       { icon: Kanban, label: "Deals", path: "/deals" },
@@ -120,6 +122,7 @@ const standardSections = [
   {
     label: "Marketing",
     items: [
+      { icon: Mail, label: "Email Marketing", path: "/email-marketing" },
       { icon: Send, label: "Campaigns", path: "/campaigns" },
       { icon: Mail, label: "Templates", path: "/templates" },
       { icon: Shield, label: "Deliverability", path: "/deliverability" },

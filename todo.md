@@ -3403,3 +3403,25 @@ Successfully implemented ALL 53+ Sheet15 audit items as comprehensive backend ro
 - [ ] BUG: Test email sending fails - Fix sendTestEmail backend endpoint to actually send emails
 - [ ] Create EmailComposer component with Outlook/Gmail-like interface (To, From, CC, BCC, Subject, Body, Attachments)
 - [ ] Integrate EmailComposer with working test email sending
+
+## Phase 9: One-Click Email Setup & Email Client Interface
+
+### Email System Architecture
+- [x] Design email system database schema (email_accounts, emails, email_attachments, email_sync_logs)
+- [x] Create database tables for emails, attachments, and email accounts
+- [ ] Build email account connection flow (Office 365 OAuth)
+- [ ] Implement email sync service (IMAP/Office 365 API)
+- [ ] Implement email sending service (SMTP)
+- [ ] Create email UI component (inbox, compose, read, reply)
+- [ ] Build tRPC procedures for email operations
+- [ ] Integrate email with contacts and deals
+- [ ] Deploy to VPS and test end-to-end
+- [ ] Deliver working email system to user
+
+### Email UI Visibility & Accessibility
+- [ ] Add prominent "Email" button to main navigation/header
+- [ ] Add "Send Email" button to Contact detail pages
+- [ ] Add "Send Email" button to Company detail pages
+- [ ] Create floating compose button for quick email access
+- [ ] Add email icon to dashboard for quick access
+- [ ] Make email interface discoverable and easy to find

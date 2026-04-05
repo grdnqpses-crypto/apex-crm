@@ -1,4 +1,4 @@
-/*
+/**
  * Email Provider Setup Router
  * Handles email configuration and test email sending
  */
@@ -43,6 +43,68 @@ export const emailProviderRouter = router({
   }),
 
   /**
+   * Send an email using user's configured email provider
+   */
+  sendEmail: protectedProcedure
+    .input(z.object({
+      to: z.string().email(),
+      cc: z.array(z.string().email()).optional(),
+      bcc: z.array(z.string().email()).optional(),
+      subject: z.string(),
+      body: z.string(),
+      from: z.string().email().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      try {
+        // Get email provider config for user
+        const emailConfig = await db.getEmailProviderConfig(ctx.user.id);
+        if (!emailConfig) {
+          throw new Error("No email provider configured. Please set up your email provider in Email Marketing → Settings");
+        }
+
+        // Create email service with user's config
+        const emailService = new EmailService({
+          provider: emailConfig.provider,
+          smtpHost: emailConfig.smtpHost,
+          smtpPort: emailConfig.smtpPort,
+          smtpUsername: emailConfig.smtpUsername,
+          smtpPassword: emailConfig.smtpPassword,
+          smtpTls: emailConfig.smtpTls,
+          resendApiKey: emailConfig.resendApiKey,
+          sendgridApiKey: emailConfig.sendgridApiKey,
+        });
+
+        // Use user's configured sender email if not provided
+        const senderEmail = input.from || emailConfig.smtpUsername || "noreply@axiomcrm.com";
+
+        // Send the email
+        const result = await emailService.send({
+          to: input.to,
+          cc: input.cc,
+          bcc: input.bcc,
+          from: senderEmail,
+          subject: input.subject,
+          html: input.body,
+          replyTo: senderEmail,
+        });
+
+        console.log("[Email Provider] Email sent successfully:", result);
+
+        return {
+          success: true,
+          message: `Email sent successfully to ${input.to}`,
+          messageId: result.id,
+        };
+      } catch (error) {
+        console.error("[Email Provider] Send email error:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to send email: ${String(error)}`,
+        });
+      }
+    }),
+
+  /**
    * Send a test email to verify configuration
    */
   sendTestEmail: protectedProcedure
@@ -64,40 +126,9 @@ export const emailProviderRouter = router({
         const testSubject = "Test Email from AXIOM CRM";
         const testBody = `
           <html>
-            <head>
-              <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #333; line-height: 1.6; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
-                .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
-                .footer { font-size: 12px; color: #999; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; }
-                .success { color: #10b981; font-weight: bold; }
-              </style>
-            </head>
             <body>
-              <div class="container">
-                <div class="header">
-                  <h1>✅ Test Email Successful</h1>
-                </div>
-                <div class="content">
-                  <p>Hello,</p>
-                  <p>This is a <span class="success">test email from AXIOM CRM</span>.</p>
-                  <p>If you received this email, your email configuration is working correctly and you're ready to start sending campaigns!</p>
-                  <p style="margin-top: 30px; padding: 15px; background: #ecfdf5; border-left: 4px solid #10b981; border-radius: 4px;">
-                    <strong>✓ Email delivery verified</strong><br/>
-                    Your domain and email provider are properly configured.
-                  </p>
-                  <div class="footer">
-                    <p>
-                      <strong>Email Details:</strong><br/>
-                      Sent from: ${input.senderEmail}<br/>
-                      Domain: ${input.domain || 'default'}<br/>
-                      Provider: ${input.provider}<br/>
-                      Time: ${new Date().toISOString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <p>This is a test email from AXIOM CRM.</p>
+              <p>If you received this email, your email configuration is working correctly!</p>
             </body>
           </html>
         `;
