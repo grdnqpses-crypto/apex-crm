@@ -37,6 +37,149 @@ const EMPTY_FORM = {
   scheduledTime: "",
 };
 
+// Extract CampaignFormFields outside to prevent re-creation on every render
+const CampaignFormFields = ({ 
+  form, 
+  setForm, 
+  selectedTemplateId, 
+  setSelectedTemplateId, 
+  selectedSegmentId, 
+  setSelectedSegmentId, 
+  templates, 
+  segmentList, 
+  segmentPreviewQuery, 
+  handleTemplateChange, 
+  handleSegmentChange, 
+  handleStatusChange, 
+  handleDateChange, 
+  handleTimeChange 
+}: any) => (
+  <div className="grid grid-cols-2 gap-4">
+    <div className="space-y-2">
+      <Label>Campaign Name *</Label>
+      <Input 
+        value={form.name} 
+        onChange={(e) => setForm((p: any) => ({ ...p, name: e.target.value }))} 
+        placeholder="Q1 Newsletter" 
+        className="bg-secondary/30" 
+      />
+    </div>
+    <div className="space-y-2">
+      <Label className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5 text-cyan-400" /> Load from Template</Label>
+      <Select value={selectedTemplateId} onValueChange={handleTemplateChange}>
+        <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select template..." /></SelectTrigger>
+        <SelectContent>
+          {(templates ?? []).map((t: any) => (
+            <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+    <div className="space-y-2">
+      <Label>Subject Line</Label>
+      <Input 
+        value={form.subject} 
+        onChange={(e) => setForm((p: any) => ({ ...p, subject: e.target.value }))} 
+        placeholder="Your weekly update" 
+        className="bg-secondary/30" 
+      />
+    </div>
+    <div className="space-y-2">
+      <Label className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-violet-400" /> Target Segment</Label>
+      <Select value={selectedSegmentId || "all"} onValueChange={handleSegmentChange}>
+        <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="All contacts" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All contacts with email</SelectItem>
+          {(segmentList ?? []).map((s: any) => (
+            <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {selectedSegmentId && selectedSegmentId !== "all" && segmentPreviewQuery.data && (
+        <p className="text-xs text-muted-foreground">
+          <Users className="h-3 w-3 inline mr-1" />
+          {segmentPreviewQuery.data.count} contacts match this segment
+        </p>
+      )}
+    </div>
+    <div className="space-y-2">
+      <Label>From Name</Label>
+      <Input 
+        value={form.fromName} 
+        onChange={(e) => setForm((p: any) => ({ ...p, fromName: e.target.value }))} 
+        placeholder="John from Acme" 
+        className="bg-secondary/30" 
+      />
+    </div>
+    <div className="space-y-2">
+      <Label>From Email</Label>
+      <Input 
+        type="email" 
+        value={form.fromEmail} 
+        onChange={(e) => setForm((p: any) => ({ ...p, fromEmail: e.target.value }))} 
+        placeholder="john@acme.com" 
+        className="bg-secondary/30" 
+      />
+    </div>
+    {/* Schedule section */}
+    <div className="col-span-2 border border-border/50 rounded-xl p-4 bg-secondary/10 space-y-3">
+      <div className="flex items-center gap-2">
+        <Calendar className="h-4 w-4 text-chart-3" />
+        <Label className="text-sm font-semibold">Schedule (Optional)</Label>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Status</Label>
+          <Select value={form.status} onValueChange={handleStatusChange}>
+            <SelectTrigger className="bg-secondary/30 h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="scheduled">Scheduled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Send Date</Label>
+          <Input
+            type="date"
+            value={form.scheduledAt}
+            onChange={handleDateChange}
+            className="bg-secondary/30 h-9"
+            min={new Date().toISOString().split("T")[0]}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Send Time</Label>
+          <Input
+            type="time"
+            value={form.scheduledTime}
+            onChange={handleTimeChange}
+            className="bg-secondary/30 h-9"
+            disabled={!form.scheduledAt}
+          />
+        </div>
+      </div>
+      {form.status === "scheduled" && form.scheduledAt && (
+        <p className="text-xs text-chart-3">
+          <Calendar className="h-3 w-3 inline mr-1" />
+          Scheduled for {new Date(`${form.scheduledAt}T${form.scheduledTime || "09:00"}`).toLocaleString()}
+        </p>
+      )}
+    </div>
+    <div className="space-y-2 col-span-2">
+      <Label>Email Content (HTML)</Label>
+      <Textarea 
+        value={form.htmlContent} 
+        onChange={(e) => setForm((p: any) => ({ ...p, htmlContent: e.target.value }))} 
+        placeholder="<html>...</html>" 
+        className="bg-secondary/30 min-h-[150px] font-mono text-xs" 
+      />
+    </div>
+  </div>
+);
+
 export default function Campaigns() {
   const { t } = useSkin();
   const [showCreate, setShowCreate] = useState(false);
@@ -210,107 +353,6 @@ export default function Campaigns() {
   const SEVERITY_ICONS: Record<string, any> = { critical: AlertTriangle, warning: AlertTriangle, info: Info };
   const SEVERITY_COLORS: Record<string, string> = { critical: "text-destructive", warning: "text-warning", info: "text-chart-1" };
 
-  const CampaignFormFields = ({ isEdit = false }: { isEdit?: boolean }) => (
-    <div className="grid grid-cols-2 gap-4">
-      <div className="space-y-2">
-        <Label>Campaign Name *</Label>
-        <Input value={form.name} onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Q1 Newsletter" className="bg-secondary/30" />
-      </div>
-      <div className="space-y-2">
-        <Label className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5 text-cyan-400" /> Load from Template</Label>
-        <Select value={selectedTemplateId} onValueChange={handleTemplateChange}>
-          <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="Select template..." /></SelectTrigger>
-          <SelectContent>
-            {(templates ?? []).map((t: any) => (
-              <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-2">
-        <Label>Subject Line</Label>
-        <Input value={form.subject} onChange={(e) => setForm(p => ({ ...p, subject: e.target.value }))} placeholder="Your weekly update" className="bg-secondary/30" />
-      </div>
-      <div className="space-y-2">
-        <Label className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-violet-400" /> Target Segment</Label>
-        <Select value={form.segmentId || "all"} onValueChange={handleSegmentChange}>
-          <SelectTrigger className="bg-secondary/30"><SelectValue placeholder="All contacts" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All contacts with email</SelectItem>
-            {(segmentList ?? []).map((s) => (
-              <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {selectedSegmentId && selectedSegmentId !== "all" && segmentPreviewQuery.data && (
-          <p className="text-xs text-muted-foreground">
-            <Users className="h-3 w-3 inline mr-1" />
-            {segmentPreviewQuery.data.count} contacts match this segment
-          </p>
-        )}
-      </div>
-      <div className="space-y-2">
-        <Label>From Name</Label>
-        <Input value={form.fromName} onChange={(e) => setForm(p => ({ ...p, fromName: e.target.value }))} placeholder="John from Acme" className="bg-secondary/30" />
-      </div>
-      <div className="space-y-2">
-        <Label>From Email</Label>
-        <Input type="email" value={form.fromEmail} onChange={(e) => setForm(p => ({ ...p, fromEmail: e.target.value }))} placeholder="john@acme.com" className="bg-secondary/30" />
-      </div>
-      {/* Schedule section */}
-      <div className="col-span-2 border border-border/50 rounded-xl p-4 bg-secondary/10 space-y-3">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-chart-3" />
-          <Label className="text-sm font-semibold">Schedule (Optional)</Label>
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Status</Label>
-            <Select value={form.status} onValueChange={handleStatusChange}>
-              <SelectTrigger className="bg-secondary/30 h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="scheduled">Scheduled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Send Date</Label>
-            <Input
-              type="date"
-              value={form.scheduledAt}
-              onChange={handleDateChange}
-              className="bg-secondary/30 h-9"
-              min={new Date().toISOString().split("T")[0]}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Send Time</Label>
-            <Input
-              type="time"
-              value={form.scheduledTime}
-              onChange={handleTimeChange}
-              className="bg-secondary/30 h-9"
-              disabled={!form.scheduledAt}
-            />
-          </div>
-        </div>
-        {form.status === "scheduled" && form.scheduledAt && (
-          <p className="text-xs text-chart-3">
-            <Calendar className="h-3 w-3 inline mr-1" />
-            Scheduled for {new Date(`${form.scheduledAt}T${form.scheduledTime || "09:00"}`).toLocaleString()}
-          </p>
-        )}
-      </div>
-      <div className="space-y-2 col-span-2">
-        <Label>Email Content (HTML)</Label>
-        <Textarea value={form.htmlContent} onChange={(e) => setForm(p => ({ ...p, htmlContent: e.target.value }))} placeholder="<html>...</html>" className="bg-secondary/30 min-h-[150px] font-mono text-xs" />
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-5">
       <PageGuide {...pageGuides.campaigns} />
@@ -348,122 +390,51 @@ export default function Campaigns() {
           <Table>
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Campaign</TableHead>
-                <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Subject</TableHead>
-                <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</TableHead>
-                <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Spam Score</TableHead>
-                <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Unsub Rate</TableHead>
-                <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Scheduled / Created</TableHead>
-                <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground w-10"></TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground">Campaign</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground">Status</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground">Recipients</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground">Sent</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground">Opened</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground">Clicked</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i} className="border-border">
-                    {Array.from({ length: 6 }).map((_, j) => (
-                      <TableCell key={j}><div className="h-4 w-24 bg-muted rounded animate-pulse" /></TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : data?.items.length === 0 ? (
-                <TableRow className="border-border">
-                  <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
-                    No campaigns yet. Create your first email campaign.
-                  </TableCell>
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading campaigns...</TableCell>
+                </TableRow>
+              ) : !data?.campaigns?.length ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No campaigns yet. Create one to get started!</TableCell>
                 </TableRow>
               ) : (
-                data?.items.map((campaign) => (
-                  <TableRow key={campaign.id} className="border-border hover:bg-secondary/30">
+                data.campaigns.map((campaign: any) => (
+                  <TableRow key={campaign.id} className="border-border hover:bg-muted/30">
+                    <TableCell className="text-sm font-medium">{campaign.name}</TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-lg bg-chart-1/10 flex items-center justify-center shrink-0">
-                          <Send className="h-4 w-4 text-chart-1" />
-                        </div>
-                        <div>
-                          <button
-                            className="font-medium text-sm text-foreground hover:text-primary hover:underline text-left flex items-center gap-1 group"
-                            onClick={() => openEdit(campaign)}
-                          >
-                            {campaign.name}
-                            <Edit2 className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity" />
-                          </button>
-                          {campaign.fromName && <p className="text-xs text-muted-foreground">From: {campaign.fromName}</p>}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">{campaign.subject || "—"}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className={`text-[10px] font-semibold uppercase ${STATUS_COLORS[campaign.status] ?? ""}`}>
+                      <Badge variant="secondary" className={`text-xs ${STATUS_COLORS[campaign.status] || ""}`}>
                         {campaign.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      {campaign.spamScore != null ? (
-                        <div className="flex items-center gap-1.5">
-                          {campaign.spamScore <= 25 ? <CheckCircle className="h-3.5 w-3.5 text-success" /> : campaign.spamScore <= 50 ? <AlertTriangle className="h-3.5 w-3.5 text-warning" /> : <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
-                          <span className="text-sm font-medium">{campaign.spamScore}</span>
-                        </div>
-                      ) : <span className="text-xs text-muted-foreground/50">—</span>}
-                    </TableCell>
-                    <TableCell>
-                      {(() => {
-                        const total = (campaign as any).recipientCount || (campaign as any).sent || 0;
-                        const unsub = (campaign as any).unsubscribed || 0;
-                        if (!total) return <span className="text-xs text-muted-foreground/50">&mdash;</span>;
-                        const rate = ((unsub / total) * 100).toFixed(1);
-                        const color = parseFloat(rate) <= 0.5 ? 'text-emerald-600' : parseFloat(rate) <= 2 ? 'text-amber-600' : 'text-red-600';
-                        return <span className={`text-xs font-medium ${color}`}>{rate}%</span>;
-                      })()}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {(campaign as any).scheduledAt ? (
-                        <span className="flex items-center gap-1 text-chart-3">
-                          <Calendar className="h-3 w-3" />
-                          {new Date((campaign as any).scheduledAt).toLocaleString()}
-                        </span>
-                      ) : (
-                        new Date(campaign.createdAt).toLocaleDateString()
-                      )}
-                    </TableCell>
+                    <TableCell className="text-sm">{campaign.totalRecipients}</TableCell>
+                    <TableCell className="text-sm">{campaign.delivered}</TableCell>
+                    <TableCell className="text-sm">{campaign.opened} ({campaign.totalRecipients > 0 ? Math.round((campaign.opened / campaign.totalRecipients) * 100) : 0}%)</TableCell>
+                    <TableCell className="text-sm">{campaign.clicked} ({campaign.totalRecipients > 0 ? Math.round((campaign.clicked / campaign.totalRecipients) * 100) : 0}%)</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="sm"><MoreHorizontal className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => openEdit(campaign)}>
-                            <Edit2 className="mr-2 h-4 w-4" /> Edit Campaign
+                            <Edit2 className="h-4 w-4 mr-2" /> Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            const preview = window.open('', '_blank', 'width=700,height=600');
-                            if (preview) {
-                              preview.document.write(`<html><head><title>Preview: ${campaign.name}</title><style>body{font-family:sans-serif;padding:24px;max-width:600px;margin:auto;color:#111}</style></head><body><h2 style="margin-bottom:4px">${campaign.subject || campaign.name}</h2><p style="color:#666;font-size:13px">From: ${campaign.fromName || 'Unknown'}</p><hr/>${(campaign as any).htmlContent || '<p style="color:#888">No content</p>'}</body></html>`);
-                              preview.document.close();
-                            }
-                          }}>
-                            <Eye className="mr-2 h-4 w-4" /> Preview Email
+                          <DropdownMenuItem onClick={() => handleSendCampaign(campaign.id)} disabled={campaign.status !== "draft"}>
+                            <Send className="h-4 w-4 mr-2" /> Send
                           </DropdownMenuItem>
-                          {campaign.status === "draft" && (
-                            <DropdownMenuItem onClick={() => handleSendCampaign(campaign.id)}>
-                              <Rocket className="mr-2 h-4 w-4 text-green-400" /> Send Campaign
-                            </DropdownMenuItem>
-                          )}
-                          {campaign.status === "draft" && (
-                            <DropdownMenuItem onClick={() => { updateMutation.mutate({ id: campaign.id, status: "pending_approval" } as any); toast.success("Submitted for approval"); }}>
-                              <CheckCircle className="mr-2 h-4 w-4 text-blue-500" /> Submit for Approval
-                            </DropdownMenuItem>
-                          )}
-                          {(campaign.status as string) === "pending_approval" && (
-                            <DropdownMenuItem onClick={() => { updateMutation.mutate({ id: campaign.id, status: "draft" } as any); toast.success("Approved — moved back to draft for sending"); }}>
-                              <CheckCircle className="mr-2 h-4 w-4 text-emerald-500" /> Approve Campaign
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem onClick={() => toast.info(`Revenue attribution for "${campaign.name}": tracks deals closed within 30 days of receiving this campaign. Connect to Deals module to see attributed revenue.`)}>
-                            <DollarSign className="mr-2 h-4 w-4 text-emerald-500" /> View Revenue Attribution
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate({ id: campaign.id })}>
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          <DropdownMenuItem onClick={() => deleteMutation.mutate({ id: campaign.id })}>
+                            <Trash2 className="h-4 w-4 mr-2" /> Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -480,7 +451,22 @@ export default function Campaigns() {
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Create Email Campaign</DialogTitle></DialogHeader>
-          <CampaignFormFields />
+          <CampaignFormFields 
+            form={form}
+            setForm={setForm}
+            selectedTemplateId={selectedTemplateId}
+            setSelectedTemplateId={setSelectedTemplateId}
+            selectedSegmentId={selectedSegmentId}
+            setSelectedSegmentId={setSelectedSegmentId}
+            templates={templates}
+            segmentList={segmentList}
+            segmentPreviewQuery={segmentPreviewQuery}
+            handleTemplateChange={handleTemplateChange}
+            handleSegmentChange={handleSegmentChange}
+            handleStatusChange={handleStatusChange}
+            handleDateChange={handleDateChange}
+            handleTimeChange={handleTimeChange}
+          />
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
             <Button onClick={handleCreate} disabled={createMutation.isPending}>
@@ -494,7 +480,22 @@ export default function Campaigns() {
       <Dialog open={!!editingCampaign} onOpenChange={(open) => { if (!open) setEditingCampaign(null); }}>
         <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle className="flex items-center gap-2"><Edit2 className="h-4 w-4" /> Edit Campaign</DialogTitle></DialogHeader>
-          <CampaignFormFields isEdit />
+          <CampaignFormFields 
+            form={form}
+            setForm={setForm}
+            selectedTemplateId={selectedTemplateId}
+            setSelectedTemplateId={setSelectedTemplateId}
+            selectedSegmentId={selectedSegmentId}
+            setSelectedSegmentId={setSelectedSegmentId}
+            templates={templates}
+            segmentList={segmentList}
+            segmentPreviewQuery={segmentPreviewQuery}
+            handleTemplateChange={handleTemplateChange}
+            handleSegmentChange={handleSegmentChange}
+            handleStatusChange={handleStatusChange}
+            handleDateChange={handleDateChange}
+            handleTimeChange={handleTimeChange}
+          />
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingCampaign(null)}>Cancel</Button>
             <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
