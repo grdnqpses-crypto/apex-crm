@@ -1,4 +1,3 @@
-import { OneClickSetupAutomation } from '@/components/OneClickSetupAutomation';
 import { EmailComposer, type EmailData } from '@/components/EmailComposer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ArrowLeft, Zap, Mail, Send } from 'lucide-react';
 import { Link } from 'wouter';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { trpc } from '@/lib/trpc';
@@ -22,6 +21,17 @@ export default function SetupDomainPage() {
   const [setupComplete, setSetupComplete] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const sendTestEmailMutation = trpc.emailProvider.sendTestEmail.useMutation();
+
+  // Auto-open email composer when setup completes
+  useEffect(() => {
+    if (setupComplete) {
+      // Wait 1 second then auto-open the composer
+      const timer = setTimeout(() => {
+        setComposerOpen(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [setupComplete]);
 
   const handleSendTestEmail = async (emailData: EmailData) => {
     try {
@@ -233,86 +243,88 @@ export default function SetupDomainPage() {
             </CardContent>
           </Card>
         ) : (
-          <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50">
-            <CardHeader>
-              <CardTitle className="text-emerald-900 flex items-center gap-2">
-                <Zap className="h-5 w-5" />
-                Setup Complete!
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-white rounded-lg p-4 space-y-3">
-                {setupMode === 'domain' && (
-                  <>
-                    <div className="flex items-start gap-3">
-                      <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-emerald-600 font-bold">✓</span>
+          <>
+            <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50">
+              <CardHeader>
+                <CardTitle className="text-emerald-900 flex items-center gap-2">
+                  <Zap className="h-5 w-5" />
+                  Setup Complete!
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-white rounded-lg p-4 space-y-3">
+                  {setupMode === 'domain' && (
+                    <>
+                      <div className="flex items-start gap-3">
+                        <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-emerald-600 font-bold">✓</span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">Domain Configured</p>
+                          <p className="text-sm text-gray-600">{customDomain || domain} is now set up with all DNS records</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">Domain Configured</p>
-                        <p className="text-sm text-gray-600">{customDomain || domain} is now set up with all DNS records</p>
-                      </div>
-                    </div>
-                  </>
-                )}
-                <div className="flex items-start gap-3">
-                  <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-emerald-600 font-bold">✓</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Email Provider Connected</p>
-                    <p className="text-sm text-gray-600">{email} is ready to send emails</p>
-                  </div>
-                </div>
-                {setupMode === 'domain' && (
+                    </>
+                  )}
                   <div className="flex items-start gap-3">
                     <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <span className="text-emerald-600 font-bold">✓</span>
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900">Authentication Verified</p>
-                      <p className="text-sm text-gray-600">SPF, DKIM, and DMARC records are configured</p>
+                      <p className="font-semibold text-gray-900">Email Provider Connected</p>
+                      <p className="text-sm text-gray-600">{email} is ready to send emails</p>
                     </div>
                   </div>
-                )}
-              </div>
+                  {setupMode === 'domain' && (
+                    <div className="flex items-start gap-3">
+                      <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-emerald-600 font-bold">✓</span>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Authentication Verified</p>
+                        <p className="text-sm text-gray-600">SPF, DKIM, and DMARC records are configured</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-900">
-                  <strong>Tip:</strong> Send a test email to verify everything is working correctly before launching campaigns.
-                </p>
-              </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-900">
+                    <strong>Tip:</strong> Send a test email to verify everything is working correctly before launching campaigns.
+                  </p>
+                </div>
 
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => setComposerOpen(true)}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
-                  variant="default"
-                  disabled={sendTestEmailMutation.isPending}
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  Send Test Email
-                </Button>
-                <EmailComposer
-                  isOpen={composerOpen}
-                  onClose={() => setComposerOpen(false)}
-                  onSend={handleSendTestEmail}
-                  defaultFrom={email}
-                  isLoading={sendTestEmailMutation.isPending}
-                />
-                <Link href="/campaigns" className="flex-1">
-                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
-                    Go to Campaigns
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => setComposerOpen(true)}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    variant="default"
+                    disabled={sendTestEmailMutation.isPending}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Send Test Email
                   </Button>
-                </Link>
-                <Link href="/dashboard" className="flex-1">
-                  <Button variant="outline" className="w-full">
-                    Back to Dashboard
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+                  <EmailComposer
+                    isOpen={composerOpen}
+                    onClose={() => setComposerOpen(false)}
+                    onSend={handleSendTestEmail}
+                    defaultFrom={email}
+                    isLoading={sendTestEmailMutation.isPending}
+                  />
+                  <Link href="/campaigns" className="flex-1">
+                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
+                      Go to Campaigns
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard" className="flex-1">
+                    <Button variant="outline" className="w-full">
+                      Back to Dashboard
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </>
         )}
       </div>
     </div>

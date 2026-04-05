@@ -949,12 +949,7 @@ export default function Dashboard() {
               >
                 <Zap className="h-3.5 w-3.5" /> One-Click Setup
               </Link>
-              <Link
-                href="/email-setup"
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white text-xs font-bold shadow-lg shadow-pink-500/20 transition-all flex items-center gap-1.5"
-              >
-                <Mail className="h-3.5 w-3.5" /> Setup Email
-              </Link>
+
             </div>
           </div>
         </div>
