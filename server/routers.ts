@@ -399,7 +399,10 @@ export const appRouter = router({
       limit: z.number().min(1).max(500).optional(),
       offset: z.number().min(0).optional(),
     }).optional()).query(async ({ ctx, input }) => {
-      return db.listContactsByRole(ctx.user, input);
+      const contacts = await db.listContactsByRole(ctx.user, input);
+      if (ctx.user.systemRole === 'developer') return contacts;
+      if (!ctx.user.tenantCompanyId) return [];
+      return contacts.filter((c: any) => c.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
       // Role-based: managers/admins can view contacts of their team
@@ -800,7 +803,10 @@ export const appRouter = router({
   }),
   pipelines: router({
     list: protectedProcedure.query(async ({ ctx }) => {
-      return db.listPipelines(ctx.user.id, ctx.user.tenantCompanyId);
+      const pipelines = await db.listPipelines(ctx.user.id, ctx.user.tenantCompanyId);
+      if (ctx.user.systemRole === 'developer') return pipelines;
+      if (!ctx.user.tenantCompanyId) return [];
+      return pipelines.filter((p: any) => p.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     create: protectedProcedure.input(z.object({
       name: z.string().min(1),
@@ -838,7 +844,10 @@ export const appRouter = router({
       limit: z.number().min(1).max(200).optional(),
       offset: z.number().min(0).optional(),
     }).optional()).query(async ({ ctx, input }) => {
-      return db.listDealsByRole(ctx.user, input);
+      const deals = await db.listDealsByRole(ctx.user, input);
+      if (ctx.user.systemRole === 'developer') return deals;
+      if (!ctx.user.tenantCompanyId) return [];
+      return deals.filter((d: any) => d.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     create: protectedProcedure.input(z.object({
       name: z.string().min(1),
@@ -958,7 +967,10 @@ export const appRouter = router({
       limit: z.number().optional(),
       offset: z.number().optional(),
     }).optional()).query(async ({ ctx, input }) => {
-      return db.listTasksByRole(ctx.user, input);
+      const tasks = await db.listTasksByRole(ctx.user, input);
+      if (ctx.user.systemRole === 'developer') return tasks;
+      if (!ctx.user.tenantCompanyId) return [];
+      return tasks.filter((t: any) => t.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     create: protectedProcedure.input(z.object({
       title: z.string().min(1),
@@ -1095,7 +1107,10 @@ export const appRouter = router({
       limit: z.number().optional(),
       offset: z.number().optional(),
     }).optional()).query(async ({ ctx, input }) => {
-      return db.listCampaigns(ctx.user.id, input);
+      const result = await db.listCampaigns(ctx.user.id, input);
+      if (ctx.user.systemRole === 'developer') return result;
+      if (!ctx.user.tenantCompanyId) return [];
+      return result.filter((item: any) => item.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     create: protectedProcedure.input(z.object({
       name: z.string().min(1),
@@ -1318,7 +1333,10 @@ export const appRouter = router({
 
   segments: router({
     list: protectedProcedure.query(async ({ ctx }) => {
-      return db.listSegments(ctx.user.id);
+      const segments = await db.listSegments(ctx.user.id);
+      if (ctx.user.systemRole === 'developer') return segments;
+      if (!ctx.user.tenantCompanyId) return [];
+      return segments.filter((s: any) => s.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     create: protectedProcedure.input(z.object({
       name: z.string().min(1),
@@ -1554,10 +1572,17 @@ export const appRouter = router({
       limit: z.number().optional(),
       offset: z.number().optional(),
     }).optional()).query(async ({ ctx, input }) => {
-      return db.listProspects(ctx.user.id, input);
+      const prospects = await db.listProspects(ctx.user.id, input);
+      if (ctx.user.systemRole === 'developer') return prospects;
+      if (!ctx.user.tenantCompanyId) return [];
+      return prospects.filter((p: any) => p.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-      return db.getProspect(input.id, ctx.user.id);
+      const prospect = await db.getProspect(input.id, ctx.user.id);
+      if (!prospect) return null;
+      if (ctx.user.systemRole === 'developer') return prospect;
+      if (!ctx.user.tenantCompanyId || prospect.tenantCompanyId !== ctx.user.tenantCompanyId) return null;
+      return prospect;
     }),
     create: protectedProcedure.input(z.object({
       firstName: z.string().min(1),
@@ -1851,7 +1876,10 @@ export const appRouter = router({
       limit: z.number().optional(),
       offset: z.number().optional(),
     }).optional()).query(async ({ ctx, input }) => {
-      return db.listTriggerSignals(ctx.user.id, input);
+      const signals = await db.listTriggerSignals(ctx.user.id, input);
+      if (ctx.user.systemRole === 'developer') return signals;
+      if (!ctx.user.tenantCompanyId) return [];
+      return signals.filter((s: any) => s.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     create: protectedProcedure.input(z.object({
       signalType: z.string(),
@@ -1898,7 +1926,10 @@ export const appRouter = router({
 
   ghostSequences: router({
     list: protectedProcedure.query(async ({ ctx }) => {
-      return db.listGhostSequences(ctx.user.id);
+      const sequences = await db.listGhostSequences(ctx.user.id);
+      if (ctx.user.systemRole === 'developer') return sequences;
+      if (!ctx.user.tenantCompanyId) return [];
+      return sequences.filter((s: any) => s.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
       return db.getGhostSequence(input.id, ctx.user.id);
@@ -4709,7 +4740,10 @@ export const appRouter = router({
   // ─── Conversation Intelligence ────────────────────────────────
   conversationIntel: router({
     list: protectedProcedure.input(z.object({ analyzed: z.boolean().optional(), contactId: z.number().optional(), limit: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
-      return db.listCallRecordings(ctx.user.id, input);
+      const recordings = await db.listCallRecordings(ctx.user.id, input);
+      if (ctx.user.systemRole === 'developer') return recordings;
+      if (!ctx.user.tenantCompanyId) return [];
+      return recordings.filter((r: any) => r.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
       return db.getCallRecording(input.id, ctx.user.id);
