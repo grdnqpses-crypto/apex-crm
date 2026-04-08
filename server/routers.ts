@@ -606,7 +606,10 @@ export const appRouter = router({
       limit: z.number().min(1).max(100).optional(),
       offset: z.number().min(0).optional(),
     }).optional()).query(async ({ ctx, input }) => {
-      return db.listCompaniesByRole(ctx.user, input);
+      const result = await db.listCompaniesByRole(ctx.user);
+      if (ctx.user.systemRole === 'developer') return result;
+      if (!ctx.user.tenantCompanyId) return [];
+      return result.filter((item: any) => item.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     listWithMetrics: protectedProcedure.input(z.object({
       search: z.string().optional(),
@@ -927,7 +930,10 @@ export const appRouter = router({
       type: z.string().optional(),
       limit: z.number().optional(),
     }).optional()).query(async ({ ctx, input }) => {
-      return db.listActivitiesByRole(ctx.user, input);
+      const result = await db.listActivitiesByRole(ctx.user);
+      if (ctx.user.systemRole === 'developer') return result;
+      if (!ctx.user.tenantCompanyId) return [];
+      return result.filter((item: any) => item.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     create: protectedProcedure.input(z.object({
       contactId: z.number().optional(),
@@ -1232,7 +1238,10 @@ export const appRouter = router({
 
   smtpAccounts: router({
     list: protectedProcedure.query(async ({ ctx }) => {
-      return db.listSmtpAccounts(ctx.user.id);
+      const result = await db.listSmtpAccounts(ctx.user.id);
+      if (ctx.user.systemRole === 'developer') return result;
+      if (!ctx.user.tenantCompanyId) return [];
+      return result.filter((item: any) => item.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     create: protectedProcedure.input(z.object({
       emailAddress: z.string(),
@@ -1932,7 +1941,10 @@ export const appRouter = router({
       return sequences.filter((s: any) => s.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-      return db.getGhostSequence(input.id, ctx.user.id);
+      const result = await db.getGhostSequence(ctx.user.id);
+      if (ctx.user.systemRole === 'developer') return result;
+      if (!ctx.user.tenantCompanyId) return [];
+      return result.filter((item: any) => item.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     create: protectedProcedure.input(z.object({
       name: z.string().min(1),
@@ -2113,7 +2125,10 @@ export const appRouter = router({
       return db.listBattleCards(ctx.user.id, input);
     }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-      return db.getBattleCard(input.id, ctx.user.id);
+      const result = await db.getBattleCard(ctx.user.id);
+      if (ctx.user.systemRole === 'developer') return result;
+      if (!ctx.user.tenantCompanyId) return [];
+      return result.filter((item: any) => item.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     markRead: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
       await db.updateBattleCard(input.id, ctx.user.id, { isRead: true });
@@ -2418,7 +2433,10 @@ export const appRouter = router({
       return db.getDomainStats(ctx.user.id, input || {});
     }),
     aggregated: protectedProcedure.query(async ({ ctx }) => {
-      return db.getDomainStatsAggregated(ctx.user.id);
+      const result = await db.getDomainStatsAggregated(ctx.user.id);
+      if (ctx.user.systemRole === 'developer') return result;
+      if (!ctx.user.tenantCompanyId) return [];
+      return result.filter((item: any) => item.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     providerBreakdown: protectedProcedure.input(z.object({ days: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
       return db.getProviderBreakdown(ctx.user.id, input?.days || 30);
@@ -4018,7 +4036,10 @@ export const appRouter = router({
       return db.listVoiceCampaigns(ctx.user.id);
     }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-      return db.getVoiceCampaign(input.id, ctx.user.id);
+      const result = await db.getVoiceCampaign(ctx.user.id);
+      if (ctx.user.systemRole === 'developer') return result;
+      if (!ctx.user.tenantCompanyId) return [];
+      return result.filter((item: any) => item.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     create: protectedProcedure.input(z.object({
       name: z.string(),
@@ -4082,7 +4103,10 @@ export const appRouter = router({
       limit: z.number().optional(),
       offset: z.number().optional(),
     }).optional()).query(async ({ ctx, input }) => {
-      return db.listCallLogs(ctx.user.id, input);
+      const result = await db.listCallLogs(ctx.user.id, input);
+      if (ctx.user.systemRole === 'developer') return result;
+      if (!ctx.user.tenantCompanyId) return [];
+      return result.filter((item: any) => item.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
       return db.getCallLog(input.id, ctx.user.id);
@@ -4253,7 +4277,10 @@ export const appRouter = router({
       limit: z.number().optional(),
       offset: z.number().optional(),
     }).optional()).query(async ({ ctx, input }) => {
-      return db.listCarrierPackets(ctx.user.id, input);
+      const result = await db.listCarrierPackets(ctx.user.id, input);
+      if (ctx.user.systemRole === 'developer') return result;
+      if (!ctx.user.tenantCompanyId) return [];
+      return result.filter((item: any) => item.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
       return db.getCarrierPacket(input.id, ctx.user.id);
@@ -4408,7 +4435,10 @@ export const appRouter = router({
       return db.listRevenueBriefings(ctx.user.id);
     }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-      return db.getRevenueBriefing(input.id, ctx.user.id);
+      const result = await db.getRevenueBriefing(ctx.user.id);
+      if (ctx.user.systemRole === 'developer') return result;
+      if (!ctx.user.tenantCompanyId) return [];
+      return result.filter((item: any) => item.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     markRead: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
       await db.markBriefingRead(input.id, ctx.user.id);
@@ -4448,7 +4478,10 @@ export const appRouter = router({
       return db.listSmartNotifications(ctx.user.id, input);
     }),
     unreadCount: protectedProcedure.query(async ({ ctx }) => {
-      return db.getUnreadNotificationCount(ctx.user.id);
+      const result = await db.getUnreadNotificationCount(ctx.user.id);
+      if (ctx.user.systemRole === 'developer') return result;
+      if (!ctx.user.tenantCompanyId) return [];
+      return result.filter((item: any) => item.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     markRead: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
       await db.markNotificationRead(input.id, ctx.user.id);
@@ -4480,7 +4513,10 @@ export const appRouter = router({
       return db.listMeetingPreps(ctx.user.id);
     }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-      return db.getMeetingPrep(input.id, ctx.user.id);
+      const result = await db.getMeetingPrep(ctx.user.id);
+      if (ctx.user.systemRole === 'developer') return result;
+      if (!ctx.user.tenantCompanyId) return [];
+      return result.filter((item: any) => item.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     generate: protectedProcedure.input(z.object({
       contactId: z.number().optional(),
@@ -4626,7 +4662,10 @@ export const appRouter = router({
       return db.listCarrierProfiles(ctx.user.id, input);
     }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-      return db.getCarrierProfile(input.id, ctx.user.id);
+      const result = await db.getCarrierProfile(ctx.user.id);
+      if (ctx.user.systemRole === 'developer') return result;
+      if (!ctx.user.tenantCompanyId) return [];
+      return result.filter((item: any) => item.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     create: protectedProcedure.input(z.object({
       carrierName: z.string(), dotNumber: z.string().optional(), mcNumber: z.string().optional(),
@@ -5236,7 +5275,10 @@ export const appRouter = router({
       return db.listInboundEmails(ctx.user.id, input);
     }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-      return db.getInboundEmail(input.id, ctx.user.id);
+      const result = await db.getInboundEmail(ctx.user.id);
+      if (ctx.user.systemRole === 'developer') return result;
+      if (!ctx.user.tenantCompanyId) return [];
+      return result.filter((item: any) => item.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     create: protectedProcedure.input(z.object({
       fromEmail: z.string().optional(), fromName: z.string().optional(), subject: z.string().optional(), bodyText: z.string(),
