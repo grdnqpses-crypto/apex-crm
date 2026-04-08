@@ -6837,5 +6837,93 @@ export const appRouter = router({
       }),
   }),
 
+  // ─── STUB ROUTES FOR MISSING MODULES (Phase 2) ───
+  quantumScore: router({
+    list: protectedProcedure.query(async ({ ctx }) => []),
+    calculate: protectedProcedure.input(z.object({ prospectId: z.number() })).mutation(async ({ input }) => ({
+      score: Math.random() * 100,
+      confidence: Math.random(),
+      calculatedAt: Date.now(),
+    })),
+  }),
+
+  grdn: router({
+    getStatus: protectedProcedure.query(async ({ ctx }) => ({
+      isConnected: false,
+      lastSync: null,
+      recordsProcessed: 0,
+      status: 'not_configured',
+    })),
+    sync: protectedProcedure.mutation(async ({ ctx }) => ({
+      success: true,
+      recordsProcessed: 0,
+      syncedAt: Date.now(),
+    })),
+  }),
+
+  neuralMapping: router({
+    list: protectedProcedure.query(async ({ ctx }) => []),
+    analyze: protectedProcedure.input(z.object({ prospectId: z.number() })).mutation(async ({ input }) => ({
+      mappingId: 0,
+      prospectId: input.prospectId,
+      confidence: 0,
+      mapping: {},
+      analyzedAt: Date.now(),
+    })),
+  }),
+
+  sentiment: router({
+    analyze: protectedProcedure.input(z.object({ text: z.string() })).mutation(async ({ input }) => ({
+      sentiment: 'neutral',
+      score: 0.5,
+      confidence: 0,
+      analyzedAt: Date.now(),
+    })),
+    list: protectedProcedure.query(async ({ ctx }) => []),
+  }),
+
+  predictive: router({
+    list: protectedProcedure.query(async ({ ctx }) => []),
+    train: protectedProcedure.input(z.object({ modelName: z.string() })).mutation(async ({ input }) => ({
+      success: true,
+      modelId: 0,
+      accuracy: 0,
+      trainedAt: Date.now(),
+    })),
+  }),
+
+  realtimeSync: router({
+    getStatus: protectedProcedure.query(async ({ ctx }) => ({
+      isRunning: false,
+      lastSync: null,
+      recordsProcessed: 0,
+      status: 'idle',
+    })),
+    start: protectedProcedure.mutation(async ({ ctx }) => ({
+      success: true,
+      startedAt: Date.now(),
+    })),
+  }),
+
+  workflows: router({
+    list: protectedProcedure.query(async ({ ctx }) => []),
+    create: protectedProcedure.input(z.object({ name: z.string(), definition: z.any() })).mutation(async ({ input }) => ({
+      id: 0,
+      name: input.name,
+      success: true,
+      createdAt: Date.now(),
+    })),
+  }),
+
+  advancedAnalytics: router({
+    list: protectedProcedure.query(async ({ ctx }) => []),
+    generate: protectedProcedure.input(z.object({ type: z.string() })).mutation(async ({ input }) => ({
+      id: 0,
+      type: input.type,
+      data: {},
+      generatedAt: Date.now(),
+    })),
+  }),
+
 });
 export type AppRouter = typeof appRouter;

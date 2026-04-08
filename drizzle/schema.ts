@@ -1032,6 +1032,29 @@ export const complianceAuditLog = mysqlTable("compliance_audit_log", {
 
 export type ComplianceAuditEntry = typeof complianceAuditLog.$inferSelect;
 
+// ─── Security Audit Log (SOC2 compliance - tracks developer access to cross-company data) ───
+export const securityAuditLog = mysqlTable("security_audit_log", {
+  id: int("id").autoincrement().primaryKey(),
+  timestamp: bigint("timestamp", { mode: "number" }).notNull(),
+  userId: int("userId").notNull(),
+  userEmail: varchar("userEmail", { length: 320 }).notNull(),
+  systemRole: varchar("systemRole", { length: 64 }).notNull(), // 'developer', 'company_admin', 'user'
+  action: mysqlEnum("action", ["READ", "CREATE", "UPDATE", "DELETE", "EXPORT"]).notNull(),
+  resourceType: varchar("resourceType", { length: 128 }).notNull(), // 'loads', 'invoices', 'contacts', etc.
+  resourceId: int("resourceId"),
+  targetCompanyId: int("targetCompanyId"),
+  userCompanyId: int("userCompanyId"),
+  accessScope: mysqlEnum("accessScope", ["SAME_COMPANY", "CROSS_COMPANY", "GLOBAL"]).notNull(),
+  reason: text("reason"),
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  status: mysqlEnum("status", ["SUCCESS", "DENIED", "ATTEMPTED"]).notNull(),
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+});
+
+export type SecurityAuditEntry = typeof securityAuditLog.$inferSelect;
+export type InsertSecurityAuditEntry = typeof securityAuditLog.$inferInsert;
+
 // ─── Sender Settings (physical address, company info for CAN-SPAM) ───
 export const senderSettings = mysqlTable("sender_settings", {
   id: int("id").autoincrement().primaryKey(),
