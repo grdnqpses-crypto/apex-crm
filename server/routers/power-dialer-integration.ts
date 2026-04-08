@@ -248,7 +248,7 @@ Would it make sense to start with a smaller scope to prove the value?`,
       id: input.callId,
       recordingUrl: "https://example.com/recording.mp3",
       duration: 245,
-      transcription: `Agent: Hi John, this is Sarah from Apex CRM. How are you today?
+      transcription: `Agent: Hi John, this is Sarah from Axiom Platform. How are you today?
 Contact: Good, thanks for calling. What's this about?
 Agent: I noticed you're in the logistics space. We help companies like yours streamline their CRM processes.
 Contact: Interesting. Tell me more.

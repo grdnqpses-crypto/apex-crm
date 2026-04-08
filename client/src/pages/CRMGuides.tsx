@@ -26,7 +26,7 @@ export default function CRMGuides() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">CRM Guides & Learning</h1>
-          <p className="text-muted-foreground">Master Apex CRM with comprehensive guides, tutorials, and resources.</p>
+          <p className="text-muted-foreground">Master Axiom Platform with comprehensive guides, tutorials, and resources.</p>
         </div>
         <div className="text-right">
           <p className="text-sm font-medium">{checklist?.completionRate ? Math.round((checklist.completionRate) * 100) : 0}% Onboarded</p>

@@ -10,12 +10,12 @@ export const crmGuidesRouter = {
     const guides = [
       {
         id: "guide_1",
-        title: "Getting Started with Apex CRM",
+        title: "Getting Started with Axiom Platform",
         category: "Basics",
         level: "beginner",
         duration: 15,
         sections: 8,
-        description: "Learn the fundamentals of Apex CRM including dashboard navigation, contact management, and basic workflows.",
+        description: "Learn the fundamentals of Axiom Platform including dashboard navigation, contact management, and basic workflows.",
         videoUrl: "https://example.com/videos/getting-started",
       },
       {
@@ -107,11 +107,11 @@ export const crmGuidesRouter = {
   })).query(async ({ ctx, input }) => {
     return {
       id: input.guideId,
-      title: "Getting Started with Apex CRM",
+      title: "Getting Started with Axiom Platform",
       category: "Basics",
       level: "beginner",
       duration: 15,
-      description: "Learn the fundamentals of Apex CRM",
+      description: "Learn the fundamentals of Axiom Platform",
       videoUrl: "https://example.com/videos/getting-started",
       sections: [
         {
@@ -196,7 +196,7 @@ export const crmGuidesRouter = {
         id: "kb_2",
         title: "Understanding lead scoring",
         category: "Sales",
-        content: "Learn how lead scoring works in Apex CRM...",
+        content: "Learn how lead scoring works in Axiom Platform...",
         views: 3890,
         helpful: 0.88,
       },
