@@ -4532,10 +4532,18 @@ export const appRouter = router({
   // ─── Load Management ──────────────────────────────────────────
   loads: router({
     list: protectedProcedure.input(z.object({ status: z.string().optional(), search: z.string().optional(), limit: z.number().optional(), offset: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
-      return db.listLoads(ctx.user.id, input);
+      // SECURITY: Company isolation - developers see all loads, others see only their company's loads
+      const loads = await db.listLoads(ctx.user.id, input);
+      if (ctx.user.systemRole === 'developer') return loads; // Developers see all
+      if (!ctx.user.tenantCompanyId) return []; // No company = no access
+      return loads.filter((l: any) => l.loadCompanyId === ctx.user.tenantCompanyId); // Filter by company
     }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-      return db.getLoad(input.id, ctx.user.id);
+      const load = await db.getLoad(input.id, ctx.user.id);
+      if (!load) return null;
+      if (ctx.user.systemRole === 'developer') return load;
+      if (!ctx.user.tenantCompanyId || load.loadCompanyId !== ctx.user.tenantCompanyId) return null;
+      return load;
     }),
     create: protectedProcedure.input(z.object({
       loadType: z.string().optional(), commodity: z.string().optional(), weight: z.number().optional(),
@@ -4547,9 +4555,11 @@ export const appRouter = router({
       companyId: z.number().optional(), contactId: z.number().optional(), carrierId: z.number().optional(),
       specialInstructions: z.string().optional(), miles: z.number().optional(),
     })).mutation(async ({ ctx, input }) => {
+      // SECURITY: Force load to user's company
+      if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: 'BAD_REQUEST', message: 'No company associated' });
       const margin = (input.customerRate || 0) - (input.carrierRate || 0);
       const marginPct = input.customerRate ? ((margin / input.customerRate) * 100).toFixed(1) + '%' : '0%';
-      return db.createLoad(ctx.user.id, { ...input, margin, marginPercent: marginPct } as any);
+      return db.createLoad(ctx.user.id, { ...input, margin, marginPercent: marginPct, loadCompanyId: ctx.user.tenantCompanyId } as any);
     }),
     update: protectedProcedure.input(z.object({
       id: z.number(), status: z.string().optional(), commodity: z.string().optional(),
@@ -4557,7 +4567,13 @@ export const appRouter = router({
       currentLocation: z.string().optional(), trackingNotes: z.string().optional(),
       carrierId: z.number().optional(), actualPickup: z.number().optional(), actualDelivery: z.number().optional(),
     })).mutation(async ({ ctx, input }) => {
+      // SECURITY: Verify ownership before updating
       const { id, ...data } = input;
+      const load = await db.getLoad(id, ctx.user.id);
+      if (!load) throw new TRPCError({ code: 'NOT_FOUND' });
+      if (ctx.user.systemRole !== 'developer' && load.loadCompanyId !== ctx.user.tenantCompanyId) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Cannot update load from another company' });
+      }
       return db.updateLoad(id, ctx.user.id, data as any);
     }),
     updateStatus: protectedProcedure.input(z.object({
@@ -4639,10 +4655,17 @@ export const appRouter = router({
   // ─── Invoicing & Billing ──────────────────────────────────────
   invoicing: router({
     list: protectedProcedure.input(z.object({ status: z.string().optional(), search: z.string().optional(), limit: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
-      return db.listInvoices(ctx.user.id, input);
+      const invoices = await db.listInvoices(ctx.user.id, input);
+      if (ctx.user.systemRole === 'developer') return invoices;
+      if (!ctx.user.tenantCompanyId) return [];
+      return invoices.filter((i: any) => i.tenantCompanyId === ctx.user.tenantCompanyId);
     }),
     get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-      return db.getInvoice(input.id, ctx.user.id);
+      const invoice = await db.getInvoice(input.id, ctx.user.id);
+      if (!invoice) return null;
+      if (ctx.user.systemRole === 'developer') return invoice;
+      if (!ctx.user.tenantCompanyId || invoice.tenantCompanyId !== ctx.user.tenantCompanyId) return null;
+      return invoice;
     }),
     create: protectedProcedure.input(z.object({
       loadId: z.number().optional(), billToName: z.string().optional(), billToEmail: z.string().optional(),
@@ -4650,7 +4673,8 @@ export const appRouter = router({
       lineItems: z.array(z.object({ description: z.string(), quantity: z.number(), unitPrice: z.number(), total: z.number() })).optional(),
       totalAmount: z.number(), paymentTerms: z.string().optional(), notes: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
-      return db.createInvoice(ctx.user.id, { ...input, totalAmount: BigInt(input.totalAmount), balanceDue: BigInt(input.totalAmount) } as any);
+      if (!ctx.user.tenantCompanyId) throw new TRPCError({ code: 'BAD_REQUEST', message: 'No company associated' });
+      return db.createInvoice(ctx.user.id, { ...input, totalAmount: BigInt(input.totalAmount), balanceDue: BigInt(input.totalAmount), tenantCompanyId: ctx.user.tenantCompanyId } as any);
     }),
     update: protectedProcedure.input(z.object({
       id: z.number(), status: z.string().optional(), amountPaid: z.number().optional(),

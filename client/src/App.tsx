@@ -148,6 +148,7 @@ const ReportBuilder = lazy(() => import("./pages/ReportBuilder"));
 const OnboardingConcierge = lazy(() => import("./pages/OnboardingConcierge"));
 const WorkflowBuilder = lazy(() => import("./pages/WorkflowBuilder"));
 const IntegrationHub = lazy(() => import("./pages/IntegrationHub"));
+const EmailSetupWizard = lazy(() => import("./pages/EmailSetupWizard"));
 const Proposals = lazy(() => import("./pages/Proposals"));
 const Dialer = lazy(() => import("./pages/Dialer"));
 const AxiomDashboard = lazy(() => import("./pages/AxiomDashboard"));
@@ -277,7 +278,7 @@ function Router() {
           <Route path="/billing" component={Billing} />
           <Route path="/import/hubspot" component={HubSpotImport} />
           <Route path="/domain-optimizer" component={DomainOptimizer} />
-
+          <Route path="/email-setup" component={EmailSetupWizard} />
           <Route path="/ab-engine" component={ABEngine} />
           <Route path="/voice-agent" component={VoiceAgent} />
           <Route path="/carrier-packets" component={CarrierPackets} />
