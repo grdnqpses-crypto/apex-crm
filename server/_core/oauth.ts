@@ -11,6 +11,14 @@ function getQueryParam(req: Request, key: string): string | undefined {
 }
 
 export function registerOAuthRoutes(app: Express) {
+  // ─── Deployment Verification Endpoint ───
+  app.get("/api/deploy-version", (req: Request, res: Response) => {
+    res.json({
+      version: "DEPLOY_TEST_001",
+      timestamp: new Date().toISOString()
+    });
+  });
+
   // ─── Credential-based Login ───
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     console.log("PRODUCTION DEPLOY TEST");
