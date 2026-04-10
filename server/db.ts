@@ -1,5 +1,6 @@
 import { eq, and, desc, asc, sql, like, or, isNotNull, count, inArray, gte, lte, ne } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import { createPool } from "mysql2/promise";
 import {
   InsertUser, users,
   contacts, companies, deals, pipelines, pipelineStages,
@@ -58,7 +59,22 @@ let _db: ReturnType<typeof drizzle> | null = null;
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
-    try { _db = drizzle(process.env.DATABASE_URL); } catch (error) { console.warn("[Database] Failed to connect:", error); _db = null; }
+    try {
+      // Parse DATABASE_URL and create connection pool with SSL configuration
+      const url = new URL(process.env.DATABASE_URL);
+      const pool = createPool({
+        host: url.hostname,
+        port: parseInt(url.port || '4000'),
+        user: url.username,
+        password: url.password,
+        database: url.pathname.slice(1),
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
+        ssl: { rejectUnauthorized: false }
+      });
+      _db = drizzle(pool);
+    } catch (error) { console.warn("[Database] Failed to connect:", error); _db = null; }
   }
   return _db;
 }

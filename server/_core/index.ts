@@ -15,6 +15,15 @@ import { startAutoSyncRunner } from "../migration-autosync-runner";
 import { setupMigrationStreamEndpoint } from "./setup-migration-stream";
 import rateLimit from "express-rate-limit";
 
+// Global error handlers
+process.on("uncaughtException", (err) => {
+  console.error("[GLOBAL] UNCAUGHT EXCEPTION:", err);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.error("[GLOBAL] UNHANDLED REJECTION:", err);
+});
+
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
     const server = net.createServer();
