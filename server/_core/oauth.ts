@@ -13,26 +13,52 @@ function getQueryParam(req: Request, key: string): string | undefined {
 export function registerOAuthRoutes(app: Express) {
   // ─── Credential-based Login ───
   app.post("/api/auth/login", async (req: Request, res: Response) => {
+    console.log("PRODUCTION DEPLOY TEST");
+    console.log("LOGIN ROUTE HIT");
     try {
       const { username, password, rememberMe } = req.body;
+      console.log("[AUTH-DEBUG] LOGIN INPUT:", { username, passwordLength: password?.length });
+      
       if (!username || !password) {
+        console.log("[AUTH-DEBUG] MISSING CREDENTIALS");
         res.status(400).json({ error: "Username and password are required" });
         return;
       }
+      
       const user = await db.getUserByUsername(username);
+      console.log("[AUTH-DEBUG] USER FROM DB:", { 
+        found: !!user, 
+        id: user?.id,
+        username: user?.username,
+        email: user?.email,
+        hasPasswordHash: !!user?.passwordHash,
+        isActive: user?.isActive,
+        passwordHashLength: user?.passwordHash?.length
+      });
+      
       if (!user || !user.passwordHash) {
+        console.log("[AUTH-DEBUG] USER NOT FOUND OR NO PASSWORD HASH");
         res.status(401).json({ error: "Invalid username or password" });
         return;
       }
+      
       if (!user.isActive) {
+        console.log("[AUTH-DEBUG] USER IS INACTIVE");
         res.status(403).json({ error: "Account is deactivated. Contact your administrator." });
         return;
       }
+      
+      console.log("[AUTH-DEBUG] ATTEMPTING BCRYPT COMPARE");
       const valid = await bcrypt.compare(password, user.passwordHash);
+      console.log("[AUTH-DEBUG] PASSWORD VALID:", valid);
+      
       if (!valid) {
+        console.log("[AUTH-DEBUG] PASSWORD MISMATCH");
         res.status(401).json({ error: "Invalid username or password" });
         return;
       }
+      
+      console.log("[AUTH-DEBUG] CREATING SESSION TOKEN");
       // Session duration: 30 days if rememberMe, otherwise 1 day (session cookie)
       const sessionDurationMs = rememberMe ? THIRTY_DAYS_MS : ONE_YEAR_MS;
       // Create session token using the user's openId
@@ -40,12 +66,19 @@ export function registerOAuthRoutes(app: Express) {
         name: user.name || "",
         expiresInMs: sessionDurationMs,
       });
+      console.log("[AUTH-DEBUG] SESSION TOKEN CREATED:", { tokenLength: sessionToken?.length });
+      
       // Update last signed in
+      console.log("[AUTH-DEBUG] UPDATING LAST SIGNED IN");
       await db.upsertUser({ openId: user.openId, lastSignedIn: new Date() });
+      console.log("[AUTH-DEBUG] LAST SIGNED IN UPDATED");
+      
       const cookieOptions = getSessionCookieOptions(req);
       // rememberMe: persistent 30-day cookie; otherwise: session cookie (no maxAge)
       const cookieMaxAge = rememberMe ? THIRTY_DAYS_MS : undefined;
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, ...(cookieMaxAge ? { maxAge: cookieMaxAge } : { expires: undefined }) });
+      
+      console.log("[AUTH-DEBUG] LOGIN SUCCESS");
       res.json({
         success: true,
         user: {
@@ -57,9 +90,17 @@ export function registerOAuthRoutes(app: Express) {
           tenantCompanyId: user.tenantCompanyId,
         },
       });
-    } catch (error) {
-      console.error("[Auth] Login failed", error);
-      res.status(500).json({ error: "Login failed" });
+    } catch (err) {
+      console.error("LOGIN ERROR FULL:", err);
+      console.error("ERROR STACK:", err?.stack);
+      console.error("ERROR TYPE:", typeof err, Object.prototype.toString.call(err));
+      return res.status(500).json({
+        error: String(err),
+        message: err?.message,
+        stack: err?.stack,
+        type: typeof err,
+        _marker: "UNIQUE_MARKER_12345_TESTING_DEPLOYMENT"
+      });
     }
   });
 
