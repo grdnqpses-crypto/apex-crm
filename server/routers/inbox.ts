@@ -6,7 +6,9 @@
 import { router, protectedProcedure } from "../_core/trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import * as db from "../db";
+import { getDb } from "../db";
+import { emailSyncMessages } from "../../drizzle/schema";
+import { eq, desc } from "drizzle-orm";
 
 export const inboxRouter = router({
   /**
@@ -25,12 +27,14 @@ export const inboxRouter = router({
         const offset = input?.offset ?? 0;
         
         // Get emails for the current user
-        const emails = await db.query.emailSyncMessages.findMany({
-          where: (table, { eq }) => eq(table.userId, ctx.user.id),
-          limit: limit,
-          offset: offset,
-          orderBy: (table, { desc }) => [desc(table.sentAt)],
-        });
+        const db = await getDb();
+        const emails = await db
+          .select()
+          .from(emailSyncMessages)
+          .where(eq(emailSyncMessages.userId, ctx.user.id))
+          .limit(limit)
+          .offset(offset)
+          .orderBy(desc(emailSyncMessages.sentAt));
 
         return {
           emails: emails.map(email => ({
