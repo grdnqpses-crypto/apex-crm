@@ -249,6 +249,8 @@ export default function MarketingHome({
   const [, navigate] = useLocation();
   const [videoOpen, setVideoOpen] = useState(false);
   const [checkoutLoadingPlan, setCheckoutLoadingPlan] = useState<string | null>(null);
+  const [isStartingTrial, setIsStartingTrial] = useState(false);
+  const startTrialMutation = trpc.trialOnboarding.startTrial.useMutation();
 
   const { user, loading: authLoading } = useAuth();
   // Redirect already-logged-in users directly to the dashboard
@@ -375,11 +377,33 @@ export default function MarketingHome({
             >
               Sign In
             </button>
-            <Link href="/signup">
-              <button className="text-xs sm:text-sm font-bold bg-gradient-to-r from-orange-500 to-amber-400 text-black px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl hover:opacity-90 transition-all hover:shadow-lg hover:shadow-orange-500/20 whitespace-nowrap">
-                Free Trial
-              </button>
-            </Link>
+            <button
+              onClick={async () => {
+                setIsStartingTrial(true);
+                try {
+                  await startTrialMutation.mutateAsync({
+                    companyName: "My Company",
+                    fullName: "Trial User",
+                    email: `trial-${Date.now()}@example.com`,
+                  });
+                  window.location.href = "/dashboard";
+                } catch (error) {
+                  setIsStartingTrial(false);
+                  toast.error("Failed to start trial. Please try again.");
+                }
+              }}
+              disabled={isStartingTrial}
+              className="text-xs sm:text-sm font-bold bg-gradient-to-r from-orange-500 to-amber-400 text-black px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl hover:opacity-90 transition-all hover:shadow-lg hover:shadow-orange-500/20 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isStartingTrial ? (
+                <>
+                  <div className="h-4 w-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                  Starting...
+                </>
+              ) : (
+                "Start Trial"
+              )}
+            </button>
             {/* Hamburger only for nav links on mobile */}
             <button className="md:hidden p-1.5 text-white/60" onClick={() => setMobileOpen(!mobileOpen)}>
               {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -400,7 +424,27 @@ export default function MarketingHome({
               ))}
               <div className="flex gap-3 pt-3 border-t border-white/5">
                 <button onClick={() => { setMobileOpen(false); setLoginOpen(true); }} className="flex-1 text-sm font-semibold border border-white/10 text-white/70 px-4 py-2.5 rounded-xl">Sign In</button>
-                <Link href="/signup"><button className="flex-1 text-sm font-bold bg-gradient-to-r from-orange-500 to-amber-400 text-black px-4 py-2.5 rounded-xl">Start Free Trial</button></Link>
+                <button
+                  onClick={async () => {
+                    setMobileOpen(false);
+                    setIsStartingTrial(true);
+                    try {
+                      await startTrialMutation.mutateAsync({
+                        companyName: "My Company",
+                        fullName: "Trial User",
+                        email: `trial-${Date.now()}@example.com`,
+                      });
+                      window.location.href = "/dashboard";
+                    } catch (error) {
+                      setIsStartingTrial(false);
+                      toast.error("Failed to start trial. Please try again.");
+                    }
+                  }}
+                  disabled={isStartingTrial}
+                  className="flex-1 text-sm font-bold bg-gradient-to-r from-orange-500 to-amber-400 text-black px-4 py-2.5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isStartingTrial ? "Starting..." : "Start Trial"}
+                </button>
               </div>
             </motion.div>
           )}
