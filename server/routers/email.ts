@@ -22,31 +22,24 @@ export const emailRouter = router({
     }))
     .mutation(async ({ input }) => {
       try {
-        // Get SMTP configuration from environment variables
-        const smtpHost = process.env.SMTP_HOST;
-        const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587;
-        const smtpUser = process.env.SMTP_USER;
-        const smtpPass = process.env.SMTP_PASS;
-        const smtpFrom = process.env.SMTP_FROM || smtpUser;
+        // Get Resend API key from environment
+        const resendApiKey = process.env.RESEND_API_KEY;
+        const smtpFrom = process.env.SMTP_FROM || "noreply@example.com";
 
-        if (!smtpHost || !smtpUser || !smtpPass || !smtpFrom) {
+        if (!resendApiKey) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "SMTP configuration incomplete",
+            message: "Resend API key not configured",
           });
         }
 
-        // Initialize EmailService with SMTP config
+        // Initialize EmailService with Resend config
         const emailService = new EmailService({
-          provider: "smtp",
-          smtpHost,
-          smtpPort,
-          smtpUsername: smtpUser,
-          smtpPassword: smtpPass,
-          smtpTls: true,
+          provider: "resend",
+          resendApiKey,
         });
 
-        // Send email
+        // Send email via Resend
         const result = await emailService.send({
           to: input.to,
           from: smtpFrom,
@@ -65,7 +58,7 @@ export const emailRouter = router({
         console.error("[Email Router] Error sending test email:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to send email",
+          message: `Email send failed: ${error instanceof Error ? error.message : "Unknown error"}`,
         });
       }
     }),
