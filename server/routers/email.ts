@@ -52,8 +52,10 @@ export const emailRouter = router({
 
         // Store email in database
         try {
+          console.log("[Email Router] Attempting to store email in database...");
           const db = await getDb();
           const now = Date.now();
+          console.log("[Email Router] Database connection acquired, inserting email...");
           await db.insert(emailSyncMessages).values({
             accountId: 1,
             userId: 1,
@@ -74,6 +76,7 @@ export const emailRouter = router({
             labels: ["sent"],
             syncedAt: now,
           });
+          console.log("[Email Router] Email stored successfully in database");
         } catch (storageError) {
           console.error("[Email Router] Warning: Failed to store email in database:", storageError);
         }
