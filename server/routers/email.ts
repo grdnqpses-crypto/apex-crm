@@ -3,7 +3,7 @@
  * Sends real emails using configured SMTP provider
  */
 
-import { router, protectedProcedure } from "../_core/trpc";
+import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { EmailService } from "../email-service";
@@ -14,7 +14,7 @@ export const emailRouter = router({
    * Input: to, subject, body
    * Returns: messageId and success status
    */
-  sendTestEmail: protectedProcedure
+  sendTestEmail: publicProcedure
     .input(z.object({
       to: z.string().email(),
       subject: z.string().min(1),
