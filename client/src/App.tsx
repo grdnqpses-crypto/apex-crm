@@ -155,6 +155,7 @@ const AxiomDashboard = lazy(() => import("./pages/AxiomDashboard"));
 const Signup = lazy(() => import("./pages/Signup"));
 const SignupRedesigned = lazy(() => import("./pages/SignupRedesigned"));
 const MarketingHome = lazy(() => import("./pages/MarketingHome"));
+const Login = lazy(() => import("./pages/Login"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Billing = lazy(() => import("./pages/Billing"));
 const CRMBible = lazy(() => import("./pages/CRMBible"));
@@ -393,7 +394,7 @@ function App() {
           <Switch>
             <Route path="/login">
               <Suspense fallback={<PageLoader />}>
-                <MarketingHome loginOpen={true} />
+                <Login />
               </Suspense>
             </Route>
             <Route path="/signup">
