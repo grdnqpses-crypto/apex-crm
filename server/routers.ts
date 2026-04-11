@@ -59,10 +59,12 @@ import { oneClickSetupRouter } from "./routers/one-click-setup";
 import { emailSetupWizardRouter } from "./routers/email-setup-wizard";
 import { trialOnboardingRouter } from "./routers/trial-onboarding";
 import { inboxRouter } from "./routers/inbox";
+import { emailRouter } from "./routers/email";
 
 export const appRouter = router({
   system: systemRouter,
   inbox: inboxRouter,
+  email: emailRouter,
   emailProvider: emailProviderRouter,
   emailSetupWizard: emailSetupWizardRouter,
   trialOnboarding: trialOnboardingRouter,
