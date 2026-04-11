@@ -118,7 +118,13 @@ async function startServer() {
     // Start AI Autonomous Engine (developer-only background tasks)
     startAIEngine();
     // Start migration auto-sync runner (checks scheduled syncs every 15 min)
-    startAutoSyncRunner();
+    // DISABLED: Causing unhandled rejection crashes - needs error handling fix
+    try {
+      // startAutoSyncRunner();
+      console.log("[INFO] Migration autosync runner disabled for stability");
+    } catch (err) {
+      console.error("[ERROR] Failed to start autosync runner:", err);
+    }
   });
 }
 
