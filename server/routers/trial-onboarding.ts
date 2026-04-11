@@ -5,6 +5,7 @@ import { nanoid } from "nanoid";
 import * as db from "../db";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "../_core/cookies";
+import { TRPCError } from "@trpc/server";
 
 export const trialOnboardingRouter = router({
   /**
@@ -44,6 +45,8 @@ export const trialOnboardingRouter = router({
           updatedAt: now,
         });
 
+        if (!companyId) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create company' });
+
         // Create user
         const userId = await db.createCredentialUser({
           username,
@@ -54,27 +57,32 @@ export const trialOnboardingRouter = router({
           tenantCompanyId: companyId ?? 0,
         });
         
-        if (!userId) throw new Error("Failed to create user");
+        if (!userId) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create user' });
 
         // Initialize default CRM data
         await initializeTrialData(companyId, userId);
 
-        // Set session cookie
-        const sessionToken = nanoid(32);
-        ctx.res.setHeader(
-          "Set-Cookie",
-          `${COOKIE_NAME}=${sessionToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${Math.floor(ONE_YEAR_MS / 1000)}`
-        );
+        // Fetch created user to return in response
+        const user = await db.getUserById(userId);
+        if (!user) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to retrieve user' });
+
+        // Set session cookie using EXACT same logic as login endpoint
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, String(userId), { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
         return {
           success: true,
-          userId,
+          user: {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            name: user.name,
+            systemRole: user.systemRole,
+            tenantCompanyId: user.tenantCompanyId,
+          },
           companyId,
-          username,
-          email: input.email,
-          fullName: input.fullName,
           tempPassword, // Return temp password for user to save
-          message: "Trial account created successfully!",
+          message: "Trial account created successfully! You are now logged in.",
         };
       } catch (error) {
         console.error("[TRIAL ONBOARDING] Error:", error);
