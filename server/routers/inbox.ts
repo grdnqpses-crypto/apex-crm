@@ -17,14 +17,18 @@ export const inboxRouter = router({
     .input(z.object({
       limit: z.number().default(50),
       offset: z.number().default(0),
-    }))
+    }).optional())
     .query(async ({ ctx, input }) => {
       try {
+        // Handle optional input
+        const limit = input?.limit ?? 50;
+        const offset = input?.offset ?? 0;
+        
         // Get emails for the current user
         const emails = await db.query.emailSyncMessages.findMany({
           where: (table, { eq }) => eq(table.userId, ctx.user.id),
-          limit: input.limit,
-          offset: input.offset,
+          limit: limit,
+          offset: offset,
           orderBy: (table, { desc }) => [desc(table.sentAt)],
         });
 
