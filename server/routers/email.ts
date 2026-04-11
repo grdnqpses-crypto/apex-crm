@@ -7,7 +7,7 @@ import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { EmailService } from "../email-service";
-import { db as database } from "../db";
+import { getDb } from "../db";
 import { emailSyncMessages } from "../../drizzle/schema";
 
 export const emailRouter = router({
@@ -52,8 +52,9 @@ export const emailRouter = router({
 
         // Store email in database
         try {
+          const db = await getDb();
           const now = Date.now();
-          await database.insert(emailSyncMessages).values({
+          await db.insert(emailSyncMessages).values({
             accountId: 1,
             userId: 0,
             contactId: null,
