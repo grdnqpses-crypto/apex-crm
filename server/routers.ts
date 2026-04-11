@@ -57,11 +57,13 @@ import { dnsRouter } from "./routers/dns";
 import { postMigrationRouter } from "./routers/post-migration";
 import { oneClickSetupRouter } from "./routers/one-click-setup";
 import { emailSetupWizardRouter } from "./routers/email-setup-wizard";
+import { trialOnboardingRouter } from "./routers/trial-onboarding";
 
 export const appRouter = router({
   system: systemRouter,
   emailProvider: emailProviderRouter,
   emailSetupWizard: emailSetupWizardRouter,
+  trialOnboarding: trialOnboardingRouter,
   dns: dnsRouter,
   postMigration: postMigrationRouter,
   oneClickSetup: oneClickSetupRouter,
