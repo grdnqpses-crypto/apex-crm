@@ -70,7 +70,7 @@ export class EmailService {
     const transporter = nodemailer.createTransport({
       host: this.config.smtpHost,
       port: this.config.smtpPort,
-      secure: this.config.smtpTls !== false,
+      secure: this.config.smtpPort === 465, // Use implicit TLS only for port 465
       auth: this.config.smtpUsername && this.config.smtpPassword ? {
         user: this.config.smtpUsername,
         pass: this.config.smtpPassword,
