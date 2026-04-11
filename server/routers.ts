@@ -214,7 +214,7 @@ export const appRouter = router({
       if (!userId) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create user' });
       const user = await db.getUserById(userId);
       const { sdk } = await import("./_core/sdk.js");
-      const sessionToken = await sdk.createSessionToken(user!.openId);
+      const sessionToken = await sdk.createSessionToken(user!.openId, { name: user!.name });
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
       return { success: true, user };
@@ -229,7 +229,7 @@ export const appRouter = router({
       const valid = await bcrypt.compare(input.password, user.passwordHash);
       if (!valid) throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid email or password' });
       const { sdk } = await import("./_core/sdk.js");
-      const sessionToken = await sdk.createSessionToken(user.openId);
+      const sessionToken = await sdk.createSessionToken(user.openId, { name: user.name });
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
       return { success: true, user };
