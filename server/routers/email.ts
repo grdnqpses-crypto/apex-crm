@@ -1,16 +1,17 @@
 /**
- * Email Router - SMTP Email Sending
- * Sends real emails using configured SMTP provider
+ * Email Router - Resend API Email Sending with Database Storage
+ * Sends real emails and stores them in the database
  */
 
 import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { EmailService } from "../email-service";
+import * as db from "../db";
 
 export const emailRouter = router({
   /**
-   * Send test email via SMTP
+   * Send test email via Resend and store in database
    * Input: to, subject, body
    * Returns: messageId and success status
    */
@@ -47,6 +48,27 @@ export const emailRouter = router({
           html: input.body,
           text: input.body,
         });
+
+        // Store email in database
+        try {
+          await db.emailSyncMessages.insert({
+            userId: 0,
+            messageId: result.id,
+            threadId: result.id,
+            subject: input.subject,
+            fromAddress: smtpFrom,
+            toAddresses: input.to,
+            bodyText: input.body,
+            bodyHtml: input.body,
+            direction: "outbound",
+            sentAt: new Date(),
+            isRead: 1,
+            hasAttachments: 0,
+            labels: "sent",
+          });
+        } catch (storageError) {
+          console.error("[Email Router] Warning: Failed to store email in database:", storageError);
+        }
 
         return {
           success: true,
