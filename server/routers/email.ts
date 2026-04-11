@@ -7,7 +7,8 @@ import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { EmailService } from "../email-service";
-import * as db from "../db";
+import { db as database } from "../db";
+import { emailSyncMessages } from "../../drizzle/schema";
 
 export const emailRouter = router({
   /**
@@ -51,20 +52,26 @@ export const emailRouter = router({
 
         // Store email in database
         try {
-          await db.emailSyncMessages.insert({
+          const now = Date.now();
+          await database.insert(emailSyncMessages).values({
+            accountId: 1,
             userId: 0,
+            contactId: null,
+            companyId: null,
             messageId: result.id,
             threadId: result.id,
             subject: input.subject,
             fromAddress: smtpFrom,
-            toAddresses: input.to,
+            toAddresses: [input.to],
+            ccAddresses: [],
             bodyText: input.body,
             bodyHtml: input.body,
             direction: "outbound",
-            sentAt: new Date(),
+            sentAt: now,
             isRead: 1,
             hasAttachments: 0,
-            labels: "sent",
+            labels: ["sent"],
+            syncedAt: now,
           });
         } catch (storageError) {
           console.error("[Email Router] Warning: Failed to store email in database:", storageError);
