@@ -16,13 +16,13 @@ export const emailRouter = router({
    * Input: to, subject, body
    * Returns: messageId and success status
    */
-  sendTestEmail: publicProcedure
+  sendTestEmail: protectedProcedure
     .input(z.object({
       to: z.string().email(),
       subject: z.string().min(1),
       body: z.string().min(1),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       try {
         // Get Resend API key from environment
         const resendApiKey = process.env.RESEND_API_KEY;
@@ -58,7 +58,7 @@ export const emailRouter = router({
           console.log("[Email Router] Database connection acquired, inserting email...");
           await db.insert(emailSyncMessages).values({
             accountId: 1,
-            userId: 1,
+            userId: ctx.user.id,
             contactId: null,
             companyId: null,
             messageId: result.id,
