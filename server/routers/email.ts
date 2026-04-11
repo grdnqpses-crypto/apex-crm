@@ -56,7 +56,7 @@ export const emailRouter = router({
           const now = Date.now();
           await db.insert(emailSyncMessages).values({
             accountId: 1,
-            userId: 0,
+            userId: 1,
             contactId: null,
             companyId: null,
             messageId: result.id,
